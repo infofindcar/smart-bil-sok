@@ -204,3 +204,74 @@
   opacity: 0;
   animation: stagger-card 0.5s ease-out both;
 }
+
+/* Premium card pop-in animation */
+@keyframes card-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.8);
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-8px) scale(1.02);
+    filter: blur(0px);
+  }
+  70% {
+    transform: translateY(4px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.card-pop-wrapper {
+  will-change: transform, opacity, filter;
+}
+
+.card-pop-hidden {
+  opacity: 0;
+  transform: translateY(40px) scale(0.8);
+  filter: blur(8px);
+}
+
+.card-pop-visible {
+  animation: card-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.card-pop-instant {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Sparkle animation for results header */
+@keyframes sparkle-rotate {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(15deg) scale(1.2); }
+  75% { transform: rotate(-15deg) scale(1.1); }
+}
+
+.card-pop-sparkle {
+  animation: sparkle-rotate 2s ease-in-out infinite;
+}
+
+/* Scroll arrow bounce */
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(8px); }
+  50% { transform: translateY(-2px); }
+  70% { transform: translateY(5px); }
+}
+
+.scroll-arrow-bounce {
+  animation: scroll-bounce 2s ease-in-out infinite;
+}
+
+/* Subtle float animation */
+.animate-float-subtle {
+  animation: gentle-float 5s ease-in-out infinite;
+}

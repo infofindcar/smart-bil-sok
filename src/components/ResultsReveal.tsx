@@ -1,7 +1,7 @@
 import { forwardRef, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CarCard } from '@/components/CarCard';
-import { Sparkles, Scale, ChevronRight, ChevronDown } from 'lucide-react';
+import { Sparkles, Scale, ChevronRight, ArrowDown } from 'lucide-react';
 import type { Car, CarReason } from './GuidedSearch';
 
 interface ResultsRevealProps {
@@ -16,7 +16,7 @@ interface ResultsRevealProps {
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, savedCars, carReasons, resultMessage, onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
+  ({ cars, savedCars, resultMessage, onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -36,30 +36,30 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
     useEffect(() => {
       if (hasAnimated || cars.length === 0) return;
 
-      // Small delay, then scroll to results
+      // Scroll to results section
       const scrollTimer = setTimeout(() => {
         sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
+      }, 200);
 
-      // Show header after scroll
+      // Show header after scroll settles
       const headerTimer = setTimeout(() => {
         setHeaderVisible(true);
-      }, 800);
+      }, 900);
 
-      // Reveal cards one by one
+      // Reveal cards one by one with a pop effect
       const cardTimers: NodeJS.Timeout[] = [];
       cars.forEach((_, i) => {
         const timer = setTimeout(() => {
           setRevealedCount((prev) => prev + 1);
-        }, 1200 + i * 400);
+        }, 1400 + i * 500);
         cardTimers.push(timer);
       });
 
-      // Mark as animated after all cards revealed
+      // Mark as animated
       const doneTimer = setTimeout(() => {
         setHasAnimated(true);
         sessionStorage.setItem('findcar-results-revealed', 'true');
-      }, 1200 + cars.length * 400 + 200);
+      }, 1400 + cars.length * 500 + 300);
 
       return () => {
         clearTimeout(scrollTimer);
@@ -69,46 +69,47 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
       };
     }, [cars.length, hasAnimated]);
 
-    // Reset revealed flag when cars change (new search)
-    useEffect(() => {
-      return () => {
-        // Don't clear on unmount from navigation — only clear in handleReset
-      };
-    }, []);
-
     const allRevealed = revealedCount >= cars.length;
 
     return (
-      <section ref={ref} className="relative px-4 pb-20 pt-8">
-        {/* Scroll indicator arrow */}
-        {!headerVisible && cars.length > 0 && (
-          <div className="flex justify-center py-8 animate-bounce">
-            <div className="flex flex-col items-center gap-2 text-secondary/60">
-              <span className="text-xs font-medium tracking-wide uppercase">Dina matchningar väntar</span>
-              <ChevronDown className="h-5 w-5" />
-            </div>
-          </div>
-        )}
-
-        <div ref={sectionRef} className="max-w-6xl mx-auto">
-          {/* Results header — fades in */}
+      <section ref={ref} className="relative px-4 pb-20">
+        {/* Scroll-down CTA banner — shows in the gap before results */}
+        <div
+          ref={sectionRef}
+          className="relative flex flex-col items-center justify-center py-12 md:py-16"
+        >
           <div
-            className={`text-center mb-10 transition-all duration-700 ease-out ${
-              headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            className={`flex flex-col items-center gap-4 transition-all duration-700 ${
+              headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-secondary/8 border border-border/30 mb-5">
-              <Sparkles className="h-3.5 w-3.5 text-secondary animate-pulse" />
-              <span className="text-xs font-semibold tracking-wide text-secondary uppercase">
-                Dina perfekta matchningar
-              </span>
-              <Sparkles className="h-3.5 w-3.5 text-secondary animate-pulse" />
+            {/* Glowing badge */}
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-150 animate-pulse" />
+              <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-border/50 shadow-lg">
+                <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
+                <span className="text-sm font-semibold text-foreground tracking-wide">
+                  {cars.length} perfekta matchningar hittade
+                </span>
+                <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" style={{ animationDelay: '200ms' }} />
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-md mx-auto text-center leading-relaxed">
               {resultMessage}
             </p>
-          </div>
 
+            {/* Animated scroll arrow */}
+            {!allRevealed && (
+              <div className="mt-2 scroll-arrow-bounce">
+                <div className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/20 flex items-center justify-center">
+                  <ArrowDown className="h-4 w-4 text-secondary" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto">
           {savedCars.length >= 2 && (
             <div
               className={`flex justify-center mb-6 transition-all duration-500 ${
@@ -122,20 +123,14 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
             </div>
           )}
 
-          {/* Cards grid — one by one reveal */}
+          {/* Cards grid — pop-in one by one */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {cars.map((car, index) => (
               <div
                 key={car.id}
-                className={`transition-all ease-out ${
-                  index < revealedCount
-                    ? 'opacity-100 translate-y-0 scale-100'
-                    : 'opacity-0 translate-y-8 scale-95'
-                }`}
-                style={{
-                  transitionDuration: '600ms',
-                  transitionDelay: hasAnimated ? '0ms' : '50ms',
-                }}
+                className={`card-pop-wrapper ${
+                  index < revealedCount ? 'card-pop-visible' : 'card-pop-hidden'
+                } ${hasAnimated ? 'card-pop-instant' : ''}`}
               >
                 <CarCard
                   car={car}
@@ -147,7 +142,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
             ))}
           </div>
 
-          {/* Show more button — appears after all revealed */}
+          {/* Show more button */}
           <div
             className={`flex justify-center mt-10 transition-all duration-500 delay-300 ${
               allRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'

@@ -159,7 +159,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
         if (data.cars?.length > 0) {
           const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
           addAssistantMessage(
-            `✨ ${resultMsg}\n\nScrolla ner för att se dina bilar ↓`,
+            `🎯 ${resultMsg}`,
             undefined,
             () => {
               // Trigger results after typewriter finishes
