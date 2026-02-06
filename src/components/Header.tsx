@@ -20,6 +20,16 @@ export const Header = () => {
     el?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // When not scrolled (transparent header over hero), use white text
+  const navLinkBase = 'transition-colors font-medium';
+  const navLinkClass = scrolled
+    ? `${navLinkBase} text-sm text-foreground/70 hover:text-foreground`
+    : `${navLinkBase} text-[15px] text-white/90 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]`;
+
+  const hamburgerClass = scrolled
+    ? 'text-foreground'
+    : 'text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]';
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
@@ -33,7 +43,9 @@ export const Header = () => {
           <img
             src={logo}
             alt="FindCar"
-            className="h-16 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
+            className={`h-16 transition-all duration-300 group-hover:brightness-110 ${
+              scrolled ? 'drop-shadow-lg' : 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)] brightness-110'
+            }`}
           />
         </Link>
 
@@ -45,7 +57,7 @@ export const Header = () => {
               e.preventDefault();
               document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="text-sm text-foreground/70 hover:text-foreground transition-colors"
+            className={navLinkClass}
           >
             Så fungerar det
           </a>
@@ -55,7 +67,7 @@ export const Header = () => {
               e.preventDefault();
               document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="text-sm text-foreground/70 hover:text-foreground transition-colors"
+            className={navLinkClass}
           >
             Vanliga frågor
           </a>
@@ -67,7 +79,7 @@ export const Header = () => {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-muted/50 transition-colors"
+          className={`md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors ${hamburgerClass}`}
           aria-label="Meny"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

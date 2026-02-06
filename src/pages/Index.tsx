@@ -114,9 +114,12 @@ const Index = () => {
           }}
         >
           <div className="relative">
-            <div className="absolute inset-0 bg-black/40 blur-3xl rounded-full scale-110" />
-            <img src={logo} alt="FindCar" className="relative h-48 md:h-72 mx-auto brightness-150 contrast-125 drop-shadow-[0_0_80px_rgba(255,255,255,0.6)] animate-float-subtle" />
+            <div className="absolute inset-0 bg-black/50 blur-[100px] rounded-full scale-125" />
+            <img src={logo} alt="FindCar" className="relative h-56 md:h-80 mx-auto brightness-[1.6] contrast-125 drop-shadow-[0_0_100px_rgba(255,255,255,0.7)] animate-float-subtle" />
           </div>
+          <p className="relative text-white/80 text-lg md:text-xl font-serif italic tracking-wide mt-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            Din objektiva bilrådgivare
+          </p>
         </div>
 
         <div
