@@ -128,24 +128,15 @@ const Index = () => {
       <section
         ref={searchRef}
         className="relative py-16 md:py-24 px-4 overflow-hidden"
-        style={{
-          background: 'linear-gradient(to bottom, hsl(var(--accent) / 0.25), hsl(var(--background)))',
-        }}
       >
-        {/* Decorative glow behind heading */}
-        <div
-          className="bg-glow absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px]"
-          aria-hidden="true"
-        />
-
         <div className="relative max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                 Hitta din <span className="text-gradient">drömbil</span>
               </h2>
-              <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-                Berätta vad du söker så hittar vår AI de bästa bilarna åt dig.
+              <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm">
+                Berätta vad du söker — Clutch analyserar tusentals bilar åt dig.
               </p>
             </div>
           </ScrollReveal>
