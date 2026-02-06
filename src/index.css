@@ -1,88 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
+    --background: 45 25% 95%;
+    --foreground: 205 55% 20%;
+    --card: 45 20% 98%;
+    --card-foreground: 205 55% 20%;
+    --popover: 45 20% 98%;
+    --popover-foreground: 205 55% 20%;
+    --primary: 190 70% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 205 60% 25%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 200 15% 85%;
+    --muted-foreground: 205 40% 35%;
+    --accent: 190 40% 92%;
+    --accent-foreground: 205 55% 20%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 200 15% 85%;
+    --input: 200 15% 85%;
+    --ring: 190 70% 38%;
+    --radius: 0.75rem;
+    --chat-bubble: 45 20% 94%;
+    --step-icon: 205 60% 25%;
+    --testimonial-bg: 45 20% 94%;
+    --section-alt: 45 20% 92%;
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 205 55% 12%;
+    --foreground: 45 20% 95%;
+    --card: 205 50% 15%;
+    --card-foreground: 45 20% 95%;
+    --popover: 205 50% 15%;
+    --popover-foreground: 45 20% 95%;
+    --primary: 190 75% 50%;
+    --primary-foreground: 205 55% 10%;
+    --secondary: 200 30% 70%;
+    --secondary-foreground: 205 55% 10%;
+    --muted: 205 40% 20%;
+    --muted-foreground: 200 20% 65%;
+    --accent: 190 40% 20%;
+    --accent-foreground: 45 20% 95%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 205 40% 20%;
+    --input: 205 40% 20%;
+    --ring: 190 75% 50%;
+    --chat-bubble: 205 40% 18%;
+    --step-icon: 190 75% 50%;
+    --testimonial-bg: 205 40% 18%;
+    --section-alt: 205 50% 14%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -98,8 +79,61 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+}
+
+/* Custom animations */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes logo-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px hsl(190 70% 38% / 0.3)); }
+  50% { filter: drop-shadow(0 0 20px hsl(190 70% 38% / 0.6)); }
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float { animation: gentle-float 4s ease-in-out infinite; }
+.animate-glow { animation: logo-glow 3s ease-in-out infinite; }
+.animate-reveal-up { animation: reveal-up 0.6s ease-out forwards; }
+
+.chat-scrollbar::-webkit-scrollbar { width: 4px; }
+.chat-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.chat-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 2px; }
+
+.touch-target { min-height: 44px; min-width: 44px; }
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px hsl(var(--primary) / 0.15);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, hsl(205 55% 18%) 0%, hsl(205 60% 14%) 40%, hsl(190 70% 25%) 100%);
 }

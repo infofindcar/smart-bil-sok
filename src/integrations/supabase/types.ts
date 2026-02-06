@@ -14,15 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_name: string
+          id: string
+          page_path: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          page_path?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          page_path?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       cars: {
         Row: {
           body_type: string | null
           city: string | null
           color: string | null
+          created_at: string | null
+          data_source: string | null
+          dealer_name: string | null
+          dealer_url: string | null
           drivetrain: string | null
           fuel_type: string | null
           id: number
           image_thumb_url: string | null
+          is_active: boolean | null
+          last_seen_at: string | null
           listing_url: string | null
           make: string | null
           mileage: number | null
@@ -36,10 +69,16 @@ export type Database = {
           body_type?: string | null
           city?: string | null
           color?: string | null
+          created_at?: string | null
+          data_source?: string | null
+          dealer_name?: string | null
+          dealer_url?: string | null
           drivetrain?: string | null
           fuel_type?: string | null
           id?: number
           image_thumb_url?: string | null
+          is_active?: boolean | null
+          last_seen_at?: string | null
           listing_url?: string | null
           make?: string | null
           mileage?: number | null
@@ -53,10 +92,16 @@ export type Database = {
           body_type?: string | null
           city?: string | null
           color?: string | null
+          created_at?: string | null
+          data_source?: string | null
+          dealer_name?: string | null
+          dealer_url?: string | null
           drivetrain?: string | null
           fuel_type?: string | null
           id?: number
           image_thumb_url?: string | null
+          is_active?: boolean | null
+          last_seen_at?: string | null
           listing_url?: string | null
           make?: string | null
           mileage?: number | null
@@ -122,6 +167,48 @@ export type Database = {
           price?: number | null
           source?: string | null
           year?: number | null
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          batches_completed: number | null
+          batches_total: number | null
+          cars_inserted: number | null
+          cars_skipped: number | null
+          cars_updated: number | null
+          completed_at: string | null
+          credits_estimated: number | null
+          error_message: string | null
+          id: string
+          started_at: string
+          status: string | null
+        }
+        Insert: {
+          batches_completed?: number | null
+          batches_total?: number | null
+          cars_inserted?: number | null
+          cars_skipped?: number | null
+          cars_updated?: number | null
+          completed_at?: string | null
+          credits_estimated?: number | null
+          error_message?: string | null
+          id?: string
+          started_at?: string
+          status?: string | null
+        }
+        Update: {
+          batches_completed?: number | null
+          batches_total?: number | null
+          cars_inserted?: number | null
+          cars_skipped?: number | null
+          cars_updated?: number | null
+          completed_at?: string | null
+          credits_estimated?: number | null
+          error_message?: string | null
+          id?: string
+          started_at?: string
+          status?: string | null
         }
         Relationships: []
       }
