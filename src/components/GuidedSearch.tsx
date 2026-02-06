@@ -8,6 +8,7 @@ export type Car = {
   id: number;
   make: string | null;
   model: string | null;
+  model_raw: string | null;
   year: number | null;
   price: number | null;
   mileage: number | null;
