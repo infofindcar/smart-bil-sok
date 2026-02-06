@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { VideoLoop } from '@/components/VideoLoop';
-import { CarCard } from '@/components/CarCard';
+import { ResultsReveal } from '@/components/ResultsReveal';
 import { HowItWorks } from '@/components/HowItWorks';
 import { WhyFindCar } from '@/components/WhyFindCar';
 import { Testimonials } from '@/components/Testimonials';
@@ -12,7 +12,7 @@ import { FAQ } from '@/components/FAQ';
 import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Scale, Sparkles, ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 import logo from '@/assets/findcar-logo.png';
 
@@ -178,74 +178,19 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Results — premium transition */}
+      {/* Results — premium reveal */}
       {showResults && cars.length > 0 && (
-        <section ref={resultsRef} className="relative px-4 pb-20">
-          {/* Gradient transition from background */}
-          <div
-            className="absolute top-0 left-0 right-0 h-24 pointer-events-none -mt-12"
-            style={{
-              background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))',
-            }}
-            aria-hidden="true"
-          />
-
-          <div className="max-w-6xl mx-auto results-section-enter">
-            {/* Results header */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/8 border border-border/30 mb-4">
-                <Sparkles className="h-3.5 w-3.5 text-secondary" />
-                <span className="text-xs font-medium text-secondary">Dina matchningar</span>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-                {resultMessage}
-              </p>
-            </div>
-
-            {savedCars.length >= 2 && (
-              <div className="flex justify-center mb-6">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/compare', { state: { cars: savedCars } })}
-                >
-                  <Scale className="h-4 w-4 mr-2" />
-                  Jämför {savedCars.length} bilar
-                </Button>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {cars.map((car, index) => (
-                <div
-                  key={car.id}
-                  className="stagger-fade-in"
-                  style={{ animationDelay: `${Math.min(index, 5) * 120}ms` }}
-                >
-                  <CarCard
-                    car={car}
-                    isSaved={savedCars.some((c) => c.id === car.id)}
-                    onToggleSave={toggleSave}
-                    matchReason={getReasonForCar(car.id)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Visa fler */}
-            <div className="flex justify-center mt-8">
-              <Button
-                variant="outline"
-                className="rounded-xl px-6"
-                onClick={() => {
-                  searchRef.current?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Visa fler bilar
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </section>
+        <ResultsReveal
+          ref={resultsRef}
+          cars={cars}
+          savedCars={savedCars}
+          carReasons={carReasons}
+          resultMessage={resultMessage}
+          onToggleSave={toggleSave}
+          onCompare={() => navigate('/compare', { state: { cars: savedCars } })}
+          onShowMore={() => searchRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          getReasonForCar={getReasonForCar}
+        />
       )}
 
       <HowItWorks />

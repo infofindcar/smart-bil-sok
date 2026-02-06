@@ -157,10 +157,15 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
         setIsLoading(false);
 
         if (data.cars?.length > 0) {
+          const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
           addAssistantMessage(
-            data.message || `Jag hittade ${data.cars.length} bilar!`
+            `✨ ${resultMsg}\n\nScrolla ner för att se dina bilar ↓`,
+            undefined,
+            () => {
+              // Trigger results after typewriter finishes
+              onResults(data.cars, resultMsg, data.carReasons || []);
+            }
           );
-          onResults(data.cars, data.message || `Hittade ${data.cars.length} bilar`, data.carReasons || []);
         } else {
           // No results — show message with suggestions
           addAssistantMessage(
@@ -190,6 +195,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     setVisibleText({});
     sessionStorage.removeItem(CHAT_STORAGE_KEY);
     sessionStorage.removeItem('findcar-search-state');
+    sessionStorage.removeItem('findcar-results-revealed');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
