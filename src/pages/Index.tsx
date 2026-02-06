@@ -138,11 +138,12 @@ const Index = () => {
         <div className="relative max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
+              <p className="text-xs font-medium uppercase tracking-widest text-secondary/60 mb-3">Personlig bilrådgivning</p>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-                Hitta din <span className="text-gradient">drömbil</span>
+                Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
               <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm">
-                Berätta vad du söker — Clutch analyserar tusentals bilar åt dig.
+                Clutch lär känna dina behov och hittar de bästa matchningarna — helt gratis.
               </p>
             </div>
           </ScrollReveal>

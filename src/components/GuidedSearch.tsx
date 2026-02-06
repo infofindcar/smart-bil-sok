@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, MessageCircle } from 'lucide-react';
+import { Send, RotateCcw, MessageCircle, PenLine } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -43,7 +43,8 @@ const GREETING: ChatMessage = {
   id: '1',
   role: 'assistant',
   content:
-    'Hej! Jag är Clutch — din objektiva bilrådgivare. Beskriv kort vad du behöver så hjälper jag dig hitta den perfekta bilen.',
+    'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Berätta lite om dig och vad du letar efter — så hittar jag bilen som passar just dig.',
+  suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
 };
 
 export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
@@ -274,6 +275,13 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                   {s}
                 </button>
               ))}
+              <button
+                onClick={() => inputRef.current?.focus()}
+                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-secondary/30 bg-transparent hover:bg-secondary/5 text-secondary/70 hover:text-secondary transition-all duration-150 flex items-center gap-1"
+              >
+                <PenLine className="h-3 w-3" />
+                Skriv eget svar
+              </button>
             </div>
           </div>
         )}
