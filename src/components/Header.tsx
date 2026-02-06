@@ -39,11 +39,11 @@ export const Header = () => {
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/" className="flex items-center gap-2 group -ml-2">
           <img
             src={logo}
             alt="FindCar"
-            className={`h-16 transition-all duration-300 group-hover:brightness-110 ${
+            className={`h-14 transition-all duration-300 group-hover:brightness-110 ${
               scrolled ? 'drop-shadow-lg' : 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)] brightness-110'
             }`}
           />
