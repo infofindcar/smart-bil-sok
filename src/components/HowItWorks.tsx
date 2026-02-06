@@ -57,26 +57,26 @@ export const HowItWorks = () => {
         <div className="grid md:grid-cols-3 gap-6">
           {steps.map((step) => (
             <ScrollReveal key={step.number}>
-              <div className="bg-card rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col">
+              <div className="bg-card rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                 {/* Image with number badge */}
                 <div className="relative">
                   <div className="aspect-[16/10] overflow-hidden">
                     <img
                       src={step.image}
                       alt={step.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
                     />
                   </div>
-                  <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md">
+                  <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md transition-transform duration-300 group-hover:scale-110">
                     {step.number}
                   </span>
                 </div>
 
                 {/* Content */}
                 <div className="p-6 flex flex-col gap-3 flex-1">
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
-                    <step.icon className="h-6 w-6 text-step-icon" />
+                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0 transition-colors duration-300 hover:bg-primary/10">
+                    <step.icon className="h-6 w-6 text-step-icon transition-transform duration-300 hover:scale-110" />
                   </div>
                   <h3 className="text-lg font-bold leading-snug">
                     {step.title}
