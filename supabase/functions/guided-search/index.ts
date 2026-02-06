@@ -1,11 +1,98 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+// --- CORS: restrict to known origins ---
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/smart-bil-sok\.lovable\.app$/,
+  /^http:\/\/localhost(:\d+)?$/,
+];
+
+function getAllowedOrigin(req: Request): string {
+  const origin = req.headers.get("origin") || "";
+  if (ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(origin))) {
+    return origin;
+  }
+  return "https://smart-bil-sok.lovable.app";
+}
+
+function getCorsHeaders(req: Request) {
+  return {
+    "Access-Control-Allow-Origin": getAllowedOrigin(req),
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
+
+// --- Rate limiter per IP ---
+const ipRequests = new Map<string, { count: number; resetAt: number }>();
+const MAX_REQUESTS = 20;
+const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = ipRequests.get(ip);
+  if (!record || now > record.resetAt) {
+    ipRequests.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+  record.count++;
+  return record.count > MAX_REQUESTS;
+}
+
+// Periodic cleanup
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of ipRequests) {
+    if (now > record.resetAt) ipRequests.delete(ip);
+  }
+}, 60 * 1000);
+
+// --- Input validation ---
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_LENGTH = 2000;
+
+function validateMessages(messages: unknown): { valid: boolean; error?: string } {
+  if (!Array.isArray(messages)) {
+    return { valid: false, error: "messages must be an array" };
+  }
+  if (messages.length === 0 || messages.length > MAX_MESSAGES) {
+    return { valid: false, error: `messages must contain 1-${MAX_MESSAGES} items` };
+  }
+  for (const msg of messages) {
+    if (!msg || typeof msg !== "object") {
+      return { valid: false, error: "Each message must be an object" };
+    }
+    if (typeof msg.content !== "string" || msg.content.length === 0) {
+      return { valid: false, error: "Each message must have a non-empty content string" };
+    }
+    if (msg.content.length > MAX_MESSAGE_LENGTH) {
+      return { valid: false, error: `Message content must be under ${MAX_MESSAGE_LENGTH} characters` };
+    }
+    if (!["user", "assistant"].includes(msg.role)) {
+      return { valid: false, error: "Each message must have role 'user' or 'assistant'" };
+    }
+  }
+  return { valid: true };
+}
+
+// --- Filter validation ---
+function sanitizeStringFilter(value: unknown, maxLen = 50): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().slice(0, maxLen);
+  // Allow letters (including Swedish), spaces, hyphens
+  if (!/^[a-zA-ZåäöÅÄÖéÉüÜ\s-]+$/.test(trimmed)) return null;
+  return trimmed;
+}
+
+function sanitizeBudget(value: unknown): { min: number; max: number } | null {
+  if (typeof value !== "string") return null;
+  const parts = value.split("-").map(Number);
+  if (parts.length !== 2 || parts.some(isNaN) || parts[0] < 0 || parts[1] < 0 || parts[1] > 100000000) {
+    return null;
+  }
+  return { min: parts[0], max: parts[1] };
+}
 
 const fuelPatterns: Record<string, string> = {
   el: "%El%",
@@ -75,17 +162,43 @@ Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe
 Giltiga useCase-värden: pendling, familj, langresa, stad, blandat`;
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json();
-    console.log("Conversation messages:", JSON.stringify(messages));
+    // Rate limiting
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+
+    if (isRateLimited(clientIp)) {
+      return new Response(
+        JSON.stringify({ action: "error", error: "Too many requests. Please wait a few minutes." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse and validate input
+    const body = await req.json();
+    const { messages } = body;
+
+    const validation = validateMessages(messages);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ action: "error", error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Received", messages.length, "messages");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      throw new Error("Required configuration missing");
     }
 
     // Send conversation to AI to decide: ask or search
@@ -121,13 +234,12 @@ serve(async (req) => {
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      console.error("AI error status:", status);
-      throw new Error(`AI gateway error: ${status}`);
+      console.error("AI gateway error:", status);
+      throw new Error("AI service unavailable");
     }
 
     const aiData = await aiResponse.json();
     const rawContent = aiData.choices?.[0]?.message?.content?.trim();
-    console.log("AI raw response:", rawContent);
 
     if (!rawContent) {
       throw new Error("Empty AI response");
@@ -143,7 +255,7 @@ serve(async (req) => {
     try {
       decision = JSON.parse(cleaned);
     } catch (parseErr) {
-      console.error("Failed to parse AI decision:", cleaned);
+      console.warn("Failed to parse AI decision, returning as message");
       return new Response(
         JSON.stringify({
           action: "ask",
@@ -155,7 +267,6 @@ serve(async (req) => {
 
     // If AI wants to ask a question, return it
     if (decision.action === "ask") {
-      console.log("AI asking:", decision.message, "suggestions:", decision.suggestions);
       return new Response(
         JSON.stringify({
           action: "ask",
@@ -171,22 +282,38 @@ serve(async (req) => {
       const filters = decision.filters || {};
       const reasoning = decision.reasoning || "";
       const customerProfile = decision.customerProfile || "";
-      console.log("AI searching with filters:", JSON.stringify(filters));
 
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      // Parse budget
+      // Parse and validate budget
       let minPrice = 0;
       let maxPrice = 99999999;
-      if (filters.budget) {
-        const parts = filters.budget.split("-").map(Number);
-        if (parts.length === 2) {
-          minPrice = parts[0];
-          maxPrice = parts[1];
-        }
+      const budgetResult = sanitizeBudget(filters.budget);
+      if (budgetResult) {
+        minPrice = budgetResult.min;
+        maxPrice = budgetResult.max;
       }
+
+      // Sanitize string filters
+      const sanitizedCity = sanitizeStringFilter(filters.city);
+      const sanitizedMake = sanitizeStringFilter(filters.make);
+      const sanitizedColor = sanitizeStringFilter(filters.color);
+
+      // Validate fuel and body type arrays against known values
+      const validFuels = Array.isArray(filters.fuel)
+        ? filters.fuel.filter((f: string) => typeof f === "string" && f in fuelPatterns)
+        : [];
+      const validBodyTypes = Array.isArray(filters.bodyType)
+        ? filters.bodyType.filter((b: string) => typeof b === "string" && b in bodyPatterns)
+        : [];
+
+      // Validate year range
+      const yearMin = typeof filters.yearMin === "number" && filters.yearMin >= 1900 && filters.yearMin <= 2100
+        ? filters.yearMin : null;
+      const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
+        ? filters.yearMax : null;
 
       // Progressive relaxation search
       let cars: any[] = [];
@@ -203,18 +330,18 @@ serve(async (req) => {
           .lte("price", Math.ceil(maxPrice * priceMult));
 
         // City filter (dropped at level 1+)
-        if (filters.city && relaxLevel < 1) {
-          query = query.ilike("city", `%${filters.city}%`);
+        if (sanitizedCity && relaxLevel < 1) {
+          query = query.ilike("city", `%${sanitizedCity}%`);
         }
 
         // Make filter (dropped at level 2+)
-        if (filters.make && relaxLevel < 2) {
-          query = query.ilike("make", `%${filters.make}%`);
+        if (sanitizedMake && relaxLevel < 2) {
+          query = query.ilike("make", `%${sanitizedMake}%`);
         }
 
         // Fuel filter (dropped at level 2+)
-        if (filters.fuel?.length > 0 && relaxLevel < 2) {
-          const fuelFilters = filters.fuel
+        if (validFuels.length > 0 && relaxLevel < 2) {
+          const fuelFilters = validFuels
             .map((f: string) => fuelPatterns[f])
             .filter(Boolean)
             .map((p: string) => `fuel_type.ilike.${p}`)
@@ -225,8 +352,8 @@ serve(async (req) => {
         }
 
         // Body type filter (dropped at level 1+)
-        if (filters.bodyType?.length > 0 && relaxLevel < 1) {
-          const bodyFilters = filters.bodyType
+        if (validBodyTypes.length > 0 && relaxLevel < 1) {
+          const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
             .map((p: string) => `body_type.ilike.${p}`)
@@ -237,16 +364,16 @@ serve(async (req) => {
         }
 
         // Color filter (dropped at level 1+)
-        if (filters.color && relaxLevel < 1) {
-          query = query.ilike("color", `%${filters.color}%`);
+        if (sanitizedColor && relaxLevel < 1) {
+          query = query.ilike("color", `%${sanitizedColor}%`);
         }
 
         // Year filter (dropped at level 2+)
-        if (filters.yearMin && relaxLevel < 2) {
-          query = query.gte("year", filters.yearMin);
+        if (yearMin && relaxLevel < 2) {
+          query = query.gte("year", yearMin);
         }
-        if (filters.yearMax && relaxLevel < 2) {
-          query = query.lte("year", filters.yearMax);
+        if (yearMax && relaxLevel < 2) {
+          query = query.lte("year", yearMax);
         }
 
         const { data, error } = await query
@@ -254,17 +381,14 @@ serve(async (req) => {
           .limit(3);
 
         if (error) {
-          console.error(`Query error at relax level ${relaxLevel}:`, error);
+          console.error("Query error at relax level", relaxLevel);
           continue;
         }
 
         if (data && data.length > 0) {
           cars = data;
-          console.log(`Found ${data.length} cars at relax level ${relaxLevel}`);
           break;
         }
-
-        console.log(`No results at relax level ${relaxLevel}, relaxing...`);
       }
 
       // Build context from conversation
@@ -337,13 +461,12 @@ Svara ENBART med JSON (ingen markdown, inga code fences):
                 message = parsed.message || "";
                 carReasons = parsed.carReasons || [];
               } catch {
-                // Fallback: use raw content as message
                 message = content;
               }
             }
           }
         } catch (e) {
-          console.error("AI message error:", e);
+          console.error("AI message generation failed");
         }
       } else {
         // No cars found — generate helpful suggestions
@@ -373,7 +496,7 @@ Använd INTE emojis.`,
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}". Filter som användes: ${JSON.stringify(filters)}. Alla 4 relax-nivåer testades utan resultat.`,
+                    content: `Kundens behov: "${userMessages}". Alla relax-nivåer testades utan resultat.`,
                   },
                 ],
               }),
@@ -398,7 +521,7 @@ Använd INTE emojis.`,
             }
           }
         } catch (e) {
-          console.error("No-result AI error:", e);
+          console.error("No-result AI generation failed");
         }
       }
 
@@ -433,11 +556,12 @@ Använd INTE emojis.`,
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
-    console.error("guided-search error:", e);
+    const corsHeaders = getCorsHeaders(req);
+    console.error("guided-search error");
     return new Response(
       JSON.stringify({
         action: "error",
-        error: e instanceof Error ? e.message : "Unknown error",
+        error: "An unexpected error occurred",
         cars: [],
       }),
       {
