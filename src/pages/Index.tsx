@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -12,7 +12,26 @@ import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Scale } from 'lucide-react';
+import heroVideo from '@/assets/hero-video.mp4';
 import logo from '@/assets/findcar-logo.png';
+
+const useScrollProgress = () => {
+  const [progress, setProgress] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      const vh = window.innerHeight;
+      const scrollY = window.scrollY;
+      // Fade transition over the full hero height
+      const p = Math.min(scrollY / (vh * 0.8), 1);
+      setProgress(p);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return progress;
+};
 
 const Index = () => {
   const [cars, setCars] = useState<Car[]>([]);
@@ -42,30 +61,65 @@ const Index = () => {
     searchRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollProgress = useScrollProgress();
+
   return (
     <div className="min-h-screen">
       <Header />
 
-      {/* Hero */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center hero-gradient overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(190_70%_38%_/_0.15),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(190_70%_38%_/_0.1),transparent_40%)]" />
-        <div className="relative z-10 text-center px-4 space-y-6">
+      {/* Hero with video background */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+        {/* Video background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 1 - scrollProgress * 0.3 }}
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
+
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/40" />
+        
+        {/* Content */}
+        <div
+          className="relative z-10 text-center px-4 space-y-6"
+          style={{
+            opacity: 1 - scrollProgress * 1.5,
+            transform: `translateY(${scrollProgress * -60}px)`,
+            transition: 'transform 0.1s linear',
+          }}
+        >
           <img src={logo} alt="FindCar" className="h-20 md:h-28 mx-auto animate-float animate-glow" />
-          <p className="text-lg md:text-xl text-primary-foreground/70 max-w-md mx-auto font-light">
+          <p className="text-lg md:text-xl text-white/70 max-w-md mx-auto font-light">
             Din AI-drivna bilrådgivare. Hitta rätt bil — utan krångel.
           </p>
           <Button variant="gradient" size="xl" onClick={scrollToSearch}>
             Hitta din bil
           </Button>
         </div>
+
+        {/* Scroll indicator */}
         <button
           onClick={scrollToSearch}
-          className="absolute bottom-10 animate-bounce text-primary-foreground/50 hover:text-primary-foreground/80 transition-colors"
+          className="absolute bottom-10 z-10 animate-bounce text-white/50 hover:text-white/80 transition-colors"
+          style={{ opacity: 1 - scrollProgress * 3 }}
           aria-label="Scrolla ner"
         >
           <ChevronDown className="h-8 w-8" />
         </button>
+
+        {/* Bottom fade transition into page background */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-40 z-10 pointer-events-none"
+          style={{
+            background: `linear-gradient(to bottom, transparent, hsl(var(--background)))`,
+            opacity: Math.min(scrollProgress * 2, 1),
+          }}
+        />
       </section>
 
       {/* Search */}
