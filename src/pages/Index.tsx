@@ -164,9 +164,6 @@ const Index = () => {
           <SectionDivider variant="bg-to-alt" />
           <section ref={resultsRef} className="py-16 px-4 bg-section-alt">
             <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold">🎉 {resultMessage}</h2>
-              </div>
 
               {savedCars.length >= 2 && (
                 <div className="flex justify-center mb-6">
