@@ -24,21 +24,9 @@ export const Header = () => {
           <img
             src={logo}
             alt="FindCar"
-            className="h-11 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
+            className="h-14 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
           />
         </Link>
-        <nav className="flex items-center gap-4">
-          <Link
-            to="/"
-            className={`text-sm transition-colors ${
-              scrolled
-                ? 'text-muted-foreground hover:text-foreground'
-                : 'text-white/70 hover:text-white'
-            }`}
-          >
-            Hem
-          </Link>
-        </nav>
       </div>
     </header>
   );
