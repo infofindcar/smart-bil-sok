@@ -13,7 +13,6 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Scale } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
-import heroBg from '@/assets/hero-bg.png';
 
 const Index = () => {
   const [cars, setCars] = useState<Car[]>([]);
@@ -49,19 +48,20 @@ const Index = () => {
 
       {/* Hero */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Animated background image */}
-        <div
-          className="absolute inset-0 hero-animated-bg"
-          style={{
-            backgroundImage: `url(${heroBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        {/* Dark overlay for contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
+        {/* Video background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
+        {/* Light overlay for contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
         <div className="relative z-10 text-center px-4 space-y-6">
-          <img src={logo} alt="FindCar" className="h-32 md:h-44 lg:h-56 mx-auto animate-float animate-glow" />
+          <img src={logo} alt="FindCar" className="h-40 md:h-52 lg:h-64 mx-auto animate-float animate-glow" />
           <p className="text-lg md:text-xl text-white/80 max-w-md mx-auto font-light">
             Din AI-drivna bilrådgivare. Hitta rätt bil — utan krångel.
           </p>
