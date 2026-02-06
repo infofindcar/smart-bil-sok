@@ -12,6 +12,7 @@ import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Scale } from 'lucide-react';
+import logo from '@/assets/findcar-logo.png';
 
 const Index = () => {
   const [cars, setCars] = useState<Car[]>([]);
@@ -50,9 +51,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(190_70%_38%_/_0.15),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(190_70%_38%_/_0.1),transparent_40%)]" />
         <div className="relative z-10 text-center px-4 space-y-6">
-          <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground animate-float animate-glow">
-            Clutch
-          </h1>
+          <img src={logo} alt="FindCar" className="h-20 md:h-28 mx-auto animate-float animate-glow" />
           <p className="text-lg md:text-xl text-primary-foreground/70 max-w-md mx-auto font-light">
             Din AI-drivna bilrådgivare. Hitta rätt bil — utan krångel.
           </p>
@@ -78,7 +77,7 @@ const Index = () => {
                 Hitta din <span className="text-gradient">drömbil</span>
               </h2>
               <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-                Berätta vad du söker så hittar Clutch de bästa bilarna åt dig.
+                Berätta vad du söker så hittar vår AI de bästa bilarna åt dig.
               </p>
             </div>
           </ScrollReveal>

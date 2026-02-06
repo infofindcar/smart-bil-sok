@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail } from 'lucide-react';
+import logo from '@/assets/findcar-logo.png';
 
 export const Footer = () => {
   return (
@@ -7,7 +8,7 @@ export const Footer = () => {
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           <div>
-            <h3 className="text-xl font-serif font-bold mb-2">Clutch</h3>
+            <img src={logo} alt="FindCar" className="h-8 mb-3 brightness-0 invert" />
             <p className="text-sm text-secondary-foreground/70 leading-relaxed">
               Din AI-drivna bilrådgivare. Vi hjälper dig hitta rätt bil — utan krångel.
             </p>
@@ -37,7 +38,7 @@ export const Footer = () => {
         </div>
         <div className="border-t border-secondary-foreground/10 pt-6 text-center">
           <p className="text-xs text-secondary-foreground/50">
-            © {new Date().getFullYear()} Find Car by Clutch. Alla rättigheter förbehållna.
+            © {new Date().getFullYear()} FindCar. Alla rättigheter förbehållna.
           </p>
         </div>
       </div>
