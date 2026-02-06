@@ -101,10 +101,10 @@ const Index = () => {
 
         {/* CTA button above scroll indicator */}
         <div
-          className="absolute bottom-24 z-10"
+          className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]"
           style={{ opacity: 1 - scrollProgress * 3 }}
         >
-          <Button variant="gradient" size="xl" onClick={scrollToSearch}>
+          <Button variant="gradient" size="xl" onClick={scrollToSearch} className="text-lg px-12 h-16 rounded-xl animate-[pulse_3s_ease-in-out_infinite] hover:animate-none">
             Hitta din bil
           </Button>
         </div>
