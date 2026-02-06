@@ -1,6 +1,7 @@
 import { ScrollReveal } from './ScrollReveal';
 import { MessageSquare, Brain, ListChecks } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import step2CarImage from '@/assets/step2-car.png';
 
 interface Step {
   icon: LucideIcon;
@@ -26,8 +27,7 @@ const steps: Step[] = [
     title: 'Clutch analyserar tusentals alternativ',
     description:
       'Vår AI skannar marknaden och jämför funktioner, priser, recensioner och tillförlitlighet för att hitta de bästa matcherna.',
-    image:
-      'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80',
+    image: step2CarImage,
   },
   {
     icon: ListChecks,
