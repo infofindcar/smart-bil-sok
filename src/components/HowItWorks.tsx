@@ -2,6 +2,7 @@ import { ScrollReveal } from './ScrollReveal';
 import { MessageSquare, Brain, ListChecks } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import step2CarImage from '@/assets/step2-car.png';
+import step3CarImage from '@/assets/step3-car.png';
 
 interface Step {
   icon: LucideIcon;
@@ -35,8 +36,7 @@ const steps: Step[] = [
     title: 'Få dina personliga rekommendationer',
     description:
       'Ta emot skräddarsydda rekommendationer med tydliga förklaringar till varför varje bil passar dina behov.',
-    image:
-      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80',
+    image: step3CarImage,
   },
 ];
 
