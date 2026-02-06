@@ -90,7 +90,7 @@ const Index = () => {
     return carReasons.find(r => r.carId === carId)?.reason;
   };
   const scrollProgress = useScrollProgress();
-  return <div className="min-h-screen">
+  return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
       {/* Hero with video background */}
