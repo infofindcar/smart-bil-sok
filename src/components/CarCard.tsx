@@ -31,11 +31,11 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
 
   return (
     <div
-      className="group relative flex flex-row md:flex-col bg-card rounded-xl overflow-hidden shadow-warm border border-border hover-lift cursor-pointer"
+      className="group relative flex flex-col bg-card rounded-xl overflow-hidden shadow-warm border border-border hover-lift cursor-pointer"
       onClick={() => navigate(`/car/${car.id}`, { state: { car } })}
     >
       {/* Image */}
-      <div className="relative w-32 h-32 md:w-full md:h-48 flex-shrink-0 overflow-hidden">
+      <div className="relative w-full h-48 flex-shrink-0 overflow-hidden">
         {car.image_thumb_url ? (
           <img
             src={car.image_thumb_url}
@@ -65,15 +65,15 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
       </div>
 
       {/* Info */}
-      <div className="flex flex-col p-3 md:p-4 flex-1 min-w-0">
-        <h3 className="font-semibold text-sm md:text-base truncate">
+      <div className="flex flex-col p-4 flex-1 min-w-0">
+        <h3 className="font-semibold text-base truncate">
           {car.make} {car.model}
         </h3>
         <p className="text-xs text-muted-foreground mt-0.5">
           {car.year} • {car.mileage ? `${new Intl.NumberFormat('sv-SE').format(car.mileage)} mil` : '–'} • {car.city || '–'}
         </p>
-        <p className="text-primary font-bold text-lg mt-1 md:mt-2">{formatPrice(car.price)} kr</p>
-        <div className="flex flex-wrap gap-1 mt-1 md:mt-2">
+        <p className="text-primary font-bold text-lg mt-2">{formatPrice(car.price)} kr</p>
+        <div className="flex flex-wrap gap-1 mt-2">
           {car.fuel_type && (
             <Badge variant="secondary" className="text-[10px] px-2 py-0">
               {car.fuel_type}

@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import logo from '@/assets/findcar-logo.png';
 
 export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const scrollToSearch = () => {
+    setMobileOpen(false);
+    const el = document.querySelector('[data-search-section]');
+    el?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <header
@@ -27,7 +36,76 @@ export const Header = () => {
             className="h-16 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
           />
         </Link>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-6">
+          <a
+            href="#how-it-works"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-sm text-foreground/70 hover:text-foreground transition-colors"
+          >
+            Så fungerar det
+          </a>
+          <a
+            href="#faq"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-sm text-foreground/70 hover:text-foreground transition-colors"
+          >
+            Vanliga frågor
+          </a>
+          <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
+            Hitta din bil
+          </Button>
+        </nav>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-muted/50 transition-colors"
+          aria-label="Meny"
+        >
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden bg-background/95 backdrop-blur-md border-b border-border/50 animate-fade-in">
+          <div className="px-4 py-4 space-y-3">
+            <a
+              href="#how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="block text-sm text-foreground/70 hover:text-foreground transition-colors py-2"
+            >
+              Så fungerar det
+            </a>
+            <a
+              href="#faq"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="block text-sm text-foreground/70 hover:text-foreground transition-colors py-2"
+            >
+              Vanliga frågor
+            </a>
+            <Button size="sm" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl">
+              Hitta din bil
+            </Button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

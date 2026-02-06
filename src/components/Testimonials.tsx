@@ -1,10 +1,10 @@
 import { ScrollReveal } from './ScrollReveal';
-import { Star, Search, Car, Shield } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 const testimonials = [
   {
     name: 'Anna K.',
-    text: '"Hittade min drömkombi på 2 minuter. FindCar förstod exakt vad jag behövde!"',
+    text: '"Hittade min drömkombi på 2 minuter. Clutch förstod exakt vad jag behövde!"',
     rating: 5,
   },
   {
@@ -19,13 +19,6 @@ const testimonials = [
   },
 ];
 
-const badges = [
-  { icon: Search, label: '50K+ sökningar' },
-  { icon: Car, label: '100K+ bilar' },
-  { icon: Star, label: '4.8/5 betyg' },
-  { icon: Shield, label: '100% Gratis' },
-];
-
 export const Testimonials = () => {
   return (
     <section className="py-16 md:py-24 px-4 bg-background">
@@ -33,10 +26,13 @@ export const Testimonials = () => {
         <ScrollReveal>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold">Vad våra användare säger</h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Tidig feedback från våra beta-användare
+            </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((t) => (
             <ScrollReveal key={t.name}>
               <div className="bg-testimonial-bg rounded-2xl p-6 border border-border">
@@ -51,17 +47,6 @@ export const Testimonials = () => {
             </ScrollReveal>
           ))}
         </div>
-
-        <ScrollReveal>
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-            {badges.map((b) => (
-              <div key={b.label} className="flex items-center gap-2 text-muted-foreground">
-                <b.icon className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">{b.label}</span>
-              </div>
-            ))}
-          </div>
-        </ScrollReveal>
       </div>
     </section>
   );
