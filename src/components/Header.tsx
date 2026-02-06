@@ -24,7 +24,7 @@ export const Header = () => {
           <img
             src={logo}
             alt="FindCar"
-            className="h-11 drop-shadow-lg transition-all duration-500 group-hover:drop-shadow-xl animate-float-subtle"
+            className="h-11 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
           />
         </Link>
         <nav className="flex items-center gap-4">
