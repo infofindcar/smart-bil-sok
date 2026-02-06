@@ -47,22 +47,12 @@ const Index = () => {
       <Header />
 
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Video background */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/hero-video.mp4" type="video/mp4" />
-        </video>
-        {/* Light overlay for contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+      <section className="relative min-h-screen flex flex-col items-center justify-center hero-gradient overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(190_70%_38%_/_0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(190_70%_38%_/_0.1),transparent_40%)]" />
         <div className="relative z-10 text-center px-4 space-y-6">
-          <img src={logo} alt="FindCar" className="h-40 md:h-52 lg:h-64 mx-auto animate-float animate-glow" />
-          <p className="text-lg md:text-xl text-white/80 max-w-md mx-auto font-light">
+          <img src={logo} alt="FindCar" className="h-20 md:h-28 mx-auto animate-float animate-glow" />
+          <p className="text-lg md:text-xl text-primary-foreground/70 max-w-md mx-auto font-light">
             Din AI-drivna bilrådgivare. Hitta rätt bil — utan krångel.
           </p>
           <Button variant="gradient" size="xl" onClick={scrollToSearch}>
@@ -71,7 +61,7 @@ const Index = () => {
         </div>
         <button
           onClick={scrollToSearch}
-          className="absolute bottom-10 animate-bounce text-white/50 hover:text-white/80 transition-colors"
+          className="absolute bottom-10 animate-bounce text-primary-foreground/50 hover:text-primary-foreground/80 transition-colors"
           aria-label="Scrolla ner"
         >
           <ChevronDown className="h-8 w-8" />
