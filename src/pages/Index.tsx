@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car } from '@/components/GuidedSearch';
+import { VideoLoop } from '@/components/VideoLoop';
 import { CarCard } from '@/components/CarCard';
 import { HowItWorks } from '@/components/HowItWorks';
 import { WhyFindCar } from '@/components/WhyFindCar';
@@ -12,7 +13,7 @@ import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Scale } from 'lucide-react';
-import heroVideo from '@/assets/hero-video.mp4';
+
 import logo from '@/assets/findcar-logo.png';
 
 const useScrollProgress = () => {
@@ -69,17 +70,8 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Video background */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ opacity: 1 - scrollProgress * 0.3 }}
-        >
-          <source src={heroVideo} type="video/mp4" />
-        </video>
+        {/* Video background with crossfade loop */}
+        <VideoLoop scrollProgress={scrollProgress} />
 
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-black/40" />
