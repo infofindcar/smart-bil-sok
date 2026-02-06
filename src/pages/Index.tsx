@@ -12,7 +12,7 @@ import { FAQ } from '@/components/FAQ';
 import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Scale, Sparkles } from 'lucide-react';
+import { ChevronDown, Scale, Sparkles, ChevronRight } from 'lucide-react';
 
 import logo from '@/assets/findcar-logo.png';
 
@@ -47,9 +47,14 @@ const Index = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const handleResults = (newCars: Car[], message: string, reasons: CarReason[]) => {
-    setCars(newCars);
-    setCarReasons(reasons);
+  const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
+    if (append) {
+      setCars((prev) => [...prev, ...newCars]);
+      setCarReasons((prev) => [...prev, ...reasons]);
+    } else {
+      setCars(newCars);
+      setCarReasons(reasons);
+    }
     setResultMessage(message);
     setShowResults(true);
   };
@@ -147,7 +152,7 @@ const Index = () => {
               </p>
             </div>
           </ScrollReveal>
-          <ScrollReveal delay={150}>
+          <ScrollReveal delay={200}>
             <GuidedSearch onResults={handleResults} />
           </ScrollReveal>
         </div>
@@ -194,7 +199,7 @@ const Index = () => {
                 <div
                   key={car.id}
                   className="stagger-fade-in"
-                  style={{ animationDelay: `${index * 120}ms` }}
+                  style={{ animationDelay: `${Math.min(index, 5) * 120}ms` }}
                 >
                   <CarCard
                     car={car}
@@ -204,6 +209,20 @@ const Index = () => {
                   />
                 </div>
               ))}
+            </div>
+
+            {/* Visa fler */}
+            <div className="flex justify-center mt-8">
+              <Button
+                variant="outline"
+                className="rounded-xl px-6"
+                onClick={() => {
+                  searchRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Visa fler bilar
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
           </div>
         </section>
