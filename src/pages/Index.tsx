@@ -13,6 +13,7 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Scale } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
+import heroBg from '@/assets/hero-bg.png';
 
 const Index = () => {
   const [cars, setCars] = useState<Car[]>([]);
@@ -47,12 +48,21 @@ const Index = () => {
       <Header />
 
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center hero-gradient overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(190_70%_38%_/_0.15),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(190_70%_38%_/_0.1),transparent_40%)]" />
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+        {/* Animated background image */}
+        <div
+          className="absolute inset-0 hero-animated-bg"
+          style={{
+            backgroundImage: `url(${heroBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        {/* Dark overlay for contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
         <div className="relative z-10 text-center px-4 space-y-6">
-          <img src={logo} alt="FindCar" className="h-20 md:h-28 mx-auto animate-float animate-glow" />
-          <p className="text-lg md:text-xl text-primary-foreground/70 max-w-md mx-auto font-light">
+          <img src={logo} alt="FindCar" className="h-32 md:h-44 lg:h-56 mx-auto animate-float animate-glow" />
+          <p className="text-lg md:text-xl text-white/80 max-w-md mx-auto font-light">
             Din AI-drivna bilrådgivare. Hitta rätt bil — utan krångel.
           </p>
           <Button variant="gradient" size="xl" onClick={scrollToSearch}>
@@ -61,7 +71,7 @@ const Index = () => {
         </div>
         <button
           onClick={scrollToSearch}
-          className="absolute bottom-10 animate-bounce text-primary-foreground/50 hover:text-primary-foreground/80 transition-colors"
+          className="absolute bottom-10 animate-bounce text-white/50 hover:text-white/80 transition-colors"
           aria-label="Scrolla ner"
         >
           <ChevronDown className="h-8 w-8" />
