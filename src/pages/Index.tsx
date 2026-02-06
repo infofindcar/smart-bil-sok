@@ -93,7 +93,10 @@ const Index = () => {
             transition: 'transform 0.1s linear',
           }}
         >
-          <img src={logo} alt="FindCar" className="h-48 md:h-72 mx-auto brightness-150 contrast-125 drop-shadow-[0_0_80px_rgba(255,255,255,0.6)] animate-float-subtle" />
+          <div className="relative">
+            <div className="absolute inset-0 bg-black/40 blur-3xl rounded-full scale-110" />
+            <img src={logo} alt="FindCar" className="relative h-48 md:h-72 mx-auto brightness-150 contrast-125 drop-shadow-[0_0_80px_rgba(255,255,255,0.6)] animate-float-subtle" />
+          </div>
         </div>
 
         {/* CTA button above scroll indicator */}
