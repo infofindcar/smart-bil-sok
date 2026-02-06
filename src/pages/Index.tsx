@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { GuidedSearch, type Car } from '@/components/GuidedSearch';
+import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { VideoLoop } from '@/components/VideoLoop';
 import { CarCard } from '@/components/CarCard';
 import { HowItWorks } from '@/components/HowItWorks';
@@ -12,7 +12,7 @@ import { FAQ } from '@/components/FAQ';
 import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Scale } from 'lucide-react';
+import { ChevronDown, Scale, Sparkles } from 'lucide-react';
 
 import logo from '@/assets/findcar-logo.png';
 
@@ -39,6 +39,7 @@ const SectionDivider = ({ variant }: { variant: 'bg-to-alt' | 'alt-to-bg' }) => 
 
 const Index = () => {
   const [cars, setCars] = useState<Car[]>([]);
+  const [carReasons, setCarReasons] = useState<CarReason[]>([]);
   const [savedCars, setSavedCars] = useState<Car[]>([]);
   const [resultMessage, setResultMessage] = useState('');
   const [showResults, setShowResults] = useState(false);
@@ -46,8 +47,9 @@ const Index = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const handleResults = (newCars: Car[], message: string) => {
+  const handleResults = (newCars: Car[], message: string, reasons: CarReason[]) => {
     setCars(newCars);
+    setCarReasons(reasons);
     setResultMessage(message);
     setShowResults(true);
   };
@@ -60,6 +62,10 @@ const Index = () => {
 
   const scrollToSearch = () => {
     searchRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const getReasonForCar = (carId: number) => {
+    return carReasons.find((r) => r.carId === carId)?.reason;
   };
 
   const scrollProgress = useScrollProgress();
@@ -146,39 +152,60 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Results */}
+      {/* Results — premium transition */}
       {showResults && cars.length > 0 && (
-        <>
-          <SectionDivider variant="bg-to-alt" />
-          <section ref={resultsRef} className="py-16 px-4 bg-section-alt">
-            <div className="max-w-6xl mx-auto">
+        <section ref={resultsRef} className="relative px-4 pb-20">
+          {/* Gradient transition from background */}
+          <div
+            className="absolute top-0 left-0 right-0 h-24 pointer-events-none -mt-12"
+            style={{
+              background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))',
+            }}
+            aria-hidden="true"
+          />
 
-              {savedCars.length >= 2 && (
-                <div className="flex justify-center mb-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate('/compare', { state: { cars: savedCars } })}
-                  >
-                    <Scale className="h-4 w-4 mr-2" />
-                    Jämför {savedCars.length} bilar
-                  </Button>
-                </div>
-              )}
+          <div className="max-w-6xl mx-auto results-section-enter">
+            {/* Results header */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/8 border border-border/30 mb-4">
+                <Sparkles className="h-3.5 w-3.5 text-secondary" />
+                <span className="text-xs font-medium text-secondary">Dina matchningar</span>
+              </div>
+              <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+                {resultMessage}
+              </p>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {cars.map((car) => (
+            {savedCars.length >= 2 && (
+              <div className="flex justify-center mb-6">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/compare', { state: { cars: savedCars } })}
+                >
+                  <Scale className="h-4 w-4 mr-2" />
+                  Jämför {savedCars.length} bilar
+                </Button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {cars.map((car, index) => (
+                <div
+                  key={car.id}
+                  className="stagger-fade-in"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
                   <CarCard
-                    key={car.id}
                     car={car}
                     isSaved={savedCars.some((c) => c.id === car.id)}
                     onToggleSave={toggleSave}
+                    matchReason={getReasonForCar(car.id)}
                   />
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          </section>
-          <SectionDivider variant="alt-to-bg" />
-        </>
+          </div>
+        </section>
       )}
 
       <HowItWorks />
