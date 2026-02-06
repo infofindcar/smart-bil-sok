@@ -26,6 +26,7 @@ type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  suggestions?: string[];
 };
 
 interface GuidedSearchProps {
@@ -45,6 +46,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
+  const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -52,28 +54,58 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const addMessage = (msg: Omit<ChatMessage, 'id'>) => {
-    const newMsg = { ...msg, id: Date.now().toString() + Math.random() };
-    setMessages((prev) => [...prev, newMsg]);
-    return newMsg;
+  // Typewriter effect for assistant messages
+  const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
+    let i = 0;
+    const speed = 18; // ms per character
+    const tick = () => {
+      i += 1;
+      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+      if (i < fullText.length) {
+        setTimeout(tick, speed + Math.random() * 12);
+      } else {
+        onDone?.();
+      }
+    };
+    setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
+    setTimeout(tick, 300); // small initial delay
   };
 
-  const handleSendMessage = async (e?: FormEvent) => {
+  const addAssistantMessage = (
+    content: string,
+    suggestions?: string[],
+    onDone?: () => void
+  ) => {
+    const id = Date.now().toString() + Math.random();
+    const msg: ChatMessage = { id, role: 'assistant', content, suggestions };
+    setMessages((prev) => [...prev, msg]);
+    typewriteMessage(id, content, onDone);
+    return msg;
+  };
+
+  const addUserMessage = (content: string) => {
+    const id = Date.now().toString() + Math.random();
+    const msg: ChatMessage = { id, role: 'user', content };
+    setMessages((prev) => [...prev, msg]);
+    return msg;
+  };
+
+  const handleSendMessage = async (e?: FormEvent, overrideText?: string) => {
     e?.preventDefault();
-    const text = inputValue.trim();
+    const text = (overrideText || inputValue).trim();
     if (!text || isLoading) return;
 
     setInputValue('');
-    const userMsg = addMessage({ role: 'user', content: text });
+    const userMsg = addUserMessage(text);
     setIsLoading(true);
 
     try {
       // Build conversation history for the AI
-      const conversationHistory = [...messages, userMsg]
-        .filter((m) => m.id !== '1') // exclude the initial greeting
+      const allMessages = [...messages, userMsg];
+      const conversationHistory = allMessages
+        .filter((m) => m.id !== '1') // exclude initial greeting
         .map((m) => ({ role: m.role, content: m.content }));
 
-      // If this is the first message, just include it
       if (conversationHistory.length === 0) {
         conversationHistory.push({ role: 'user', content: text });
       }
@@ -85,45 +117,47 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
       if (error) throw error;
 
       if (data?.action === 'ask') {
-        // AI wants to ask a follow-up question
-        addMessage({ role: 'assistant', content: data.message });
+        addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
-        // AI decided to search — show animation then results
         setPhase('searching');
-        addMessage({ role: 'assistant', content: '🔍 Clutch söker efter din perfekta bil...' });
+        addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
-        // Brief delay for search animation
-        await new Promise((r) => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 2000));
 
         setPhase('results');
         setIsLoading(false);
 
         if (data.cars?.length > 0) {
-          addMessage({ role: 'assistant', content: data.message || `Jag hittade ${data.cars.length} bilar!` });
+          addAssistantMessage(
+            data.message || `Jag hittade ${data.cars.length} bilar!`
+          );
           onResults(data.cars, data.message || `Hittade ${data.cars.length} bilar`);
         } else {
-          addMessage({
-            role: 'assistant',
-            content: data.message || 'Tyvärr hittade jag inga bilar som matchar just nu. Beskriv dina behov på ett annat sätt!',
-          });
+          addAssistantMessage(
+            data.message || 'Tyvärr hittade jag inga bilar som matchar just nu. Beskriv dina behov på ett annat sätt!'
+          );
         }
       } else {
-        // Error or unexpected response
-        addMessage({ role: 'assistant', content: data?.message || 'Något gick fel. Försök igen!' });
+        addAssistantMessage(data?.message || 'Något gick fel. Försök igen!');
         setIsLoading(false);
       }
     } catch (err) {
       console.error('Guided search error:', err);
-      addMessage({ role: 'assistant', content: 'Något gick fel. Försök igen!' });
+      addAssistantMessage('Något gick fel. Försök igen!');
       setIsLoading(false);
     }
+  };
+
+  const handleSuggestionClick = (text: string) => {
+    handleSendMessage(undefined, text);
   };
 
   const handleReset = () => {
     setMessages([GREETING]);
     setPhase('chatting');
     setInputValue('');
+    setVisibleText({});
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -132,6 +166,26 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
       handleSendMessage();
     }
   };
+
+  // Get the displayed text for a message (typewriter or full)
+  const getDisplayText = (msg: ChatMessage) => {
+    if (msg.role === 'user') return msg.content;
+    return visibleText[msg.id] !== undefined ? visibleText[msg.id] : msg.content;
+  };
+
+  // Check if a message is still being typed
+  const isTyping = (msg: ChatMessage) => {
+    if (msg.role === 'user') return false;
+    const displayed = visibleText[msg.id];
+    return displayed !== undefined && displayed.length < msg.content.length;
+  };
+
+  // Find the last assistant message to show suggestions on
+  const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
+  const showSuggestions =
+    !isLoading &&
+    lastAssistantMsg?.suggestions?.length &&
+    !isTyping(lastAssistantMsg);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -164,16 +218,20 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                     : 'bg-chat-bubble text-foreground rounded-bl-md'
                 }`}
               >
-                {msg.content}
+                {getDisplayText(msg)}
+                {isTyping(msg) && (
+                  <span className="inline-block w-0.5 h-4 bg-foreground/60 ml-0.5 animate-pulse align-text-bottom" />
+                )}
               </div>
             </div>
           ))}
 
+          {/* Typing indicator while loading */}
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {isLoading && phase !== 'searching' && (
             <div className="flex justify-start animate-fade-in">
               <div className="bg-chat-bubble rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -184,7 +242,24 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Reset button (shown after results) */}
+        {/* Quick-reply suggestions */}
+        {showSuggestions && (
+          <div className="px-4 md:px-5 pb-3">
+            <div className="flex flex-wrap gap-2">
+              {lastAssistantMsg!.suggestions!.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleSuggestionClick(s)}
+                  className="text-xs px-3 py-2 rounded-xl border border-border/50 bg-accent/30 hover:bg-accent/60 hover:border-primary/30 text-foreground transition-all duration-200"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reset button */}
         {phase === 'results' && !isLoading && (
           <div className="px-4 md:px-5 pb-3">
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full rounded-xl">
