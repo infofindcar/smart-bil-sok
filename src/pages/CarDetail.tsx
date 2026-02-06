@@ -5,12 +5,54 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette, Settings2, Sparkles } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
 
 const formatPrice = (price: number | null) => {
   if (!price) return 'Kontakta säljare';
   return new Intl.NumberFormat('sv-SE').format(price) + ' kr';
+};
+
+const generateDescription = (car: CarType): string => {
+  const parts: string[] = [];
+
+  const displayModel = car.model_raw || `${car.make} ${car.model}`;
+  parts.push(`${car.make} ${displayModel}`);
+
+  if (car.year) {
+    parts[0] += ` från ${car.year}`;
+  }
+
+  const features: string[] = [];
+  if (car.fuel_type) features.push(car.fuel_type.toLowerCase());
+  if (car.drivetrain) features.push(car.drivetrain);
+  if (car.body_type) features.push(car.body_type.toLowerCase());
+
+  if (features.length > 0) {
+    parts.push(`Det är en ${features.join(', ')}`);
+  }
+
+  if (car.mileage) {
+    const miltal = new Intl.NumberFormat('sv-SE').format(car.mileage);
+    if (car.mileage < 5000) {
+      parts.push(`med mycket lågt miltal på bara ${miltal} mil`);
+    } else if (car.mileage < 10000) {
+      parts.push(`med lågt miltal på ${miltal} mil`);
+    } else {
+      parts.push(`med ${miltal} mil på mätaren`);
+    }
+  }
+
+  if (car.color) {
+    parts.push(`Färgen är ${car.color.toLowerCase()}`);
+  }
+
+  if (car.price) {
+    const pris = new Intl.NumberFormat('sv-SE').format(car.price);
+    parts.push(`Priset ligger på ${pris} kr`);
+  }
+
+  return parts.join('. ') + '.';
 };
 
 const CarDetail = () => {
@@ -19,6 +61,11 @@ const CarDetail = () => {
   const navigate = useNavigate();
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
   const [isLoading, setIsLoading] = useState(!car);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   useEffect(() => {
     if (!car && id) {
@@ -57,6 +104,8 @@ const CarDetail = () => {
     );
   }
 
+  const displayTitle = car.model_raw || `${car.model}`;
+
   const fuelKey = car.fuel_type?.toLowerCase().includes('el')
     ? 'el'
     : car.fuel_type?.toLowerCase().includes('diesel')
@@ -73,6 +122,8 @@ const CarDetail = () => {
   };
   const fuelCost = fuelCosts[fuelKey] || fuelCosts.bensin;
 
+  const description = generateDescription(car);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -87,7 +138,7 @@ const CarDetail = () => {
             {car.image_thumb_url ? (
               <img
                 src={car.image_thumb_url}
-                alt={`${car.make} ${car.model}`}
+                alt={`${car.make} ${displayTitle}`}
                 className="w-full h-64 md:h-96 object-cover"
               />
             ) : (
@@ -97,21 +148,33 @@ const CarDetail = () => {
             )}
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-bold">
-                {car.make} {car.model}
+                {car.make} {displayTitle}
               </h1>
               <div className="flex flex-wrap gap-2 mt-2">
                 {car.fuel_type && <Badge variant="secondary">{car.fuel_type}</Badge>}
                 {car.body_type && <Badge variant="outline">{car.body_type}</Badge>}
                 {car.drivetrain && <Badge variant="outline">{car.drivetrain}</Badge>}
+                {car.color && <Badge variant="outline">{car.color}</Badge>}
               </div>
             </div>
             <p className="text-3xl font-bold text-primary">{formatPrice(car.price)}</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Description */}
+          <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h2 className="text-lg font-semibold">Om bilen</h2>
+            </div>
+            <p className="text-muted-foreground leading-relaxed text-sm">
+              {description}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
               { icon: Calendar, label: 'Årsmodell', value: car.year || '–' },
               {
@@ -121,6 +184,8 @@ const CarDetail = () => {
               },
               { icon: Fuel, label: 'Drivmedel', value: car.fuel_type || '–' },
               { icon: MapPin, label: 'Plats', value: car.city || '–' },
+              ...(car.color ? [{ icon: Palette, label: 'Färg', value: car.color }] : []),
+              ...(car.drivetrain ? [{ icon: Settings2, label: 'Drivlina', value: car.drivetrain }] : []),
             ].map((spec) => (
               <div key={spec.label} className="bg-card rounded-xl p-4 border border-border text-center">
                 <spec.icon className="h-5 w-5 mx-auto text-primary mb-1" />
