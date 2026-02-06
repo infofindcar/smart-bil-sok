@@ -47,15 +47,31 @@ const GREETING: ChatMessage = {
   suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
 };
 
+const CHAT_STORAGE_KEY = 'findcar-chat-state';
+
+const loadChatState = (): { messages: ChatMessage[]; phase: Phase } | null => {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+};
+
 export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
-  const [phase, setPhase] = useState<Phase>('chatting');
+  const savedChat = loadChatState();
+  const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETING]);
+  const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persist chat state
+  useEffect(() => {
+    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
+  }, [messages, phase]);
 
   // Scroll only within the chat container, not the whole page
   useEffect(() => {
@@ -172,6 +188,8 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     setPhase('chatting');
     setInputValue('');
     setVisibleText({});
+    sessionStorage.removeItem(CHAT_STORAGE_KEY);
+    sessionStorage.removeItem('findcar-search-state');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

@@ -37,15 +37,35 @@ const SectionDivider = ({ variant }: { variant: 'bg-to-alt' | 'alt-to-bg' }) => 
   <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />
 );
 
+const STORAGE_KEY = 'findcar-search-state';
+
+const loadSearchState = () => {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+};
+
 const Index = () => {
-  const [cars, setCars] = useState<Car[]>([]);
-  const [carReasons, setCarReasons] = useState<CarReason[]>([]);
-  const [savedCars, setSavedCars] = useState<Car[]>([]);
-  const [resultMessage, setResultMessage] = useState('');
-  const [showResults, setShowResults] = useState(false);
+  const saved = loadSearchState();
+  const [cars, setCars] = useState<Car[]>(saved?.cars || []);
+  const [carReasons, setCarReasons] = useState<CarReason[]>(saved?.carReasons || []);
+  const [savedCars, setSavedCars] = useState<Car[]>(saved?.savedCars || []);
+  const [resultMessage, setResultMessage] = useState(saved?.resultMessage || '');
+  const [showResults, setShowResults] = useState(saved?.showResults || false);
   const searchRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Persist search state to sessionStorage
+  useEffect(() => {
+    if (showResults) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        cars, carReasons, savedCars, resultMessage, showResults,
+      }));
+    }
+  }, [cars, carReasons, savedCars, resultMessage, showResults]);
 
   const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
     if (append) {
