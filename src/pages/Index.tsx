@@ -104,7 +104,7 @@ const Index = () => {
           className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]"
           style={{ opacity: 1 - scrollProgress * 3 }}
         >
-          <Button variant="gradient" size="xl" onClick={scrollToSearch} className="px-8 h-12 rounded-xl">
+          <Button variant="gradient" size="default" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
           </Button>
         </div>
