@@ -24,7 +24,7 @@ export const Header = () => {
           <img
             src={logo}
             alt="FindCar"
-            className="h-14 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
+            className="h-16 drop-shadow-lg transition-all duration-300 group-hover:brightness-110"
           />
         </Link>
       </div>
