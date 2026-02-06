@@ -23,6 +23,72 @@ const bodyPatterns: Record<string, string> = {
   coupe: "%Coup%",
 };
 
+async function parseFreeText(
+  freeText: string,
+  apiKey: string
+): Promise<{
+  useCase?: string;
+  budget?: string;
+  fuel?: string[];
+  bodyType?: string[];
+  make?: string;
+}> {
+  try {
+    const response = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: `Du är en parser som extraherar bilsökningsparametrar från fritext på svenska. Svara ENBART med ett JSON-objekt (ingen markdown, inga code fences).
+
+Fält:
+- useCase: en av "pendling", "familj", "langresa", "stad", "blandat" (eller utelämna)
+- budget: format "MIN-MAX" t.ex. "0-300000" (eller utelämna)
+- fuel: array av "el", "laddhybrid", "hybrid", "bensin", "diesel" (eller utelämna)
+- bodyType: array av "suv", "kombi", "sedan", "halvkombi", "coupe" (eller utelämna)
+- make: bilmärke om nämnt, t.ex. "Volvo", "Tesla" (eller utelämna)
+
+Exempel input: "Jag vill ha en elbil under 300 000 kr"
+Svar: {"fuel":["el"],"budget":"0-300000"}
+
+Exempel input: "Familjebil med plats, gärna kombi"
+Svar: {"useCase":"familj","bodyType":["kombi"]}`,
+            },
+            { role: "user", content: freeText },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("AI parse error status:", response.status);
+      return {};
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) return {};
+
+    // Strip possible markdown code fences
+    const cleaned = content
+      .replace(/^```json?\s*/i, "")
+      .replace(/```\s*$/, "")
+      .trim();
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.error("Free text parse error:", e);
+    return {};
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,12 +101,29 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    // If there's free text, parse it with AI first
+    let searchContext = { ...context };
+    if (context.freeText && LOVABLE_API_KEY) {
+      const parsed = await parseFreeText(context.freeText, LOVABLE_API_KEY);
+      console.log("Parsed free text:", JSON.stringify(parsed));
+      // Merge parsed fields (don't override existing ones from guided steps)
+      searchContext = {
+        ...parsed,
+        ...Object.fromEntries(
+          Object.entries(context).filter(
+            ([k, v]) => k !== "freeText" && v !== undefined
+          )
+        ),
+      };
+    }
 
     // Parse budget range
     let minPrice = 0;
     let maxPrice = 99999999;
-    if (context.budget) {
-      const parts = context.budget.split("-").map(Number);
+    if (searchContext.budget) {
+      const parts = searchContext.budget.split("-").map(Number);
       if (parts.length === 2) {
         minPrice = parts[0];
         maxPrice = parts[1];
@@ -61,9 +144,14 @@ serve(async (req) => {
         .gte("price", Math.floor(minPrice * priceMinMult))
         .lte("price", Math.ceil(maxPrice * priceMult));
 
+      // Make filter (from free text)
+      if (searchContext.make && relaxLevel < 2) {
+        query = query.ilike("make", `%${searchContext.make}%`);
+      }
+
       // Fuel filter (dropped at level 2+)
-      if (context.fuel?.length > 0 && relaxLevel < 2) {
-        const fuelFilters = context.fuel
+      if (searchContext.fuel?.length > 0 && relaxLevel < 2) {
+        const fuelFilters = searchContext.fuel
           .map((f: string) => fuelPatterns[f])
           .filter(Boolean)
           .map((p: string) => `fuel_type.ilike.${p}`)
@@ -74,8 +162,8 @@ serve(async (req) => {
       }
 
       // Body type filter (dropped at level 1+)
-      if (context.bodyType?.length > 0 && relaxLevel < 1) {
-        const bodyFilters = context.bodyType
+      if (searchContext.bodyType?.length > 0 && relaxLevel < 1) {
+        const bodyFilters = searchContext.bodyType
           .map((b: string) => bodyPatterns[b])
           .filter(Boolean)
           .map((p: string) => `body_type.ilike.${p}`)
@@ -85,7 +173,9 @@ serve(async (req) => {
         }
       }
 
-      const { data, error } = await query.order("price", { ascending: true }).limit(6);
+      const { data, error } = await query
+        .order("price", { ascending: true })
+        .limit(6);
 
       if (error) {
         console.error(`Query error at relax level ${relaxLevel}:`, error);
@@ -103,47 +193,49 @@ serve(async (req) => {
 
     // Generate AI message
     let message = "";
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (cars.length > 0 && LOVABLE_API_KEY) {
       try {
-        const makes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
+        const makes = [
+          ...new Set(cars.map((c: any) => c.make).filter(Boolean)),
+        ];
         const priceRange = `${cars[0].price?.toLocaleString("sv-SE")} – ${cars[cars.length - 1].price?.toLocaleString("sv-SE")} kr`;
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "Du är Clutch, en vänlig svensk bilrådgivare. Ge en kort, positiv sammanfattning (max 2 meningar) av sökresultaten på svenska. Var personlig och entusiastisk.",
-              },
-              {
-                role: "user",
-                content: `Sökning: användning=${context.useCase || "ej angett"}, budget=${context.budget || "ej angett"}, drivlina=${context.fuel?.join(", ") || "ej angett"}, kaross=${context.bodyType?.join(", ") || "ej angett"}. Hittade ${cars.length} bilar. Prisintervall: ${priceRange}. Märken: ${makes.join(", ")}. ${relaxLevel > 0 ? "Sökningen breddades." : ""}`,
-              },
-            ],
-          }),
-        });
+        const userQuery = context.freeText
+          ? `Användarens fråga: "${context.freeText}". `
+          : "";
+
+        const aiResponse = await fetch(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "Du är Clutch, en vänlig svensk bilrådgivare. Ge en kort, positiv sammanfattning (max 2 meningar) av sökresultaten på svenska. Var personlig och entusiastisk. Om användaren skrev en fråga, referera till den.",
+                },
+                {
+                  role: "user",
+                  content: `${userQuery}Sökning: användning=${searchContext.useCase || "ej angett"}, budget=${searchContext.budget || "ej angett"}, drivlina=${searchContext.fuel?.join(", ") || "ej angett"}, kaross=${searchContext.bodyType?.join(", ") || "ej angett"}${searchContext.make ? `, märke=${searchContext.make}` : ""}. Hittade ${cars.length} bilar. Prisintervall: ${priceRange}. Märken: ${makes.join(", ")}. ${relaxLevel > 0 ? "Sökningen breddades." : ""}`,
+                },
+              ],
+            }),
+          }
+        );
 
         if (aiResponse.ok) {
           const aiData = await aiResponse.json();
           const content = aiData.choices?.[0]?.message?.content;
           if (content) message = content;
         } else {
-          const status = aiResponse.status;
-          console.error("AI response error:", status);
-          if (status === 429) {
-            console.error("AI rate limit exceeded");
-          } else if (status === 402) {
-            console.error("AI payment required");
-          }
+          console.error("AI response error:", aiResponse.status);
         }
       } catch (e) {
         console.error("AI message error:", e);
@@ -176,7 +268,10 @@ serve(async (req) => {
         error: e instanceof Error ? e.message : "Unknown error",
         cars: [],
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });

@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { StepIndicator } from './StepIndicator';
-import { Send, Sparkles, RotateCcw } from 'lucide-react';
+import { SearchAnimation } from './SearchAnimation';
+import { Send, Sparkles, RotateCcw, ArrowRight } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -40,6 +40,7 @@ type SearchContext = {
   budget?: string;
   fuel?: string[];
   bodyType?: string[];
+  freeText?: string;
 };
 
 const STEPS: Record<string, { message: string; options: ChatOption[]; multiSelect?: boolean }> = {
@@ -87,20 +88,13 @@ const STEPS: Record<string, { message: string; options: ChatOption[]; multiSelec
   },
 };
 
-const STEP_ORDER: Step[] = ['useCase', 'budget', 'fuel', 'bodyType'];
+const _STEP_ORDER: Step[] = ['useCase', 'budget', 'fuel', 'bodyType'];
 
-const QUICK_STARTS = [
-  { label: '👨‍👩‍👧‍👦 Familjebil', context: { useCase: 'familj' } as Partial<SearchContext> },
-  { label: '⚡ Elbil', context: { fuel: ['el'] } as Partial<SearchContext> },
-  { label: '🚗 Pendlarbil', context: { useCase: 'pendling' } as Partial<SearchContext> },
-  { label: '💰 Under 250k', context: { budget: '0-250000' } as Partial<SearchContext> },
-];
-
-const LOADING_MESSAGES = [
-  'Söker bland hundratals bilar...',
-  'Analyserar dina preferenser...',
-  'Hittar de bästa matcherna...',
-  'Nästan klart...',
+const SUGGESTIONS = [
+  'Jag vill ha en elbil under 300 000 kr',
+  'Familjebil med plats för tre barnstolar',
+  'Snål pendlarbil max 150 000',
+  'SUV med fyrhjulsdrift',
 ];
 
 interface GuidedSearchProps {
@@ -120,34 +114,21 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Berätta vad du letar efter så hjälper jag dig hitta rätt bil!',
+      content: 'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Skriv vad du letar efter — eller använd knapparna nedan för en guidad sökning.',
     },
   ]);
   const [currentStep, setCurrentStep] = useState<Step>('greeting');
   const [context, setContext] = useState<SearchContext>({});
   const [isLoading, setIsLoading] = useState(false);
   const [multiSelections, setMultiSelections] = useState<string[]>([]);
-  const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
+  const [inputValue, setInputValue] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading) return;
-    let i = 0;
-    const interval = setInterval(() => {
-      i = (i + 1) % LOADING_MESSAGES.length;
-      setLoadingMessage(LOADING_MESSAGES[i]);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  const getStepIndex = () => {
-    const idx = STEP_ORDER.indexOf(currentStep as (typeof STEP_ORDER)[number]);
-    return idx >= 0 ? idx : 0;
-  };
 
   const addMessage = (msg: Omit<ChatMessage, 'id'>) => {
     setMessages((prev) => [...prev, { ...msg, id: Date.now().toString() + Math.random() }]);
@@ -171,11 +152,10 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     }
   };
 
-  const handleQuickStart = (qs: (typeof QUICK_STARTS)[0]) => {
-    const newContext = { ...context, ...qs.context };
-    setContext(newContext);
-    addMessage({ role: 'user', content: qs.label });
-    showNextStep(newContext);
+  const handleSuggestion = (text: string) => {
+    setInputValue('');
+    addMessage({ role: 'user', content: text });
+    performSearch({ freeText: text });
   };
 
   const handleSingleSelect = (option: ChatOption) => {
@@ -209,10 +189,32 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     showNextStep(newContext);
   };
 
+  const handleSendMessage = (e?: FormEvent) => {
+    e?.preventDefault();
+    const text = inputValue.trim();
+    if (!text || isLoading) return;
+    setInputValue('');
+    addMessage({ role: 'user', content: text });
+
+    // If we're in guided mode, try to interpret as a step answer
+    // Otherwise treat as free-text search
+    if (currentStep === 'greeting' || currentStep === 'results') {
+      performSearch({ ...context, freeText: text });
+    } else {
+      // In guided mode, still allow free text to override
+      performSearch({ ...context, freeText: text });
+    }
+  };
+
+  const handleStartGuided = () => {
+    const newContext = { ...context };
+    showNextStep(newContext);
+  };
+
   const performSearch = async (searchContext: SearchContext) => {
     setCurrentStep('searching');
     setIsLoading(true);
-    addMessage({ role: 'assistant', content: '🔍 Söker efter bilar som matchar dina önskemål...' });
+    addMessage({ role: 'assistant', content: '🔍 Clutch söker efter din perfekta bil...' });
 
     try {
       const { data, error } = await supabase.functions.invoke('guided-search', {
@@ -231,12 +233,12 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
       } else {
         addMessage({
           role: 'assistant',
-          content: '😔 Tyvärr hittade jag inga bilar som matchar just nu. Prova att bredda din sökning!',
+          content: '😔 Tyvärr hittade jag inga bilar som matchar just nu. Prova att beskriva vad du söker på ett annat sätt!',
         });
       }
     } catch (e) {
       console.error('Search error:', e);
-      addMessage({ role: 'assistant', content: '❌ Något gick fel med sökningen. Försök igen!' });
+      addMessage({ role: 'assistant', content: '❌ Något gick fel. Försök igen!' });
       setCurrentStep('results');
     } finally {
       setIsLoading(false);
@@ -248,39 +250,50 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
       {
         id: '1',
         role: 'assistant',
-        content: 'Hej igen! 👋 Låt oss hitta en ny bil åt dig. Vad letar du efter?',
+        content: 'Hej igen! 👋 Beskriv din drömbil, eller starta en guidad sökning.',
       },
     ]);
     setCurrentStep('greeting');
     setContext({});
     setMultiSelections([]);
+    setInputValue('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   const lastMessage = messages[messages.length - 1];
+  const showSuggestions = currentStep === 'greeting' && messages.length <= 1;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {currentStep !== 'greeting' && currentStep !== 'results' && (
-        <StepIndicator current={getStepIndex() + 1} total={STEP_ORDER.length} />
-      )}
-
-      <div className="bg-card rounded-2xl shadow-warm border border-border overflow-hidden">
+      <div className="rounded-2xl md:rounded-3xl overflow-hidden border border-border/60 bg-card/80 backdrop-blur-xl shadow-[0_8px_60px_-15px_hsl(var(--primary)/0.15)]">
         {/* Header */}
-        <div className="p-4 border-b border-border flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+        <div className="px-5 py-4 border-b border-border/50 flex items-center gap-3 bg-gradient-to-r from-card to-accent/20">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary border-2 border-card" />
           </div>
-          <span className="font-semibold text-sm">Clutch AI</span>
+          <div>
+            <h3 className="font-bold text-sm tracking-tight">Clutch AI</h3>
+            <p className="text-xs text-muted-foreground">Din personliga bilrådgivare</p>
+          </div>
         </div>
 
-        {/* Chat */}
-        <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto chat-scrollbar">
+        {/* Chat area */}
+        <div className="px-4 md:px-5 py-4 space-y-3 max-h-[350px] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px]">
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm animate-slide-up ${
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
+                    ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-sm'
                     : 'bg-chat-bubble text-foreground rounded-bl-md'
                 }`}
               >
@@ -289,42 +302,13 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
             </div>
           ))}
 
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-chat-bubble rounded-2xl rounded-bl-md px-4 py-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  <span className="text-muted-foreground text-xs">{loadingMessage}</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {isLoading && <SearchAnimation />}
           <div ref={chatEndRef} />
         </div>
 
-        {/* Options */}
-        {!isLoading && currentStep !== 'results' && (
-          <div className="p-4 border-t border-border space-y-3">
-            {currentStep === 'greeting' && (
-              <div className="flex flex-wrap gap-2">
-                {QUICK_STARTS.map((qs) => (
-                  <Button
-                    key={qs.label}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full touch-target hover-lift"
-                    onClick={() => handleQuickStart(qs)}
-                  >
-                    {qs.label}
-                  </Button>
-                ))}
-              </div>
-            )}
-
+        {/* Guided options (shown when in step mode) */}
+        {!isLoading && currentStep !== 'results' && currentStep !== 'greeting' && currentStep !== 'searching' && (
+          <div className="px-4 md:px-5 pb-3 space-y-3">
             {lastMessage?.options && !lastMessage.multiSelect && (
               <div className="flex flex-wrap gap-2">
                 {lastMessage.options.map((opt) => (
@@ -332,7 +316,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                     key={opt.value}
                     variant="outline"
                     size="sm"
-                    className="rounded-full touch-target hover-lift"
+                    className="rounded-full touch-target hover:bg-accent/60 hover:border-primary/30 transition-all"
                     onClick={() => handleSingleSelect(opt)}
                   >
                     {opt.label}
@@ -349,7 +333,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                       key={opt.value}
                       variant={multiSelections.includes(opt.value) ? 'default' : 'outline'}
                       size="sm"
-                      className="rounded-full touch-target"
+                      className="rounded-full touch-target transition-all"
                       onClick={() => handleMultiToggle(opt.value)}
                     >
                       {opt.label}
@@ -357,7 +341,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                   ))}
                 </div>
                 {multiSelections.length > 0 && (
-                  <Button onClick={handleMultiConfirm} size="sm" className="w-full">
+                  <Button onClick={handleMultiConfirm} size="sm" className="w-full rounded-xl">
                     <Send className="h-4 w-4 mr-2" />
                     Fortsätt ({multiSelections.length} valda)
                   </Button>
@@ -367,14 +351,82 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
           </div>
         )}
 
-        {currentStep === 'results' && (
-          <div className="p-4 border-t border-border">
-            <Button variant="outline" size="sm" onClick={handleReset} className="w-full">
+        {/* Suggestions (only on first greeting) */}
+        {showSuggestions && (
+          <div className="px-4 md:px-5 pb-3 space-y-3">
+            <p className="text-xs text-muted-foreground font-medium">Prova att fråga:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleSuggestion(s)}
+                  className="text-left text-xs px-3 py-2.5 rounded-xl border border-border/50 bg-accent/30 hover:bg-accent/60 hover:border-primary/30 text-foreground transition-all duration-200 flex items-center gap-2 group"
+                >
+                  <ArrowRight className="h-3 w-3 text-primary opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all shrink-0" />
+                  <span>{s}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <div className="h-px flex-1 bg-border/50" />
+              <span className="text-xs text-muted-foreground">eller</span>
+              <div className="h-px flex-1 bg-border/50" />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleStartGuided}
+              className="w-full rounded-xl hover:bg-accent/60"
+            >
+              Guidad sökning steg-för-steg
+            </Button>
+          </div>
+        )}
+
+        {/* Results actions */}
+        {currentStep === 'results' && !isLoading && (
+          <div className="px-4 md:px-5 pb-3">
+            <Button variant="outline" size="sm" onClick={handleReset} className="w-full rounded-xl">
               <RotateCcw className="h-4 w-4 mr-2" />
               Ny sökning
             </Button>
           </div>
         )}
+
+        {/* Input area */}
+        <div className="px-4 md:px-5 pb-4 pt-2 border-t border-border/40">
+          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+            <div
+              className={`flex-1 relative rounded-xl border transition-all duration-200 ${
+                inputFocused
+                  ? 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]'
+                  : 'border-border/50'
+              } bg-background/60`}
+            >
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                onKeyDown={handleKeyDown}
+                placeholder="Beskriv din drömbil..."
+                disabled={isLoading}
+                rows={1}
+                className="w-full resize-none bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground/60 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '44px' }}
+              />
+            </div>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!inputValue.trim() || isLoading}
+              className="h-11 w-11 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary hover:shadow-md transition-all"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
