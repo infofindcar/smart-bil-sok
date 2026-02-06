@@ -23,6 +23,33 @@ const bodyPatterns: Record<string, string> = {
   coupe: "%Coup%",
 };
 
+const PARSE_SYSTEM_PROMPT = `Du är Clutch, en expert-bilrådgivare. Analysera användarens meddelande och dra slutsatser om vilken typ av bil som passar bäst.
+
+RESONERA så här:
+- Om personen pendlar långt → prioritera bränsleeffektivitet och komfort (diesel, hybrid, eller el med bra räckvidd)
+- Om personen bor i en specifik stad/region → filtrera på bilar i närliggande städer (inte hela Sverige)
+- Om personen har familj → prioritera utrymme och säkerhet (kombi, SUV)
+- Om personen kör mest i stad → mindre bil, el eller hybrid är bra
+- Om budget är tight → fokusera på driftsekonomi, inte bara inköpspris
+
+Svara ENBART med ett JSON-objekt (ingen markdown, inga code fences).
+
+Fält:
+- useCase: en av "pendling", "familj", "langresa", "stad", "blandat" (eller utelämna)
+- budget: format "MIN-MAX" t.ex. "0-300000" (eller utelämna)
+- fuel: array av "el", "laddhybrid", "hybrid", "bensin", "diesel" — välj det som PASSAR BÄST för situationen (eller utelämna)
+- bodyType: array av "suv", "kombi", "sedan", "halvkombi", "coupe" — välj det som PASSAR BÄST (eller utelämna)
+- make: bilmärke om nämnt eller om du starkt rekommenderar ett (eller utelämna)
+- city: stad eller region att filtrera på, t.ex. "Jönköping", "Växjö" — baserat på var personen bor (eller utelämna)
+- reasoning: en kort mening (max 30 ord) som förklarar VARFÖR du valt dessa filter
+
+Exempel:
+Input: "Bor i Småland, pendlar 8 mil per dag, budget 250k"
+Svar: {"useCase":"pendling","budget":"0-250000","fuel":["diesel","laddhybrid"],"bodyType":["kombi","sedan"],"city":"Jönköping","reasoning":"Lång pendling kräver bränsleeffektiv och bekväm bil. Söker i Småland-området."}
+
+Input: "Familj med 3 barn, bor i Göteborg, max 400k"
+Svar: {"useCase":"familj","budget":"0-400000","bodyType":["suv","kombi"],"city":"Göteborg","reasoning":"Stor familj behöver rymlig bil med bra säkerhet. Söker nära Göteborg."}`;
+
 async function parseFreeText(
   freeText: string,
   apiKey: string
@@ -32,6 +59,8 @@ async function parseFreeText(
   fuel?: string[];
   bodyType?: string[];
   make?: string;
+  city?: string;
+  reasoning?: string;
 }> {
   try {
     const response = await fetch(
@@ -43,25 +72,9 @@ async function parseFreeText(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3-flash-preview",
           messages: [
-            {
-              role: "system",
-              content: `Du är en parser som extraherar bilsökningsparametrar från fritext på svenska. Svara ENBART med ett JSON-objekt (ingen markdown, inga code fences).
-
-Fält:
-- useCase: en av "pendling", "familj", "langresa", "stad", "blandat" (eller utelämna)
-- budget: format "MIN-MAX" t.ex. "0-300000" (eller utelämna)
-- fuel: array av "el", "laddhybrid", "hybrid", "bensin", "diesel" (eller utelämna)
-- bodyType: array av "suv", "kombi", "sedan", "halvkombi", "coupe" (eller utelämna)
-- make: bilmärke om nämnt, t.ex. "Volvo", "Tesla" (eller utelämna)
-
-Exempel input: "Jag vill ha en elbil under 300 000 kr"
-Svar: {"fuel":["el"],"budget":"0-300000"}
-
-Exempel input: "Familjebil med plats, gärna kombi"
-Svar: {"useCase":"familj","bodyType":["kombi"]}`,
-            },
+            { role: "system", content: PARSE_SYSTEM_PROMPT },
             { role: "user", content: freeText },
           ],
         }),
@@ -77,7 +90,6 @@ Svar: {"useCase":"familj","bodyType":["kombi"]}`,
     const content = data.choices?.[0]?.message?.content?.trim();
     if (!content) return {};
 
-    // Strip possible markdown code fences
     const cleaned = content
       .replace(/^```json?\s*/i, "")
       .replace(/```\s*$/, "")
@@ -105,12 +117,17 @@ serve(async (req) => {
 
     // If there's free text, parse it with AI first
     let searchContext = { ...context };
+    let aiReasoning = "";
+
     if (context.freeText && LOVABLE_API_KEY) {
       const parsed = await parseFreeText(context.freeText, LOVABLE_API_KEY);
       console.log("Parsed free text:", JSON.stringify(parsed));
+      aiReasoning = parsed.reasoning || "";
+
       // Merge parsed fields (don't override existing ones from guided steps)
+      const { reasoning: _r, ...parsedFilters } = parsed;
       searchContext = {
-        ...parsed,
+        ...parsedFilters,
         ...Object.fromEntries(
           Object.entries(context).filter(
             ([k, v]) => k !== "freeText" && v !== undefined
@@ -144,7 +161,12 @@ serve(async (req) => {
         .gte("price", Math.floor(minPrice * priceMinMult))
         .lte("price", Math.ceil(maxPrice * priceMult));
 
-      // Make filter (from free text)
+      // City/region filter (dropped at level 1+)
+      if (searchContext.city && relaxLevel < 1) {
+        query = query.ilike("city", `%${searchContext.city}%`);
+      }
+
+      // Make filter (dropped at level 2+)
       if (searchContext.make && relaxLevel < 2) {
         query = query.ilike("make", `%${searchContext.make}%`);
       }
@@ -191,7 +213,7 @@ serve(async (req) => {
       console.log(`No results at relax level ${relaxLevel}, relaxing...`);
     }
 
-    // Generate AI message
+    // Generate AI message with context-aware reasoning
     let message = "";
 
     if (cars.length > 0 && LOVABLE_API_KEY) {
@@ -200,6 +222,17 @@ serve(async (req) => {
           ...new Set(cars.map((c: any) => c.make).filter(Boolean)),
         ];
         const priceRange = `${cars[0].price?.toLocaleString("sv-SE")} – ${cars[cars.length - 1].price?.toLocaleString("sv-SE")} kr`;
+        const cities = [
+          ...new Set(cars.map((c: any) => c.city).filter(Boolean)),
+        ];
+
+        const carSummaries = cars
+          .slice(0, 4)
+          .map(
+            (c: any) =>
+              `${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}`
+          )
+          .join("; ");
 
         const userQuery = context.freeText
           ? `Användarens fråga: "${context.freeText}". `
@@ -214,16 +247,21 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "google/gemini-3-flash-preview",
               messages: [
                 {
                   role: "system",
-                  content:
-                    "Du är Clutch, en vänlig svensk bilrådgivare. Ge en kort, positiv sammanfattning (max 2 meningar) av sökresultaten på svenska. Var personlig och entusiastisk. Om användaren skrev en fråga, referera till den.",
+                  content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Ge en personlig, kort sammanfattning (max 3 meningar) av varför dessa bilar passar kundens situation. 
+
+Var specifik: nämn varför biltypen/drivlinan passar deras livsstil. Om de nämnde pendling, kommentera bränsleeffektivitet. Om de nämnde familj, kommentera utrymme och säkerhet. Om de nämnde en region, bekräfta att du sökt lokalt.
+
+${aiReasoning ? `Din resonering: ${aiReasoning}` : ""}
+
+Var varm, professionell och objektiv — rekommendera det som faktiskt är bäst för kunden.`,
                 },
                 {
                   role: "user",
-                  content: `${userQuery}Sökning: användning=${searchContext.useCase || "ej angett"}, budget=${searchContext.budget || "ej angett"}, drivlina=${searchContext.fuel?.join(", ") || "ej angett"}, kaross=${searchContext.bodyType?.join(", ") || "ej angett"}${searchContext.make ? `, märke=${searchContext.make}` : ""}. Hittade ${cars.length} bilar. Prisintervall: ${priceRange}. Märken: ${makes.join(", ")}. ${relaxLevel > 0 ? "Sökningen breddades." : ""}`,
+                  content: `${userQuery}Sökresultat: ${cars.length} bilar hittade. Prisintervall: ${priceRange}. Märken: ${makes.join(", ")}. Städer: ${cities.join(", ")}. Topbilar: ${carSummaries}. ${relaxLevel > 0 ? "Sökningen breddades för att hitta resultat." : ""}`,
                 },
               ],
             }),
@@ -246,7 +284,7 @@ serve(async (req) => {
       message =
         cars.length > 0
           ? `Jag hittade ${cars.length} bilar som matchar dina önskemål!`
-          : "Tyvärr hittade jag inga bilar som matchar just nu. Prova att bredda din sökning.";
+          : "Tyvärr hittade jag inga bilar som matchar just nu. Prova att beskriva din situation på ett annat sätt.";
     }
 
     return new Response(

@@ -91,10 +91,10 @@ const STEPS: Record<string, { message: string; options: ChatOption[]; multiSelec
 const _STEP_ORDER: Step[] = ['useCase', 'budget', 'fuel', 'bodyType'];
 
 const SUGGESTIONS = [
-  'Jag vill ha en elbil under 300 000 kr',
-  'Familjebil med plats för tre barnstolar',
-  'Snål pendlarbil max 150 000',
-  'SUV med fyrhjulsdrift',
+  'Bor i Småland, pendlar 8 mil/dag, budget 250k',
+  'Familj med 3 barn, behöver plats och säkerhet',
+  'Elbil för stadskörning, max 300 000 kr',
+  'Bekväm långkörare för tjänsteresor',
 ];
 
 interface GuidedSearchProps {
@@ -114,7 +114,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Skriv vad du letar efter — eller använd knapparna nedan för en guidad sökning.',
+      content: 'Hej! 👋 Jag är Clutch — din objektiva bilrådgivare. Berätta om din situation så hittar jag den perfekta bilen åt dig. Var bor du? Hur långt pendlar du? Vilken budget har du? Ju mer jag vet, desto bättre kan jag hjälpa dig.',
     },
   ]);
   const [currentStep, setCurrentStep] = useState<Step>('greeting');
