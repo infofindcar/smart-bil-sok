@@ -93,7 +93,7 @@ const Index = () => {
             transition: 'transform 0.1s linear',
           }}
         >
-          <img src={logo} alt="FindCar" className="h-28 md:h-40 mx-auto drop-shadow-2xl animate-float-subtle" />
+          <img src={logo} alt="FindCar" className="h-36 md:h-52 mx-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.3)] animate-float-subtle" />
           <p className="text-lg md:text-xl text-white/70 max-w-md mx-auto font-light">
             Din AI-drivna bilrådgivare. Hitta rätt bil — utan krångel.
           </p>
