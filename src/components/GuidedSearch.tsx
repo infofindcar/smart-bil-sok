@@ -20,6 +20,11 @@ export type Car = {
   listing_url: string | null;
 };
 
+export type CarReason = {
+  carId: number;
+  reason: string;
+};
+
 type Phase = 'chatting' | 'searching' | 'results';
 
 type ChatMessage = {
@@ -30,7 +35,7 @@ type ChatMessage = {
 };
 
 interface GuidedSearchProps {
-  onResults: (cars: Car[], message: string) => void;
+  onResults: (cars: Car[], message: string, carReasons: CarReason[]) => void;
 }
 
 const GREETING: ChatMessage = {
@@ -137,10 +142,12 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
           addAssistantMessage(
             data.message || `Jag hittade ${data.cars.length} bilar!`
           );
-          onResults(data.cars, data.message || `Hittade ${data.cars.length} bilar`);
+          onResults(data.cars, data.message || `Hittade ${data.cars.length} bilar`, data.carReasons || []);
         } else {
+          // No results — show message with suggestions
           addAssistantMessage(
-            data.message || 'Tyvärr hittade jag inga bilar som matchar just nu. Beskriv dina behov på ett annat sätt!'
+            data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
+            data.suggestions || []
           );
         }
       } else {

@@ -7,6 +7,7 @@ interface CarCardProps {
   car: Car;
   isSaved?: boolean;
   onToggleSave?: (car: Car) => void;
+  matchReason?: string;
 }
 
 const formatPrice = (price: number | null) => {
@@ -24,7 +25,7 @@ const BRAND_GRADIENTS: Record<string, string> = {
   Volkswagen: 'from-blue-800 to-blue-600',
 };
 
-export const CarCard = ({ car, isSaved = false, onToggleSave }: CarCardProps) => {
+export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: CarCardProps) => {
   const navigate = useNavigate();
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
 
@@ -84,6 +85,15 @@ export const CarCard = ({ car, isSaved = false, onToggleSave }: CarCardProps) =>
             </Badge>
           )}
         </div>
+
+        {/* Personlig motivering från Clutch */}
+        {matchReason && (
+          <div className="mt-2 pt-2 border-t border-border/30">
+            <p className="text-xs italic text-muted-foreground leading-relaxed">
+              "{matchReason}"
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

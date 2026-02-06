@@ -25,7 +25,7 @@ const bodyPatterns: Record<string, string> = {
 
 const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du har ett naturligt samtal med kunden för att förstå exakt vilken bil som passar dem bäst. Du ska kännas som en riktig människa som bryr sig.
 
-DITT MÅL: Ställ tillräckligt med frågor för att verkligen förstå kundens situation och kunna hitta EXAKT rätt bil. Ju mer du vet, desto bättre resultat.
+DITT MÅL: Ställ tillräckligt med frågor för att verkligen förstå kundens situation och kunna hitta EXAKT rätt bil. Ju mer du vet, desto bättre resultat. Du ska ställa minst 5 frågor innan du söker.
 
 INFORMATION DU BEHÖVER SAMLA (alla är viktiga):
 1. Vad bilen ska användas till (pendling, familj, stad, långresor, blandat)
@@ -34,19 +34,27 @@ INFORMATION DU BEHÖVER SAMLA (alla är viktiga):
 4. Hur långt de kör dagligen/veckovis (påverkar drivlina-val)
 5. Drivlina-preferens (el, hybrid, bensin, diesel) — eller om de inte vet, hjälp dem
 6. Karosstyp (SUV, kombi, sedan, etc.) — eller härledd från behov
-7. Eventuella specifika önskemål (märke, årsmodell, färg, automatväxel, etc.)
+7. Färgpreferens — har kunden önskemål om färg? (vi har data på detta)
+8. Växellåda — automat eller manuell? (viktigt för komfort)
+9. Driftskostnad vs prestanda — vill kunden ha låga kostnader eller mer kraft?
+10. Årsmodell — vill kunden ha nyare eller äldre bil? (påverkar pris och utrustning)
+11. Eventuella specifika önskemål (märke, utrustning, etc.)
 
 INTELLIGENTA REGLER:
 - Om kunden nämner lång pendling → du förstår att bränsleeffektivitet och komfort är viktigt, men fråga ändå om budget och plats
 - Om kunden nämner familj → du förstår att utrymme och säkerhet är viktigt, men fråga hur stor familjen är
 - Om kunden nämner stad → liten bil och el/hybrid, men fråga om de kör långa sträckor ibland
+- Om kunden säger "låg driftskostnad" → förstå att el/hybrid och lågt miltal är viktigt
+- Om kunden nämner en färg → notera och filtrera på den
+- Om kunden nämner automat/manuell → notera det (vi kan inte filtrera direkt men nämn det i motiveringar)
 - Ställ MAX EN fråga per meddelande
 - Var kort, varm och naturlig — som en kompis som kan bilar
 - Använd INTE emojis
 - Bekräfta kort vad kunden sa innan du ställer nästa fråga (t.ex. "Okej, pendling alltså!")
 - Om kunden ger väldigt mycket info på en gång, hoppa över frågor du redan har svar på
+- Blanda inte ihop frågor — ställ en i taget för att det ska kännas personligt
 
-NÄR DU SKA SÖKA: Du ska ha samlat minst 4 av de 7 punkterna ovan ELLER ha ställt minst 4 frågor. Sök INTE förrän du har tillräckligt för att verkligen kunna filtrera bort fel bilar.
+NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 11 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt för att verkligen kunna filtrera bort fel bilar och ge personliga motiveringar.
 
 NÄR DU STÄLLER EN FRÅGA, inkludera även "suggestions" — 2-4 korta svarsförslag som kunden kan klicka på. Dessa ska vara relevanta för frågan.
 
@@ -56,7 +64,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"city":"Stad","make":"Märke","useCase":"pendling"},"reasoning":"Kort förklaring av varför dessa filter valdes"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling"},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
@@ -133,7 +141,6 @@ serve(async (req) => {
       decision = JSON.parse(cleaned);
     } catch (parseErr) {
       console.error("Failed to parse AI decision:", cleaned);
-      // Fallback: treat as a question
       return new Response(
         JSON.stringify({
           action: "ask",
@@ -160,6 +167,7 @@ serve(async (req) => {
     if (decision.action === "search") {
       const filters = decision.filters || {};
       const reasoning = decision.reasoning || "";
+      const customerProfile = decision.customerProfile || "";
       console.log("AI searching with filters:", JSON.stringify(filters));
 
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -225,6 +233,19 @@ serve(async (req) => {
           }
         }
 
+        // Color filter (dropped at level 1+)
+        if (filters.color && relaxLevel < 1) {
+          query = query.ilike("color", `%${filters.color}%`);
+        }
+
+        // Year filter (dropped at level 2+)
+        if (filters.yearMin && relaxLevel < 2) {
+          query = query.gte("year", filters.yearMin);
+        }
+        if (filters.yearMax && relaxLevel < 2) {
+          query = query.lte("year", filters.yearMax);
+        }
+
         const { data, error } = await query
           .order("price", { ascending: true })
           .limit(3);
@@ -243,26 +264,25 @@ serve(async (req) => {
         console.log(`No results at relax level ${relaxLevel}, relaxing...`);
       }
 
-      // Generate personalized result message
+      // Build context from conversation
+      const userMessages = messages
+        .filter((m: any) => m.role === "user")
+        .map((m: any) => m.content)
+        .join(". ");
+
+      // Generate personalized result message + per-car reasons
       let message = "";
+      let carReasons: { carId: number; reason: string }[] = [];
+      let suggestions: string[] = [];
 
       if (cars.length > 0) {
         try {
-          const makes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
-          const priceRange = `${cars[0].price?.toLocaleString("sv-SE")} – ${cars[cars.length - 1].price?.toLocaleString("sv-SE")} kr`;
-          const cities = [...new Set(cars.map((c: any) => c.city).filter(Boolean))];
           const carSummaries = cars
             .map(
               (c: any) =>
-                `${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}`
+                `ID:${c.id} — ${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}, färg: ${c.color || "okänd"}`
             )
-            .join("; ");
-
-          // Build context from conversation
-          const userMessages = messages
-            .filter((m: any) => m.role === "user")
-            .map((m: any) => m.content)
-            .join(". ");
+            .join("\n");
 
           const msgResponse = await fetch(
             "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -277,17 +297,24 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Ge en personlig, kort sammanfattning (max 3 meningar) av varför dessa bilar passar kundens situation.
+                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Du ska göra två saker:
 
-Var specifik: nämn varför biltypen/drivlinan passar deras livsstil. Använd INTE emojis.
+1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar kundens situation.
+2. För VARJE bil, ge en kort personlig motivering (1 mening) om varför just den bilen passar kunden baserat på deras specifika behov.
+
+Var specifik: nämn varför biltypen/drivlinan/färgen/priset passar deras livsstil. Använd INTE emojis.
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
+${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
 
-Var varm, professionell och objektiv — rekommendera det som faktiskt är bäst för kunden.`,
+Var varm, professionell och objektiv.
+
+Svara ENBART med JSON (ingen markdown, inga code fences):
+{"message":"Din sammanfattning här","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}". Sökresultat: ${cars.length} bilar. Prisintervall: ${priceRange}. Märken: ${makes.join(", ")}. Städer: ${cities.join(", ")}. Bilar: ${carSummaries}. ${relaxLevel > 0 ? "Sökningen breddades för att hitta resultat." : ""}`,
+                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxLevel > 0 ? "Sökningen breddades för att hitta resultat." : ""}`,
                   },
                 ],
               }),
@@ -296,11 +323,79 @@ Var varm, professionell och objektiv — rekommendera det som faktiskt är bäst
 
           if (msgResponse.ok) {
             const msgData = await msgResponse.json();
-            const content = msgData.choices?.[0]?.message?.content;
-            if (content) message = content;
+            const content = msgData.choices?.[0]?.message?.content?.trim();
+            if (content) {
+              try {
+                const cleanedContent = content
+                  .replace(/^```json?\s*/i, "")
+                  .replace(/```\s*$/, "")
+                  .trim();
+                const parsed = JSON.parse(cleanedContent);
+                message = parsed.message || "";
+                carReasons = parsed.carReasons || [];
+              } catch {
+                // Fallback: use raw content as message
+                message = content;
+              }
+            }
           }
         } catch (e) {
           console.error("AI message error:", e);
+        }
+      } else {
+        // No cars found — generate helpful suggestions
+        try {
+          const noResultResponse = await fetch(
+            "https://ai.gateway.lovable.dev/v1/chat/completions",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-3-flash-preview",
+                messages: [
+                  {
+                    role: "system",
+                    content: `Du är Clutch, en svensk bilrådgivare. Kunden sökte bilar men inga hittades. Du ska:
+1. Kort förklara varför det inte finns matchande bilar (max 2 meningar)
+2. Ge 2-3 konkreta förslag på hur kunden kan ändra sin sökning för att hitta bilar
+
+Svara ENBART med JSON (ingen markdown, inga code fences):
+{"message":"Tyvärr hittade jag inga bilar som matchar...","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
+
+Förslagen ska vara specifika och klickbara, t.ex. "Öka budgeten till 200 000 kr", "Prova hybrid istället för el", "Sök i hela Sverige".
+Använd INTE emojis.`,
+                  },
+                  {
+                    role: "user",
+                    content: `Kundens behov: "${userMessages}". Filter som användes: ${JSON.stringify(filters)}. Alla 4 relax-nivåer testades utan resultat.`,
+                  },
+                ],
+              }),
+            }
+          );
+
+          if (noResultResponse.ok) {
+            const noResultData = await noResultResponse.json();
+            const content = noResultData.choices?.[0]?.message?.content?.trim();
+            if (content) {
+              try {
+                const cleanedContent = content
+                  .replace(/^```json?\s*/i, "")
+                  .replace(/```\s*$/, "")
+                  .trim();
+                const parsed = JSON.parse(cleanedContent);
+                message = parsed.message || "";
+                suggestions = parsed.suggestions || [];
+              } catch {
+                message = content;
+              }
+            }
+          }
+        } catch (e) {
+          console.error("No-result AI error:", e);
         }
       }
 
@@ -308,7 +403,7 @@ Var varm, professionell och objektiv — rekommendera det som faktiskt är bäst
         message =
           cars.length > 0
             ? `Jag hittade ${cars.length} bilar som matchar dina önskemål!`
-            : "Tyvärr hittade jag inga bilar som matchar just nu. Kan du beskriva vad du söker på ett annat sätt?";
+            : "Tyvärr hittade jag inga bilar som matchar just nu. Försök ändra dina kriterier.";
       }
 
       return new Response(
@@ -316,6 +411,8 @@ Var varm, professionell och objektiv — rekommendera det som faktiskt är bäst
           action: "search",
           message,
           cars,
+          carReasons,
+          suggestions,
           matchCount: cars.length,
           relaxed: relaxLevel > 0,
           relaxLevel,
