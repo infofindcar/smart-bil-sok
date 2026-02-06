@@ -1,6 +1,7 @@
 import { ScrollReveal } from './ScrollReveal';
 import { MessageSquare, Brain, ListChecks } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import step1CarImage from '@/assets/step1-car.jpg';
 import step2CarImage from '@/assets/step2-car.png';
 import step3CarImage from '@/assets/step3-car.png';
 
@@ -19,8 +20,7 @@ const steps: Step[] = [
     title: 'Berätta för Clutch vad du vill ha',
     description:
       'Beskriv din drömbil. Budget, livsstil, preferenser — allt som är viktigt för dig.',
-    image:
-      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80',
+    image: step1CarImage,
   },
   {
     icon: Brain,
