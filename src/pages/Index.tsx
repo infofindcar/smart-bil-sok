@@ -94,10 +94,6 @@ const Index = () => {
           }}
         >
           <img src={logo} alt="FindCar" className="h-40 md:h-60 mx-auto brightness-125 contrast-110 drop-shadow-[0_0_60px_rgba(255,255,255,0.5)] animate-float-subtle" />
-          <div className="h-8 md:h-12" />
-          <p className="text-lg md:text-xl text-white/70 max-w-md mx-auto font-light">
-            Hitta din bil
-          </p>
           <Button variant="gradient" size="xl" onClick={scrollToSearch}>
             Hitta din bil
           </Button>
