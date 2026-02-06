@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Lock } from 'lucide-react';
+import logo from '@/assets/findcar-logo.png';
 
 const SESSION_KEY = 'findcar_session';
 
@@ -66,7 +67,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse-subtle">
-          <h1 className="text-3xl font-serif font-bold text-gradient">Clutch</h1>
+          <img src={logo} alt="FindCar" className="h-12" />
         </div>
       </div>
     );
@@ -78,8 +79,8 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm text-center space-y-8">
         <div className="space-y-2">
-          <h1 className="text-4xl font-serif font-bold text-gradient animate-float">Clutch</h1>
-          <p className="text-muted-foreground text-sm">Find Car — Din AI-bilrådgivare</p>
+          <img src={logo} alt="FindCar" className="h-14 mx-auto animate-float" />
+          <p className="text-muted-foreground text-sm">Din AI-bilrådgivare</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">

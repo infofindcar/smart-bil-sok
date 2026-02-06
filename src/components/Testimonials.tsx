@@ -4,7 +4,7 @@ import { Star, Search, Car, Shield } from 'lucide-react';
 const testimonials = [
   {
     name: 'Anna K.',
-    text: '"Hittade min drömkombi på 2 minuter. Clutch förstod exakt vad jag behövde!"',
+    text: '"Hittade min drömkombi på 2 minuter. FindCar förstod exakt vad jag behövde!"',
     rating: 5,
   },
   {

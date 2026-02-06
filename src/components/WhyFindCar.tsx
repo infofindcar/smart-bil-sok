@@ -5,7 +5,7 @@ const benefits = [
   {
     icon: Clock,
     title: 'Spara tid',
-    description: 'Slipp timmar på Blocket och Bytbil. Clutch gör jobbet åt dig på sekunder.',
+    description: 'Slipp timmar på Blocket och Bytbil. Vår AI gör jobbet åt dig på sekunder.',
   },
   {
     icon: Zap,

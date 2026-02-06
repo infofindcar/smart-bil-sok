@@ -5,7 +5,7 @@ const steps = [
   {
     icon: MessageSquare,
     title: 'Berätta',
-    description: 'Beskriv vad du söker — budget, biltyp, drivlina. Clutch förstår dig.',
+    description: 'Beskriv vad du söker — budget, biltyp, drivlina. Vår AI Clutch förstår dig.',
   },
   {
     icon: Brain,
