@@ -20,8 +20,12 @@ export const Header = () => {
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="FindCar" className="h-8" />
+        <Link to="/" className="flex items-center gap-2 group">
+          <img
+            src={logo}
+            alt="FindCar"
+            className="h-11 drop-shadow-lg transition-all duration-500 group-hover:drop-shadow-xl animate-float-subtle"
+          />
         </Link>
         <nav className="flex items-center gap-4">
           <Link

@@ -106,6 +106,10 @@ export default {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-12px)" },
         },
+        "float-subtle": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-4px)" },
+        },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
@@ -121,6 +125,7 @@ export default {
         "fade-in": "fade-in 0.5s ease-out",
         "slide-up": "slide-up 0.5s ease-out",
         float: "float 4s ease-in-out infinite",
+        "float-subtle": "float-subtle 3s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
       },
