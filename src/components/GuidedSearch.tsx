@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, Sparkles, RotateCcw } from 'lucide-react';
+import { Send, RotateCcw, MessageCircle } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -47,28 +47,34 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
   const [inputValue, setInputValue] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Scroll only within the chat container, not the whole page
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   }, [messages, isLoading]);
 
-  // Typewriter effect for assistant messages
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     let i = 0;
-    const speed = 18; // ms per character
+    const speed = 15;
     const tick = () => {
       i += 1;
       setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
       if (i < fullText.length) {
-        setTimeout(tick, speed + Math.random() * 12);
+        setTimeout(tick, speed + Math.random() * 10);
       } else {
         onDone?.();
       }
     };
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
-    setTimeout(tick, 300); // small initial delay
+    setTimeout(tick, 250);
   };
 
   const addAssistantMessage = (
@@ -100,10 +106,9 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     setIsLoading(true);
 
     try {
-      // Build conversation history for the AI
       const allMessages = [...messages, userMsg];
       const conversationHistory = allMessages
-        .filter((m) => m.id !== '1') // exclude initial greeting
+        .filter((m) => m.id !== '1')
         .map((m) => ({ role: m.role, content: m.content }));
 
       if (conversationHistory.length === 0) {
@@ -167,90 +172,96 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
     }
   };
 
-  // Get the displayed text for a message (typewriter or full)
   const getDisplayText = (msg: ChatMessage) => {
     if (msg.role === 'user') return msg.content;
     return visibleText[msg.id] !== undefined ? visibleText[msg.id] : msg.content;
   };
 
-  // Check if a message is still being typed
-  const isTyping = (msg: ChatMessage) => {
+  const isTypingMsg = (msg: ChatMessage) => {
     if (msg.role === 'user') return false;
     const displayed = visibleText[msg.id];
     return displayed !== undefined && displayed.length < msg.content.length;
   };
 
-  // Find the last assistant message to show suggestions on
   const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
   const showSuggestions =
     !isLoading &&
     lastAssistantMsg?.suggestions?.length &&
-    !isTyping(lastAssistantMsg);
+    !isTypingMsg(lastAssistantMsg);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="rounded-2xl md:rounded-3xl overflow-hidden border border-border/60 bg-card/80 backdrop-blur-xl shadow-[0_8px_60px_-15px_hsl(var(--primary)/0.15)]">
+      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-border/40 bg-card backdrop-blur-xl">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/50 flex items-center gap-3 bg-gradient-to-r from-card to-accent/20">
+        <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            <div className="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <MessageCircle className="h-4.5 w-4.5 text-secondary" />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary border-2 border-card" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
           </div>
           <div>
-            <h3 className="font-bold text-sm tracking-tight">Clutch AI</h3>
-            <p className="text-xs text-muted-foreground">Din personliga bilrådgivare</p>
+            <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch</h3>
+            <p className="text-[11px] text-muted-foreground">Objektiv bilrådgivare</p>
           </div>
         </div>
 
-        {/* Chat area */}
-        <div className="px-4 md:px-5 py-4 space-y-3 max-h-[350px] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px]">
+        {/* Chat area — scroll is contained here */}
+        <div
+          ref={chatContainerRef}
+          className="px-4 md:px-5 py-4 space-y-3 max-h-[340px] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[180px]"
+        >
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
             >
+              {msg.role === 'assistant' && (
+                <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                  <MessageCircle className="h-3 w-3 text-muted-foreground" />
+                </div>
+              )}
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-sm'
-                    : 'bg-chat-bubble text-foreground rounded-bl-md'
+                    ? 'bg-secondary text-secondary-foreground rounded-br-sm'
+                    : 'bg-muted/50 text-foreground rounded-bl-sm'
                 }`}
               >
                 {getDisplayText(msg)}
-                {isTyping(msg) && (
-                  <span className="inline-block w-0.5 h-4 bg-foreground/60 ml-0.5 animate-pulse align-text-bottom" />
+                {isTypingMsg(msg) && (
+                  <span className="inline-block w-0.5 h-3.5 bg-foreground/40 ml-0.5 animate-pulse align-text-bottom" />
                 )}
               </div>
             </div>
           ))}
 
-          {/* Typing indicator while loading */}
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {isLoading && phase !== 'searching' && (
-            <div className="flex justify-start animate-fade-in">
-              <div className="bg-chat-bubble rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex gap-1.5">
-                  <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            <div className="flex justify-start gap-2 animate-fade-in">
+              <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                <MessageCircle className="h-3 w-3 text-muted-foreground" />
+              </div>
+              <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-3">
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </div>
           )}
-          <div ref={chatEndRef} />
         </div>
 
         {/* Quick-reply suggestions */}
         {showSuggestions && (
           <div className="px-4 md:px-5 pb-3">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {lastAssistantMsg!.suggestions!.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs px-3 py-2 rounded-xl border border-border/50 bg-accent/30 hover:bg-accent/60 hover:border-primary/30 text-foreground transition-all duration-200"
+                  className="text-xs px-3 py-1.5 rounded-lg border border-border/40 bg-background hover:bg-muted/60 hover:border-border text-foreground/80 transition-all duration-150"
                 >
                   {s}
                 </button>
@@ -262,22 +273,22 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
         {/* Reset button */}
         {phase === 'results' && !isLoading && (
           <div className="px-4 md:px-5 pb-3">
-            <Button variant="outline" size="sm" onClick={handleReset} className="w-full rounded-xl">
-              <RotateCcw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={handleReset} className="w-full rounded-xl text-xs">
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               Ny sökning
             </Button>
           </div>
         )}
 
         {/* Input area */}
-        <div className="px-4 md:px-5 pb-4 pt-2 border-t border-border/40">
+        <div className="px-4 md:px-5 pb-4 pt-2 border-t border-border/30">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
                 inputFocused
-                  ? 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]'
-                  : 'border-border/50'
-              } bg-background/60`}
+                  ? 'border-secondary/40 shadow-[0_0_0_2px_hsl(var(--secondary)/0.06)]'
+                  : 'border-border/40'
+              } bg-background/80`}
             >
               <textarea
                 ref={inputRef}
@@ -286,20 +297,20 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
-                placeholder="Beskriv din situation..."
+                placeholder="Skriv här..."
                 disabled={isLoading}
                 rows={1}
-                className="w-full resize-none bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground/60 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '44px' }}
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '40px' }}
               />
             </div>
             <Button
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-11 w-11 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary hover:shadow-md transition-all"
+              className="h-10 w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3.5 w-3.5" />
             </Button>
           </form>
         </div>
