@@ -7,24 +7,21 @@ interface VideoLoopProps {
 
 export const VideoLoop = ({ scrollProgress }: VideoLoopProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [fading, setFading] = useState(false);
+  const [loopOverlay, setLoopOverlay] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     const handleTimeUpdate = () => {
-      // Start fading 1.5s before the end
-      if (video.duration && video.currentTime >= video.duration - 1.5) {
-        setFading(true);
-      } else {
-        setFading(false);
+      if (video.duration && video.currentTime >= video.duration - 0.8) {
+        setLoopOverlay(true);
       }
     };
 
     const handleSeeked = () => {
-      // After loop restarts, fade back in
-      setFading(false);
+      // After loop restarts, hold overlay briefly then fade out
+      setTimeout(() => setLoopOverlay(false), 200);
     };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
@@ -37,16 +34,23 @@ export const VideoLoop = ({ scrollProgress }: VideoLoopProps) => {
   }, []);
 
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      loop
-      muted
-      playsInline
-      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out"
-      style={{ opacity: fading ? 0.3 : (1 - scrollProgress * 0.3) }}
-    >
-      <source src={heroVideo} type="video/mp4" />
-    </video>
+    <>
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ opacity: 1 - scrollProgress * 0.3 }}
+      >
+        <source src={heroVideo} type="video/mp4" />
+      </video>
+      {/* Smooth overlay to mask loop transition */}
+      <div
+        className="absolute inset-0 bg-black transition-opacity duration-700 ease-in-out pointer-events-none"
+        style={{ opacity: loopOverlay ? 0.5 : 0 }}
+      />
+    </>
   );
 };
