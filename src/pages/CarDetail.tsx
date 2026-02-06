@@ -197,7 +197,7 @@ const CarDetail = () => {
 
           <div className="bg-card rounded-2xl border border-border p-6 mb-8">
             <h2 className="text-xl font-bold mb-4">Uppskattade driftskostnader</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {[
                 { label: fuelCost.label, value: `${fuelCost.monthly} kr/mån` },
                 { label: 'Försäkring', value: '~800 kr/mån' },
@@ -210,6 +210,9 @@ const CarDetail = () => {
                 </div>
               ))}
             </div>
+            <p className="text-[11px] text-muted-foreground/60 italic">
+              * Uppskattade siffror baserade på genomsnittliga kostnader. Faktisk kostnad varierar beroende på körvanor, försäkringsbolag och region.
+            </p>
           </div>
 
           {car.listing_url && (

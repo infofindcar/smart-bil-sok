@@ -9,6 +9,7 @@ import { HowItWorks } from '@/components/HowItWorks';
 import { WhyFindCar } from '@/components/WhyFindCar';
 import { Testimonials } from '@/components/Testimonials';
 import { FAQ } from '@/components/FAQ';
+import { CtaBanner } from '@/components/CtaBanner';
 import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
@@ -158,6 +159,7 @@ const Index = () => {
       {/* Search */}
       <section
         ref={searchRef}
+        data-search-section
         className="relative py-16 md:py-24 px-4 overflow-hidden"
       >
         <div className="relative max-w-4xl mx-auto">
@@ -193,13 +195,19 @@ const Index = () => {
         />
       )}
 
-      <HowItWorks />
+      <section id="how-it-works">
+        <HowItWorks />
+      </section>
       <SectionDivider variant="bg-to-alt" />
       <WhyFindCar />
       <SectionDivider variant="alt-to-bg" />
       <Testimonials />
       <SectionDivider variant="bg-to-alt" />
-      <FAQ />
+      <section id="faq">
+        <FAQ />
+      </section>
+      <SectionDivider variant="alt-to-bg" />
+      <CtaBanner />
       <Footer />
       <CookieBanner />
     </div>

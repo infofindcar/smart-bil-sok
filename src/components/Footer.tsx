@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Linkedin, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
 
 export const Footer = () => {
@@ -23,17 +23,13 @@ export const Footer = () => {
           </div>
           <div>
             <h4 className="font-semibold text-sm mb-3">Kontakt</h4>
-            <div className="flex gap-3">
-              <a href="#" className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-secondary-foreground/20 transition-colors">
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-secondary-foreground/20 transition-colors">
-                <Linkedin className="h-4 w-4" />
-              </a>
-              <a href="mailto:info@findcar.se" className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-secondary-foreground/20 transition-colors">
-                <Mail className="h-4 w-4" />
-              </a>
-            </div>
+            <a
+              href="mailto:info@findcar.se"
+              className="inline-flex items-center gap-2 text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors"
+            >
+              <Mail className="h-4 w-4" />
+              info@findcar.se
+            </a>
           </div>
         </div>
         <div className="border-t border-secondary-foreground/10 pt-6 text-center">
