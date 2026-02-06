@@ -118,6 +118,21 @@
 .chat-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 2px; }
 .chat-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.3); }
 
+/* Slim global scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+}
+html::-webkit-scrollbar { width: 6px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 3px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
 .touch-target { min-height: 44px; min-width: 44px; }
 
 .hover-lift {
