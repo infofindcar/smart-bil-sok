@@ -14,12 +14,9 @@ import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
-
 import logo from '@/assets/findcar-logo.png';
-
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
-  
   useEffect(() => {
     const handleScroll = () => {
       const vh = window.innerHeight;
@@ -27,19 +24,19 @@ const useScrollProgress = () => {
       const p = Math.min(scrollY / (vh * 0.8), 1);
       setProgress(p);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, {
+      passive: true
+    });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   return progress;
 };
-
-const SectionDivider = ({ variant }: { variant: 'bg-to-alt' | 'alt-to-bg' }) => (
-  <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />
-);
-
+const SectionDivider = ({
+  variant
+}: {
+  variant: 'bg-to-alt' | 'alt-to-bg';
+}) => <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />;
 const STORAGE_KEY = 'findcar-search-state';
-
 const loadSearchState = () => {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -47,7 +44,6 @@ const loadSearchState = () => {
   } catch {}
   return null;
 };
-
 const Index = () => {
   const saved = loadSearchState();
   const [cars, setCars] = useState<Car[]>(saved?.cars || []);
@@ -63,15 +59,18 @@ const Index = () => {
   useEffect(() => {
     if (showResults) {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        cars, carReasons, savedCars, resultMessage, showResults,
+        cars,
+        carReasons,
+        savedCars,
+        resultMessage,
+        showResults
       }));
     }
   }, [cars, carReasons, savedCars, resultMessage, showResults]);
-
   const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
     if (append) {
-      setCars((prev) => [...prev, ...newCars]);
-      setCarReasons((prev) => [...prev, ...reasons]);
+      setCars(prev => [...prev, ...newCars]);
+      setCarReasons(prev => [...prev, ...reasons]);
     } else {
       setCars(newCars);
       setCarReasons(reasons);
@@ -79,25 +78,19 @@ const Index = () => {
     setResultMessage(message);
     setShowResults(true);
   };
-
   const toggleSave = (car: Car) => {
-    setSavedCars((prev) =>
-      prev.find((c) => c.id === car.id) ? prev.filter((c) => c.id !== car.id) : [...prev, car]
-    );
+    setSavedCars(prev => prev.find(c => c.id === car.id) ? prev.filter(c => c.id !== car.id) : [...prev, car]);
   };
-
   const scrollToSearch = () => {
-    searchRef.current?.scrollIntoView({ behavior: 'smooth' });
+    searchRef.current?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
-
   const getReasonForCar = (carId: number) => {
-    return carReasons.find((r) => r.carId === carId)?.reason;
+    return carReasons.find(r => r.carId === carId)?.reason;
   };
-
   const scrollProgress = useScrollProgress();
-
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       <Header />
 
       {/* Hero with video background */}
@@ -105,66 +98,46 @@ const Index = () => {
         <VideoLoop scrollProgress={scrollProgress} />
         <div className="absolute inset-0 bg-black/40" />
         
-        <div
-          className="relative z-10 text-center px-4 space-y-6"
-          style={{
-            opacity: 1 - scrollProgress * 1.5,
-            transform: `translateY(${scrollProgress * -60}px)`,
-            transition: 'transform 0.1s linear',
-          }}
-        >
+        <div className="relative z-10 text-center px-4 space-y-6" style={{
+        opacity: 1 - scrollProgress * 1.5,
+        transform: `translateY(${scrollProgress * -60}px)`,
+        transition: 'transform 0.1s linear'
+      }}>
           <div className="relative">
             <div className="absolute inset-0 bg-black/50 blur-[100px] rounded-full scale-125" />
             <img src={logo} alt="FindCar" className="relative h-56 md:h-80 mx-auto brightness-[1.6] contrast-125 drop-shadow-[0_0_100px_rgba(255,255,255,0.7)] animate-float-subtle" />
           </div>
-          <p className="relative text-white/80 text-lg md:text-xl font-serif italic tracking-wide mt-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-            Din objektiva bilrådgivare
-          </p>
+          
         </div>
 
-        <div
-          className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]"
-          style={{ opacity: 1 - scrollProgress * 3 }}
-        >
+        <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
+        opacity: 1 - scrollProgress * 3
+      }}>
           <Button variant="gradient" size="default" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
           </Button>
         </div>
 
-        <button
-          onClick={scrollToSearch}
-          className="absolute bottom-10 z-10 animate-bounce text-white/50 hover:text-white/80 transition-colors"
-          style={{ opacity: 1 - scrollProgress * 3 }}
-          aria-label="Scrolla ner"
-        >
+        <button onClick={scrollToSearch} className="absolute bottom-10 z-10 animate-bounce text-white/50 hover:text-white/80 transition-colors" style={{
+        opacity: 1 - scrollProgress * 3
+      }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
         </button>
 
         {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-64 z-10 pointer-events-none"
-          style={{
-            background: `linear-gradient(to bottom, transparent, hsl(var(--background)))`,
-            opacity: Math.min(scrollProgress * 2, 1),
-          }}
-        />
+        <div className="absolute bottom-0 left-0 right-0 h-64 z-10 pointer-events-none" style={{
+        background: `linear-gradient(to bottom, transparent, hsl(var(--background)))`,
+        opacity: Math.min(scrollProgress * 2, 1)
+      }} />
       </section>
 
       {/* Bridge transition zone between hero and search */}
-      <div
-        className="relative -mt-8 py-8 pointer-events-none"
-        style={{
-          background: 'linear-gradient(to bottom, hsl(var(--background)), hsl(var(--primary) / 0.04), hsl(var(--background)))',
-        }}
-        aria-hidden="true"
-      />
+      <div className="relative -mt-8 py-8 pointer-events-none" style={{
+      background: 'linear-gradient(to bottom, hsl(var(--background)), hsl(var(--primary) / 0.04), hsl(var(--background)))'
+    }} aria-hidden="true" />
 
       {/* Search */}
-      <section
-        ref={searchRef}
-        data-search-section
-        className="relative py-16 md:py-24 px-4 overflow-hidden"
-      >
+      <section ref={searchRef} data-search-section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div className="relative max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
@@ -184,19 +157,13 @@ const Index = () => {
       </section>
 
       {/* Results — premium reveal */}
-      {showResults && cars.length > 0 && (
-        <ResultsReveal
-          ref={resultsRef}
-          cars={cars}
-          savedCars={savedCars}
-          carReasons={carReasons}
-          resultMessage={resultMessage}
-          onToggleSave={toggleSave}
-          onCompare={() => navigate('/compare', { state: { cars: savedCars } })}
-          onShowMore={() => searchRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          getReasonForCar={getReasonForCar}
-        />
-      )}
+      {showResults && cars.length > 0 && <ResultsReveal ref={resultsRef} cars={cars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+      state: {
+        cars: savedCars
+      }
+    })} onShowMore={() => searchRef.current?.scrollIntoView({
+      behavior: 'smooth'
+    })} getReasonForCar={getReasonForCar} />}
 
       <section id="how-it-works">
         <HowItWorks />
@@ -213,8 +180,6 @@ const Index = () => {
       <CtaBanner />
       <Footer />
       <CookieBanner />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
