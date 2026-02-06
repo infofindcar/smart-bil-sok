@@ -50,9 +50,6 @@ const Index = () => {
     setCars(newCars);
     setResultMessage(message);
     setShowResults(true);
-    setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
   };
 
   const toggleSave = (car: Car) => {
