@@ -1,45 +1,27 @@
 
 
-## Redesign av "Sa fungerar det"-sektionen
+## Osynlig video-loop med crossfade mellan två videoelement
 
-Sektionen ska byggas om for att matcha referensbilden med kort som har bilder, numrerade badges, ikoner och utforligare texter.
+Problemet just nu ar att videon har en synlig "hopp" nar den loopar tillbaka till borjan. En enkel overlay dojer det, men ser artificiellt ut. Den basta losningen ar att anvanda **tva videoeelement** som crossfadar mellan varandra -- sa nar den ena videon narmar sig slutet borjar den andra spela fran borjan och fadar in smidigt ovanpa.
 
-### Vad som andras
+### Hur det fungerar
 
-**Nuvarande design:** Enkel layout med bara ikoner, korta titlar och beskrivningar centrerade utan kort.
-
-**Ny design (fran referensbilden):**
-- Tre kort med vit bakgrund, rundade horn och subtil skugga
-- Varje kort har en stor bild langst upp med rundade horn
-- En numrerad badge (1, 2, 3) i primarkfarg overlappar bildens ovre vanstra horn
-- En ikon under bilden i en rundad ruta
-- Langre, mer beskrivande titlar
-- Utforligare beskrivningstexter
-- Uppdaterad underrubrik: "Att hitta din perfekta bil har aldrig varit enklare. Lat Clutch gora det tunga arbetet."
-
-### Bilder
-
-Eftersom referensbilden visar tre specifika stockfoton (par pa bil vid solnedgang, sportbil pa bergsvag, SUV i skog) kommer jag anvanda Unsplash-bilder med liknande motiv som laddas direkt via URL. Detta ger snygga, royaltyfria bilder utan att behova ladda upp filer.
-
-### Uppdaterad text (fran referensbilden)
-
-1. **Beratta for Clutch vad du vill ha** - "Beskriv din drombil. Budget, livsstil, preferenser -- allt som ar viktigt for dig."
-2. **Clutch analyserar tusentals alternativ** - "Var AI skannar marknaden och jamfor funktioner, priser, recensioner och tillforlitlighet for att hitta de basta matcherna."
-3. **Fa dina personliga rekommendationer** - "Ta emot skraddarsydda rekommendationer med tydliga forklaringar till varfor varje bil passar dina behov."
-
----
+1. Tva identiska `<video>`-element laddas med samma video
+2. Nar den aktiva videon narmar sig slutet (ca 1 sekund kvar) borjar den andra videon spela fran borjan och fadar in
+3. Nar crossfaden ar klar blir den nya videon den aktiva
+4. Processen upprepas -- sa det ser ut som en oandlig, somllos loop
 
 ### Tekniska detaljer
 
-**Fil som andras:** `src/components/HowItWorks.tsx`
+**Fil: `src/components/VideoLoop.tsx`**
 
-**Ny komponentstruktur:**
-- Kort wrappade i `bg-card rounded-2xl border shadow-sm overflow-hidden`
-- Bildsektion: `aspect-[16/10]` med `object-cover` och `rounded-t-2xl`
-- Numrerad badge: Absolut positionerad cirkel med `bg-primary text-white` overst till vanster pa bilden
-- Ikon-ruta: `w-12 h-12 rounded-xl bg-accent` under bilden
-- Textsektion: `p-6` med titel och beskrivning vansterjusterad
-- Ikoner: `MessageSquare` (steg 1), `Brain` (steg 2), `ListChecks` (steg 3)
+- Ersatt nuvarande enkel-video + overlay-losning med en dual-video crossfade
+- Tva `<video>`-element renderas, varav bara en ar synlig at gangen
+- `timeupdate`-lyssnare detekterar nar videon narmar sig slutet
+- Den andra videon startar fran `currentTime = 0` och fadar in med CSS `transition-opacity`
+- Nar crossfaden ar klar byts rollerna (aktiv/inaktiv)
+- Scroll-progress-opacity behalls pa bada videoelement
+- Overlayen med `bg-black` tas bort helt
 
-**Inga andra filer paverkas** -- enbart `HowItWorks.tsx` behover skrivas om.
+Resultatet blir en loop som ser helt somllos ut utan nagot synligt hopp eller fading-effekt.
 
