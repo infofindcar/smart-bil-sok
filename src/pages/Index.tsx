@@ -138,10 +138,20 @@ const Index = () => {
 
       {/* Search */}
       <section ref={searchRef} data-search-section className="relative py-16 md:py-24 px-4 overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
+          <div className="absolute -top-20 -right-20 w-[300px] h-[300px] rounded-full bg-secondary/[0.06] blur-[80px]" />
+          <div className="absolute bottom-0 -left-20 w-[250px] h-[250px] rounded-full bg-primary/[0.05] blur-[80px]" />
+        </div>
+
         <div className="relative max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
-              <p className="text-xs font-medium uppercase tracking-widest text-secondary/60 mb-3">Personlig bilrådgivning</p>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/[0.08] border border-secondary/[0.12] mb-5">
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                <p className="text-xs font-medium uppercase tracking-widest text-secondary/80">Personlig bilrådgivning</p>
+              </div>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                 Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
