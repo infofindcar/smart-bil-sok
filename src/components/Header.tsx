@@ -71,11 +71,7 @@ export const Header = () => {
             Vanliga frågor
           </a>
           <a
-            href="#contact"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            href="mailto:kontakt@findcar.se"
             className={navLinkClass}
           >
             Kontakta oss
@@ -122,12 +118,7 @@ export const Header = () => {
               Vanliga frågor
             </a>
             <a
-              href="#contact"
-              onClick={(e) => {
-                e.preventDefault();
-                setMobileOpen(false);
-                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-              }}
+              href="mailto:kontakt@findcar.se"
               className="block text-sm text-foreground/70 hover:text-foreground transition-colors py-2"
             >
               Kontakta oss
