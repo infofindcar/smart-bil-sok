@@ -112,6 +112,27 @@ const Index = () => {
               className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[1.7] contrast-125 drop-shadow-[0_0_120px_rgba(255,255,255,0.8)] animate-float-subtle" 
             />
           </div>
+
+          {/* Swedish license plate */}
+          <div className="mt-4 sm:mt-6 animate-[fade-in_1s_ease-out_0.3s_both]">
+            <div className="inline-flex items-stretch rounded-md border-2 border-foreground/80 shadow-[0_4px_20px_rgba(0,0,0,0.4)] overflow-hidden scale-90 sm:scale-100 md:scale-110">
+              {/* EU blue strip */}
+              <div className="flex flex-col items-center justify-end bg-[#003399] px-2 py-1.5 gap-0.5">
+                <div className="flex flex-wrap justify-center gap-[2px]">
+                  {[...Array(12)].map((_, i) => (
+                    <span key={i} className="text-[5px] text-yellow-400 leading-none">★</span>
+                  ))}
+                </div>
+                <span className="text-white font-bold text-xs leading-none tracking-wide">S</span>
+              </div>
+              {/* Plate text */}
+              <div className="bg-white px-4 sm:px-6 py-2 sm:py-2.5 flex items-center">
+                <span className="font-mono font-bold text-xl sm:text-2xl md:text-3xl tracking-[0.25em] text-black leading-none">
+                  FINDCAR
+                </span>
+              </div>
+            </div>
+          </div>
           
         </div>
 
