@@ -104,8 +104,13 @@ const Index = () => {
         transition: 'transform 0.1s linear'
       }}>
           <div className="relative">
-            <div className="absolute inset-0 bg-black/50 blur-[100px] rounded-full scale-125" />
-            <img src={logo} alt="FindCar" className="relative h-56 md:h-80 mx-auto brightness-[1.6] contrast-125 drop-shadow-[0_0_100px_rgba(255,255,255,0.7)] animate-float-subtle" />
+            <div className="absolute inset-0 bg-white/10 blur-[120px] rounded-full scale-150" />
+            <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-110" />
+            <img 
+              src={logo} 
+              alt="FindCar" 
+              className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[1.7] contrast-125 drop-shadow-[0_0_120px_rgba(255,255,255,0.8)] animate-float-subtle" 
+            />
           </div>
           
         </div>
