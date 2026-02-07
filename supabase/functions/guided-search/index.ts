@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // --- CORS: restrict to known origins ---
 const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/.*\.lovable\.app$/,
-  /^https:\/\/smart-bil-sok\.lovable\.app$/,
+  /^https:\/\/.*\.lovableproject\.com$/,
   /^http:\/\/localhost(:\d+)?$/,
 ];
 
