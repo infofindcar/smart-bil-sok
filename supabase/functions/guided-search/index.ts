@@ -378,7 +378,7 @@ serve(async (req) => {
 
         const { data, error } = await query
           .order("price", { ascending: true })
-          .limit(3);
+          .limit(9);
 
         if (error) {
           console.error("Query error at relax level", relaxLevel);
