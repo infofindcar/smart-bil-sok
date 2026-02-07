@@ -8,7 +8,7 @@ export const Footer = () => {
   return (
     <footer className="bg-secondary text-secondary-foreground">
       {/* Main footer content */}
-      <div className="max-w-screen-2xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-28 pt-20 pb-12">
+      <div className="w-full px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-20 pb-12">
         {/* Top row: large logo + navigation columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
           {/* Logo & tagline — takes more space */}
