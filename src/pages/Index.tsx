@@ -166,7 +166,10 @@ const Index = () => {
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200}>
-            <GuidedSearch onResults={handleResults} />
+            <GuidedSearch
+              onResults={handleResults}
+              onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            />
           </ScrollReveal>
         </div>
       </section>
