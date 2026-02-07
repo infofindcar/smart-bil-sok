@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import step1CarImage from '@/assets/step1-car.jpg';
 import step2CarImage from '@/assets/step2-car.png';
 import step3CarImage from '@/assets/step3-car.png';
+import findcarPlate from '@/assets/findcar-plate.png';
 
 interface Step {
   icon: LucideIcon;
@@ -60,13 +61,26 @@ export const HowItWorks = () => {
               <div className="bg-card rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                 {/* Image with number badge */}
                 <div className="relative">
-                  <div className="aspect-[16/10] overflow-hidden">
+                  <div className="aspect-[16/10] overflow-hidden relative">
                     <img
                       src={step.image}
                       alt={step.title}
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
                     />
+                    {step.number === 1 && (
+                      <img
+                        src={findcarPlate}
+                        alt="FINDCAR registreringsskylt"
+                        className="absolute pointer-events-none"
+                        style={{
+                          width: '18%',
+                          bottom: '11%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                        }}
+                      />
+                    )}
                   </div>
                   <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md transition-transform duration-300 group-hover:scale-110">
                     {step.number}
