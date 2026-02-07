@@ -49,7 +49,6 @@ export const Header = () => {
           />
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           <a
             href="#how-it-works"
@@ -70,6 +69,16 @@ export const Header = () => {
             className={navLinkClass}
           >
             Vanliga frågor
+          </a>
+          <a
+            href="#contact"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className={navLinkClass}
+          >
+            Kontakta oss
           </a>
           <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
@@ -111,6 +120,17 @@ export const Header = () => {
               className="block text-sm text-foreground/70 hover:text-foreground transition-colors py-2"
             >
               Vanliga frågor
+            </a>
+            <a
+              href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="block text-sm text-foreground/70 hover:text-foreground transition-colors py-2"
+            >
+              Kontakta oss
             </a>
             <Button size="sm" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl">
               Hitta din bil
