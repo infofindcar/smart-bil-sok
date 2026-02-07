@@ -172,13 +172,19 @@ const Index = () => {
       </section>
 
       {/* Results — premium reveal */}
-      {showResults && cars.length > 0 && <ResultsReveal ref={resultsRef} cars={cars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
-      state: {
-        cars: savedCars
-      }
-    })} onShowMore={() => searchRef.current?.scrollIntoView({
-      behavior: 'smooth'
-    })} getReasonForCar={getReasonForCar} />}
+      {showResults && cars.length > 0 && (() => {
+        const topCars = cars.slice(0, 3);
+        const similarCars = cars.slice(3, 9);
+        return (
+          <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+            state: {
+              cars: savedCars
+            }
+          })} onShowMore={() => searchRef.current?.scrollIntoView({
+            behavior: 'smooth'
+          })} getReasonForCar={getReasonForCar} />
+        );
+      })()}
 
       <section id="how-it-works">
         <HowItWorks />

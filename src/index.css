@@ -290,3 +290,23 @@ html::-webkit-scrollbar-thumb:hover {
 .animate-float-subtle {
   animation: gentle-float 5s ease-in-out infinite;
 }
+
+/* Horizontal scroll for similar cars */
+.similar-cars-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.similar-cars-scroll > * {
+  scroll-snap-align: start;
+}
+.similar-cars-scroll::-webkit-scrollbar { height: 4px; }
+.similar-cars-scroll::-webkit-scrollbar-track { background: transparent; }
+.similar-cars-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 2px;
+}
+.similar-cars-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
