@@ -36,10 +36,10 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
     useEffect(() => {
       if (hasAnimated || cars.length === 0) return;
 
-      // Scroll to results section
+      // Scroll to results section — use 'center' to make it impossible to miss
       const scrollTimer = setTimeout(() => {
-        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
 
       // Show header after scroll settles
       const headerTimer = setTimeout(() => {
@@ -73,6 +73,12 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
 
     return (
       <section ref={ref} className="relative px-4 pb-20">
+        {/* Decorative background for results */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-primary/[0.04] blur-[120px]" />
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-secondary/[0.05] blur-[100px]" />
+        </div>
+
         {/* Scroll-down CTA banner — shows in the gap before results */}
         <div
           ref={sectionRef}
@@ -86,7 +92,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
             {/* Glowing badge */}
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-150 animate-pulse" />
-              <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-border/50 shadow-lg">
+              <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-primary/20 shadow-lg shadow-primary/[0.08]">
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
                 <span className="text-sm font-semibold text-foreground tracking-wide">
                   {cars.length} perfekta matchningar hittade
@@ -98,18 +104,18 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               {resultMessage}
             </p>
 
-            {/* Animated scroll arrow */}
+            {/* Animated scroll arrow — larger + more prominent */}
             {!allRevealed && (
-              <div className="mt-2 scroll-arrow-bounce">
-                <div className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/20 flex items-center justify-center">
-                  <ArrowDown className="h-4 w-4 text-secondary" />
+              <div className="mt-4 scroll-arrow-bounce">
+                <div className="w-12 h-12 rounded-full bg-secondary/10 border border-secondary/20 flex items-center justify-center shadow-md shadow-secondary/[0.08]">
+                  <ArrowDown className="h-5 w-5 text-secondary" />
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto">
+        <div className="relative max-w-6xl mx-auto">
           {savedCars.length >= 2 && (
             <div
               className={`flex justify-center mb-6 transition-all duration-500 ${

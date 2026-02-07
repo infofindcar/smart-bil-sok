@@ -224,11 +224,11 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-border/40 bg-card backdrop-blur-xl">
+      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-secondary/[0.15] bg-card backdrop-blur-xl shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)]">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3">
+        <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3 bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
           <div className="relative">
-            <div className="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
               <MessageCircle className="h-4.5 w-4.5 text-secondary" />
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
@@ -250,14 +250,14 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
-                  <MessageCircle className="h-3 w-3 text-muted-foreground" />
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
+                  <MessageCircle className="h-3 w-3 text-secondary" />
                 </div>
               )}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-secondary text-secondary-foreground rounded-br-sm'
+                    ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
                     : 'bg-muted/50 text-foreground rounded-bl-sm'
                 }`}
               >
@@ -272,8 +272,8 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {isLoading && phase !== 'searching' && (
             <div className="flex justify-start gap-2 animate-fade-in">
-              <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
-                <MessageCircle className="h-3 w-3 text-muted-foreground" />
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
+                <MessageCircle className="h-3 w-3 text-secondary" />
               </div>
               <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-3">
                 <div className="flex gap-1">
@@ -294,7 +294,7 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-border/40 bg-background hover:bg-muted/60 hover:border-border text-foreground/80 transition-all duration-150"
+                  className="text-xs px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-foreground/80 transition-all duration-150 shadow-sm"
                 >
                   {s}
                 </button>
