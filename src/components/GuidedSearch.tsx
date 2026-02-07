@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, MessageCircle, PenLine } from 'lucide-react';
+import { Send, RotateCcw, MessageCircle, PenLine, ChevronDown } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -37,6 +37,7 @@ type ChatMessage = {
 
 interface GuidedSearchProps {
   onResults: (cars: Car[], message: string, carReasons: CarReason[]) => void;
+  onScrollToResults?: () => void;
 }
 
 const GREETING: ChatMessage = {
@@ -57,7 +58,7 @@ const loadChatState = (): { messages: ChatMessage[]; phase: Phase } | null => {
   return null;
 };
 
-export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
+export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps) => {
   const savedChat = loadChatState();
   const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETING]);
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
@@ -310,9 +311,20 @@ export const GuidedSearch = ({ onResults }: GuidedSearchProps) => {
           </div>
         )}
 
-        {/* Reset button */}
+        {/* Results CTA + Reset */}
         {phase === 'results' && !isLoading && (
-          <div className="px-4 md:px-5 pb-3">
+          <div className="px-4 md:px-5 pb-3 space-y-2">
+            {onScrollToResults && (
+              <Button
+                variant="gradient"
+                size="default"
+                onClick={onScrollToResults}
+                className="w-full rounded-xl text-sm font-semibold"
+              >
+                <ChevronDown className="h-4 w-4 mr-2" />
+                Visa mina matchningar
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full rounded-xl text-xs">
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               Ny sökning
