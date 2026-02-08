@@ -5,6 +5,7 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/.*\.lovable\.app$/,
   /^https:\/\/.*\.lovableproject\.com$/,
   /^http:\/\/localhost(:\d+)?$/,
+  /^https:\/\/(www\.)?findcar\.se$/,
 ];
 
 function getAllowedOrigin(req: Request): string {
