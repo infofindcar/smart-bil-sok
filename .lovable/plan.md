@@ -1,29 +1,54 @@
 
 
-## Uppdatera "Vanliga fragor" (FAQ) med nytt innehall
+## Fix: Lagg till findcar.se i CORS-whitelist for alla edge-funktioner
 
-### Vad som andras
+### Problemet
 
-FAQ-sektionen i `src/components/FAQ.tsx` uppdateras med 8 nya, mer premium-formulerade fragor och svar som bygger fortroende och tydligare kommunicerar FindCars vardeforslag.
+Nar en besokare oppnar sidan via `findcar.se` eller `www.findcar.se` skickar webblasaren `origin: https://findcar.se`. Edge-funktionerna har en strict CORS-whitelist som bara tillater `*.lovable.app`, `*.lovableproject.com` och `localhost`. Darfor blockerar webblasaren alla svar fran edge-funktionerna, vilket gor att losenordsverifiering, sokning och allt annat som anropar backend slutar fungera.
 
-### Nytt innehall
+### Losning
 
-De nuvarande 6 fragorna ersatts med 8 nya:
+Lagga till tva nya monster i `ALLOWED_ORIGIN_PATTERNS` i alla tre edge-funktioner:
 
-1. **Vad ar FindCar egentligen?** -- Positionerar FindCar som objektiv radgivare
-2. **Hur hittar FindCar ratt bil for mig?** -- Forklarar matchningsprocessen pa ett vardagligt satt
-3. **Ar FindCar verkligen objektivt?** -- Viktig trust-fraga
-4. **Kostar det nagot att anvanda FindCar?** -- Kortare och tydligare an tidigare
-5. **Var kommer bilarna ifran?** -- Mer premium formulerat
-6. **Vad hander nar jag hittat en bil som passar?** -- Forklarar nasta steg
-7. **Maste jag kopa bilen via FindCar?** -- Tar bort kopppress
-8. **Ar detta bara for erfarna bilkopare?** -- Inkluderande fraga
+```text
+/^https:\/\/(www\.)?findcar\.se$/
+```
 
-### Tekniska detaljer
+Detta tillater bade `https://findcar.se` och `https://www.findcar.se`.
 
-**Fil: `src/components/FAQ.tsx`**
+### Filer som andras
 
-- Ersatt `faqs`-arrayen med de 8 nya fragorna och svaren
-- Ingen strukturell andring av komponenten -- samma Accordion-layout, samma styling
-- Inga nya beroenden eller andra filandringar behovs
+**1. `supabase/functions/verify-password/index.ts`**
+- Lagga till `findcar.se`-monstret i `ALLOWED_ORIGIN_PATTERNS`-arrayen (rad 4-8)
+
+**2. `supabase/functions/verify-admin-password/index.ts`**
+- Samma andring i `ALLOWED_ORIGIN_PATTERNS`-arrayen (rad 4-8)
+
+**3. `supabase/functions/guided-search/index.ts`**
+- Samma andring i `ALLOWED_ORIGIN_PATTERNS`-arrayen (rad 5-9)
+
+### Exempel pa andringen
+
+Fran:
+```typescript
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*\.lovableproject\.com$/,
+  /^http:\/\/localhost(:\d+)?$/,
+];
+```
+
+Till:
+```typescript
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*\.lovableproject\.com$/,
+  /^http:\/\/localhost(:\d+)?$/,
+  /^https:\/\/(www\.)?findcar\.se$/,
+];
+```
+
+### Efter implementering
+
+Nar andringarna ar gjorda och edge-funktionerna ar deployade kommer `findcar.se` och `www.findcar.se` fungera fullt ut -- inklusive losenordsinloggning, bilsokning och admin-panelen.
 
