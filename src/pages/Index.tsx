@@ -1,17 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { VideoLoop } from '@/components/VideoLoop';
-import { ResultsReveal } from '@/components/ResultsReveal';
-import { HowItWorks } from '@/components/HowItWorks';
-import { WhyFindCar } from '@/components/WhyFindCar';
-import { Testimonials } from '@/components/Testimonials';
-import { FAQ } from '@/components/FAQ';
-import { CtaBanner } from '@/components/CtaBanner';
-import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollReveal } from '@/components/ScrollReveal';
+
+// Lazy-load below-fold sections
+const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then(m => ({ default: m.ResultsReveal })));
+const HowItWorks = lazy(() => import('@/components/HowItWorks').then(m => ({ default: m.HowItWorks })));
+const WhyFindCar = lazy(() => import('@/components/WhyFindCar').then(m => ({ default: m.WhyFindCar })));
+const Testimonials = lazy(() => import('@/components/Testimonials').then(m => ({ default: m.Testimonials })));
+const FAQ = lazy(() => import('@/components/FAQ').then(m => ({ default: m.FAQ })));
+const CtaBanner = lazy(() => import('@/components/CtaBanner').then(m => ({ default: m.CtaBanner })));
+const CookieBanner = lazy(() => import('@/components/CookieBanner').then(m => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
@@ -189,19 +191,21 @@ const Index = () => {
         );
       })()}
 
-      <section id="how-it-works">
-        <HowItWorks />
-      </section>
-      <SectionDivider variant="bg-to-alt" />
-      <WhyFindCar />
-      <SectionDivider variant="alt-to-bg" />
-      <Testimonials />
-      <SectionDivider variant="bg-to-alt" />
-      <section id="faq">
-        <FAQ />
-      </section>
-      <SectionDivider variant="alt-to-bg" />
-      <CtaBanner />
+      <Suspense fallback={null}>
+        <section id="how-it-works">
+          <HowItWorks />
+        </section>
+        <SectionDivider variant="bg-to-alt" />
+        <WhyFindCar />
+        <SectionDivider variant="alt-to-bg" />
+        <Testimonials />
+        <SectionDivider variant="bg-to-alt" />
+        <section id="faq">
+          <FAQ />
+        </section>
+        <SectionDivider variant="alt-to-bg" />
+        <CtaBanner />
+      </Suspense>
       <Footer />
       <CookieBanner />
     </div>;
