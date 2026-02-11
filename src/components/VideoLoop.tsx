@@ -33,9 +33,8 @@ export const VideoLoop = ({ scrollProgress }: VideoLoopProps) => {
       muted
       loop
       playsInline
-      preload="metadata"
-      poster=""
-      className="absolute inset-0 w-full h-full object-cover"
+      preload="none"
+      className="absolute inset-0 w-full h-full object-cover bg-foreground/90"
       style={{ opacity: 1 - scrollProgress * 0.3 }}
     >
       <source src="/hero-video.mp4" type="video/mp4" />
