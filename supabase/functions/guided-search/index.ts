@@ -316,79 +316,74 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
-      // Progressive relaxation search
+      // Progressive relaxation search — run levels 0 and 1 in parallel for speed
       let cars: any[] = [];
       let relaxLevel = 0;
 
-      for (relaxLevel = 0; relaxLevel <= 3; relaxLevel++) {
+      const buildQuery = (level: number) => {
         let query = supabase.from("cars").select("*");
 
-        // Price filter (widened at higher relax levels)
-        const priceMult = [1, 1.3, 1.6, 10][relaxLevel];
-        const priceMinMult = [1, 0.7, 0.5, 0][relaxLevel];
+        const priceMult = [1, 1.3, 1.6, 10][level];
+        const priceMinMult = [1, 0.7, 0.5, 0][level];
         query = query
           .gte("price", Math.floor(minPrice * priceMinMult))
           .lte("price", Math.ceil(maxPrice * priceMult));
 
-        // City filter (dropped at level 1+)
-        if (sanitizedCity && relaxLevel < 1) {
+        if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
         }
-
-        // Make filter (dropped at level 2+)
-        if (sanitizedMake && relaxLevel < 2) {
+        if (sanitizedMake && level < 2) {
           query = query.ilike("make", `%${sanitizedMake}%`);
         }
-
-        // Fuel filter (dropped at level 2+)
-        if (validFuels.length > 0 && relaxLevel < 2) {
+        if (validFuels.length > 0 && level < 2) {
           const fuelFilters = validFuels
             .map((f: string) => fuelPatterns[f])
             .filter(Boolean)
             .map((p: string) => `fuel_type.ilike.${p}`)
             .join(",");
-          if (fuelFilters) {
-            query = query.or(fuelFilters);
-          }
+          if (fuelFilters) query = query.or(fuelFilters);
         }
-
-        // Body type filter (dropped at level 1+)
-        if (validBodyTypes.length > 0 && relaxLevel < 1) {
+        if (validBodyTypes.length > 0 && level < 1) {
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
             .map((p: string) => `body_type.ilike.${p}`)
             .join(",");
-          if (bodyFilters) {
-            query = query.or(bodyFilters);
-          }
+          if (bodyFilters) query = query.or(bodyFilters);
         }
-
-        // Color filter (dropped at level 1+)
-        if (sanitizedColor && relaxLevel < 1) {
+        if (sanitizedColor && level < 1) {
           query = query.ilike("color", `%${sanitizedColor}%`);
         }
+        if (yearMin && level < 2) query = query.gte("year", yearMin);
+        if (yearMax && level < 2) query = query.lte("year", yearMax);
 
-        // Year filter (dropped at level 2+)
-        if (yearMin && relaxLevel < 2) {
-          query = query.gte("year", yearMin);
-        }
-        if (yearMax && relaxLevel < 2) {
-          query = query.lte("year", yearMax);
-        }
+        return query.order("price", { ascending: true }).limit(9);
+      };
 
-        const { data, error } = await query
-          .order("price", { ascending: true })
-          .limit(9);
+      // Fire levels 0 and 1 in parallel
+      const [res0, res1] = await Promise.all([
+        buildQuery(0),
+        buildQuery(1),
+      ]);
 
-        if (error) {
-          console.error("Query error at relax level", relaxLevel);
-          continue;
-        }
-
-        if (data && data.length > 0) {
-          cars = data;
-          break;
+      if (res0.data && res0.data.length > 0) {
+        cars = res0.data;
+        relaxLevel = 0;
+      } else if (res1.data && res1.data.length > 0) {
+        cars = res1.data;
+        relaxLevel = 1;
+      } else {
+        // Try levels 2 and 3 in parallel
+        const [res2, res3] = await Promise.all([
+          buildQuery(2),
+          buildQuery(3),
+        ]);
+        if (res2.data && res2.data.length > 0) {
+          cars = res2.data;
+          relaxLevel = 2;
+        } else if (res3.data && res3.data.length > 0) {
+          cars = res3.data;
+          relaxLevel = 3;
         }
       }
 
