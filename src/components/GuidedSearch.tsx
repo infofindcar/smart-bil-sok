@@ -149,10 +149,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
         addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
-        setPhase('searching');
+      setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
-
-        await new Promise((r) => setTimeout(r, 2000));
 
         setPhase('results');
         setIsLoading(false);
