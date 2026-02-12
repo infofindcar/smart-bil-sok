@@ -97,7 +97,7 @@ const Index = () => {
       <Header />
 
       {/* Hero with video background */}
-      <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden bg-[#0a0a0a] -mb-px">
+      <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden bg-background -mb-px">
         <picture>
           <source media="(min-width: 1024px)" srcSet={heroDesktop} />
           <img
@@ -127,16 +127,14 @@ const Index = () => {
         </button>
 
         {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-64 z-10 pointer-events-none" style={{
-        background: `linear-gradient(to bottom, transparent, hsl(var(--background)))`,
-        opacity: Math.min(scrollProgress * 2, 1)
+        <div className="absolute bottom-0 left-0 right-0 h-72 z-10 pointer-events-none" style={{
+        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.5) 60%, hsl(var(--background)) 100%)`,
+        opacity: Math.max(0.3, Math.min(scrollProgress * 2, 1))
       }} />
       </section>
 
       {/* Bridge transition zone between hero and search */}
-      <div className="relative -mt-8 py-8 pointer-events-none" style={{
-      background: 'linear-gradient(to bottom, hsl(var(--background)), hsl(var(--primary) / 0.04), hsl(var(--background)))'
-    }} aria-hidden="true" />
+      {/* Seamless transition handled by the gradient overlay inside the hero */}
 
       {/* Search */}
       <section ref={searchRef} data-search-section className="relative py-16 md:py-24 px-4 overflow-hidden">
