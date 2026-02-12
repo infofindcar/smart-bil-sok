@@ -96,15 +96,15 @@ const Index = () => {
       <Header />
 
       {/* Hero with video background */}
-      <section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden bg-black">
         <img
           src={heroImage}
           alt="En utvald bil bland många — hitta din perfekta bil"
           loading="eager"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain object-top"
           style={{ opacity: 1 - scrollProgress * 0.3 }}
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/20" />
         
         {/* Logo and tagline are part of the hero image */}
 
