@@ -119,10 +119,10 @@ const Index = () => {
               alt="FindCar" 
               className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[2] contrast-150 drop-shadow-[0_0_80px_rgba(255,255,255,1)] saturate-150" 
             />
+            <p className="relative text-white/70 text-xs sm:text-sm md:text-base font-serif tracking-widest mt-2 drop-shadow-md">
+              Din objektiva bilrådgivare
+            </p>
           </div>
-          <p className="text-white/80 text-lg sm:text-xl md:text-2xl font-serif tracking-wide drop-shadow-lg">
-            Findcar – Din objektiva bilrådgivare
-          </p>
         </div>
 
         <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
