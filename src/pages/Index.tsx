@@ -96,7 +96,7 @@ const Index = () => {
       <Header />
 
       {/* Hero with video background */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
         <img
           src={heroImage}
           alt="En utvald bil bland många — hitta din perfekta bil"
@@ -106,7 +106,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-black/40" />
         
-        <div className="relative z-10 text-center px-4 space-y-6" style={{
+        <div className="relative z-10 text-center px-4 space-y-4 mt-24 sm:mt-32 md:mt-36" style={{
         opacity: 1 - scrollProgress * 1.5,
         transform: `translateY(${scrollProgress * -60}px)`,
         transition: 'transform 0.1s linear'
@@ -120,7 +120,9 @@ const Index = () => {
               className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[1.7] contrast-125 drop-shadow-[0_0_120px_rgba(255,255,255,0.8)] animate-float-subtle" 
             />
           </div>
-          
+          <p className="text-white/80 text-lg sm:text-xl md:text-2xl font-serif tracking-wide drop-shadow-lg">
+            Findcar – Din objektiva bilrådgivare
+          </p>
         </div>
 
         <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
