@@ -1,54 +1,48 @@
 
 
-## Fix: Lagg till findcar.se i CORS-whitelist for alla edge-funktioner
+# Byt hero-video till AI-genererad hero-bild
 
-### Problemet
+## Koncept
+En stilren, cinematic bild: en bil i en tydlig, iögonfallande färg (t.ex. djupblå eller röd) står i centrum, skarpt belyst. Runtomkring syns andra bilar som är urblekta, gråtonade eller suddiga — visuellt budskap: **"Den perfekta bilen, utvald bland alla andra."**
 
-Nar en besokare oppnar sidan via `findcar.se` eller `www.findcar.se` skickar webblasaren `origin: https://findcar.se`. Edge-funktionerna har en strict CORS-whitelist som bara tillater `*.lovable.app`, `*.lovableproject.com` och `localhost`. Darfor blockerar webblasaren alla svar fran edge-funktionerna, vilket gor att losenordsverifiering, sokning och allt annat som anropar backend slutar fungera.
+Mörk, premium-känsla som matchar FindCars befintliga tema.
 
-### Losning
+## Steg
 
-Lagga till tva nya monster i `ALLOWED_ORIGIN_PATTERNS` i alla tre edge-funktioner:
+### 1. Generera hero-bilden med AI
+- Använda Gemini bildgenerering via edge function
+- Prompt: En elegant modern bil i stark färg (djupblå/röd) i centrum av bilden, skarpt belyst, omgiven av flera andra bilar som är gråtonade, suddiga och i bakgrunden. Cinematic, mörk bakgrund, premium bilförsäljningskänsla.
+- Spara bilden i projektet (t.ex. `src/assets/hero-image.png` eller ladda upp till Supabase Storage)
 
+### 2. Ersätt VideoLoop med en statisk hero-bild
+- Ta bort `VideoLoop`-komponenten från hero-sektionen i `src/pages/Index.tsx`
+- Ersätt med en `<img>`-tag som laddar den genererade bilden
+- Behåll samma scroll-parallax-effekt (opacity minskar vid scroll)
+- Lägg till `loading="eager"` för att prioritera hero-bilden
+
+### 3. Rensa upp
+- VideoLoop-komponenten kan tas bort eller behållas för framtida bruk
+- Hero-videon (`public/hero-video.mp4`) kan tas bort för att minska bundle-storlek (stor fil)
+
+## Tekniska detaljer
+
+**Filer som ändras:**
+- `src/pages/Index.tsx` — Byt ut `<VideoLoop>` mot `<img>` med den nya hero-bilden
+- `supabase/functions/generate-hero/index.ts` — Ny edge function för att generera bilden (engångsanvändning)
+- Alternativt: generera bilden direkt och spara som asset
+
+**Filer som kan tas bort:**
+- `src/components/VideoLoop.tsx` (valfritt)
+- `public/hero-video.mp4` (rekommenderas — sparar bandbredd)
+
+**Bildformat:** WebP eller PNG, optimerad storlek (max ~500 KB för snabb laddning)
+
+**Parallax-effekt behålls:**
 ```text
-/^https:\/\/(www\.)?findcar\.se$/
+<img>  med style={{ opacity: 1 - scrollProgress * 0.3 }}
 ```
 
-Detta tillater bade `https://findcar.se` och `https://www.findcar.se`.
-
-### Filer som andras
-
-**1. `supabase/functions/verify-password/index.ts`**
-- Lagga till `findcar.se`-monstret i `ALLOWED_ORIGIN_PATTERNS`-arrayen (rad 4-8)
-
-**2. `supabase/functions/verify-admin-password/index.ts`**
-- Samma andring i `ALLOWED_ORIGIN_PATTERNS`-arrayen (rad 4-8)
-
-**3. `supabase/functions/guided-search/index.ts`**
-- Samma andring i `ALLOWED_ORIGIN_PATTERNS`-arrayen (rad 5-9)
-
-### Exempel pa andringen
-
-Fran:
-```typescript
-const ALLOWED_ORIGIN_PATTERNS = [
-  /^https:\/\/.*\.lovable\.app$/,
-  /^https:\/\/.*\.lovableproject\.com$/,
-  /^http:\/\/localhost(:\d+)?$/,
-];
-```
-
-Till:
-```typescript
-const ALLOWED_ORIGIN_PATTERNS = [
-  /^https:\/\/.*\.lovable\.app$/,
-  /^https:\/\/.*\.lovableproject\.com$/,
-  /^http:\/\/localhost(:\d+)?$/,
-  /^https:\/\/(www\.)?findcar\.se$/,
-];
-```
-
-### Efter implementering
-
-Nar andringarna ar gjorda och edge-funktionerna ar deployade kommer `findcar.se` och `www.findcar.se` fungera fullt ut -- inklusive losenordsinloggning, bilsokning och admin-panelen.
-
+## Fördelar
+- Mycket snabbare laddningstid (bild vs video)
+- Starkare visuellt budskap som matchar FindCars värdeförslag
+- Fungerar bättre på mobil och svaga nätverk
