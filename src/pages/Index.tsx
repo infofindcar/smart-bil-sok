@@ -106,24 +106,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-black/40" />
         
-        <div className="relative z-10 text-center px-4 mt-16 sm:mt-20 md:mt-24 flex flex-col items-center" style={{
-        opacity: 1 - scrollProgress * 1.5,
-        transform: `translateY(${scrollProgress * -60}px)`,
-        transition: 'transform 0.1s linear'
-      }}>
-          <div className="relative inline-block animate-float-subtle">
-            <div className="absolute inset-0 bg-white/15 blur-[100px] rounded-full scale-150" />
-            <div className="absolute inset-0 bg-primary/25 blur-[60px] rounded-full scale-125" />
-            <img 
-              src={logo} 
-              alt="FindCar" 
-              className="relative w-56 sm:w-64 md:w-80 lg:w-96 mx-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.6)] brightness-[1.8] contrast-125" 
-            />
-          </div>
-          <p className="relative text-white/80 text-sm sm:text-base md:text-lg font-serif tracking-[0.2em] mt-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] animate-float-subtle" style={{ animationDelay: '0.5s' }}>
-            Din objektiva bilrådgivare
-          </p>
-        </div>
+        {/* Logo and tagline are part of the hero image */}
 
         <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
         opacity: 1 - scrollProgress * 3
