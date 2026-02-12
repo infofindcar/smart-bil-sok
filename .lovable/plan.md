@@ -1,50 +1,25 @@
 
 
-## Responsiva hero-bilder for desktop, surfplatta och mobil
+## Fixa hero-bilden pa mobil
 
-### Vad vi gor
-Implementerar tre separata hero-bilder som automatiskt visas baserat pa skarmstorlek med HTML `<picture>`-elementet.
+### Problemet
+Mobilskarmens format (ca 9:19, hogt och smalt) gor det svart att skapa en bild som ser bra ut -- bilden blir antingen for inzoomad eller felcentrerad med `object-cover`.
 
-### Bilder
-- **Desktop** (min-width: 1024px): `Adobe_Express_-_file.png`
-- **Surfplatta** (min-width: 640px): `Din_objektiva_bilrådgivare_5.png`
-- **Mobil** (default): `Din_objektiva_bilrådgivare_3.png`
+### Losning
+Istallet for att forsoka skapa en perfekt mobil-bild, anpassar vi hur den befintliga bilden visas pa mobil med CSS-justeringar:
+
+1. **Anvand surfplatte-bilden aven for mobil** -- den har ett hogre format som passar battre an desktop-bilden
+2. **Justera `object-position`** sa att loggan och bilen centreras korrekt pa smala skarmar
+3. **Minska hero-sektionens hojd pa mobil** fran `min-h-screen` till `min-h-[85vh]` sa att bilden inte stracks ut lika mycket
+4. **Lagg till en subtil gradient-overlay** langst ned for att mjuka upp overgangen
 
 ### Tekniska detaljer
 
-**Steg 1: Kopiera bilderna till projektet**
-- `user-uploads://Adobe_Express_-_file.png` -> `src/assets/hero-desktop.png`
-- `user-uploads://Din_objektiva_bilrådgivare_5.png` -> `src/assets/hero-tablet.png`
-- `user-uploads://Din_objektiva_bilrådgivare_3.png` -> `src/assets/hero-mobile.png`
+**Fil: `src/pages/Index.tsx`**
 
-**Steg 2: Uppdatera `src/pages/Index.tsx`**
+- Ta bort den separata mobil-bilden fran `<picture>` -- lat surfplatte-bilden (`hero-tablet.png`) anvandas for bade mobil och surfplatta
+- Andra hero-sektionens klass fran `min-h-screen` till `min-h-[85vh] sm:min-h-screen` sa att mobilen far en kortare hero
+- Justera `object-position` till `object-[center_35%]` pa mobil for att fokusera pa ratt del av bilden
 
-Ta bort gammal import:
-```tsx
-// Ta bort: import heroImage from '@/assets/hero-image.jpg';
-```
-
-Lagg till nya importer:
-```tsx
-import heroDesktop from '@/assets/hero-desktop.png';
-import heroTablet from '@/assets/hero-tablet.png';
-import heroMobile from '@/assets/hero-mobile.png';
-```
-
-Byt ut `<img>`-taggen mot `<picture>`:
-```tsx
-<picture>
-  <source media="(min-width: 1024px)" srcSet={heroDesktop} />
-  <source media="(min-width: 640px)" srcSet={heroTablet} />
-  <img
-    src={heroMobile}
-    alt="En utvald bil bland manga -- hitta din perfekta bil"
-    loading="eager"
-    className="absolute inset-0 w-full h-full object-cover"
-    style={{ opacity: 1 - scrollProgress * 0.3 }}
-  />
-</picture>
-```
-
-Varje bild ar anpassad for sitt format sa `object-cover` fungerar optimalt utan att bilden zoomas in for mycket.
+Resultatet: samma bild pa mobil och surfplatta, men med bra beskaring och proportioner pa bada.
 
