@@ -106,7 +106,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-black/40" />
         
-        <div className="relative z-10 text-center px-4 mt-[25vh] sm:mt-[28vh] md:mt-[30vh] flex flex-col items-center" style={{
+        <div className="relative z-10 text-center px-4 mt-16 sm:mt-20 md:mt-24 flex flex-col items-center" style={{
         opacity: 1 - scrollProgress * 1.5,
         transform: `translateY(${scrollProgress * -60}px)`,
         transition: 'transform 0.1s linear'
@@ -117,10 +117,10 @@ const Index = () => {
             <img 
               src={logo} 
               alt="FindCar" 
-              className="relative w-64 sm:w-72 md:w-96 lg:w-[28rem] mx-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.6)] brightness-[1.8] contrast-125" 
+              className="relative w-56 sm:w-64 md:w-80 lg:w-96 mx-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.6)] brightness-[1.8] contrast-125" 
             />
           </div>
-          <p className="relative text-white/80 text-sm sm:text-base md:text-lg font-serif tracking-[0.2em] mt-3 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] animate-float-subtle" style={{ animationDelay: '0.5s' }}>
+          <p className="relative text-white/80 text-sm sm:text-base md:text-lg font-serif tracking-[0.2em] mt-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] animate-float-subtle" style={{ animationDelay: '0.5s' }}>
             Din objektiva bilrådgivare
           </p>
         </div>
