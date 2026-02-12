@@ -97,14 +97,14 @@ const Index = () => {
       <Header />
 
       {/* Hero with video background */}
-      <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden bg-[#0a0a0a]">
+      <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden bg-[#0a0a0a] -mb-px">
         <picture>
           <source media="(min-width: 1024px)" srcSet={heroDesktop} />
           <img
             src={heroTablet}
             alt="En utvald bil bland många — hitta din perfekta bil"
             loading="eager"
-            className="absolute inset-0 w-full h-full object-cover object-[center_35%] sm:object-center lg:object-[center_30%]"
+            className="absolute inset-0 w-full h-[calc(100%+2px)] object-cover object-[center_35%] sm:object-center lg:object-[center_30%]"
             style={{ opacity: 1 - scrollProgress * 0.3 }}
           />
         </picture>
