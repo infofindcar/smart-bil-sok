@@ -1,35 +1,50 @@
 
 
-## Fixa hero-bilden: mindre inzoomad, bättre upplösning
+## Responsiva hero-bilder for desktop, surfplatta och mobil
 
-### Problem
-Hero-bilden använder `object-cover` på en fullskärmscontainer (`min-h-screen`), vilket gör att bilden beskärs/zoomas in kraftigt. Eftersom den uppladdade bilden troligen har en upplösning som inte matchar viewporten blir det dålig kvalitet.
+### Vad vi gor
+Implementerar tre separata hero-bilder som automatiskt visas baserat pa skarmstorlek med HTML `<picture>`-elementet.
 
-### Lösning
-
-1. **Ändra bildens visning** -- byt från `object-cover` till `object-contain` så hela bilden syns utan beskärning, med mörk bakgrund bakom.
-
-2. **Positionera bilden i övre delen** -- använd `object-position: top` och `object-contain` så loggan och bilen visas centrerat utan att zoomas in.
-
-3. **Mörk bakgrundsfärg** på hero-sektionen (`bg-black` eller `bg-[#0a0a0a]`) så att eventuella tomma ytor smälter in.
-
-4. **Justera overlay** -- minska eller ta bort `bg-black/40` overlay eftersom bilden redan har rätt tonalitet.
+### Bilder
+- **Desktop** (min-width: 1024px): `Adobe_Express_-_file.png`
+- **Surfplatta** (min-width: 640px): `Din_objektiva_bilrådgivare_5.png`
+- **Mobil** (default): `Din_objektiva_bilrådgivare_3.png`
 
 ### Tekniska detaljer
 
-Ändring i `src/pages/Index.tsx` (rad 99-106):
+**Steg 1: Kopiera bilderna till projektet**
+- `user-uploads://Adobe_Express_-_file.png` -> `src/assets/hero-desktop.png`
+- `user-uploads://Din_objektiva_bilrådgivare_5.png` -> `src/assets/hero-tablet.png`
+- `user-uploads://Din_objektiva_bilrådgivare_3.png` -> `src/assets/hero-mobile.png`
 
+**Steg 2: Uppdatera `src/pages/Index.tsx`**
+
+Ta bort gammal import:
 ```tsx
-<section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden bg-black">
-  <img
-    src={heroImage}
-    alt="En utvald bil bland många — hitta din perfekta bil"
-    loading="eager"
-    className="absolute inset-0 w-full h-full object-contain object-top"
-    style={{ opacity: 1 - scrollProgress * 0.3 }}
-  />
-  <div className="absolute inset-0 bg-black/20" />
+// Ta bort: import heroImage from '@/assets/hero-image.jpg';
 ```
 
-Detta visar hela bilden utan beskärning, centrerad uppåt, med en subtil mörk overlay.
+Lagg till nya importer:
+```tsx
+import heroDesktop from '@/assets/hero-desktop.png';
+import heroTablet from '@/assets/hero-tablet.png';
+import heroMobile from '@/assets/hero-mobile.png';
+```
+
+Byt ut `<img>`-taggen mot `<picture>`:
+```tsx
+<picture>
+  <source media="(min-width: 1024px)" srcSet={heroDesktop} />
+  <source media="(min-width: 640px)" srcSet={heroTablet} />
+  <img
+    src={heroMobile}
+    alt="En utvald bil bland manga -- hitta din perfekta bil"
+    loading="eager"
+    className="absolute inset-0 w-full h-full object-cover"
+    style={{ opacity: 1 - scrollProgress * 0.3 }}
+  />
+</picture>
+```
+
+Varje bild ar anpassad for sitt format sa `object-cover` fungerar optimalt utan att bilden zoomas in for mycket.
 
