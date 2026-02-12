@@ -106,21 +106,21 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-black/40" />
         
-        <div className="relative z-10 text-center px-4 space-y-4 mt-12 sm:mt-16 md:mt-20" style={{
+        <div className="relative z-10 text-center px-4 mt-12 sm:mt-16 md:mt-20 flex flex-col items-center" style={{
         opacity: 1 - scrollProgress * 1.5,
         transform: `translateY(${scrollProgress * -60}px)`,
         transition: 'transform 0.1s linear'
       }}>
-          <div className="relative">
+          <div className="relative inline-block">
             <div className="absolute inset-0 bg-white/10 blur-[120px] rounded-full scale-150" />
             <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-110" />
             <img 
               src={logo} 
               alt="FindCar" 
-              className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[2] contrast-150 drop-shadow-[0_0_80px_rgba(255,255,255,1)] saturate-150" 
+              className="relative h-48 sm:h-56 md:h-72 lg:h-80 mx-auto brightness-[2] contrast-150 drop-shadow-[0_0_80px_rgba(255,255,255,1)] saturate-150" 
             />
           </div>
-          <p className="relative text-white/70 text-xs sm:text-sm md:text-base font-serif tracking-widest -mt-20 sm:-mt-24 md:-mt-32 lg:-mt-40 drop-shadow-md">
+          <p className="relative text-white/70 text-xs sm:text-sm md:text-base font-serif tracking-widest -mt-6 sm:-mt-8 md:-mt-10 drop-shadow-md">
             Din objektiva bilrådgivare
           </p>
         </div>
