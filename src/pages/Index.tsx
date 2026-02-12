@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
-import { VideoLoop } from '@/components/VideoLoop';
+import heroImage from '@/assets/hero-image.jpg';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 // Lazy-load below-fold sections
@@ -97,7 +97,13 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        <VideoLoop scrollProgress={scrollProgress} />
+        <img
+          src={heroImage}
+          alt="En utvald bil bland många — hitta din perfekta bil"
+          loading="eager"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 1 - scrollProgress * 0.3 }}
+        />
         <div className="absolute inset-0 bg-black/40" />
         
         <div className="relative z-10 text-center px-4 space-y-6" style={{
