@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
-import heroImage from '@/assets/hero-image.jpg';
+import heroDesktop from '@/assets/hero-desktop.png';
+import heroTablet from '@/assets/hero-tablet.png';
+import heroMobile from '@/assets/hero-mobile.png';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 // Lazy-load below-fold sections
@@ -97,13 +99,17 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden bg-[#0a0a0a]">
-        <img
-          src={heroImage}
-          alt="En utvald bil bland många — hitta din perfekta bil"
-          loading="eager"
-          className="absolute inset-0 w-full h-full object-cover object-[center_20%] md:object-[center_30%] lg:object-[center_25%]"
-          style={{ opacity: 1 - scrollProgress * 0.3 }}
-        />
+        <picture>
+          <source media="(min-width: 1024px)" srcSet={heroDesktop} />
+          <source media="(min-width: 640px)" srcSet={heroTablet} />
+          <img
+            src={heroMobile}
+            alt="En utvald bil bland många — hitta din perfekta bil"
+            loading="eager"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ opacity: 1 - scrollProgress * 0.3 }}
+          />
+        </picture>
         <div className="absolute inset-0 bg-black/25" />
         
         {/* Logo and tagline are part of the hero image */}
