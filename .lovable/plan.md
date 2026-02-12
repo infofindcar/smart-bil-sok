@@ -1,48 +1,35 @@
 
 
-# Byt hero-video till AI-genererad hero-bild
+## Fixa hero-bilden: mindre inzoomad, bättre upplösning
 
-## Koncept
-En stilren, cinematic bild: en bil i en tydlig, iögonfallande färg (t.ex. djupblå eller röd) står i centrum, skarpt belyst. Runtomkring syns andra bilar som är urblekta, gråtonade eller suddiga — visuellt budskap: **"Den perfekta bilen, utvald bland alla andra."**
+### Problem
+Hero-bilden använder `object-cover` på en fullskärmscontainer (`min-h-screen`), vilket gör att bilden beskärs/zoomas in kraftigt. Eftersom den uppladdade bilden troligen har en upplösning som inte matchar viewporten blir det dålig kvalitet.
 
-Mörk, premium-känsla som matchar FindCars befintliga tema.
+### Lösning
 
-## Steg
+1. **Ändra bildens visning** -- byt från `object-cover` till `object-contain` så hela bilden syns utan beskärning, med mörk bakgrund bakom.
 
-### 1. Generera hero-bilden med AI
-- Använda Gemini bildgenerering via edge function
-- Prompt: En elegant modern bil i stark färg (djupblå/röd) i centrum av bilden, skarpt belyst, omgiven av flera andra bilar som är gråtonade, suddiga och i bakgrunden. Cinematic, mörk bakgrund, premium bilförsäljningskänsla.
-- Spara bilden i projektet (t.ex. `src/assets/hero-image.png` eller ladda upp till Supabase Storage)
+2. **Positionera bilden i övre delen** -- använd `object-position: top` och `object-contain` så loggan och bilen visas centrerat utan att zoomas in.
 
-### 2. Ersätt VideoLoop med en statisk hero-bild
-- Ta bort `VideoLoop`-komponenten från hero-sektionen i `src/pages/Index.tsx`
-- Ersätt med en `<img>`-tag som laddar den genererade bilden
-- Behåll samma scroll-parallax-effekt (opacity minskar vid scroll)
-- Lägg till `loading="eager"` för att prioritera hero-bilden
+3. **Mörk bakgrundsfärg** på hero-sektionen (`bg-black` eller `bg-[#0a0a0a]`) så att eventuella tomma ytor smälter in.
 
-### 3. Rensa upp
-- VideoLoop-komponenten kan tas bort eller behållas för framtida bruk
-- Hero-videon (`public/hero-video.mp4`) kan tas bort för att minska bundle-storlek (stor fil)
+4. **Justera overlay** -- minska eller ta bort `bg-black/40` overlay eftersom bilden redan har rätt tonalitet.
 
-## Tekniska detaljer
+### Tekniska detaljer
 
-**Filer som ändras:**
-- `src/pages/Index.tsx` — Byt ut `<VideoLoop>` mot `<img>` med den nya hero-bilden
-- `supabase/functions/generate-hero/index.ts` — Ny edge function för att generera bilden (engångsanvändning)
-- Alternativt: generera bilden direkt och spara som asset
+Ändring i `src/pages/Index.tsx` (rad 99-106):
 
-**Filer som kan tas bort:**
-- `src/components/VideoLoop.tsx` (valfritt)
-- `public/hero-video.mp4` (rekommenderas — sparar bandbredd)
-
-**Bildformat:** WebP eller PNG, optimerad storlek (max ~500 KB för snabb laddning)
-
-**Parallax-effekt behålls:**
-```text
-<img>  med style={{ opacity: 1 - scrollProgress * 0.3 }}
+```tsx
+<section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden bg-black">
+  <img
+    src={heroImage}
+    alt="En utvald bil bland många — hitta din perfekta bil"
+    loading="eager"
+    className="absolute inset-0 w-full h-full object-contain object-top"
+    style={{ opacity: 1 - scrollProgress * 0.3 }}
+  />
+  <div className="absolute inset-0 bg-black/20" />
 ```
 
-## Fördelar
-- Mycket snabbare laddningstid (bild vs video)
-- Starkare visuellt budskap som matchar FindCars värdeförslag
-- Fungerar bättre på mobil och svaga nätverk
+Detta visar hela bilden utan beskärning, centrerad uppåt, med en subtil mörk overlay.
+
