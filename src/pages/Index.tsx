@@ -106,7 +106,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-black/40" />
         
-        <div className="relative z-10 text-center px-4 space-y-4 mt-24 sm:mt-32 md:mt-36" style={{
+        <div className="relative z-10 text-center px-4 space-y-4 mt-12 sm:mt-16 md:mt-20" style={{
         opacity: 1 - scrollProgress * 1.5,
         transform: `translateY(${scrollProgress * -60}px)`,
         transition: 'transform 0.1s linear'
@@ -117,7 +117,7 @@ const Index = () => {
             <img 
               src={logo} 
               alt="FindCar" 
-              className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[1.7] contrast-125 drop-shadow-[0_0_120px_rgba(255,255,255,0.8)] animate-float-subtle" 
+              className="relative h-72 sm:h-80 md:h-96 lg:h-[28rem] mx-auto brightness-[2] contrast-150 drop-shadow-[0_0_80px_rgba(255,255,255,1)] saturate-150" 
             />
           </div>
           <p className="text-white/80 text-lg sm:text-xl md:text-2xl font-serif tracking-wide drop-shadow-lg">
