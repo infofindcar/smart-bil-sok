@@ -106,7 +106,7 @@ const Index = () => {
             src={heroMobile}
             alt="En utvald bil bland många — hitta din perfekta bil"
             loading="eager"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center sm:object-[center_40%] lg:object-[center_30%]"
             style={{ opacity: 1 - scrollProgress * 0.3 }}
           />
         </picture>
