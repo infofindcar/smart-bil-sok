@@ -40,12 +40,85 @@ interface GuidedSearchProps {
   onScrollToResults?: () => void;
 }
 
-const GREETING: ChatMessage = {
-  id: '1',
-  role: 'assistant',
-  content:
-    'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Berätta lite om dig och vad du letar efter — så hittar jag bilen som passar just dig.',
-  suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
+const GREETINGS: Record<string, ChatMessage> = {
+  sv: {
+    id: '1',
+    role: 'assistant',
+    content: 'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Berätta lite om dig och vad du letar efter — så hittar jag bilen som passar just dig.',
+    suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
+  },
+  en: {
+    id: '1',
+    role: 'assistant',
+    content: 'Hi! 👋 I\'m Clutch, your personal car advisor. Tell me a bit about yourself and what you\'re looking for — and I\'ll find the perfect car for you.',
+    suggestions: ['I commute to work', 'Need a family car', 'Want a fun car', 'Not sure yet'],
+  },
+  no: {
+    id: '1',
+    role: 'assistant',
+    content: 'Hei! 👋 Jeg er Clutch, din personlige bilrådgiver. Fortell litt om deg og hva du leter etter — så finner jeg bilen som passer deg.',
+    suggestions: ['Jeg pendler til jobb', 'Trenger en familiebil', 'Vil ha en morsom bil', 'Vet ikke helt'],
+  },
+  da: {
+    id: '1',
+    role: 'assistant',
+    content: 'Hej! 👋 Jeg er Clutch, din personlige bilrådgiver. Fortæl lidt om dig selv og hvad du leder efter — så finder jeg bilen der passer dig.',
+    suggestions: ['Jeg pendler til arbejde', 'Har brug for en familiebil', 'Vil have en sjov bil', 'Ved ikke rigtig'],
+  },
+  fi: {
+    id: '1',
+    role: 'assistant',
+    content: 'Hei! 👋 Olen Clutch, henkilökohtainen autoneuvonantajasi. Kerro hieman itsestäsi ja mitä etsit — niin löydän sinulle täydellisen auton.',
+    suggestions: ['Pendelöin töihin', 'Tarvitsen perheauton', 'Haluan hauskan auton', 'En ole varma'],
+  },
+};
+
+const PLACEHOLDERS: Record<string, string> = {
+  sv: 'Skriv här...',
+  en: 'Type here...',
+  no: 'Skriv her...',
+  da: 'Skriv her...',
+  fi: 'Kirjoita tähän...',
+};
+
+const WRITE_OWN: Record<string, string> = {
+  sv: 'Skriv eget svar',
+  en: 'Write your own',
+  no: 'Skriv eget svar',
+  da: 'Skriv eget svar',
+  fi: 'Kirjoita oma vastaus',
+};
+
+const NEW_SEARCH: Record<string, string> = {
+  sv: 'Ny sökning',
+  en: 'New search',
+  no: 'Nytt søk',
+  da: 'Ny søgning',
+  fi: 'Uusi haku',
+};
+
+const SHOW_MATCHES: Record<string, string> = {
+  sv: 'Visa mina matchningar',
+  en: 'Show my matches',
+  no: 'Vis mine treff',
+  da: 'Vis mine match',
+  fi: 'Näytä osumat',
+};
+
+const RESTART: Record<string, string> = {
+  sv: 'Börja om',
+  en: 'Start over',
+  no: 'Start på nytt',
+  da: 'Start forfra',
+  fi: 'Aloita alusta',
+};
+
+const SUBTITLE: Record<string, string> = {
+  sv: 'Objektiv bilrådgivare',
+  en: 'Objective car advisor',
+  no: 'Objektiv bilrådgiver',
+  da: 'Objektiv bilrådgiver',
+  fi: 'Objektiivinen autoneuvoja',
 };
 
 const CHAT_STORAGE_KEY = 'findcar-chat-state';
@@ -60,7 +133,7 @@ const loadChatState = (): { messages: ChatMessage[]; phase: Phase } | null => {
 
 export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps) => {
   const savedChat = loadChatState();
-  const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETING]);
+  const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETINGS.sv]);
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -188,14 +261,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
     handleSendMessage(undefined, text);
   };
 
-  const handleReset = () => {
-    setMessages([GREETING]);
+  const handleReset = (lang?: string) => {
+    const l = lang || language;
+    setMessages([GREETINGS[l] || GREETINGS.sv]);
     setPhase('chatting');
     setInputValue('');
     setVisibleText({});
     sessionStorage.removeItem(CHAT_STORAGE_KEY);
     sessionStorage.removeItem('findcar-search-state');
     sessionStorage.removeItem('findcar-results-revealed');
+  };
+
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang);
+    handleReset(newLang);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -236,13 +315,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
             </div>
             <div>
               <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
-              <p className="text-[11px] text-muted-foreground">Objektiv bilrådgivare</p>
+              <p className="text-[11px] text-muted-foreground">{SUBTITLE[language] || SUBTITLE.sv}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => handleLanguageChange(e.target.value)}
               className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
             >
               <option value="sv">🇸🇪 SV</option>
@@ -252,12 +331,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
               <option value="fi">🇫🇮 FI</option>
             </select>
             <button
-              onClick={handleReset}
+              onClick={() => handleReset()}
               className="text-[11px] flex items-center gap-1 border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
-              title="Börja om"
+              title={RESTART[language] || RESTART.sv}
             >
               <RotateCcw className="h-3 w-3" />
-              Börja om
+              {RESTART[language] || RESTART.sv}
             </button>
           </div>
         </div>
@@ -327,7 +406,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
                 className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-secondary/30 bg-transparent hover:bg-secondary/5 text-secondary/70 hover:text-secondary transition-all duration-150 flex items-center gap-1"
               >
                 <PenLine className="h-3 w-3" />
-                Skriv eget svar
+                {WRITE_OWN[language] || WRITE_OWN.sv}
               </button>
             </div>
           </div>
@@ -344,12 +423,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
                 className="w-full rounded-xl text-sm font-semibold"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
-                Visa mina matchningar
+                {SHOW_MATCHES[language] || SHOW_MATCHES.sv}
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={handleReset} className="w-full rounded-xl text-xs">
+            <Button variant="outline" size="sm" onClick={() => handleReset()} className="w-full rounded-xl text-xs">
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Ny sökning
+              {NEW_SEARCH[language] || NEW_SEARCH.sv}
             </Button>
           </div>
         )}
@@ -371,7 +450,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
-                placeholder="Skriv här..."
+                placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
                 disabled={isLoading}
                 rows={1}
                 className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
