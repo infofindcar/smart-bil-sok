@@ -6,13 +6,13 @@ import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearc
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 // Lazy-load below-fold sections
-const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then(m => ({ default: m.ResultsReveal })));
-const HowItWorks = lazy(() => import('@/components/HowItWorks').then(m => ({ default: m.HowItWorks })));
-const WhyFindCar = lazy(() => import('@/components/WhyFindCar').then(m => ({ default: m.WhyFindCar })));
-const Testimonials = lazy(() => import('@/components/Testimonials').then(m => ({ default: m.Testimonials })));
-const FAQ = lazy(() => import('@/components/FAQ').then(m => ({ default: m.FAQ })));
-const CtaBanner = lazy(() => import('@/components/CtaBanner').then(m => ({ default: m.CtaBanner })));
-const CookieBanner = lazy(() => import('@/components/CookieBanner').then(m => ({ default: m.CookieBanner })));
+const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) => ({ default: m.ResultsReveal })));
+const HowItWorks = lazy(() => import('@/components/HowItWorks').then((m) => ({ default: m.HowItWorks })));
+const WhyFindCar = lazy(() => import('@/components/WhyFindCar').then((m) => ({ default: m.WhyFindCar })));
+const Testimonials = lazy(() => import('@/components/Testimonials').then((m) => ({ default: m.Testimonials })));
+const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ })));
+const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
+const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
@@ -35,9 +35,9 @@ const useScrollProgress = () => {
 };
 const SectionDivider = ({
   variant
-}: {
-  variant: 'bg-to-alt' | 'alt-to-bg';
-}) => <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />;
+
+
+}: {variant: 'bg-to-alt' | 'alt-to-bg';}) => <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />;
 const STORAGE_KEY = 'findcar-search-state';
 const loadSearchState = () => {
   try {
@@ -71,8 +71,8 @@ const Index = () => {
   }, [cars, carReasons, savedCars, resultMessage, showResults]);
   const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
     if (append) {
-      setCars(prev => [...prev, ...newCars]);
-      setCarReasons(prev => [...prev, ...reasons]);
+      setCars((prev) => [...prev, ...newCars]);
+      setCarReasons((prev) => [...prev, ...reasons]);
     } else {
       setCars(newCars);
       setCarReasons(reasons);
@@ -81,7 +81,7 @@ const Index = () => {
     setShowResults(true);
   };
   const toggleSave = (car: Car) => {
-    setSavedCars(prev => prev.find(c => c.id === car.id) ? prev.filter(c => c.id !== car.id) : [...prev, car]);
+    setSavedCars((prev) => prev.find((c) => c.id === car.id) ? prev.filter((c) => c.id !== car.id) : [...prev, car]);
   };
   const scrollToSearch = () => {
     searchRef.current?.scrollIntoView({
@@ -89,7 +89,7 @@ const Index = () => {
     });
   };
   const getReasonForCar = (carId: number) => {
-    return carReasons.find(r => r.carId === carId)?.reason;
+    return carReasons.find((r) => r.carId === carId)?.reason;
   };
   const scrollProgress = useScrollProgress();
   return <div className="min-h-screen overflow-x-hidden">
@@ -97,19 +97,19 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section
-        className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px"
-        style={{
-          backgroundImage: 'url(/images/hero_findcar.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+      className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px"
+      style={{
+        backgroundImage: 'url(/images/hero_findcar.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+
         {/* FindCar logo + tagline */}
         <div className="absolute top-[2%] left-1/2 -translate-x-1/2 z-10">
           <div className="relative">
             <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
-            <p className="absolute bottom-[18%] right-[-2%] text-white text-[10px] sm:text-xs md:text-sm font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap">Din objektiva bilrådgivare</p>
+            <p className="absolute bottom-[18%] right-[-2%] text-[10px] sm:text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary my-[63px] md:text-base font-sans font-extrabold mx-[45px]">Din objektiva bilrådgivare</p>
           </div>
         </div>
 
@@ -163,27 +163,27 @@ const Index = () => {
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <GuidedSearch
-              onResults={handleResults}
-              onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            />
+            onResults={handleResults}
+            onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+
           </ScrollReveal>
         </div>
       </section>
 
       {/* Results — premium reveal */}
       {showResults && cars.length > 0 && (() => {
-        const topCars = cars.slice(0, 3);
-        const similarCars = cars.slice(3, 9);
-        return (
-          <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
-            state: {
-              cars: savedCars
-            }
-          })} onShowMore={() => searchRef.current?.scrollIntoView({
-            behavior: 'smooth'
-          })} getReasonForCar={getReasonForCar} />
-        );
-      })()}
+      const topCars = cars.slice(0, 3);
+      const similarCars = cars.slice(3, 9);
+      return (
+        <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+          state: {
+            cars: savedCars
+          }
+        })} onShowMore={() => searchRef.current?.scrollIntoView({
+          behavior: 'smooth'
+        })} getReasonForCar={getReasonForCar} />);
+
+    })()}
 
       <Suspense fallback={null}>
         <section id="how-it-works">
