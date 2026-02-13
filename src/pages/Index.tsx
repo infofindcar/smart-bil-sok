@@ -109,19 +109,17 @@ const Index = () => {
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
           <div className="relative">
             <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
+            <p className="absolute -bottom-2 left-[54%] -translate-x-1/2 text-[10px] sm:text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary font-sans font-extrabold md:text-base">Din objektiva bilrådgivare</p>
           </div>
         </div>
 
-        {/* Tagline positioned just above the horizon */}
-        <p className="absolute bottom-[38%] sm:bottom-[40%] left-[54%] -translate-x-1/2 z-10 text-[10px] sm:text-xs md:text-base drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary font-sans font-extrabold">Din objektiva bilrådgivare</p>
+        
 
-        <div className="absolute bottom-20 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
-        opacity: 1 - scrollProgress * 3
-      }}>
-          <Button variant="gradient" size="default" onClick={scrollToSearch} className="rounded-xl">
-            Hitta din bil
-          </Button>
-        </div>
+
+
+
+
+
 
         <button onClick={scrollToSearch} className="absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
         opacity: 1 - scrollProgress * 3
