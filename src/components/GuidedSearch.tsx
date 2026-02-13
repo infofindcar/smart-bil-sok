@@ -64,6 +64,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -140,7 +141,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
       }
 
       const { data, error } = await supabase.functions.invoke('guided-search', {
-        body: { messages: conversationHistory },
+        body: { messages: conversationHistory, language },
       });
 
       if (error) throw error;
@@ -225,17 +226,30 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
     <div className="w-full max-w-2xl mx-auto">
       <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-secondary/[0.15] bg-card backdrop-blur-xl shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)]">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3 bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
-          <div className="relative">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
-              <Sparkles className="h-4.5 w-4.5 text-secondary" />
+        <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
+                <Sparkles className="h-4.5 w-4.5 text-secondary" />
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+            <div>
+              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
+              <p className="text-[11px] text-muted-foreground">Objektiv bilrådgivare</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
-            <p className="text-[11px] text-muted-foreground">Objektiv bilrådgivare</p>
-          </div>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
+          >
+            <option value="sv">🇸🇪 SV</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="no">🇳🇴 NO</option>
+            <option value="da">🇩🇰 DA</option>
+            <option value="fi">🇫🇮 FI</option>
+          </select>
         </div>
 
         {/* Chat area — scroll is contained here */}
