@@ -106,7 +106,7 @@ const Index = () => {
       }}>
 
         {/* FindCar logo + tagline */}
-        <div className="absolute top-[2%] left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10">
           <div className="relative">
             <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
             <p className="absolute bottom-[18%] right-[-2%] text-[10px] sm:text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary font-sans font-extrabold my-[80px] md:text-base mx-0 px-[88px]">Din objektiva bilrådgivare</p>
