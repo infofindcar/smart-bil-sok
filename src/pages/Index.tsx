@@ -97,7 +97,7 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section
-      className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px -mt-20"
+      className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px"
       style={{
         backgroundImage: 'url(/images/hero_findcar.jpg)',
         backgroundSize: 'cover',
@@ -106,7 +106,7 @@ const Index = () => {
       }}>
 
         {/* FindCar logo + tagline */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
           <div className="relative">
             <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
             <p className="absolute bottom-[18%] right-[-2%] text-[10px] sm:text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary my-[63px] md:text-base font-sans font-extrabold mx-[45px]">Din objektiva bilrådgivare</p>
