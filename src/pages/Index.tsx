@@ -113,12 +113,13 @@ const Index = () => {
           </div>
         </div>
 
-        
 
-
-
-
-
+        {/* CTA Button */}
+        <div className="absolute bottom-20 z-10 flex flex-col items-center gap-3">
+          <Button onClick={scrollToSearch} size="lg" className="text-base sm:text-lg px-8 py-6 rounded-full shadow-primary-glow hover:scale-105 transition-transform">
+            Hitta din bil
+          </Button>
+        </div>
 
 
         <button onClick={scrollToSearch} className="absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
