@@ -108,7 +108,7 @@ const Index = () => {
         {/* FindCar logo + tagline */}
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
           <div className="relative">
-            <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] brightness-105 contrast-105" style={{ filter: 'drop-shadow(0 2px 8px rgba(255,255,255,0.15)) drop-shadow(0 6px 24px rgba(0,0,0,0.5)) brightness(1.05) contrast(1.05)' }} />
+            <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto animate-float-subtle" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
             
           </div>
         </div>
