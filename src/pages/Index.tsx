@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
-import heroDesktop from '@/assets/hero-desktop.png';
-import heroTablet from '@/assets/hero-tablet.png';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 // Lazy-load below-fold sections
@@ -17,7 +15,7 @@ const CtaBanner = lazy(() => import('@/components/CtaBanner').then(m => ({ defau
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then(m => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import logo from '@/assets/findcar-logo.png';
+
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   useEffect(() => {
@@ -97,18 +95,16 @@ const Index = () => {
       <Header />
 
       {/* Hero with video background */}
-      <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden bg-background -mb-px">
-        <picture>
-          <source media="(min-width: 1024px)" srcSet={heroDesktop} />
-          <img
-            src={heroTablet}
-            alt="En utvald bil bland många — hitta din perfekta bil"
-            loading="eager"
-            className="absolute inset-0 w-full h-[calc(100%+2px)] object-cover object-[center_35%] sm:object-center lg:object-[center_30%]"
-            style={{ opacity: 1 - scrollProgress * 0.3 }}
-          />
-        </picture>
-        <div className="absolute inset-0 bg-black/25" />
+      <section
+        className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px"
+        style={{
+          backgroundImage: 'url(/images/findcar_hero_desktop_2560x1440.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/25" style={{ opacity: 1 - scrollProgress * 0.3 }} />
         
         {/* Logo and tagline are part of the hero image */}
 
