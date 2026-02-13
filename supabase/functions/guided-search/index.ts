@@ -185,7 +185,17 @@ serve(async (req) => {
 
     // Parse and validate input
     const body = await req.json();
-    const { messages } = body;
+    const { messages, language } = body;
+
+    // Language instruction map
+    const langInstructions: Record<string, string> = {
+      sv: "\n\nSvara på svenska.",
+      en: "\n\nYou MUST respond in English.",
+      no: "\n\nDu MÅ svare på norsk.",
+      da: "\n\nDu SKAL svare på dansk.",
+      fi: "\n\nVastaa suomeksi.",
+    };
+    const langInstruction = langInstructions[language as string] || langInstructions.sv;
 
     const validation = validateMessages(messages);
     if (!validation.valid) {
@@ -214,7 +224,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: CONVERSATION_SYSTEM_PROMPT },
+            { role: "system", content: CONVERSATION_SYSTEM_PROMPT + langInstruction },
             ...messages,
           ],
         }),
@@ -425,7 +435,7 @@ serve(async (req) => {
 1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar kundens situation.
 2. För VARJE bil, ge en kort personlig motivering (1 mening) om varför just den bilen passar kunden baserat på deras specifika behov.
 
-Var specifik: nämn varför biltypen/drivlinan/färgen/priset passar deras livsstil. Använd INTE emojis.
+Var specifik: nämn varför biltypen/drivlinan/färgen/priset passar deras livsstil. Använd INTE emojis.${langInstruction}
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
@@ -488,7 +498,7 @@ Svara ENBART med JSON (ingen markdown, inga code fences):
 {"message":"Tyvärr hittade jag inga bilar som matchar...","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Förslagen ska vara specifika och klickbara, t.ex. "Öka budgeten till 200 000 kr", "Prova hybrid istället för el", "Sök i hela Sverige".
-Använd INTE emojis.`,
+Använd INTE emojis.${langInstruction}`,
                   },
                   {
                     role: "user",
