@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, MessageCircle, PenLine, ChevronDown } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -228,12 +228,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
         <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3 bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
           <div className="relative">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
-              <MessageCircle className="h-4.5 w-4.5 text-secondary" />
+              <Sparkles className="h-4.5 w-4.5 text-secondary" />
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch</h3>
+            <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
             <p className="text-[11px] text-muted-foreground">Objektiv bilrådgivare</p>
           </div>
         </div>
@@ -250,7 +250,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
             >
               {msg.role === 'assistant' && (
                 <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                  <MessageCircle className="h-3 w-3 text-secondary" />
+                  <Sparkles className="h-3 w-3 text-secondary" />
                 </div>
               )}
               <div
@@ -272,7 +272,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
           {isLoading && phase !== 'searching' && (
             <div className="flex justify-start gap-2 animate-fade-in">
               <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                <MessageCircle className="h-3 w-3 text-secondary" />
+                <Sparkles className="h-3 w-3 text-secondary" />
               </div>
               <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-3">
                 <div className="flex gap-1">
