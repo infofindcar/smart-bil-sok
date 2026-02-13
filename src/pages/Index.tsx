@@ -106,10 +106,18 @@ const Index = () => {
       }}>
 
         {/* FindCar logo + tagline */}
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-          <div className="relative">
-            <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
-            <p className="absolute bottom-[18%] right-[-2%] text-[10px] sm:text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary font-sans font-extrabold px-0 my-[80px] md:text-base mx-[87px]">Din objektiva bilrådgivare</p>
+        <div
+          className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 premium-entrance"
+          style={{
+            transform: `translateX(-50%) translateY(${scrollProgress * -40}px)`,
+            willChange: 'transform',
+          }}
+        >
+          {/* Halo glow behind logo */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] rounded-full bg-primary/[0.06] blur-[60px] pointer-events-none" aria-hidden="true" />
+          <div className="relative premium-float premium-glow">
+            <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto" />
+            <p className="absolute bottom-[18%] right-[-2%] text-[10px] sm:text-xs whitespace-nowrap font-sans font-extrabold px-0 my-[80px] md:text-base mx-[87px] tagline-shimmer">Din objektiva bilrådgivare</p>
           </div>
         </div>
 
