@@ -98,7 +98,7 @@ const Index = () => {
       <section
         className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px"
         style={{
-          backgroundImage: 'url(/images/hero_findcar.jpg)',
+          backgroundImage: 'url(/images/Din objektiva bilrådgivare (2) (1).png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
