@@ -15,7 +15,6 @@ const CtaBanner = lazy(() => import('@/components/CtaBanner').then(m => ({ defau
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then(m => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import newLogo from '@/assets/findcar-logo-new.png';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
@@ -105,14 +104,9 @@ const Index = () => {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        {/* Logo overlay on hero */}
-        <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-32 md:pt-40">
-          <img
-            src={newLogo}
-            alt="FindCar"
-            className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
-          />
-        </div>
+        {/* Overlay removed to show hero image without gray tint */}
+        
+        {/* Logo and tagline are part of the hero image */}
 
         <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
         opacity: 1 - scrollProgress * 3
