@@ -1,28 +1,37 @@
 
-## Lägg in ny logga i projektet
 
-### Vad som ska göras
+## Premium Hero-effekt for logga och tagline
 
-Du vill ha den nya FindCar-loggan i projektet så att du sedan kan bestämma var den ska användas (i Header, Footer, eller någon annanstans).
+### Vad vi gor
+Ger loggan och taglinjen en lyxig, levande kansla som smolter in battre mot bakgrunden genom subtila animationer och visuella effekter.
 
-### Implementering
+### Effekter som laggs till
 
-**Steg 1: Kopiera loggan från user-uploads till projektet**
+1. **Subtil flytande animation pa loggan** -- en mjuk upp-och-ner-rorelse (ca 6px) som ger en levande, premium kansla utan att vara distraherande.
 
-Den nya loggan kommer läggas i `src/assets/` tillsammans med övriga bildeluppsatser. Filnamn: `findcar-logo-new.png`
+2. **Mjuk glow-effekt pa loggan** -- en pulserande drop-shadow som gor att loggan "lyser" subtilt, som om den ar belyst bakifran.
 
-Anledning: `src/assets/` är rätt plats för loggor och bilder som används i React-komponenter, och de importeras sedan som ES6-moduler.
+3. **Fade-in med slide-up vid sidladdning** -- loggan och texten glider in snoyggt uppifran nar sidan laddas istallet for att bara dyka upp.
 
-**Steg 2: Efter kopiering**
+4. **Tagline med shimmer-effekt** -- texten "Din objektiva bilradgivare" far en subtil shimmer/glans som sveper over texten, som ljus pa en premiumyta.
 
-Du kan sedan själv bestämma:
-- Om denna ska ersätta den befintliga `findcar-logo.png` i Header och Footer
-- Eller om den ska användas på specifika ställen
-- Vi kan uppdatera komponenterna (`Header.tsx`, `Footer.tsx`) när du säger till
+5. **Parallax-effekt vid scroll** -- loggan ror sig langsammare an bakgrunden nar man scrollar, vilket ger djupkansla.
 
-### Teknisk notering
+---
 
-- Befintlig logga: `src/assets/findcar-logo.png` (används i `Header.tsx` och `Footer.tsx`)
-- Ny logga kommer: `src/assets/findcar-logo-new.png` (redo för användning)
-- Du har full kontroll över nästa steg 👍
+### Tekniska detaljer
+
+**Fil: `src/index.css`**
+- Lagg till en ny `@keyframes premium-float` animation (subtilare an den befintliga `gentle-float`)
+- Lagg till en `@keyframes logo-shimmer` for tagline-texten
+- Lagg till en `@keyframes premium-entrance` for fade-in + slide-up vid laddning
+
+**Fil: `src/pages/Index.tsx`**
+- Applicera `animate-float-subtle` + pulserande glow pa logga-containern
+- Lagg till entrance-animation pa hela logo+tagline-wrappern
+- Anvand `scrollProgress` for att skapa en parallax-effekt (loggan ror sig uppat langsammare vid scroll)
+- Lagg till shimmer-klass pa tagline-texten
+- Eventuellt en tunn ljus "halo" bakom loggan med en radial-gradient div
+
+Alla animationer hålls subtila och performanta med `will-change: transform` och GPU-accelererade properties.
 
