@@ -239,17 +239,27 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
               <p className="text-[11px] text-muted-foreground">Objektiv bilrådgivare</p>
             </div>
           </div>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
-          >
-            <option value="sv">🇸🇪 SV</option>
-            <option value="en">🇬🇧 EN</option>
-            <option value="no">🇳🇴 NO</option>
-            <option value="da">🇩🇰 DA</option>
-            <option value="fi">🇫🇮 FI</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
+            >
+              <option value="sv">🇸🇪 SV</option>
+              <option value="en">🇬🇧 EN</option>
+              <option value="no">🇳🇴 NO</option>
+              <option value="da">🇩🇰 DA</option>
+              <option value="fi">🇫🇮 FI</option>
+            </select>
+            <button
+              onClick={handleReset}
+              className="text-[11px] flex items-center gap-1 border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
+              title="Börja om"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Börja om
+            </button>
+          </div>
         </div>
 
         {/* Chat area — scroll is contained here */}
