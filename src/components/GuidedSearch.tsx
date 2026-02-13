@@ -38,6 +38,7 @@ type ChatMessage = {
 interface GuidedSearchProps {
   onResults: (cars: Car[], message: string, carReasons: CarReason[]) => void;
   onScrollToResults?: () => void;
+  onLanguageChange?: (lang: string) => void;
 }
 
 const GREETINGS: Record<string, ChatMessage> = {
@@ -131,7 +132,7 @@ const loadChatState = (): { messages: ChatMessage[]; phase: Phase } | null => {
   return null;
 };
 
-export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps) => {
+export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }: GuidedSearchProps) => {
   const savedChat = loadChatState();
   const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETINGS.sv]);
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
@@ -275,6 +276,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults }: GuidedSearchProps
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
     handleReset(newLang);
+    onLanguageChange?.(newLang);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
