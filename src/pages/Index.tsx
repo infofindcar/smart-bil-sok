@@ -106,8 +106,8 @@ const Index = () => {
         }}
       >
         {/* FindCar logo centered on the water */}
-        <div className="absolute top-[25%] left-1/2 -translate-x-1/2 z-10">
-          <img src={findcarLogoHero} alt="FindCar" className="h-20 sm:h-28 md:h-36 lg:h-44 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
+        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 z-10">
+          <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
         </div>
 
         <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
