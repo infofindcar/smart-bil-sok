@@ -109,7 +109,7 @@ const Index = () => {
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
           <div className="relative">
             <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
-            <p className="absolute -bottom-2 left-[54%] -translate-x-1/2 text-[10px] sm:text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap text-secondary font-sans font-extrabold md:text-base">Din objektiva bilrådgivare</p>
+            
           </div>
         </div>
 
