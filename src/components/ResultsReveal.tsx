@@ -4,12 +4,25 @@ import { CarCard } from '@/components/CarCard';
 import { Sparkles, Scale, ChevronRight, Lightbulb, Trophy } from 'lucide-react';
 import type { Car, CarReason } from './GuidedSearch';
 
+const T: Record<string, Record<string, string>> = {
+  matchesFound: { sv: 'perfekta matchningar hittade', en: 'perfect matches found', no: 'perfekte treff funnet', da: 'perfekte match fundet', fi: 'täydellistä osumaa löydetty' },
+  compare: { sv: 'Jämför', en: 'Compare', no: 'Sammenlign', da: 'Sammenlign', fi: 'Vertaa' },
+  cars: { sv: 'bilar', en: 'cars', no: 'biler', da: 'biler', fi: 'autoa' },
+  bestMatches: { sv: 'Bästa matchningar', en: 'Best matches', no: 'Beste treff', da: 'Bedste match', fi: 'Parhaat osumat' },
+  youMightLike: { sv: 'Du kanske också gillar', en: 'You might also like', no: 'Du liker kanskje også', da: 'Du kan også lide', fi: 'Saatat myös pitää' },
+  similarCars: { sv: 'Liknande bilar baserat på dina preferenser', en: 'Similar cars based on your preferences', no: 'Lignende biler basert på dine preferanser', da: 'Lignende biler baseret på dine præferencer', fi: 'Samankaltaisia autoja mieltymystesi perusteella' },
+  showMore: { sv: 'Visa fler bilar', en: 'Show more cars', no: 'Vis flere biler', da: 'Vis flere biler', fi: 'Näytä lisää autoja' },
+};
+
+const t = (key: string, lang: string) => T[key]?.[lang] || T[key]?.sv || key;
+
 interface ResultsRevealProps {
   cars: Car[];
   similarCars: Car[];
   savedCars: Car[];
   carReasons: CarReason[];
   resultMessage: string;
+  language?: string;
   onToggleSave: (car: Car) => void;
   onCompare: () => void;
   onShowMore: () => void;
@@ -17,7 +30,7 @@ interface ResultsRevealProps {
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, savedCars, resultMessage, onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -104,7 +117,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-primary/20 shadow-lg shadow-primary/[0.08]">
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
                 <span className="text-sm font-semibold text-foreground tracking-wide">
-                  {cars.length} perfekta matchningar hittade
+                  {cars.length} {t('matchesFound', language)}
                 </span>
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" style={{ animationDelay: '200ms' }} />
               </div>
@@ -122,7 +135,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
             >
               <Button variant="outline" onClick={onCompare}>
                 <Scale className="h-4 w-4 mr-2" />
-                Jämför {savedCars.length} bilar
+                {t('compare', language)} {savedCars.length} {t('cars', language)}
               </Button>
             </div>
           )}
@@ -139,7 +152,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                 <Trophy className="h-4 w-4 text-primary" />
               </div>
               <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                Bästa matchningar
+                {t('bestMatches', language)}
               </h3>
               <div className="flex-1 h-px bg-border/50" />
             </div>
@@ -185,10 +198,10 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                    Du kanske också gillar
+                    {t('youMightLike', language)}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Liknande bilar baserat på dina preferenser
+                    {t('similarCars', language)}
                   </p>
                 </div>
               </div>
@@ -224,7 +237,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               className="rounded-xl px-6"
               onClick={onShowMore}
             >
-              Visa fler bilar
+              {t('showMore', language)}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>

@@ -53,6 +53,7 @@ const Index = () => {
   const [savedCars, setSavedCars] = useState<Car[]>(saved?.savedCars || []);
   const [resultMessage, setResultMessage] = useState(saved?.resultMessage || '');
   const [showResults, setShowResults] = useState(saved?.showResults || false);
+  const [language, setLanguage] = useState('sv');
   const searchRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -165,7 +166,8 @@ const Index = () => {
           <ScrollReveal delay={200}>
             <GuidedSearch
             onResults={handleResults}
-            onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+            onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onLanguageChange={setLanguage} />
 
           </ScrollReveal>
         </div>
@@ -176,7 +178,7 @@ const Index = () => {
       const topCars = cars.slice(0, 3);
       const similarCars = cars.slice(3, 9);
       return (
-        <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+        <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
           state: {
             cars: savedCars
           }
