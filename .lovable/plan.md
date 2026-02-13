@@ -1,24 +1,28 @@
 
+## Lägg in ny logga i projektet
 
-## Uppdatera hero-bilden till den nya filen
+### Vad som ska göras
 
-### Vad som andras
+Du vill ha den nya FindCar-loggan i projektet så att du sedan kan bestämma var den ska användas (i Header, Footer, eller någon annanstans).
 
-Hero-sektionens `background-image` pekar for narvarande pa `/images/findcar_hero_desktop_2560x1440.jpg`. Den nya bilden som laddades upp via GitHub heter `/images/hero_findcar.jpg`. Vi byter sokvagen.
+### Implementering
 
-### Tekniska detaljer
+**Steg 1: Kopiera loggan från user-uploads till projektet**
 
-**Fil: `src/pages/Index.tsx`**
+Den nya loggan kommer läggas i `src/assets/` tillsammans med övriga bildeluppsatser. Filnamn: `findcar-logo-new.png`
 
-En enda rad andras -- bakgrundsbildens URL:
+Anledning: `src/assets/` är rätt plats för loggor och bilder som används i React-komponenter, och de importeras sedan som ES6-moduler.
 
-```tsx
-// Fran:
-backgroundImage: 'url(/images/findcar_hero_desktop_2560x1440.jpg)',
+**Steg 2: Efter kopiering**
 
-// Till:
-backgroundImage: 'url(/images/hero_findcar.jpg)',
-```
+Du kan sedan själv bestämma:
+- Om denna ska ersätta den befintliga `findcar-logo.png` i Header och Footer
+- Eller om den ska användas på specifika ställen
+- Vi kan uppdatera komponenterna (`Header.tsx`, `Footer.tsx`) när du säger till
 
-Ingen annan logik, overlay, gradient eller scroll-effekt andras. Ingen bildoptimering eller blur tillampad -- filen i `public/` serveras exakt som den ar.
+### Teknisk notering
+
+- Befintlig logga: `src/assets/findcar-logo.png` (används i `Header.tsx` och `Footer.tsx`)
+- Ny logga kommer: `src/assets/findcar-logo-new.png` (redo för användning)
+- Du har full kontroll över nästa steg 👍
 
