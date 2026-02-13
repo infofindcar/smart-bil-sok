@@ -113,7 +113,7 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
+        <div className="absolute bottom-20 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
         opacity: 1 - scrollProgress * 3
       }}>
           <Button variant="gradient" size="default" onClick={scrollToSearch} className="rounded-xl">
@@ -121,7 +121,7 @@ const Index = () => {
           </Button>
         </div>
 
-        <button onClick={scrollToSearch} className="absolute bottom-10 z-10 animate-bounce text-white/50 hover:text-white/80 transition-colors" style={{
+        <button onClick={scrollToSearch} className="absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
         opacity: 1 - scrollProgress * 3
       }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
