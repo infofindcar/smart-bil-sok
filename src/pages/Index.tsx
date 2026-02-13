@@ -104,7 +104,7 @@ const Index = () => {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="absolute inset-0 bg-black/25" style={{ opacity: 1 - scrollProgress * 0.3 }} />
+        {/* Overlay removed to show hero image without gray tint */}
         
         {/* Logo and tagline are part of the hero image */}
 
