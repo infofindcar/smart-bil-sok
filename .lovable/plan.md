@@ -1,28 +1,28 @@
 
-## Lägg in ny logga i projektet
+## Språkstöd i Clutch AI
 
-### Vad som ska göras
+Ändringen är enkel och påverkar **inte** din databas, Supabase-koppling eller något annat. Det enda som ändras är att edge-funktionen läser det `language`-värde som redan skickas från frontend och lägger till en instruktion i AI-prompten att svara på rätt språk.
 
-Du vill ha den nya FindCar-loggan i projektet så att du sedan kan bestämma var den ska användas (i Header, Footer, eller någon annanstans).
+### Vad som ändras
 
-### Implementering
+**1. Läs språkparametern (rad 188 i `supabase/functions/guided-search/index.ts`)**
+- Hämta `language` från request body (redan skickat från frontend)
 
-**Steg 1: Kopiera loggan från user-uploads till projektet**
+**2. Lägg till språkinstruktion i system-prompten (rad ~207)**
+- Före AI-anropet, lägg till en rad i slutet av system-prompten:
+  - `sv` -> "Svara på svenska." (standard, ingen ändring)
+  - `en` -> "You MUST respond in English."
+  - `no` -> "Du MÅ svare på norsk."
+  - `da` -> "Du SKAL svare på dansk."
+  - `fi` -> "Vastaa suomeksi."
 
-Den nya loggan kommer läggas i `src/assets/` tillsammans med övriga bildeluppsatser. Filnamn: `findcar-logo-new.png`
+**3. Samma instruktion för resultat-AI:t (rad ~330 och ~380)**
+- Samma språkinstruktion läggs till i de två andra AI-anropen (personliga bilmotiveringar och "inga resultat"-meddelandet)
 
-Anledning: `src/assets/` är rätt plats för loggor och bilder som används i React-komponenter, och de importeras sedan som ES6-moduler.
+### Tekniska detaljer
 
-**Steg 2: Efter kopiering**
-
-Du kan sedan själv bestämma:
-- Om denna ska ersätta den befintliga `findcar-logo.png` i Header och Footer
-- Eller om den ska användas på specifika ställen
-- Vi kan uppdatera komponenterna (`Header.tsx`, `Footer.tsx`) när du säger till
-
-### Teknisk notering
-
-- Befintlig logga: `src/assets/findcar-logo.png` (används i `Header.tsx` och `Footer.tsx`)
-- Ny logga kommer: `src/assets/findcar-logo-new.png` (redo för användning)
-- Du har full kontroll över nästa steg 👍
-
+- En map med språkkoder och instruktioner skapas
+- Instruktionen appendas till varje system-prompt med en enkel string-concatenation
+- Validering: om okänt språk skickas, används svenska som standard
+- Inga databasändringar, inga nya tabeller, inga nya secrets
+- Bara edge-funktionen `guided-search/index.ts` ändras
