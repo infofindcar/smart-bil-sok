@@ -105,13 +105,12 @@ const Index = () => {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        {/* FindCar logo centered on the water */}
-        <div className="absolute top-[5%] left-1/2 -translate-x-1/2 z-10">
-          <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
-        </div>
-        {/* Tagline under logo */}
-        <div className="absolute top-[30%] left-1/2 -translate-x-1/2 z-10 text-center">
-          <p className="text-white text-lg sm:text-xl md:text-2xl font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">Din objektiva bilrådgivare</p>
+        {/* FindCar logo + tagline */}
+        <div className="absolute top-[2%] left-1/2 -translate-x-1/2 z-10">
+          <div className="relative">
+            <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" />
+            <p className="absolute bottom-[5%] right-[-2%] text-white text-[10px] sm:text-xs md:text-sm font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] whitespace-nowrap">Din objektiva bilrådgivare</p>
+          </div>
         </div>
 
         <div className="absolute bottom-24 z-10 animate-[fade-in_1s_ease-out_0.5s_both]" style={{
