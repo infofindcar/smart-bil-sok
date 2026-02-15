@@ -1,28 +1,34 @@
 
-## Språkstöd i Clutch AI
 
-Ändringen är enkel och påverkar **inte** din databas, Supabase-koppling eller något annat. Det enda som ändras är att edge-funktionen läser det `language`-värde som redan skickas från frontend och lägger till en instruktion i AI-prompten att svara på rätt språk.
+## Intresseanmälan på lösenordssidan
 
-### Vad som ändras
+Lägger till ett e-postformulär under lösenordsskyddet. Inget befintligt i databasen (bilar, analytics, sökfunktioner) påverkas.
 
-**1. Läs språkparametern (rad 188 i `supabase/functions/guided-search/index.ts`)**
-- Hämta `language` från request body (redan skickat från frontend)
+### Steg 1: Ny databastabell `waitlist`
+- Skapas med en migration (bredvid dina befintliga tabeller)
+- Kolumner: `id` (uuid), `email` (text, unik), `created_at` (timestamptz)
+- RLS: tillåt INSERT för alla, blockera SELECT/UPDATE/DELETE
+- Dina bilar och andra tabeller rörs inte
 
-**2. Lägg till språkinstruktion i system-prompten (rad ~207)**
-- Före AI-anropet, lägg till en rad i slutet av system-prompten:
-  - `sv` -> "Svara på svenska." (standard, ingen ändring)
-  - `en` -> "You MUST respond in English."
-  - `no` -> "Du MÅ svare på norsk."
-  - `da` -> "Du SKAL svare på dansk."
-  - `fi` -> "Vastaa suomeksi."
+### Steg 2: Uppdatera PasswordGate.tsx
+- Under texten "Denna tjänst är lösenordsskyddad under beta" läggs till:
+  - En linje/separator
+  - Texten "Vill du få tillgång först och följa resan?"
+  - Ett e-postfält med en skicka-knapp
+  - Bekräftelsetext: "Tack! Vi hör av oss."
+- Sparar direkt till `waitlist`-tabellen via Supabase-klienten
+- Ingen edge function behövs, ingen extern tjänst
 
-**3. Samma instruktion för resultat-AI:t (rad ~330 och ~380)**
-- Samma språkinstruktion läggs till i de två andra AI-anropen (personliga bilmotiveringar och "inga resultat"-meddelandet)
+### Vad som INTE ändras
+- `cars`-tabellen (alla bilar kvar som vanligt)
+- `ny find car`-tabellen
+- `guided-search` edge function
+- `verify-password` edge function
+- Alla andra komponenter och sidor
 
-### Tekniska detaljer
-
-- En map med språkkoder och instruktioner skapas
-- Instruktionen appendas till varje system-prompt med en enkel string-concatenation
-- Validering: om okänt språk skickas, används svenska som standard
-- Inga databasändringar, inga nya tabeller, inga nya secrets
-- Bara edge-funktionen `guided-search/index.ts` ändras
+### Tekniskt
+- Migration: `CREATE TABLE waitlist (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, email text NOT NULL UNIQUE, created_at timestamptz DEFAULT now())`
+- RLS: en RESTRICTIVE policy som nekar allt, plus en PERMISSIVE INSERT-policy for anon
+- Frontend: `supabase.from('waitlist').insert({ email })` — ingen autentisering krävs
+- Duplicate-hantering: vid samma e-post igen visas ändå "Tack"-meddelande
+- Du ser alla anmälningar i Supabase Table Editor (supabase.com/dashboard)
