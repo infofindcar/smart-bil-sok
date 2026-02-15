@@ -124,7 +124,7 @@ const WaitlistForm = () => {
     setWaitlistError('');
 
     try {
-      const { error } = await supabase.from('waitlist' as any).insert({ email } as any);
+      const { error } = await supabase.from('waitlist').insert({ email });
       if (error && !error.message.includes('duplicate')) throw error;
       setIsSubmitted(true);
     } catch {
