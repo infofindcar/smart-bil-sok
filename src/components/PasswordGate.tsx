@@ -1,8 +1,9 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock } from 'lucide-react';
+import { Lock, Mail, CheckCircle } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
 
 const SESSION_KEY = 'findcar_session';
@@ -102,7 +103,68 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
         <p className="text-xs text-muted-foreground">
           Denna tjänst är lösenordsskyddad under beta.
         </p>
+
+        <Separator className="my-2" />
+
+        <WaitlistForm />
       </div>
+    </div>
+  );
+};
+
+const WaitlistForm = () => {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
+
+  const handleWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setWaitlistError('');
+
+    try {
+      const { error } = await supabase.from('waitlist' as any).insert({ email } as any);
+      if (error && !error.message.includes('duplicate')) throw error;
+      setIsSubmitted(true);
+    } catch {
+      setWaitlistError('Något gick fel. Försök igen.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="space-y-2 text-center">
+        <CheckCircle className="h-6 w-6 text-primary mx-auto" />
+        <p className="text-sm text-muted-foreground">Tack! Vi hör av oss.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Vill du få tillgång först och följa resan?
+      </p>
+      <form onSubmit={handleWaitlist} className="flex gap-2">
+        <div className="relative flex-1">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="email"
+            placeholder="din@email.se"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="pl-10 h-10 bg-card"
+            required
+          />
+        </div>
+        <Button type="submit" size="sm" className="h-10" disabled={isSubmitting || !email}>
+          {isSubmitting ? '...' : 'Skicka'}
+        </Button>
+      </form>
+      {waitlistError && <p className="text-destructive text-xs">{waitlistError}</p>}
     </div>
   );
 };
