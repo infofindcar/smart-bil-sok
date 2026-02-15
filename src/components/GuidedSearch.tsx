@@ -153,12 +153,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   useEffect(() => {
     const container = chatContainerRef.current;
     if (container) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'smooth',
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth',
+        });
       });
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, visibleText]);
 
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     let i = 0;
