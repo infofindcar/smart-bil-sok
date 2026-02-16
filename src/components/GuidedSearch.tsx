@@ -426,16 +426,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Search now button — always visible during chatting when user has sent at least one message */}
         {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
-          <div className="px-4 md:px-5 pb-3">
-            <Button
-              variant="gradient"
-              size="sm"
+          <div className="px-4 md:px-5 pb-3 flex justify-end">
+            <button
               onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
-              className="w-full rounded-xl text-xs font-semibold"
+              className="text-[11px] px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
             >
-              <Search className="h-3.5 w-3.5 mr-1.5" />
+              <Search className="h-3 w-3" />
               {SEARCH_NOW[language] || SEARCH_NOW.sv}
-            </Button>
+            </button>
           </div>
         )}
 
