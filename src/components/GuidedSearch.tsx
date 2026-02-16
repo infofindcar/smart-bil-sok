@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -96,6 +96,14 @@ const NEW_SEARCH: Record<string, string> = {
   no: 'Nytt søk',
   da: 'Ny søgning',
   fi: 'Uusi haku',
+};
+
+const SEARCH_NOW: Record<string, string> = {
+  sv: 'Sök direkt',
+  en: 'Search now',
+  no: 'Søk nå',
+  da: 'Søg nu',
+  fi: 'Hae nyt',
 };
 
 const SHOW_MATCHES: Record<string, string> = {
@@ -413,6 +421,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 {WRITE_OWN[language] || WRITE_OWN.sv}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Search now button — always visible during chatting when user has sent at least one message */}
+        {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
+          <div className="px-4 md:px-5 pb-3">
+            <Button
+              variant="gradient"
+              size="sm"
+              onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
+              className="w-full rounded-xl text-xs font-semibold"
+            >
+              <Search className="h-3.5 w-3.5 mr-1.5" />
+              {SEARCH_NOW[language] || SEARCH_NOW.sv}
+            </Button>
           </div>
         )}
 
