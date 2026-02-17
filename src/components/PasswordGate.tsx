@@ -92,22 +92,22 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
         </div>
 
         {/* Password entry */}
-        <div className="space-y-4">
+        <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-6 sm:p-8 space-y-5">
           <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Beta-åtkomst</p>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="password"
                 placeholder="Ange kod"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 h-12 bg-card text-center"
+                className="pl-12 h-14 bg-background text-center text-base rounded-xl border-border/50 focus:border-secondary/40"
                 autoFocus
               />
             </div>
             {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full h-12" disabled={isLoading || !password}>
+            <Button type="submit" className="w-full h-14 text-base rounded-xl font-semibold" disabled={isLoading || !password}>
               {isLoading ? 'Verifierar...' : 'Logga in'}
             </Button>
           </form>
@@ -116,21 +116,23 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
         <Separator />
 
         {/* Waitlist signup */}
-        <WaitlistForm />
+        <div className="rounded-2xl border border-secondary/20 bg-secondary/[0.03] p-6 sm:p-8">
+          <WaitlistForm />
+        </div>
 
         <Separator />
 
         {/* Dealer CTA */}
-        <div className="space-y-2 pb-4">
-          <p className="text-sm text-foreground font-medium">Är du bilhandlare?</p>
-          <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">
+        <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-6 sm:p-8 space-y-3 text-center">
+          <p className="text-base text-foreground font-semibold">Är du bilhandlare?</p>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
             Vill du synas på FindCar när vi lanserar? Kontakta oss så berättar vi mer.
           </p>
           <a
             href="mailto:info@findcar.se?subject=Intresseanmälan bilhandlare"
-            className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-secondary hover:text-secondary/80 transition-colors"
+            className="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-secondary hover:text-secondary/80 transition-colors bg-secondary/[0.06] hover:bg-secondary/[0.12] px-5 py-3 rounded-xl border border-secondary/20"
           >
-            <Mail className="h-3.5 w-3.5" />
+            <Mail className="h-4 w-4" />
             info@findcar.se
           </a>
         </div>
@@ -172,31 +174,31 @@ const WaitlistForm = () => {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-1">
-        <p className="text-sm text-foreground font-medium">Få tillgång först</p>
-        <p className="text-xs text-muted-foreground">
+    <div className="space-y-4">
+      <div className="space-y-1.5 text-center">
+        <p className="text-base text-foreground font-semibold">Få tillgång först</p>
+        <p className="text-sm text-muted-foreground">
           Skriv upp dig så meddelar vi dig när FindCar lanseras.
         </p>
       </div>
       <form onSubmit={handleWaitlist} className="flex gap-2">
         <div className="relative flex-1">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="email"
             placeholder="din@email.se"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="pl-10 h-11 bg-card"
+            className="pl-12 h-14 bg-background text-base rounded-xl border-border/50 focus:border-secondary/40"
             required
           />
         </div>
-        <Button type="submit" size="sm" className="h-11 px-5" disabled={isSubmitting || !email}>
-          <Send className="h-4 w-4 mr-1.5" />
+        <Button type="submit" className="h-14 px-6 rounded-xl text-base font-semibold" disabled={isSubmitting || !email}>
+          <Send className="h-4 w-4 mr-2" />
           {isSubmitting ? '...' : 'Skicka'}
         </Button>
       </form>
-      {waitlistError && <p className="text-destructive text-xs">{waitlistError}</p>}
+      {waitlistError && <p className="text-destructive text-sm">{waitlistError}</p>}
     </div>
   );
 };
