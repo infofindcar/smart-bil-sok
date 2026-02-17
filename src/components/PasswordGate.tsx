@@ -55,10 +55,10 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
         }));
         setIsAuthenticated(true);
       } else {
-        setError(data?.error || 'Fel lösenord');
+        setError(data?.error || 'Wrong password');
       }
     } catch {
-      setError('Något gick fel. Försök igen.');
+      setError('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -88,18 +88,18 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
             className="h-28 sm:h-36 mx-auto animate-float"
             style={{ filter: 'drop-shadow(0 0 24px rgba(212,175,55,0.25))' }}
           />
-          <p className="text-muted-foreground text-sm tracking-wide">Din objektiva bilrådgivare</p>
+          <p className="text-muted-foreground text-sm tracking-wide">Your unbiased car advisor</p>
         </div>
 
         {/* Password entry */}
         <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-6 sm:p-8 space-y-5">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Beta-åtkomst</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Beta Access</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="password"
-                placeholder="Ange kod"
+                placeholder="Enter code"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-12 h-14 bg-background text-center text-base rounded-xl border-border/50 focus:border-secondary/40"
@@ -108,7 +108,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
             </div>
             {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full h-14 text-base rounded-xl font-semibold" disabled={isLoading || !password}>
-              {isLoading ? 'Verifierar...' : 'Logga in'}
+              {isLoading ? 'Verifying...' : 'Log in'}
             </Button>
           </form>
         </div>
@@ -124,12 +124,12 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
 
         {/* Dealer CTA */}
         <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-6 sm:p-8 space-y-3 text-center">
-          <p className="text-base text-foreground font-semibold">Är du bilhandlare?</p>
+          <p className="text-base text-foreground font-semibold">Are you a car dealer?</p>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-            Vill du synas på FindCar när vi lanserar? Kontakta oss så berättar vi mer.
+            Want to be listed on FindCar when we launch? Get in touch and we'll tell you more.
           </p>
           <a
-            href="mailto:info@findcar.se?subject=Intresseanmälan bilhandlare"
+            href="mailto:info@findcar.se?subject=Car dealer inquiry"
             className="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-secondary hover:text-secondary/80 transition-colors bg-secondary/[0.06] hover:bg-secondary/[0.12] px-5 py-3 rounded-xl border border-secondary/20"
           >
             <Mail className="h-4 w-4" />
@@ -157,7 +157,7 @@ const WaitlistForm = () => {
       if (error && !error.message.includes('duplicate')) throw error;
       setIsSubmitted(true);
     } catch {
-      setWaitlistError('Något gick fel. Försök igen.');
+      setWaitlistError('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -167,8 +167,8 @@ const WaitlistForm = () => {
     return (
       <div className="space-y-2 text-center py-2">
         <CheckCircle className="h-6 w-6 text-primary mx-auto" />
-        <p className="text-sm font-medium text-foreground">Tack! Du är med på listan.</p>
-        <p className="text-xs text-muted-foreground">Vi hör av oss när det är dags.</p>
+        <p className="text-sm font-medium text-foreground">Thanks! You're on the list.</p>
+        <p className="text-xs text-muted-foreground">We'll reach out when it's time.</p>
       </div>
     );
   }
@@ -176,9 +176,9 @@ const WaitlistForm = () => {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5 text-center">
-        <p className="text-base text-foreground font-semibold">Få tillgång först</p>
+        <p className="text-base text-foreground font-semibold">Get early access</p>
         <p className="text-sm text-muted-foreground">
-          Skriv upp dig så meddelar vi dig när FindCar lanseras.
+          Sign up and we'll notify you when FindCar launches.
         </p>
       </div>
       <form onSubmit={handleWaitlist} className="flex gap-2">
@@ -186,7 +186,7 @@ const WaitlistForm = () => {
           <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="email"
-            placeholder="din@email.se"
+            placeholder="your@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="pl-12 h-14 bg-background text-base rounded-xl border-border/50 focus:border-secondary/40"
@@ -195,7 +195,7 @@ const WaitlistForm = () => {
         </div>
         <Button type="submit" className="h-14 px-6 rounded-xl text-base font-semibold" disabled={isSubmitting || !email}>
           <Send className="h-4 w-4 mr-2" />
-          {isSubmitting ? '...' : 'Skicka'}
+          {isSubmitting ? '...' : 'Send'}
         </Button>
       </form>
       {waitlistError && <p className="text-destructive text-sm">{waitlistError}</p>}
