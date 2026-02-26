@@ -41,13 +41,12 @@ export type Database = {
         }
         Relationships: []
       }
-      cars: {
+      Lovable: {
         Row: {
           body_type: string | null
           city: string | null
           color: string | null
           created_at: string | null
-          data_source: string | null
           dealer_name: string | null
           dealer_url: string | null
           drivetrain: string | null
@@ -62,7 +61,10 @@ export type Database = {
           model: string | null
           model_clean: string | null
           model_raw: string | null
+          orginal_url: string | null
           price: number | null
+          source: string | null
+          source_listing_id: string | null
           year: number | null
         }
         Insert: {
@@ -70,7 +72,6 @@ export type Database = {
           city?: string | null
           color?: string | null
           created_at?: string | null
-          data_source?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
           drivetrain?: string | null
@@ -85,7 +86,10 @@ export type Database = {
           model?: string | null
           model_clean?: string | null
           model_raw?: string | null
+          orginal_url?: string | null
           price?: number | null
+          source?: string | null
+          source_listing_id?: string | null
           year?: number | null
         }
         Update: {
@@ -93,7 +97,6 @@ export type Database = {
           city?: string | null
           color?: string | null
           created_at?: string | null
-          data_source?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
           drivetrain?: string | null
@@ -108,7 +111,10 @@ export type Database = {
           model?: string | null
           model_clean?: string | null
           model_raw?: string | null
+          orginal_url?: string | null
           price?: number | null
+          source?: string | null
+          source_listing_id?: string | null
           year?: number | null
         }
         Relationships: []
