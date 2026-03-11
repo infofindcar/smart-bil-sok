@@ -70,7 +70,7 @@ const CarDetail = () => {
   useEffect(() => {
     if (!car && id) {
       const fetchCar = async () => {
-        const { data } = await supabase.from('cars').select('*').eq('id', Number(id)).single();
+        const { data } = await supabase.from('Lovable').select('*').eq('id', Number(id)).single();
         if (data) setCar(data as CarType);
         setIsLoading(false);
       };
