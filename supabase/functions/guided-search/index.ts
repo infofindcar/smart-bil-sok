@@ -361,12 +361,25 @@ serve(async (req) => {
           if (fuelFilters) query = query.or(fuelFilters);
         }
         if (validBodyTypes.length > 0 && level < 1) {
+          // Match by body_type field OR by model name for cars with Unknown/null body_type
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
-            .map((p: string) => `body_type.ilike.${p}`)
-            .join(",");
-          if (bodyFilters) query = query.or(bodyFilters);
+            .map((p: string) => `body_type.ilike.${p}`);
+          
+          // Also match model names that imply the body type
+          const modelFilters: string[] = [];
+          for (const bt of validBodyTypes) {
+            const models = modelBodyTypeMap[bt];
+            if (models) {
+              for (const m of models) {
+                modelFilters.push(`model.ilike.%${m}%`);
+              }
+            }
+          }
+          
+          const allFilters = [...bodyFilters, ...modelFilters].join(",");
+          if (allFilters) query = query.or(allFilters);
         }
         if (sanitizedColor && level < 1) {
           query = query.ilike("color", `%${sanitizedColor}%`);
