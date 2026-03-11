@@ -338,7 +338,7 @@ serve(async (req) => {
       let relaxLevel = 0;
 
       const buildQuery = (level: number) => {
-        let query = supabase.from("cars").select("*");
+        let query = supabase.from("Lovable").select("*");
 
         const priceMult = [1, 1.3, 1.6, 10][level];
         const priceMinMult = [1, 0.7, 0.5, 0][level];
