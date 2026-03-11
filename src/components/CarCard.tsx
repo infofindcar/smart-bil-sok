@@ -72,6 +72,11 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
         <p className="text-xs text-muted-foreground mt-0.5">
           {car.year} • {car.mileage ? `${new Intl.NumberFormat('sv-SE').format(car.mileage)} mil` : '–'} • {car.city || '–'}
         </p>
+        {car.regnr && (
+          <p className="text-[10px] font-mono text-muted-foreground/70 mt-0.5 uppercase tracking-wider">
+            {car.regnr}
+          </p>
+        )}
         <p className="text-primary font-bold text-lg mt-2">{formatPrice(car.price)} kr</p>
         <div className="flex flex-wrap gap-1 mt-2">
           {car.fuel_type && (
