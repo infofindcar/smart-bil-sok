@@ -19,6 +19,7 @@ export type Car = {
   color: string | null;
   image_thumb_url: string | null;
   listing_url: string | null;
+  regnr: string | null;
 };
 
 export type CarReason = {
