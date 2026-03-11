@@ -391,7 +391,15 @@ serve(async (req) => {
           if (allFilters) query = query.or(allFilters);
         }
         if (sanitizedColor && level < 1) {
-          query = query.ilike("color", `%${sanitizedColor}%`);
+          // Match exact color, quoted (AI-inferred) color, and Unknown/null
+          query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.is.null`);
+        }
+        if (sanitizedDrivetrain && level < 2) {
+          const dtValues = drivetrainPatterns[sanitizedDrivetrain];
+          if (dtValues) {
+            const dtFilters = dtValues.map(v => `drivetrain.eq.${v}`).join(",");
+            query = query.or(`${dtFilters},drivetrain.eq.Unknown,drivetrain.is.null`);
+          }
         }
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
