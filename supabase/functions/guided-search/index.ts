@@ -370,7 +370,7 @@ serve(async (req) => {
           if (fuelFilters) query = query.or(fuelFilters);
         }
         if (validBodyTypes.length > 0 && level < 1) {
-          // Match by body_type field OR by model name for cars with Unknown/null body_type
+          // Match by body_type field, Unknown/null body_type, OR by model name
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
@@ -387,7 +387,8 @@ serve(async (req) => {
             }
           }
           
-          const allFilters = [...bodyFilters, ...modelFilters].join(",");
+          // Include cars with Unknown/null body_type
+          const allFilters = [...bodyFilters, ...modelFilters, "body_type.eq.Unknown", "body_type.is.null"].join(",");
           if (allFilters) query = query.or(allFilters);
         }
         if (sanitizedColor && level < 1) {
