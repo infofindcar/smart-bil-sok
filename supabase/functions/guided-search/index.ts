@@ -111,6 +111,12 @@ const bodyPatterns: Record<string, string> = {
   coupe: "%Coup%",
 };
 
+const drivetrainPatterns: Record<string, string[]> = {
+  awd: ["AWD", '"AWD"'],
+  fwd: ["FWD", '"FWD"'],
+  rwd: ["RWD", '"RWD"'],
+};
+
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
   suv: ["XC90", "XC60", "XC40", "EX90", "EX60", "EX40", "EX30", "RAV4", "CR-V", "Tiguan", "Tucson", "Kona", "Sportage", "Niro", "Q3", "Q5", "Q7", "Q8", "X1", "X3", "X5", "X7", "GLC", "GLE", "GLB", "EQA", "EQB", "EQC", "Model Y", "Model X", "ID.4", "ID.5", "Enyaq", "Karoq", "Kodiaq", "Forester", "Outback"],
@@ -162,11 +168,12 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling"},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling"},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe
+Giltiga drivetrain-värden: awd, fwd, rwd
 Giltiga useCase-värden: pendling, familj, langresa, stad, blandat`;
 
 serve(async (req) => {
@@ -318,6 +325,8 @@ serve(async (req) => {
       const sanitizedCity = sanitizeStringFilter(filters.city);
       const sanitizedMake = sanitizeStringFilter(filters.make);
       const sanitizedColor = sanitizeStringFilter(filters.color);
+      const sanitizedDrivetrain = typeof filters.drivetrain === "string" && filters.drivetrain in drivetrainPatterns
+        ? filters.drivetrain : null;
 
       // Validate fuel and body type arrays against known values
       const validFuels = Array.isArray(filters.fuel)
@@ -382,7 +391,15 @@ serve(async (req) => {
           if (allFilters) query = query.or(allFilters);
         }
         if (sanitizedColor && level < 1) {
-          query = query.ilike("color", `%${sanitizedColor}%`);
+          // Match exact color, quoted (AI-inferred) color, and Unknown/null
+          query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.is.null`);
+        }
+        if (sanitizedDrivetrain && level < 2) {
+          const dtValues = drivetrainPatterns[sanitizedDrivetrain];
+          if (dtValues) {
+            const dtFilters = dtValues.map(v => `drivetrain.eq.${v}`).join(",");
+            query = query.or(`${dtFilters},drivetrain.eq.Unknown,drivetrain.is.null`);
+          }
         }
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
