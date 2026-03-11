@@ -111,6 +111,12 @@ const bodyPatterns: Record<string, string> = {
   coupe: "%Coup%",
 };
 
+const drivetrainPatterns: Record<string, string[]> = {
+  awd: ["AWD", '"AWD"'],
+  fwd: ["FWD", '"FWD"'],
+  rwd: ["RWD", '"RWD"'],
+};
+
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
   suv: ["XC90", "XC60", "XC40", "EX90", "EX60", "EX40", "EX30", "RAV4", "CR-V", "Tiguan", "Tucson", "Kona", "Sportage", "Niro", "Q3", "Q5", "Q7", "Q8", "X1", "X3", "X5", "X7", "GLC", "GLE", "GLB", "EQA", "EQB", "EQC", "Model Y", "Model X", "ID.4", "ID.5", "Enyaq", "Karoq", "Kodiaq", "Forester", "Outback"],
