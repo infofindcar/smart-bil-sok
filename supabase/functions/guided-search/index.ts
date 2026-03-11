@@ -325,6 +325,8 @@ serve(async (req) => {
       const sanitizedCity = sanitizeStringFilter(filters.city);
       const sanitizedMake = sanitizeStringFilter(filters.make);
       const sanitizedColor = sanitizeStringFilter(filters.color);
+      const sanitizedDrivetrain = typeof filters.drivetrain === "string" && filters.drivetrain in drivetrainPatterns
+        ? filters.drivetrain : null;
 
       // Validate fuel and body type arrays against known values
       const validFuels = Array.isArray(filters.fuel)
