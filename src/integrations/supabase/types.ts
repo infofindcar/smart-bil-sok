@@ -63,6 +63,7 @@ export type Database = {
           model_raw: string | null
           orginal_url: string | null
           price: number | null
+          regnr: string | null
           source: string | null
           source_listing_id: string | null
           year: number | null
@@ -88,6 +89,7 @@ export type Database = {
           model_raw?: string | null
           orginal_url?: string | null
           price?: number | null
+          regnr?: string | null
           source?: string | null
           source_listing_id?: string | null
           year?: number | null
@@ -113,6 +115,7 @@ export type Database = {
           model_raw?: string | null
           orginal_url?: string | null
           price?: number | null
+          regnr?: string | null
           source?: string | null
           source_listing_id?: string | null
           year?: number | null
