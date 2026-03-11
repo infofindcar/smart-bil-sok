@@ -35,7 +35,7 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('cars').select('id, image_thumb_url, city, make');
+    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make');
     if (data) {
       setStats({
         total: data.length,

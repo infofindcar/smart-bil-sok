@@ -111,6 +111,13 @@ const bodyPatterns: Record<string, string> = {
   coupe: "%Coup%",
 };
 
+// Model names that imply a body type (used when body_type is Unknown/null)
+const modelBodyTypeMap: Record<string, string[]> = {
+  suv: ["XC90", "XC60", "XC40", "EX90", "EX60", "EX40", "EX30", "RAV4", "CR-V", "Tiguan", "Tucson", "Kona", "Sportage", "Niro", "Q3", "Q5", "Q7", "Q8", "X1", "X3", "X5", "X7", "GLC", "GLE", "GLB", "EQA", "EQB", "EQC", "Model Y", "Model X", "ID.4", "ID.5", "Enyaq", "Karoq", "Kodiaq", "Forester", "Outback"],
+  kombi: ["V60", "V90", "V70", "V50", "V40", "A4 Avant", "A6 Avant", "3 Touring", "5 Touring", "Octavia Combi", "Superb Combi", "Passat Sportscombi", "Golf Sportscombi"],
+  sedan: ["S60", "S90", "S80", "S40", "A4 Sedan", "A6 Sedan", "3 Series", "5 Series", "C-Class", "E-Class", "Model 3", "Model S"],
+};
+
 const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du har ett naturligt samtal med kunden för att förstå exakt vilken bil som passar dem bäst. Du ska kännas som en riktig människa som bryr sig.
 
 DITT MÅL: Ställ tillräckligt med frågor för att verkligen förstå kundens situation och kunna hitta EXAKT rätt bil. Ju mer du vet, desto bättre resultat. Du ska ställa minst 5 frågor innan du söker.
@@ -331,7 +338,7 @@ serve(async (req) => {
       let relaxLevel = 0;
 
       const buildQuery = (level: number) => {
-        let query = supabase.from("cars").select("*");
+        let query = supabase.from("Lovable").select("*");
 
         const priceMult = [1, 1.3, 1.6, 10][level];
         const priceMinMult = [1, 0.7, 0.5, 0][level];
@@ -354,12 +361,25 @@ serve(async (req) => {
           if (fuelFilters) query = query.or(fuelFilters);
         }
         if (validBodyTypes.length > 0 && level < 1) {
+          // Match by body_type field OR by model name for cars with Unknown/null body_type
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
-            .map((p: string) => `body_type.ilike.${p}`)
-            .join(",");
-          if (bodyFilters) query = query.or(bodyFilters);
+            .map((p: string) => `body_type.ilike.${p}`);
+          
+          // Also match model names that imply the body type
+          const modelFilters: string[] = [];
+          for (const bt of validBodyTypes) {
+            const models = modelBodyTypeMap[bt];
+            if (models) {
+              for (const m of models) {
+                modelFilters.push(`model.ilike.%${m}%`);
+              }
+            }
+          }
+          
+          const allFilters = [...bodyFilters, ...modelFilters].join(",");
+          if (allFilters) query = query.or(allFilters);
         }
         if (sanitizedColor && level < 1) {
           query = query.ilike("color", `%${sanitizedColor}%`);
