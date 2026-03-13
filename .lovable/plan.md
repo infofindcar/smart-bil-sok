@@ -1,24 +1,34 @@
 
 
-## Plan: Lägg till body_type-berikning + berikningsstatus på admin
+## Intresseanmälan på lösenordssidan
 
-### 1. Edge function: Lägg till body_type-berikning (`supabase/functions/enrich-car-data/index.ts`)
+Lägger till ett e-postformulär under lösenordsskyddet. Inget befintligt i databasen (bilar, analytics, sökfunktioner) påverkas.
 
-Auto-loopen fungerar redan -- när du trycker "Kör berikning" körs alla bilar automatiskt i omgångar om 25. Det som saknas är body_type.
+### Steg 1: Ny databastabell `waitlist`
+- Skapas med en migration (bredvid dina befintliga tabeller)
+- Kolumner: `id` (uuid), `email` (text, unik), `created_at` (timestamptz)
+- RLS: tillåt INSERT för alla, blockera SELECT/UPDATE/DELETE
+- Dina bilar och andra tabeller rörs inte
 
-- Utöka filtret att även inkludera `body_type.eq.Unknown,body_type.is.null`
-- Inkludera `body_type` i select-queryn
-- Lägg till ett tredje AI-anrop som härleder body_type från make/model/model_raw med svarsalternativ: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil
-- Returnera `bodyTypeUpdated` i svaret
+### Steg 2: Uppdatera PasswordGate.tsx
+- Under texten "Denna tjänst är lösenordsskyddad under beta" läggs till:
+  - En linje/separator
+  - Texten "Vill du få tillgång först och följa resan?"
+  - Ett e-postfält med en skicka-knapp
+  - Bekräftelsetext: "Tack! Vi hör av oss."
+- Sparar direkt till `waitlist`-tabellen via Supabase-klienten
+- Ingen edge function behövs, ingen extern tjänst
 
-### 2. Admin-sidan: Visa berikningsstatus (`src/pages/Admin.tsx`)
+### Vad som INTE ändras
+- `cars`-tabellen (alla bilar kvar som vanligt)
+- `ny find car`-tabellen
+- `guided-search` edge function
+- `verify-password` edge function
+- Alla andra komponenter och sidor
 
-- Utöka `fetchStats`-queryn med `drivetrain, color, body_type`
-- Räkna bilar med giltig drivetrain/color/body_type (ej null, ej "Unknown")
-- Lägg till 3 nya stat-kort under befintliga:
-  - "Drivetrain berikad: X/Y"
-  - "Färg berikad: X/Y"
-  - "Body type berikad: X/Y"
-  - "Behöver berikas: Z" (antal som saknar minst ett värde)
-- Uppdatera loggen att visa body_type-resultat också
-
+### Tekniskt
+- Migration: `CREATE TABLE waitlist (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, email text NOT NULL UNIQUE, created_at timestamptz DEFAULT now())`
+- RLS: en RESTRICTIVE policy som nekar allt, plus en PERMISSIVE INSERT-policy for anon
+- Frontend: `supabase.from('waitlist').insert({ email })` — ingen autentisering krävs
+- Duplicate-hantering: vid samma e-post igen visas ändå "Tack"-meddelande
+- Du ser alla anmälningar i Supabase Table Editor (supabase.com/dashboard)

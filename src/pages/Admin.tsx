@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square } from 'lucide-react';
+import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square, CheckCircle, AlertCircle, Palette, Cog } from 'lucide-react';
 
 const Admin = () => {
   const [isAuthed, setIsAuthed] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0 });
+  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0, drivetrainEnriched: 0, colorEnriched: 0, bodyTypeEnriched: 0, needsEnrichment: 0 });
   const [storedPassword, setStoredPassword] = useState('');
 
   // Enrich state
@@ -44,13 +44,26 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make');
+    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type');
     if (data) {
+      const total = data.length;
+      const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown').length;
+      const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown').length;
+      const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown').length;
+      const needsEnrichment = data.filter((c) =>
+        !c.drivetrain || c.drivetrain === 'Unknown' ||
+        !c.color || c.color === 'Unknown' ||
+        !c.body_type || c.body_type === 'Unknown'
+      ).length;
       setStats({
-        total: data.length,
+        total,
         withImages: data.filter((c) => c.image_thumb_url).length,
         cities: new Set(data.map((c) => c.city)).size,
         makes: new Set(data.map((c) => c.make)).size,
+        drivetrainEnriched,
+        colorEnriched,
+        bodyTypeEnriched,
+        needsEnrichment,
       });
     }
   };
@@ -66,6 +79,7 @@ const Admin = () => {
     setEnrichProgress(null);
 
     let totalProcessed = 0;
+    let totalBodyType = 0;
     let totalDrivetrain = 0;
     let totalColor = 0;
     let totalErrors = 0;
@@ -85,10 +99,11 @@ const Admin = () => {
           break;
         }
 
-        const { processed, remaining, drivetrainUpdated, colorUpdated, errors } = data;
+        const { processed, remaining, drivetrainUpdated, colorUpdated, bodyTypeUpdated, errors } = data;
         totalProcessed += processed;
         totalDrivetrain += drivetrainUpdated || 0;
         totalColor += colorUpdated || 0;
+        totalBodyType += bodyTypeUpdated || 0;
         totalErrors += errors || 0;
 
         if (firstRun) {
@@ -99,10 +114,10 @@ const Admin = () => {
           setEnrichProgress((prev) => prev ? { ...prev, processed: totalProcessed } : null);
         }
 
-        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}). ${remaining} kvar.`);
+        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);
 
         if (remaining === 0) {
-          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Fel: ${totalErrors}`);
+          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Karosstyp: ${totalBodyType}, Fel: ${totalErrors}`);
           break;
         }
       } catch (e) {
@@ -159,6 +174,13 @@ const Admin = () => {
     { icon: MapPin, value: stats.cities, label: 'Städer' },
   ];
 
+  const enrichCards = [
+    { icon: Cog, value: `${stats.drivetrainEnriched}/${stats.total}`, label: 'Drivetrain berikad' },
+    { icon: Palette, value: `${stats.colorEnriched}/${stats.total}`, label: 'Färg berikad' },
+    { icon: Car, value: `${stats.bodyTypeEnriched}/${stats.total}`, label: 'Karosstyp berikad' },
+    { icon: stats.needsEnrichment > 0 ? AlertCircle : CheckCircle, value: stats.needsEnrichment, label: 'Behöver berikas', highlight: stats.needsEnrichment > 0 },
+  ];
+
   const progressPercent = enrichProgress
     ? Math.round((enrichProgress.processed / enrichProgress.total) * 100)
     : 0;
@@ -179,7 +201,16 @@ const Admin = () => {
             ))}
           </div>
 
-          {/* Enrich car data */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {enrichCards.map((s) => (
+              <div key={s.label} className={`bg-card rounded-xl p-4 border text-center ${(s as any).highlight ? 'border-destructive' : 'border-border'}`}>
+                <s.icon className={`h-6 w-6 mx-auto mb-2 ${(s as any).highlight ? 'text-destructive' : 'text-primary'}`} />
+                <p className="text-2xl font-bold">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="bg-card rounded-xl p-6 border border-border mb-8 space-y-4">
             <div>
               <h2 className="text-lg font-semibold flex items-center gap-2">

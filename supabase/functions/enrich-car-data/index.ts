@@ -33,30 +33,30 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Count total needing enrichment
+    // Count total needing enrichment (missing drivetrain, color, OR body_type)
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null");
+      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null");
 
     // Fetch chunk
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, drivetrain, color, image_thumb_url")
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null")
+      .select("id, make, model, model_raw, drivetrain, color, body_type, image_thumb_url")
+      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null")
       .limit(CHUNK_SIZE);
 
     if (fetchError) throw fetchError;
     if (!cars || cars.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "Alla bilar är redan berikade!", updated: 0, remaining: 0 }),
+        JSON.stringify({ success: true, message: "Alla bilar är redan berikade!", updated: 0, remaining: 0, processed: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log(`Processing ${cars.length} cars (${totalRemaining} total remaining)`);
 
-    const results = { drivetrainUpdated: 0, colorUpdated: 0, errors: 0 };
+    const results = { drivetrainUpdated: 0, colorUpdated: 0, bodyTypeUpdated: 0, errors: 0 };
 
     // Process in batches of BATCH_SIZE
     for (let i = 0; i < cars.length; i += BATCH_SIZE) {
@@ -123,6 +123,36 @@ serve(async (req) => {
           } catch (e) {
             console.error(`Color error for car ${car.id}:`, e);
             results.errors++;
+          }
+        }
+
+        // Body type inference
+        if (!car.body_type || car.body_type === "Unknown") {
+          if (car.make || car.model_raw) {
+            try {
+              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "google/gemini-2.5-flash-lite",
+                  messages: [
+                    { role: "system", content: `You are a car expert. Given a car's make, model, and raw model name, determine the body type.\nReply with ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, or UNKNOWN.\n\nRules:\n- SUV: XC60, XC90, Q5, Q7, X3, X5, GLC, GLE, Tucson, Tiguan, RAV4, CR-V, Kona, etc.\n- Sedan: S60, A4 Sedan, 3-serie Sedan, C-Klass Sedan, Camry, Accord, etc.\n- Kombi: V60, V90, A4 Avant, 3-serie Touring, C-Klass Kombi, Passat Variant, etc.\n- Halvkombi: Golf, Focus, i30, Civic HB, V40, etc.\n- Coupé: TT, 4-serie Coupé, C-Klass Coupé, RC, 86, etc.\n- Cab/Cabriolet: convertible models\n- Pickup: Hilux, Ranger, Amarok, L200, etc.\n- Minibuss: Multivan, Sharan, Galaxy, etc.\n- Småbil: i10, i20, Yaris, Polo, Up, Aygo, etc.\n- If you truly cannot determine → UNKNOWN\n\nReply with just the body type, nothing else.` },
+                    { role: "user", content: `Make: ${car.make || "unknown"}\nModel: ${car.model || "unknown"}\nModel raw: ${car.model_raw || "unknown"}` },
+                  ],
+                }),
+              });
+              if (res.ok) {
+                const data = await res.json();
+                const answer = data.choices?.[0]?.message?.content?.trim();
+                if (answer && answer !== "UNKNOWN" && answer.length < 20) {
+                  updates.body_type = `"${answer}"`;
+                  results.bodyTypeUpdated++;
+                }
+              }
+            } catch (e) {
+              console.error(`Body type error for car ${car.id}:`, e);
+              results.errors++;
+            }
           }
         }
 
