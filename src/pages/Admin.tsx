@@ -11,7 +11,7 @@ const Admin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0 });
+  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0, drivetrainEnriched: 0, colorEnriched: 0, bodyTypeEnriched: 0, needsEnrichment: 0 });
   const [storedPassword, setStoredPassword] = useState('');
 
   // Enrich state
