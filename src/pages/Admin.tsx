@@ -201,7 +201,16 @@ const Admin = () => {
             ))}
           </div>
 
-          {/* Enrich car data */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {enrichCards.map((s) => (
+              <div key={s.label} className={`bg-card rounded-xl p-4 border text-center ${(s as any).highlight ? 'border-destructive' : 'border-border'}`}>
+                <s.icon className={`h-6 w-6 mx-auto mb-2 ${(s as any).highlight ? 'text-destructive' : 'text-primary'}`} />
+                <p className="text-2xl font-bold">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="bg-card rounded-xl p-6 border border-border mb-8 space-y-4">
             <div>
               <h2 className="text-lg font-semibold flex items-center gap-2">
