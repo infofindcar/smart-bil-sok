@@ -121,14 +121,20 @@ serve(async (req) => {
               const data = await res.json();
               const colorAnswer = data.choices?.[0]?.message?.content?.trim();
               if (colorAnswer && colorAnswer !== "UNKNOWN" && colorAnswer.length < 30) {
-                updates.color = `"${colorAnswer}"`;
+                updates.color = colorAnswer;
                 results.colorUpdated++;
+              } else {
+                updates.color = "Okänd";
               }
             }
           } catch (e) {
             console.error(`Color error for car ${car.id}:`, e);
+            updates.color = "Okänd";
             results.errors++;
           }
+        } else {
+          // No image available, mark as Okänd to prevent re-processing
+          updates.color = "Okänd";
         }
 
         // Body type inference
