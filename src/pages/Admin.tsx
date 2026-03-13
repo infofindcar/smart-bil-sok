@@ -117,7 +117,7 @@ const Admin = () => {
         addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);
 
         if (remaining === 0) {
-          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Fel: ${totalErrors}`);
+          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Karosstyp: ${totalBodyType}, Fel: ${totalErrors}`);
           break;
         }
       } catch (e) {
