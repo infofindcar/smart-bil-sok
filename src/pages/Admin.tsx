@@ -79,6 +79,7 @@ const Admin = () => {
     setEnrichProgress(null);
 
     let totalProcessed = 0;
+    let totalBodyType = 0;
     let totalDrivetrain = 0;
     let totalColor = 0;
     let totalErrors = 0;
