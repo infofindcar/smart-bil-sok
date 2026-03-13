@@ -111,7 +111,7 @@ const Admin = () => {
           setEnrichProgress({ processed: totalProcessed, total });
           firstRun = false;
         } else {
-          setEnrichProgress((prev) => prev ? { ...prev, processed: totalProcessed } : null);
+          setEnrichProgress((prev) => prev ? { ...prev, processed: prev.total - remaining } : null);
         }
 
         addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);
