@@ -174,6 +174,13 @@ const Admin = () => {
     { icon: MapPin, value: stats.cities, label: 'Städer' },
   ];
 
+  const enrichCards = [
+    { icon: Cog, value: `${stats.drivetrainEnriched}/${stats.total}`, label: 'Drivetrain berikad' },
+    { icon: Palette, value: `${stats.colorEnriched}/${stats.total}`, label: 'Färg berikad' },
+    { icon: Car, value: `${stats.bodyTypeEnriched}/${stats.total}`, label: 'Karosstyp berikad' },
+    { icon: stats.needsEnrichment > 0 ? AlertCircle : CheckCircle, value: stats.needsEnrichment, label: 'Behöver berikas', highlight: stats.needsEnrichment > 0 },
+  ];
+
   const progressPercent = enrichProgress
     ? Math.round((enrichProgress.processed / enrichProgress.total) * 100)
     : 0;
