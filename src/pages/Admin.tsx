@@ -44,13 +44,26 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make');
+    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type');
     if (data) {
+      const total = data.length;
+      const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown').length;
+      const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown').length;
+      const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown').length;
+      const needsEnrichment = data.filter((c) =>
+        !c.drivetrain || c.drivetrain === 'Unknown' ||
+        !c.color || c.color === 'Unknown' ||
+        !c.body_type || c.body_type === 'Unknown'
+      ).length;
       setStats({
-        total: data.length,
+        total,
         withImages: data.filter((c) => c.image_thumb_url).length,
         cities: new Set(data.map((c) => c.city)).size,
         makes: new Set(data.map((c) => c.make)).size,
+        drivetrainEnriched,
+        colorEnriched,
+        bodyTypeEnriched,
+        needsEnrichment,
       });
     }
   };
