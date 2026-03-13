@@ -156,14 +156,19 @@ serve(async (req) => {
                 const data = await res.json();
                 const answer = data.choices?.[0]?.message?.content?.trim();
                 if (answer && answer !== "UNKNOWN" && answer.length < 20) {
-                  updates.body_type = `"${answer}"`;
+                  updates.body_type = answer;
                   results.bodyTypeUpdated++;
+                } else {
+                  updates.body_type = "Okänd";
                 }
               }
             } catch (e) {
               console.error(`Body type error for car ${car.id}:`, e);
+              updates.body_type = "Okänd";
               results.errors++;
             }
+          } else {
+            updates.body_type = "Okänd";
           }
         }
 
