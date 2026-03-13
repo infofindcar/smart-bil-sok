@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2 } from 'lucide-react';
+import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square } from 'lucide-react';
 
 const Admin = () => {
   const [isAuthed, setIsAuthed] = useState(false);
@@ -11,9 +12,13 @@ const Admin = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0 });
-  const [enrichStatus, setEnrichStatus] = useState<string | null>(null);
-  const [isEnriching, setIsEnriching] = useState(false);
   const [storedPassword, setStoredPassword] = useState('');
+
+  // Enrich state
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichLog, setEnrichLog] = useState<string[]>([]);
+  const [enrichProgress, setEnrichProgress] = useState<{ processed: number; total: number } | null>(null);
+  const stopRef = useRef(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,24 +55,72 @@ const Admin = () => {
     }
   };
 
+  const addLog = useCallback((msg: string) => {
+    setEnrichLog((prev) => [...prev, `${new Date().toLocaleTimeString('sv-SE')} — ${msg}`]);
+  }, []);
+
   const handleEnrich = async () => {
     setIsEnriching(true);
-    setEnrichStatus('Berikar bildata med AI...');
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('enrich-car-data', {
-        body: { password: storedPassword },
-      });
-      if (fnError) throw fnError;
-      if (data?.success) {
-        setEnrichStatus(data.message);
-      } else {
-        setEnrichStatus(`Fel: ${data?.error || 'Okänt fel'}`);
+    stopRef.current = false;
+    setEnrichLog([]);
+    setEnrichProgress(null);
+
+    let totalProcessed = 0;
+    let totalDrivetrain = 0;
+    let totalColor = 0;
+    let totalErrors = 0;
+    let firstRun = true;
+
+    addLog('Startar berikning...');
+
+    while (!stopRef.current) {
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('enrich-car-data', {
+          body: { password: storedPassword },
+        });
+
+        if (fnError) throw fnError;
+        if (!data?.success) {
+          addLog(`Fel: ${data?.error || 'Okänt fel'}`);
+          break;
+        }
+
+        const { processed, remaining, drivetrainUpdated, colorUpdated, errors } = data;
+        totalProcessed += processed;
+        totalDrivetrain += drivetrainUpdated || 0;
+        totalColor += colorUpdated || 0;
+        totalErrors += errors || 0;
+
+        if (firstRun) {
+          const total = processed + remaining;
+          setEnrichProgress({ processed: totalProcessed, total });
+          firstRun = false;
+        } else {
+          setEnrichProgress((prev) => prev ? { ...prev, processed: totalProcessed } : null);
+        }
+
+        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}). ${remaining} kvar.`);
+
+        if (remaining === 0) {
+          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Fel: ${totalErrors}`);
+          break;
+        }
+      } catch (e) {
+        addLog(`Fel: ${e instanceof Error ? e.message : 'Okänt fel'}`);
+        break;
       }
-    } catch {
-      setEnrichStatus('Något gick fel vid berikningn.');
-    } finally {
-      setIsEnriching(false);
     }
+
+    if (stopRef.current) {
+      addLog(`⏹ Stoppad manuellt efter ${totalProcessed} bilar.`);
+    }
+
+    setIsEnriching(false);
+    fetchStats();
+  };
+
+  const handleStop = () => {
+    stopRef.current = true;
   };
 
   if (!isAuthed) {
@@ -106,6 +159,10 @@ const Admin = () => {
     { icon: MapPin, value: stats.cities, label: 'Städer' },
   ];
 
+  const progressPercent = enrichProgress
+    ? Math.round((enrichProgress.processed / enrichProgress.total) * 100)
+    : 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -130,16 +187,39 @@ const Admin = () => {
                 Berika bildata med AI
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Använder Gemini för att härleda drivetrain från model_raw och identifiera färg från bilbilder. 
-                AI-härledda värden sparas med citattecken.
+                Kör i omgångar om 25 bilar. Drivetrain härleds från modellnamn, färg identifieras från bilder.
               </p>
             </div>
-            <Button onClick={handleEnrich} disabled={isEnriching} className="gap-2">
-              {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isEnriching ? 'Berikar...' : 'Kör berikningn'}
-            </Button>
-            {enrichStatus && (
-              <p className="text-sm text-muted-foreground bg-muted rounded-lg p-3">{enrichStatus}</p>
+
+            <div className="flex gap-2">
+              <Button onClick={handleEnrich} disabled={isEnriching} className="gap-2">
+                {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {isEnriching ? 'Berikar...' : 'Kör berikning'}
+              </Button>
+              {isEnriching && (
+                <Button onClick={handleStop} variant="destructive" className="gap-2">
+                  <Square className="h-4 w-4" />
+                  Stoppa
+                </Button>
+              )}
+            </div>
+
+            {enrichProgress && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>{enrichProgress.processed} av {enrichProgress.total} bilar</span>
+                  <span>{progressPercent}%</span>
+                </div>
+                <Progress value={progressPercent} className="h-3" />
+              </div>
+            )}
+
+            {enrichLog.length > 0 && (
+              <div className="bg-muted rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                {enrichLog.map((line, i) => (
+                  <p key={i} className="text-xs text-muted-foreground font-mono">{line}</p>
+                ))}
+              </div>
             )}
           </div>
 
