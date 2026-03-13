@@ -47,9 +47,9 @@ const Admin = () => {
     const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type');
     if (data) {
       const total = data.length;
-      const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown').length;
-      const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown').length;
-      const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown').length;
+      const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown' && c.drivetrain !== 'Okänd').length;
+      const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown' && c.color !== 'Okänd').length;
+      const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown' && c.body_type !== 'Okänd').length;
       const needsEnrichment = data.filter((c) =>
         !c.drivetrain || c.drivetrain === 'Unknown' ||
         !c.color || c.color === 'Unknown' ||
@@ -111,7 +111,7 @@ const Admin = () => {
           setEnrichProgress({ processed: totalProcessed, total });
           firstRun = false;
         } else {
-          setEnrichProgress((prev) => prev ? { ...prev, processed: totalProcessed } : null);
+          setEnrichProgress((prev) => prev ? { ...prev, processed: prev.total - remaining } : null);
         }
 
         addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);

@@ -84,14 +84,19 @@ serve(async (req) => {
                 const data = await res.json();
                 const answer = data.choices?.[0]?.message?.content?.trim().toUpperCase();
                 if (answer && ["AWD", "FWD", "RWD"].includes(answer)) {
-                  updates.drivetrain = `"${answer}"`;
+                  updates.drivetrain = answer;
                   results.drivetrainUpdated++;
+                } else {
+                  updates.drivetrain = "Okänd";
                 }
               }
             } catch (e) {
               console.error(`Drivetrain error for car ${car.id}:`, e);
+              updates.drivetrain = "Okänd";
               results.errors++;
             }
+          } else {
+            updates.drivetrain = "Okänd";
           }
         }
 
@@ -116,14 +121,20 @@ serve(async (req) => {
               const data = await res.json();
               const colorAnswer = data.choices?.[0]?.message?.content?.trim();
               if (colorAnswer && colorAnswer !== "UNKNOWN" && colorAnswer.length < 30) {
-                updates.color = `"${colorAnswer}"`;
+                updates.color = colorAnswer;
                 results.colorUpdated++;
+              } else {
+                updates.color = "Okänd";
               }
             }
           } catch (e) {
             console.error(`Color error for car ${car.id}:`, e);
+            updates.color = "Okänd";
             results.errors++;
           }
+        } else {
+          // No image available, mark as Okänd to prevent re-processing
+          updates.color = "Okänd";
         }
 
         // Body type inference
@@ -145,14 +156,19 @@ serve(async (req) => {
                 const data = await res.json();
                 const answer = data.choices?.[0]?.message?.content?.trim();
                 if (answer && answer !== "UNKNOWN" && answer.length < 20) {
-                  updates.body_type = `"${answer}"`;
+                  updates.body_type = answer;
                   results.bodyTypeUpdated++;
+                } else {
+                  updates.body_type = "Okänd";
                 }
               }
             } catch (e) {
               console.error(`Body type error for car ${car.id}:`, e);
+              updates.body_type = "Okänd";
               results.errors++;
             }
+          } else {
+            updates.body_type = "Okänd";
           }
         }
 
