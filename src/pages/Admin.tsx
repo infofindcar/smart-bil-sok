@@ -99,10 +99,11 @@ const Admin = () => {
           break;
         }
 
-        const { processed, remaining, drivetrainUpdated, colorUpdated, errors } = data;
+        const { processed, remaining, drivetrainUpdated, colorUpdated, bodyTypeUpdated, errors } = data;
         totalProcessed += processed;
         totalDrivetrain += drivetrainUpdated || 0;
         totalColor += colorUpdated || 0;
+        totalBodyType += bodyTypeUpdated || 0;
         totalErrors += errors || 0;
 
         if (firstRun) {
@@ -113,7 +114,7 @@ const Admin = () => {
           setEnrichProgress((prev) => prev ? { ...prev, processed: totalProcessed } : null);
         }
 
-        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}). ${remaining} kvar.`);
+        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);
 
         if (remaining === 0) {
           addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Fel: ${totalErrors}`);
