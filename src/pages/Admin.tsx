@@ -191,7 +191,23 @@ const Admin = () => {
       <Header />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={isRefreshing}
+              onClick={async () => {
+                setIsRefreshing(true);
+                await fetchStats();
+                setIsRefreshing(false);
+              }}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Uppdatera
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {statCards.map((s) => (
               <div key={s.label} className="bg-card rounded-xl p-4 border border-border text-center">

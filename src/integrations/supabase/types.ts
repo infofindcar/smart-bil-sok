@@ -51,6 +51,7 @@ export type Database = {
           dealer_url: string | null
           drivetrain: string | null
           fuel_type: string | null
+          horsepower: number | null
           id: number
           image_thumb_url: string | null
           is_active: boolean | null
@@ -66,6 +67,7 @@ export type Database = {
           regnr: string | null
           source: string | null
           source_listing_id: string | null
+          transmission: string | null
           year: number | null
         }
         Insert: {
@@ -77,6 +79,7 @@ export type Database = {
           dealer_url?: string | null
           drivetrain?: string | null
           fuel_type?: string | null
+          horsepower?: number | null
           id?: number
           image_thumb_url?: string | null
           is_active?: boolean | null
@@ -92,6 +95,7 @@ export type Database = {
           regnr?: string | null
           source?: string | null
           source_listing_id?: string | null
+          transmission?: string | null
           year?: number | null
         }
         Update: {
@@ -103,6 +107,7 @@ export type Database = {
           dealer_url?: string | null
           drivetrain?: string | null
           fuel_type?: string | null
+          horsepower?: number | null
           id?: number
           image_thumb_url?: string | null
           is_active?: boolean | null
@@ -118,6 +123,7 @@ export type Database = {
           regnr?: string | null
           source?: string | null
           source_listing_id?: string | null
+          transmission?: string | null
           year?: number | null
         }
         Relationships: []
