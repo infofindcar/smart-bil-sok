@@ -33,17 +33,17 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Count total needing enrichment (missing drivetrain, color, OR body_type)
+    // Count total needing enrichment (missing drivetrain, color, body_type, OR horsepower)
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null");
+      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null,horsepower.is.null,horsepower.eq.0");
 
     // Fetch chunk
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, drivetrain, color, body_type, image_thumb_url")
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null")
+      .select("id, make, model, model_raw, drivetrain, color, body_type, image_thumb_url, horsepower, year, fuel_type")
+      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null,horsepower.is.null,horsepower.eq.0")
       .limit(CHUNK_SIZE);
 
     if (fetchError) throw fetchError;
