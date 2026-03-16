@@ -103,11 +103,12 @@ const Admin = () => {
           break;
         }
 
-        const { processed, remaining, drivetrainUpdated, colorUpdated, bodyTypeUpdated, errors } = data;
+        const { processed, remaining, drivetrainUpdated, colorUpdated, bodyTypeUpdated, horsepowerUpdated, errors } = data;
         totalProcessed += processed;
         totalDrivetrain += drivetrainUpdated || 0;
         totalColor += colorUpdated || 0;
         totalBodyType += bodyTypeUpdated || 0;
+        totalHorsepower += horsepowerUpdated || 0;
         totalErrors += errors || 0;
 
         if (firstRun) {
