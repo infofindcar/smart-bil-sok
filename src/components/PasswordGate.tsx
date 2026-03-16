@@ -153,8 +153,11 @@ const WaitlistForm = () => {
     setWaitlistError('');
 
     try {
-      const { error } = await supabase.from('waitlist').insert({ email });
-      if (error && !error.message.includes('duplicate')) throw error;
+      const { data, error: fnError } = await supabase.functions.invoke('add-to-waitlist', {
+        body: { email },
+      });
+      if (fnError) throw fnError;
+      if (!data?.success) throw new Error(data?.error || 'Failed');
       setIsSubmitted(true);
     } catch {
       setWaitlistError('Something went wrong. Please try again.');
