@@ -120,7 +120,7 @@ const Admin = () => {
           setEnrichProgress((prev) => prev ? { ...prev, processed: prev.total - remaining } : null);
         }
 
-        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);
+        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}, HP: ${horsepowerUpdated || 0}). ${remaining} kvar.`);
 
         if (remaining === 0) {
           addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Karosstyp: ${totalBodyType}, Fel: ${totalErrors}`);
