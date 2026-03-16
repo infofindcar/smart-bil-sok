@@ -86,6 +86,7 @@ const Admin = () => {
     let totalBodyType = 0;
     let totalDrivetrain = 0;
     let totalColor = 0;
+    let totalHorsepower = 0;
     let totalErrors = 0;
     let firstRun = true;
 
