@@ -25,31 +25,30 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-// Rate limiter: 30 events per minute per IP
-const analyticsRequests = new Map<string, { count: number; resetAt: number }>();
-const MAX_EVENTS = 30;
-const WINDOW_MS = 60 * 1000;
+// Rate limiter: 5 attempts per 15 minutes per IP
+const attempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000;
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  const record = analyticsRequests.get(ip);
+  const record = attempts.get(ip);
   if (!record || now > record.resetAt) {
-    analyticsRequests.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
     return false;
   }
   record.count++;
-  return record.count > MAX_EVENTS;
+  return record.count > MAX_ATTEMPTS;
 }
 
-// Cleanup expired entries
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, record] of analyticsRequests) {
-    if (now > record.resetAt) analyticsRequests.delete(ip);
+  for (const [ip, record] of attempts) {
+    if (now > record.resetAt) attempts.delete(ip);
   }
 }, 60 * 1000);
 
-const MAX_EVENT_DATA_SIZE = 2048; // 2 KB
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -64,37 +63,28 @@ serve(async (req) => {
 
     if (isRateLimited(clientIp)) {
       return new Response(
-        JSON.stringify({ success: false, error: "Rate limited" }),
+        JSON.stringify({ success: false, error: "Too many attempts. Please wait." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { eventName, eventData, pagePath, userAgent } = await req.json();
+    const { email } = await req.json();
 
-    // Input validation
-    if (!eventName || typeof eventName !== "string" || eventName.length > 100) {
+    // Server-side email validation
+    if (typeof email !== "string" || email.length === 0 || email.length > 254) {
       return new Response(
-        JSON.stringify({ success: false, error: "Invalid eventName" }),
+        JSON.stringify({ success: false, error: "Invalid email" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (pagePath && (typeof pagePath !== "string" || pagePath.length > 500)) {
+    const sanitized = email.trim().toLowerCase();
+
+    if (!EMAIL_REGEX.test(sanitized)) {
       return new Response(
-        JSON.stringify({ success: false, error: "Invalid pagePath" }),
+        JSON.stringify({ success: false, error: "Invalid email format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-
-    // Validate eventData size
-    if (eventData != null) {
-      const serialized = JSON.stringify(eventData);
-      if (serialized.length > MAX_EVENT_DATA_SIZE) {
-        return new Response(
-          JSON.stringify({ success: false, error: "eventData too large" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
     }
 
     const supabase = createClient(
@@ -102,17 +92,19 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { error } = await supabase.from("analytics_events").insert({
-      event_name: eventName.slice(0, 100),
-      event_data: eventData || null,
-      page_path: pagePath?.slice(0, 500) || null,
-      user_agent: typeof userAgent === "string" ? userAgent.slice(0, 500) : null,
-    });
+    const { error } = await supabase.from("waitlist").insert({ email: sanitized });
 
     if (error) {
-      console.error("Analytics insert error");
+      // Handle duplicate gracefully
+      if (error.message?.includes("duplicate") || error.code === "23505") {
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      console.error("Waitlist insert error");
       return new Response(
-        JSON.stringify({ success: false }),
+        JSON.stringify({ success: false, error: "Something went wrong" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -122,11 +114,10 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
-    const corsHeaders = getCorsHeaders(req);
-    console.error("track-analytics error");
+    console.error("add-to-waitlist error");
     return new Response(
-      JSON.stringify({ success: false }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: false, error: "Server error" }),
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
