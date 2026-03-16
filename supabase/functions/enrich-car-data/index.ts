@@ -56,7 +56,7 @@ serve(async (req) => {
 
     console.log(`Processing ${cars.length} cars (${totalRemaining} total remaining)`);
 
-    const results = { drivetrainUpdated: 0, colorUpdated: 0, bodyTypeUpdated: 0, errors: 0 };
+    const results = { drivetrainUpdated: 0, colorUpdated: 0, bodyTypeUpdated: 0, horsepowerUpdated: 0, errors: 0 };
 
     // Process in batches of BATCH_SIZE
     for (let i = 0; i < cars.length; i += BATCH_SIZE) {
