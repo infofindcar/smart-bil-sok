@@ -11,7 +11,7 @@ const Admin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0, drivetrainEnriched: 0, colorEnriched: 0, bodyTypeEnriched: 0, needsEnrichment: 0 });
+  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0, drivetrainEnriched: 0, colorEnriched: 0, bodyTypeEnriched: 0, horsepowerEnriched: 0, needsEnrichment: 0 });
   const [storedPassword, setStoredPassword] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -45,16 +45,18 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type');
+    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type, horsepower');
     if (data) {
       const total = data.length;
       const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown' && c.drivetrain !== 'Okänd').length;
       const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown' && c.color !== 'Okänd').length;
       const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown' && c.body_type !== 'Okänd').length;
+      const horsepowerEnriched = data.filter((c) => c.horsepower && c.horsepower > 0).length;
       const needsEnrichment = data.filter((c) =>
         !c.drivetrain || c.drivetrain === 'Unknown' ||
         !c.color || c.color === 'Unknown' ||
-        !c.body_type || c.body_type === 'Unknown'
+        !c.body_type || c.body_type === 'Unknown' ||
+        !c.horsepower || c.horsepower === 0
       ).length;
       setStats({
         total,
@@ -64,6 +66,7 @@ const Admin = () => {
         drivetrainEnriched,
         colorEnriched,
         bodyTypeEnriched,
+        horsepowerEnriched,
         needsEnrichment,
       });
     }
@@ -83,6 +86,7 @@ const Admin = () => {
     let totalBodyType = 0;
     let totalDrivetrain = 0;
     let totalColor = 0;
+    let totalHorsepower = 0;
     let totalErrors = 0;
     let firstRun = true;
 
@@ -100,11 +104,12 @@ const Admin = () => {
           break;
         }
 
-        const { processed, remaining, drivetrainUpdated, colorUpdated, bodyTypeUpdated, errors } = data;
+        const { processed, remaining, drivetrainUpdated, colorUpdated, bodyTypeUpdated, horsepowerUpdated, errors } = data;
         totalProcessed += processed;
         totalDrivetrain += drivetrainUpdated || 0;
         totalColor += colorUpdated || 0;
         totalBodyType += bodyTypeUpdated || 0;
+        totalHorsepower += horsepowerUpdated || 0;
         totalErrors += errors || 0;
 
         if (firstRun) {
@@ -115,10 +120,10 @@ const Admin = () => {
           setEnrichProgress((prev) => prev ? { ...prev, processed: prev.total - remaining } : null);
         }
 
-        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}). ${remaining} kvar.`);
+        addLog(`✓ ${processed} bilar berikade (drivetrain: ${drivetrainUpdated || 0}, färg: ${colorUpdated || 0}, karosstyp: ${bodyTypeUpdated || 0}, HP: ${horsepowerUpdated || 0}). ${remaining} kvar.`);
 
         if (remaining === 0) {
-          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Karosstyp: ${totalBodyType}, Fel: ${totalErrors}`);
+          addLog(`🎉 Klart! Totalt: ${totalProcessed} bilar. Drivetrain: ${totalDrivetrain}, Färg: ${totalColor}, Karosstyp: ${totalBodyType}, HP: ${totalHorsepower}, Fel: ${totalErrors}`);
           break;
         }
       } catch (e) {
@@ -179,6 +184,7 @@ const Admin = () => {
     { icon: Cog, value: `${stats.drivetrainEnriched}/${stats.total}`, label: 'Drivetrain berikad' },
     { icon: Palette, value: `${stats.colorEnriched}/${stats.total}`, label: 'Färg berikad' },
     { icon: Car, value: `${stats.bodyTypeEnriched}/${stats.total}`, label: 'Karosstyp berikad' },
+    { icon: Sparkles, value: `${stats.horsepowerEnriched}/${stats.total}`, label: 'HP berikad' },
     { icon: stats.needsEnrichment > 0 ? AlertCircle : CheckCircle, value: stats.needsEnrichment, label: 'Behöver berikas', highlight: stats.needsEnrichment > 0 },
   ];
 

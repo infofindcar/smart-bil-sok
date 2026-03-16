@@ -33,17 +33,17 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Count total needing enrichment (missing drivetrain, color, OR body_type)
+    // Count total needing enrichment (missing drivetrain, color, body_type, OR horsepower)
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null");
+      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null,horsepower.is.null,horsepower.eq.0");
 
     // Fetch chunk
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, drivetrain, color, body_type, image_thumb_url")
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null")
+      .select("id, make, model, model_raw, drivetrain, color, body_type, image_thumb_url, horsepower, year, fuel_type")
+      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null,horsepower.is.null,horsepower.eq.0")
       .limit(CHUNK_SIZE);
 
     if (fetchError) throw fetchError;
@@ -56,7 +56,7 @@ serve(async (req) => {
 
     console.log(`Processing ${cars.length} cars (${totalRemaining} total remaining)`);
 
-    const results = { drivetrainUpdated: 0, colorUpdated: 0, bodyTypeUpdated: 0, errors: 0 };
+    const results = { drivetrainUpdated: 0, colorUpdated: 0, bodyTypeUpdated: 0, horsepowerUpdated: 0, errors: 0 };
 
     // Process in batches of BATCH_SIZE
     for (let i = 0; i < cars.length; i += BATCH_SIZE) {
@@ -172,6 +172,42 @@ serve(async (req) => {
           }
         }
 
+        // Horsepower inference
+        if (!car.horsepower || car.horsepower === 0) {
+          if (car.model_raw || car.make) {
+            try {
+              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "google/gemini-2.5-flash-lite",
+                  messages: [
+                    { role: "system", content: `You are a car expert. Given a car's make, model name, year, and fuel type, determine the horsepower (HP/PS).\nReply with ONLY the number as an integer. No text, no units.\nIf you truly cannot determine the horsepower, reply 0.\n\nExamples:\n- Volvo XC60 T6 AWD 2022 → 310\n- Audi A4 40 TFSI 2021 → 190\n- BMW 530e 2020 → 252\n- Tesla Model 3 Long Range 2023 → 351` },
+                    { role: "user", content: `Make: ${car.make || "unknown"}\nModel raw: ${car.model_raw || "unknown"}\nYear: ${car.year || "unknown"}\nFuel: ${car.fuel_type || "unknown"}` },
+                  ],
+                }),
+              });
+              if (res.ok) {
+                const data = await res.json();
+                const answer = data.choices?.[0]?.message?.content?.trim();
+                const hp = parseInt(answer, 10);
+                if (!isNaN(hp) && hp > 0) {
+                  updates.horsepower = hp;
+                  results.horsepowerUpdated++;
+                } else {
+                  updates.horsepower = -1; // Mark as attempted
+                }
+              }
+            } catch (e) {
+              console.error(`HP error for car ${car.id}:`, e);
+              updates.horsepower = -1;
+              results.errors++;
+            }
+          } else {
+            updates.horsepower = -1;
+          }
+        }
+
         if (Object.keys(updates).length > 0) {
           const { error: updateError } = await supabase.from("Lovable").update(updates).eq("id", car.id);
           if (updateError) {
@@ -190,6 +226,7 @@ serve(async (req) => {
         processed: cars.length,
         remaining,
         ...results,
+        horsepowerUpdated: results.horsepowerUpdated,
         message: remaining > 0
           ? `Berikade ${cars.length} bilar. ${remaining} kvar.`
           : `Klart! Berikade ${cars.length} bilar.`,
