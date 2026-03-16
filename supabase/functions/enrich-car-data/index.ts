@@ -172,6 +172,42 @@ serve(async (req) => {
           }
         }
 
+        // Horsepower inference
+        if (!car.horsepower || car.horsepower === 0) {
+          if (car.model_raw || car.make) {
+            try {
+              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "google/gemini-2.5-flash-lite",
+                  messages: [
+                    { role: "system", content: `You are a car expert. Given a car's make, model name, year, and fuel type, determine the horsepower (HP/PS).\nReply with ONLY the number as an integer. No text, no units.\nIf you truly cannot determine the horsepower, reply 0.\n\nExamples:\n- Volvo XC60 T6 AWD 2022 → 310\n- Audi A4 40 TFSI 2021 → 190\n- BMW 530e 2020 → 252\n- Tesla Model 3 Long Range 2023 → 351` },
+                    { role: "user", content: `Make: ${car.make || "unknown"}\nModel raw: ${car.model_raw || "unknown"}\nYear: ${car.year || "unknown"}\nFuel: ${car.fuel_type || "unknown"}` },
+                  ],
+                }),
+              });
+              if (res.ok) {
+                const data = await res.json();
+                const answer = data.choices?.[0]?.message?.content?.trim();
+                const hp = parseInt(answer, 10);
+                if (!isNaN(hp) && hp > 0) {
+                  updates.horsepower = hp;
+                  results.horsepowerUpdated++;
+                } else {
+                  updates.horsepower = -1; // Mark as attempted
+                }
+              }
+            } catch (e) {
+              console.error(`HP error for car ${car.id}:`, e);
+              updates.horsepower = -1;
+              results.errors++;
+            }
+          } else {
+            updates.horsepower = -1;
+          }
+        }
+
         if (Object.keys(updates).length > 0) {
           const { error: updateError } = await supabase.from("Lovable").update(updates).eq("id", car.id);
           if (updateError) {
