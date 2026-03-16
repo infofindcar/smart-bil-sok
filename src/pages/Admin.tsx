@@ -66,6 +66,7 @@ const Admin = () => {
         drivetrainEnriched,
         colorEnriched,
         bodyTypeEnriched,
+        horsepowerEnriched,
         needsEnrichment,
       });
     }
