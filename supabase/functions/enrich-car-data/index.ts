@@ -226,6 +226,7 @@ serve(async (req) => {
         processed: cars.length,
         remaining,
         ...results,
+        horsepowerUpdated: results.horsepowerUpdated,
         message: remaining > 0
           ? `Berikade ${cars.length} bilar. ${remaining} kvar.`
           : `Klart! Berikade ${cars.length} bilar.`,

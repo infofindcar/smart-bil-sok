@@ -184,6 +184,7 @@ const Admin = () => {
     { icon: Cog, value: `${stats.drivetrainEnriched}/${stats.total}`, label: 'Drivetrain berikad' },
     { icon: Palette, value: `${stats.colorEnriched}/${stats.total}`, label: 'Färg berikad' },
     { icon: Car, value: `${stats.bodyTypeEnriched}/${stats.total}`, label: 'Karosstyp berikad' },
+    { icon: Sparkles, value: `${stats.horsepowerEnriched}/${stats.total}`, label: 'HP berikad' },
     { icon: stats.needsEnrichment > 0 ? AlertCircle : CheckCircle, value: stats.needsEnrichment, label: 'Behöver berikas', highlight: stats.needsEnrichment > 0 },
   ];
 
