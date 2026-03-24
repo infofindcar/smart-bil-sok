@@ -185,6 +185,99 @@ export type Database = {
         }
         Relationships: []
       }
+      car_makes: {
+        Row: {
+          make: string
+          warranty_years: number
+          warranty_km: number
+          roadside_assistance_years: number
+          country_of_origin: string | null
+          notes: string | null
+        }
+        Insert: {
+          make: string
+          warranty_years?: number
+          warranty_km?: number
+          roadside_assistance_years?: number
+          country_of_origin?: string | null
+          notes?: string | null
+        }
+        Update: {
+          make?: string
+          warranty_years?: number
+          warranty_km?: number
+          roadside_assistance_years?: number
+          country_of_origin?: string | null
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      car_models: {
+        Row: {
+          id: number
+          make: string
+          model: string
+          body_type: string | null
+          boot_space_liters: number | null
+          max_towing_kg: number | null
+          seats: number | null
+          typical_hp_min: number | null
+          typical_hp_max: number | null
+          zero_to_hundred_sec: number | null
+          drivetrain_default: string | null
+          fuel_consumption_l100km: number | null
+          electric_range_km: number | null
+          co2_g_per_km: number | null
+          euro_ncap_stars: number | null
+          euro_ncap_year: number | null
+          ncap_source: string | null
+          reliability_notes: string | null
+          enriched_at: string | null
+        }
+        Insert: {
+          id?: number
+          make: string
+          model: string
+          body_type?: string | null
+          boot_space_liters?: number | null
+          max_towing_kg?: number | null
+          seats?: number | null
+          typical_hp_min?: number | null
+          typical_hp_max?: number | null
+          zero_to_hundred_sec?: number | null
+          drivetrain_default?: string | null
+          fuel_consumption_l100km?: number | null
+          electric_range_km?: number | null
+          co2_g_per_km?: number | null
+          euro_ncap_stars?: number | null
+          euro_ncap_year?: number | null
+          ncap_source?: string | null
+          reliability_notes?: string | null
+          enriched_at?: string | null
+        }
+        Update: {
+          id?: number
+          make?: string
+          model?: string
+          body_type?: string | null
+          boot_space_liters?: number | null
+          max_towing_kg?: number | null
+          seats?: number | null
+          typical_hp_min?: number | null
+          typical_hp_max?: number | null
+          zero_to_hundred_sec?: number | null
+          drivetrain_default?: string | null
+          fuel_consumption_l100km?: number | null
+          electric_range_km?: number | null
+          co2_g_per_km?: number | null
+          euro_ncap_stars?: number | null
+          euro_ncap_year?: number | null
+          ncap_source?: string | null
+          reliability_notes?: string | null
+          enriched_at?: string | null
+        }
+        Relationships: []
+      }
       sync_logs: {
         Row: {
           batches_completed: number | null
