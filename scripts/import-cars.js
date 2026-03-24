@@ -39,7 +39,7 @@ function parseModelRaw(modelRaw, make, model) {
 
   // Drivlina – explicit nämnt i annonsen
   let drivetrain = null;
-  if (/quattro|xdrive|4matic|4motion|4x4|\bawd\b|allrad|syncro|e-awd|\b4M\b/i.test(raw)) {
+  if (/quattro|xdrive|4matic|4motion|4x4|\bawd\b|\b4wd\b|allrad|syncro|e-awd|\b4M\b/i.test(raw)) {
     drivetrain = "AWD";
   } else if (/\bfwd\b|framhjulsdrift/i.test(raw)) {
     drivetrain = "FWD";
