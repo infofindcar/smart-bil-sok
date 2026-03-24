@@ -65,7 +65,7 @@ serve(async (req) => {
 
       const { error } = await supabase
         .from("Lovable")
-        .upsert(batch, { onConflict: "source_listing_id", ignoreDuplicates: false });
+        .upsert(batch, { onConflict: "source,source_listing_id", ignoreDuplicates: false });
 
       if (error) {
         console.error(`Batch upsert error at offset ${i}:`, error.message);
