@@ -60,7 +60,24 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\nTotalt ${cars.length} bilar hämtade. Skickar till Supabase...`);
+  // Mappa Blockets fältnamn till databasens kolumnnamn
+  const mappedCars = cars.map((car) => ({
+    source_listing_id: String(car.id),
+    make: car.make ?? null,
+    model: car.model ?? null,
+    year: car.year ?? null,
+    price: car.price?.amount ?? null,
+    mileage: car.mileage ?? null,
+    city: car.location ?? null,
+    fuel_type: car.fuel ?? null,
+    transmission: car.transmission ?? null,
+    image_thumb_url: car.image?.url ?? null,
+    listing_url: car.canonical_url ?? null,
+    regnr: car.regno ?? null,
+    source: "blocket",
+  }));
+
+  console.log(`\nTotalt ${mappedCars.length} bilar hämtade. Skickar till Supabase...`);
 
   const syncResponse = await fetch(SUPABASE_SYNC_URL, {
     method: "POST",
@@ -68,7 +85,7 @@ async function main() {
       "Content-Type": "application/json",
       "x-sync-secret": SYNC_SECRET,
     },
-    body: JSON.stringify({ cars }),
+    body: JSON.stringify({ cars: mappedCars }),
   });
 
   const result = await syncResponse.json();
