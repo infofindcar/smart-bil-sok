@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.add-to-waitlist]
 verify_jwt = false
+
+[functions.sync-cars]
+verify_jwt = false
