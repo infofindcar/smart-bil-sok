@@ -1,22 +1,16 @@
 // scripts/import-cars.js
 //
-// Hämtar billistings från din datakälla och skickar dem till
-// Supabase Edge Function (sync-cars) som hanterar import + rensning.
+// Hämtar billistings från blocket-api.se (alla sidor) och skickar dem
+// till Supabase Edge Function (sync-cars) som hanterar import + rensning.
 //
 // HUR DU ANVÄNDER DET:
-//   1. Fyll i YOUR_API_URL nedan med URL:en till din bildata
-//   2. Sätt miljövariabler (eller skapa en .env-fil):
-//        SUPABASE_SYNC_URL  = URL till sync-cars edge function
-//        SYNC_SECRET        = ditt hemliga lösenord (samma som i Supabase secrets)
-//   3. Kör:  node scripts/import-cars.js
+//   Sätt miljövariabler och kör:
+//     SUPABASE_SYNC_URL=... SYNC_SECRET=... node scripts/import-cars.js
 //
-//   KRAV: Node.js version 18 eller nyare
-//
-// ============================================================
-// STEG 1: Fyll i din API-URL här
-// ============================================================
-const YOUR_API_URL = "https://DIN-API-URL-HÄR/bilar.json";
-// ============================================================
+//   KRAV: Node.js version 18 eller nyare (ingen npm install behövs)
+
+const BLOCKET_API_BASE = "https://blocket-api.se/v1/search/car";
+const TOTAL_PAGES = 20;
 
 const SUPABASE_SYNC_URL = process.env.SUPABASE_SYNC_URL;
 const SYNC_SECRET = process.env.SYNC_SECRET;
@@ -24,45 +18,50 @@ const SYNC_SECRET = process.env.SYNC_SECRET;
 if (!SUPABASE_SYNC_URL || !SYNC_SECRET) {
   console.error("FEL: Miljövariabler saknas.");
   console.error("  Sätt SUPABASE_SYNC_URL och SYNC_SECRET innan du kör scriptet.");
-  console.error("");
-  console.error("  Exempel:");
-  console.error("  SUPABASE_SYNC_URL=https://bvqveqoschdpenvbxygj.supabase.co/functions/v1/sync-cars SYNC_SECRET=ditt-hemliga-lösenord node scripts/import-cars.js");
   process.exit(1);
 }
 
-if (YOUR_API_URL.includes("DIN-API-URL-HÄR")) {
-  console.error("FEL: Du måste fylla i YOUR_API_URL i scriptet först.");
-  console.error("  Öppna scripts/import-cars.js och ersätt 'DIN-API-URL-HÄR' med din riktiga URL.");
-  process.exit(1);
+async function fetchAllCars() {
+  const allCars = [];
+
+  for (let page = 1; page <= TOTAL_PAGES; page++) {
+    console.log(`Hämtar sida ${page}/${TOTAL_PAGES}...`);
+
+    const res = await fetch(`${BLOCKET_API_BASE}?page=${page}`);
+    if (!res.ok) {
+      console.warn(`  Varning: sida ${page} misslyckades (${res.status}), hoppar över.`);
+      continue;
+    }
+
+    const data = await res.json();
+
+    // Blocket-API returnerar typiskt en array direkt eller inpackad i ett objekt
+    const cars = Array.isArray(data)
+      ? data
+      : data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
+
+    if (cars.length === 0) {
+      console.log(`  Sida ${page} är tom, avslutar hämtning.`);
+      break;
+    }
+
+    allCars.push(...cars);
+    console.log(`  Fick ${cars.length} bilar (totalt: ${allCars.length})`);
+  }
+
+  return allCars;
 }
 
 async function main() {
-  console.log(`Hämtar bildata från: ${YOUR_API_URL}`);
+  const cars = await fetchAllCars();
 
-  // Steg 1: Hämta bildata från din källa
-  const dataResponse = await fetch(YOUR_API_URL);
-  if (!dataResponse.ok) {
-    throw new Error(`Kunde inte hämta bildata: ${dataResponse.status} ${dataResponse.statusText}`);
+  if (cars.length === 0) {
+    console.error("Inga bilar hittades. Kontrollera API:et.");
+    process.exit(1);
   }
 
-  const rawData = await dataResponse.json();
+  console.log(`\nTotalt ${cars.length} bilar hämtade. Skickar till Supabase...`);
 
-  // Steg 2: Normalisera till en array
-  // Om din API returnerar en array direkt, eller inpackad i ett objekt – justera här.
-  const cars = Array.isArray(rawData)
-    ? rawData
-    : rawData.cars ?? rawData.data ?? rawData.listings ?? rawData.results;
-
-  if (!Array.isArray(cars)) {
-    throw new Error(
-      "Kunde inte hitta en bil-array i API-svaret. " +
-      "Kontrollera och justera raden 'const cars = ...' i scriptet."
-    );
-  }
-
-  console.log(`Hittade ${cars.length} bilar. Skickar till Supabase...`);
-
-  // Steg 3: Skicka till sync-cars edge function
   const syncResponse = await fetch(SUPABASE_SYNC_URL, {
     method: "POST",
     headers: {
@@ -79,8 +78,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("");
-  console.log("✓ Synkronisering klar!");
+  console.log("\n✓ Synkronisering klar!");
   console.log(`  Nya bilar:      ${result.added}`);
   console.log(`  Uppdaterade:    ${result.updated}`);
   console.log(`  Inaktiverade:   ${result.deactivated} (sålda/borttagna)`);
