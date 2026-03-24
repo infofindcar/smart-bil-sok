@@ -73,6 +73,8 @@ async function main() {
       city: car.location ?? null,
       fuel_type: car.fuel ?? null,
       transmission: car.transmission ?? null,
+      body_type: car.registration_class?.value ?? null,
+      dealer_name: car.organisation_name ?? null,
       image_thumb_url: car.image?.url ?? null,
       listing_url: car.canonical_url ?? null,
       regnr: car.regno ?? null,
