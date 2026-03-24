@@ -8,106 +8,258 @@ const corsHeaders = {
 };
 
 const CHUNK_SIZE = 25;
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 8;
 
-async function askAI(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
+// ─────────────────────────────────────────────
+// Svensk fordonsskatt – deterministisk formel
+// Källa: Transportstyrelsen / Lag (2006:228) §4-7
+// Gäller bilar registrerade fr.o.m. 2018-07-01
+// ─────────────────────────────────────────────
+function calcAnnualTax(co2: number, fuelType: string): number {
+  const fuel = (fuelType ?? "").toLowerCase();
+  if (fuel.includes("el") || fuel.includes("vätgas") || fuel.includes("hydrogen")) {
+    return 360; // elbil/vätgas – minimibelopp
+  }
+  if (co2 <= 0) return 360; // okänd – visa minimum
+  const base = 360 + Math.max(0, co2 - 111) * 22;
+  if (fuel.includes("diesel")) return Math.round(base * 2.37);
+  return Math.round(base);
+}
+
+// ─────────────────────────────────────────────
+// Euro NCAP lookup
+// Söker deras publika webbplats och extraherar stjärnor + år
+// ─────────────────────────────────────────────
+async function lookupEuroNcap(make: string, model: string): Promise<{ stars: number; year: number; source: string } | null> {
+  try {
+    const query = encodeURIComponent(`${make} ${model}`);
+    const res = await fetch(
+      `https://www.euroncap.com/en/results/search/?searchText=${query}&class=&year=`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; car-data-enricher/1.0)",
+          Accept: "text/html",
+        },
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // Euro NCAP embeds result data as JSON in <script type="application/json"> or data attributes
+    // Pattern: "overallRating":5 or data-stars="5" with year nearby
+    const starsMatch = html.match(/"overallRating"\s*:\s*(\d)/);
+    const yearMatch = html.match(/"testYear"\s*:\s*(\d{4})/) ??
+                      html.match(/class="[-\w]*year[-\w]*"[^>]*>(\d{4})</) ??
+                      html.match(/(\d{4})/);
+
+    if (starsMatch) {
+      return {
+        stars: parseInt(starsMatch[1]),
+        year: yearMatch ? parseInt(yearMatch[1]) : 0,
+        source: "euroncap",
+      };
+    }
+
+    // Fallback: look for star rating in visible text pattern
+    const altMatch = html.match(/(\d)\s*Stars?/i);
+    if (altMatch) {
+      return {
+        stars: parseInt(altMatch[1]),
+        year: yearMatch ? parseInt(yearMatch[1]) : 0,
+        source: "euroncap",
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────
+// AI helper – Gemini Flash Lite för faktafrågor
+// ─────────────────────────────────────────────
+async function askAI(apiKey: string, system: string, user: string): Promise<string> {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash-lite",
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     }),
+    signal: AbortSignal.timeout(15000),
   });
-  if (!res.ok) throw new Error(`AI error ${res.status}`);
+  if (!res.ok) throw new Error(`AI ${res.status}`);
   const data = await res.json();
   return data.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
-// Enrich a model in car_models with AI – runs ONCE per make+model, cached forever
-async function enrichCarModel(
+// ─────────────────────────────────────────────
+// Berika ett make+model i car_models – körs EN gång, cachas för alltid
+// Ordning: Euro NCAP (gratis, faktabaserad) → AI (för resten)
+// ─────────────────────────────────────────────
+async function enrichModel(
   supabase: ReturnType<typeof createClient>,
   apiKey: string,
   make: string,
-  model: string
+  model: string,
+  fuelType: string | null
 ): Promise<Record<string, unknown>> {
-  const prompt = `Make: ${make}\nModel: ${model}`;
+  const prompt = `${make} ${model}`;
 
-  const [bodyType, consumption, electricRange, co2, ncap, tax, drivetrainDefault, typicalHpMin, typicalHpMax] =
-    await Promise.all([
-      askAI(apiKey,
-        `Car expert. Reply with ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN`,
-        `Body type of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY a decimal number (liters per 100km WLTP average). For EVs reply 0. If unknown reply 0.`,
-        `Fuel consumption l/100km of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY an integer (km range WLTP for electric/PHEV). For non-EVs reply 0. If unknown reply 0.`,
-        `Electric range km of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY an integer (CO2 g/km WLTP). If unknown reply 0.`,
-        `CO2 g/km of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY an integer 1-5 (Euro NCAP stars). If unknown reply 0.`,
-        `Euro NCAP stars of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY an integer (Swedish fordonsskatt SEK per year, approximate). If unknown reply 0.`,
-        `Swedish annual vehicle tax SEK of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY one of: AWD, FWD, RWD, UNKNOWN (most common drivetrain for base model).`,
-        `Default drivetrain of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY an integer (minimum HP across all engine variants). If unknown reply 0.`,
-        `Minimum horsepower of ${prompt}?`
-      ),
-      askAI(apiKey,
-        `Car expert. Reply with ONLY an integer (maximum HP across all engine variants). If unknown reply 0.`,
-        `Maximum horsepower of ${prompt}?`
-      ),
-    ]);
+  // 1. Hämta Euro NCAP-data (ingen AI)
+  const ncap = await lookupEuroNcap(make, model);
 
-  const modelData = {
+  // 2. Kör AI-frågor parallellt för allt annat
+  const [
+    bodyType,
+    co2Raw,
+    consumptionRaw,
+    electricRangeRaw,
+    hpMinRaw,
+    hpMaxRaw,
+    zeroHundredRaw,
+    bootSpaceRaw,
+    towingRaw,
+    seatsRaw,
+    drivetrainRaw,
+    reliabilityNotes,
+    ncapAI,
+  ] = await Promise.all([
+    askAI(apiKey,
+      "Car expert. Reply ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN",
+      `Body type of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.",
+      `Fuel consumption l/100km of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (WLTP electric range km). Non-EVs: 0.",
+      `Electric range km WLTP of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (minimum HP across engine variants). Unknown: 0.",
+      `Min horsepower of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (maximum HP across engine variants). Unknown: 0.",
+      `Max horsepower of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY a decimal (fastest 0-100 km/h in seconds). Unknown: 0.",
+      `Fastest 0-100 km/h sec of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (typical boot space liters, standard position). Unknown: 0.",
+      `Boot space liters of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (max towing capacity kg). Unknown: 0.",
+      `Max towing kg of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (number of seats standard). Unknown: 5.",
+      `Seats in ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY one of: AWD, FWD, RWD, UNKNOWN (most common base model drivetrain).",
+      `Default drivetrain of ${prompt}?`
+    ),
+    // Reliability notes på svenska – kort och kärnfull
+    askAI(apiKey,
+      "Car expert. Reply in Swedish, max 2 sentences. Mention key strengths and any widely-known reliability issues. If nothing notable, reply NONE.",
+      `Key reliability notes about ${prompt}?`
+    ),
+    // NCAP via AI som fallback om webbsökning misslyckades
+    ncap ? Promise.resolve("") : askAI(apiKey,
+      "Car expert. Reply ONLY an integer 1-5 (Euro NCAP stars). Unknown: 0.",
+      `Euro NCAP stars of ${prompt}?`
+    ),
+  ]);
+
+  // CO2 beräknas här – tax räknas ut on-the-fly vid visning
+  const co2 = parseInt(co2Raw) || 0;
+  const effectiveFuel = fuelType ?? "bensin";
+
+  const BODY_TYPES = ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"];
+  const DRIVETRAINS = ["AWD","FWD","RWD"];
+
+  const ncapStars = ncap ? ncap.stars : (parseInt(ncapAI) || null);
+  const ncapYear = ncap?.year || null;
+  const ncapSource = ncap ? "euroncap" : (ncapStars ? "ai_estimate" : null);
+
+  const modelData: Record<string, unknown> = {
     make,
     model,
-    body_type: ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"].includes(bodyType) ? bodyType : null,
-    fuel_consumption_l100km: parseFloat(consumption) || null,
-    electric_range_km: parseInt(electricRange) || null,
-    co2_g_per_km: parseInt(co2) || null,
-    euro_ncap_stars: parseInt(ncap) || null,
-    annual_tax_sek: parseInt(tax) || null,
-    drivetrain_default: ["AWD","FWD","RWD"].includes(drivetrainDefault) ? drivetrainDefault : null,
-    typical_hp_min: parseInt(typicalHpMin) || null,
-    typical_hp_max: parseInt(typicalHpMax) || null,
-    enriched_at: new Date().toISOString(),
+    body_type:               BODY_TYPES.includes(bodyType) ? bodyType : null,
+    fuel_consumption_l100km: parseFloat(consumptionRaw) || null,
+    electric_range_km:       parseInt(electricRangeRaw) || null,
+    co2_g_per_km:            co2 || null,
+    euro_ncap_stars:         ncapStars,
+    euro_ncap_year:          ncapYear,
+    ncap_source:             ncapSource,
+    drivetrain_default:      DRIVETRAINS.includes(drivetrainRaw) ? drivetrainRaw : null,
+    typical_hp_min:          parseInt(hpMinRaw) || null,
+    typical_hp_max:          parseInt(hpMaxRaw) || null,
+    zero_to_hundred_sec:     parseFloat(zeroHundredRaw) || null,
+    boot_space_liters:       parseInt(bootSpaceRaw) || null,
+    max_towing_kg:           parseInt(towingRaw) || null,
+    seats:                   parseInt(seatsRaw) || 5,
+    reliability_notes:       (reliabilityNotes && reliabilityNotes !== "NONE") ? reliabilityNotes : null,
+    enriched_at:             new Date().toISOString(),
   };
 
   await supabase.from("car_models").upsert(modelData, { onConflict: "make,model" });
   return modelData;
 }
 
+// ─────────────────────────────────────────────
+// Bildanalys för färg – unik per bil, kan inte cachas
+// ─────────────────────────────────────────────
+async function detectColor(apiKey: string, imageUrl: string, make: string, model: string): Promise<string> {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [{
+        role: "system",
+        content: "Car color expert. Identify the primary car color in Swedish. Use ONLY these values: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Reply ONLY the color name in Swedish. If unsure reply UNKNOWN.",
+      }, {
+        role: "user",
+        content: [
+          { type: "text", text: `What color is this ${make} ${model}?` },
+          { type: "image_url", image_url: { url: imageUrl } },
+        ],
+      }],
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) return "Okänd";
+  const data = await res.json();
+  const color = data.choices?.[0]?.message?.content?.trim() ?? "";
+  return (color && color !== "UNKNOWN" && color.length < 30) ? color : "Okänd";
+}
+
+// ─────────────────────────────────────────────
+// Edge Function handler
+// ─────────────────────────────────────────────
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { password } = await req.json();
     const adminPassword = Deno.env.get("ADMIN_PASSWORD");
     if (!adminPassword || password !== adminPassword) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -118,46 +270,48 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Count total needing enrichment
+    // ── Räkna hur många bilar som behöver berikas ──
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
       .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown");
 
-    // Fetch chunk needing enrichment
+    // ── Hämta chunk ──
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
+      .select("id, make, model, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type, transmission")
       .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown")
       .limit(CHUNK_SIZE);
 
     if (fetchError) throw fetchError;
     if (!cars || cars.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, message: "Alla bilar är redan berikade!", processed: 0, remaining: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        success: true, message: "Alla bilar är redan berikade!", processed: 0, remaining: 0,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Pre-load car_models cache for all makes+models in this chunk
-    const uniqueMakes = [...new Set(cars.map((c) => c.make).filter(Boolean))];
-    const uniqueModelNames = [...new Set(cars.map((c) => c.model).filter(Boolean))];
-
+    // ── Ladda car_models cache för denna chunk ──
+    const uniqueMakes  = [...new Set(cars.map((c) => c.make).filter(Boolean))];
+    const uniqueModels = [...new Set(cars.map((c) => c.model).filter(Boolean))];
     const { data: cachedModels } = await supabase
-      .from("car_models")
-      .select("*")
-      .in("make", uniqueMakes)
-      .in("model", uniqueModelNames);
+      .from("car_models").select("*")
+      .in("make", uniqueMakes).in("model", uniqueModels);
 
     const modelCache: Record<string, Record<string, unknown>> = {};
-    for (const cm of cachedModels ?? []) {
-      modelCache[`${cm.make}|||${cm.model}`] = cm;
-    }
+    for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
 
-    const uncachedCount = cars.filter((c) => c.make && c.model && !modelCache[`${c.make}|||${c.model}`]).length;
-    console.log(`Processing ${cars.length} cars, ${Object.keys(modelCache).length} models cached, ~${uncachedCount} need AI`);
+    // ── Ladda car_makes (garanti) per märke ──
+    const { data: makesData } = await supabase
+      .from("car_makes").select("*").in("make", uniqueMakes);
+    const makesCache: Record<string, Record<string, unknown>> = {};
+    for (const mk of makesData ?? []) makesCache[mk.make] = mk;
 
-    const results = { colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, modelsCached: 0, errors: 0 };
+    console.log(`Bilar: ${cars.length}, modell-cache: ${Object.keys(modelCache).length}/${uniqueModels.length}`);
+
+    const results = {
+      colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0,
+      horsepowerUpdated: 0, modelsCached: 0, errors: 0,
+    };
 
     for (let i = 0; i < cars.length; i += BATCH_SIZE) {
       const batch = cars.slice(i, i + BATCH_SIZE);
@@ -167,71 +321,48 @@ serve(async (req) => {
           const cacheKey = `${car.make}|||${car.model}`;
           let carModel = modelCache[cacheKey];
 
-          // Run AI for this model if not in cache
+          // Berika modellen om den inte finns i cache (AI + NCAP)
           if (!carModel && car.make && car.model) {
-            carModel = await enrichCarModel(supabase, LOVABLE_API_KEY, car.make, car.model);
+            carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
             modelCache[cacheKey] = carModel;
             results.modelsCached++;
           }
 
           const updates: Record<string, unknown> = {};
 
-          // Apply model-level data from cache
           if (carModel) {
+            // body_type
             if (!car.body_type || car.body_type === "Unknown") {
               updates.body_type = carModel.body_type ?? "Okänd";
               results.bodyTypeUpdated++;
             }
-            if (!car.drivetrain || car.drivetrain === "Unknown") {
-              if (carModel.drivetrain_default) {
-                updates.drivetrain = carModel.drivetrain_default;
-                results.drivetrainUpdated++;
-              }
+            // drivetrain
+            if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
+              updates.drivetrain = carModel.drivetrain_default;
+              results.drivetrainUpdated++;
             }
-            if (!car.horsepower || car.horsepower === 0) {
-              if (carModel.typical_hp_min) {
-                updates.horsepower = carModel.typical_hp_min;
-                results.horsepowerUpdated++;
-              }
+            // horsepower – sätt mittenvärde av min/max om saknas
+            if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
+              const hp_min = carModel.typical_hp_min as number;
+              const hp_max = (carModel.typical_hp_max as number) || hp_min;
+              updates.horsepower = Math.round((hp_min + hp_max) / 2);
+              results.horsepowerUpdated++;
             }
           }
 
-          // Color via AI vision – unique per car, cannot cache on model level
+          // Färg – AI bildanalys (unik per bil)
           if (!car.color || car.color === "Unknown") {
-            if (car.image_thumb_url) {
-              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: "google/gemini-2.5-flash",
-                  messages: [{
-                    role: "system",
-                    content: `Car color expert. Identify the car color in Swedish. Use only: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Reply ONLY the color name. If unsure reply UNKNOWN.`,
-                  }, {
-                    role: "user",
-                    content: [
-                      { type: "text", text: `Color of this ${car.make} ${car.model}?` },
-                      { type: "image_url", image_url: { url: car.image_thumb_url } },
-                    ],
-                  }],
-                }),
-              });
-              if (res.ok) {
-                const data = await res.json();
-                const color = data.choices?.[0]?.message?.content?.trim();
-                updates.color = (color && color !== "UNKNOWN" && color.length < 30) ? color : "Okänd";
-                results.colorUpdated++;
-              }
-            } else {
-              updates.color = "Okänd";
-            }
+            updates.color = car.image_thumb_url
+              ? await detectColor(LOVABLE_API_KEY, car.image_thumb_url, car.make ?? "", car.model ?? "")
+              : "Okänd";
+            results.colorUpdated++;
           }
 
           if (Object.keys(updates).length > 0) {
             await supabase.from("Lovable").update(updates).eq("id", car.id);
           }
         } catch (e) {
-          console.error(`Error enriching car ${car.id}:`, e);
+          console.error(`Fel för bil ${car.id}:`, e);
           results.errors++;
         }
       }));
@@ -239,23 +370,32 @@ serve(async (req) => {
 
     const remaining = Math.max(0, (totalRemaining ?? 0) - cars.length);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        processed: cars.length,
-        remaining,
-        ...results,
-        message: remaining > 0
-          ? `Berikade ${cars.length} bilar (${results.modelsCached} nya modeller cachade). ${remaining} kvar.`
-          : `Klart! Berikade ${cars.length} bilar.`,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Bygg ett informativt svarsmeddelande med skatteexempel
+    const exampleCar = cars.find((c) => c.fuel_type);
+    const taxExample = exampleCar
+      ? ` (ex. skatt: ${calcAnnualTax(
+          (modelCache[`${exampleCar.make}|||${exampleCar.model}`]?.co2_g_per_km as number) ?? 0,
+          exampleCar.fuel_type ?? ""
+        )} kr/år)`
+      : "";
+
+    return new Response(JSON.stringify({
+      success: true,
+      processed: cars.length,
+      remaining,
+      ...results,
+      message: remaining > 0
+        ? `Berikade ${cars.length} bilar (${results.modelsCached} nya modeller cachade)${taxExample}. ${remaining} kvar.`
+        : `Klart! Berikade ${cars.length} bilar. Alla berikade.`,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
   } catch (e) {
     console.error("enrich-car-data error:", e);
-    return new Response(
-      JSON.stringify({ success: false, error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: false, error: e instanceof Error ? e.message : "Unknown" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
+
+// Exportera calcAnnualTax så frontend kan använda den direkt (noll API-anrop)
+export { calcAnnualTax };
