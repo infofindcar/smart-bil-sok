@@ -1,0 +1,29 @@
+name: Daglig bilsynkronisering
+
+on:
+  # Kör varje dag kl 04:00 UTC (06:00 svensk sommartid / 05:00 vintertid)
+  schedule:
+    - cron: "0 4 * * *"
+
+  # Tillåter manuell körning från GitHub UI (Actions > Daily Car Sync > Run workflow)
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Synkronisera billistings
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Hämta kod
+        uses: actions/checkout@v4
+
+      - name: Sätt upp Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Kör importscript
+        env:
+          SUPABASE_SYNC_URL: ${{ secrets.SUPABASE_SYNC_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: node scripts/import-cars.js
