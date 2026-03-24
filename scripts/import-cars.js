@@ -67,6 +67,7 @@ async function main() {
       source_listing_id: String(car.id), // Blockets list-ID är nyckeln, matchar befintlig data
       make: car.make ?? null,
       model: car.model ?? null,
+      model_raw: car.model_specification ?? null,
       year: car.year ?? null,
       price: car.price?.amount ?? null,
       mileage: car.mileage ?? null,
