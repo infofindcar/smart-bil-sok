@@ -10,6 +10,91 @@ const corsHeaders = {
 const CHUNK_SIZE = 25;
 const BATCH_SIZE = 10;
 
+async function askAI(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash-lite",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`AI error ${res.status}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() ?? "";
+}
+
+// Enrich a model in car_models with AI – runs ONCE per make+model, cached forever
+async function enrichCarModel(
+  supabase: ReturnType<typeof createClient>,
+  apiKey: string,
+  make: string,
+  model: string
+): Promise<Record<string, unknown>> {
+  const prompt = `Make: ${make}\nModel: ${model}`;
+
+  const [bodyType, consumption, electricRange, co2, ncap, tax, drivetrainDefault, typicalHpMin, typicalHpMax] =
+    await Promise.all([
+      askAI(apiKey,
+        `Car expert. Reply with ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN`,
+        `Body type of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY a decimal number (liters per 100km WLTP average). For EVs reply 0. If unknown reply 0.`,
+        `Fuel consumption l/100km of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY an integer (km range WLTP for electric/PHEV). For non-EVs reply 0. If unknown reply 0.`,
+        `Electric range km of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY an integer (CO2 g/km WLTP). If unknown reply 0.`,
+        `CO2 g/km of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY an integer 1-5 (Euro NCAP stars). If unknown reply 0.`,
+        `Euro NCAP stars of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY an integer (Swedish fordonsskatt SEK per year, approximate). If unknown reply 0.`,
+        `Swedish annual vehicle tax SEK of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY one of: AWD, FWD, RWD, UNKNOWN (most common drivetrain for base model).`,
+        `Default drivetrain of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY an integer (minimum HP across all engine variants). If unknown reply 0.`,
+        `Minimum horsepower of ${prompt}?`
+      ),
+      askAI(apiKey,
+        `Car expert. Reply with ONLY an integer (maximum HP across all engine variants). If unknown reply 0.`,
+        `Maximum horsepower of ${prompt}?`
+      ),
+    ]);
+
+  const modelData = {
+    make,
+    model,
+    body_type: ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"].includes(bodyType) ? bodyType : null,
+    fuel_consumption_l100km: parseFloat(consumption) || null,
+    electric_range_km: parseInt(electricRange) || null,
+    co2_g_per_km: parseInt(co2) || null,
+    euro_ncap_stars: parseInt(ncap) || null,
+    annual_tax_sek: parseInt(tax) || null,
+    drivetrain_default: ["AWD","FWD","RWD"].includes(drivetrainDefault) ? drivetrainDefault : null,
+    typical_hp_min: parseInt(typicalHpMin) || null,
+    typical_hp_max: parseInt(typicalHpMax) || null,
+    enriched_at: new Date().toISOString(),
+  };
+
+  await supabase.from("car_models").upsert(modelData, { onConflict: "make,model" });
+  return modelData;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -33,192 +118,126 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Count total needing enrichment (missing drivetrain, color, body_type, OR horsepower)
+    // Count total needing enrichment
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null,horsepower.is.null,horsepower.eq.0");
+      .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown");
 
-    // Fetch chunk
+    // Fetch chunk needing enrichment
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, drivetrain, color, body_type, image_thumb_url, horsepower, year, fuel_type")
-      .or("drivetrain.eq.Unknown,drivetrain.is.null,color.eq.Unknown,color.is.null,body_type.eq.Unknown,body_type.is.null,horsepower.is.null,horsepower.eq.0")
+      .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
+      .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown")
       .limit(CHUNK_SIZE);
 
     if (fetchError) throw fetchError;
     if (!cars || cars.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "Alla bilar är redan berikade!", updated: 0, remaining: 0, processed: 0 }),
+        JSON.stringify({ success: true, message: "Alla bilar är redan berikade!", processed: 0, remaining: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Processing ${cars.length} cars (${totalRemaining} total remaining)`);
+    // Pre-load car_models cache for all makes+models in this chunk
+    const uniqueMakes = [...new Set(cars.map((c) => c.make).filter(Boolean))];
+    const uniqueModelNames = [...new Set(cars.map((c) => c.model).filter(Boolean))];
 
-    const results = { drivetrainUpdated: 0, colorUpdated: 0, bodyTypeUpdated: 0, horsepowerUpdated: 0, errors: 0 };
+    const { data: cachedModels } = await supabase
+      .from("car_models")
+      .select("*")
+      .in("make", uniqueMakes)
+      .in("model", uniqueModelNames);
 
-    // Process in batches of BATCH_SIZE
+    const modelCache: Record<string, Record<string, unknown>> = {};
+    for (const cm of cachedModels ?? []) {
+      modelCache[`${cm.make}|||${cm.model}`] = cm;
+    }
+
+    const uncachedCount = cars.filter((c) => c.make && c.model && !modelCache[`${c.make}|||${c.model}`]).length;
+    console.log(`Processing ${cars.length} cars, ${Object.keys(modelCache).length} models cached, ~${uncachedCount} need AI`);
+
+    const results = { colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, modelsCached: 0, errors: 0 };
+
     for (let i = 0; i < cars.length; i += BATCH_SIZE) {
       const batch = cars.slice(i, i + BATCH_SIZE);
 
       await Promise.all(batch.map(async (car) => {
-        const updates: Record<string, string> = {};
+        try {
+          const cacheKey = `${car.make}|||${car.model}`;
+          let carModel = modelCache[cacheKey];
 
-        // Drivetrain inference
-        if (!car.drivetrain || car.drivetrain === "Unknown") {
-          if (car.model_raw) {
-            try {
+          // Run AI for this model if not in cache
+          if (!carModel && car.make && car.model) {
+            carModel = await enrichCarModel(supabase, LOVABLE_API_KEY, car.make, car.model);
+            modelCache[cacheKey] = carModel;
+            results.modelsCached++;
+          }
+
+          const updates: Record<string, unknown> = {};
+
+          // Apply model-level data from cache
+          if (carModel) {
+            if (!car.body_type || car.body_type === "Unknown") {
+              updates.body_type = carModel.body_type ?? "Okänd";
+              results.bodyTypeUpdated++;
+            }
+            if (!car.drivetrain || car.drivetrain === "Unknown") {
+              if (carModel.drivetrain_default) {
+                updates.drivetrain = carModel.drivetrain_default;
+                results.drivetrainUpdated++;
+              }
+            }
+            if (!car.horsepower || car.horsepower === 0) {
+              if (carModel.typical_hp_min) {
+                updates.horsepower = carModel.typical_hp_min;
+                results.horsepowerUpdated++;
+              }
+            }
+          }
+
+          // Color via AI vision – unique per car, cannot cache on model level
+          if (!car.color || car.color === "Unknown") {
+            if (car.image_thumb_url) {
               const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
                 method: "POST",
                 headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  model: "google/gemini-2.5-flash-lite",
-                  messages: [
-                    { role: "system", content: `You are a car expert. Given a car's make, model, and raw model name, determine the drivetrain.\nReply with ONLY one of: AWD, FWD, RWD, or UNKNOWN.\n\nRules:\n- "Twin Motor", "quattro", "xDrive", "4MATIC", "T6 AWD", "T8", "e-tron quattro", "4WD", "4x4" → AWD\n- "Single Motor", "FWD", "2WD", "sDrive", "D2", "D3", "D4 FWD" → FWD\n- "RWD", "rear-wheel", "sDrive" (BMW 2/3/4 series) → RWD\n- If you truly cannot determine → UNKNOWN\n\nReply with just the three-letter code, nothing else.` },
-                    { role: "user", content: `Make: ${car.make || "unknown"}\nModel: ${car.model || "unknown"}\nModel raw: ${car.model_raw}` },
-                  ],
+                  model: "google/gemini-2.5-flash",
+                  messages: [{
+                    role: "system",
+                    content: `Car color expert. Identify the car color in Swedish. Use only: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Reply ONLY the color name. If unsure reply UNKNOWN.`,
+                  }, {
+                    role: "user",
+                    content: [
+                      { type: "text", text: `Color of this ${car.make} ${car.model}?` },
+                      { type: "image_url", image_url: { url: car.image_thumb_url } },
+                    ],
+                  }],
                 }),
               });
               if (res.ok) {
                 const data = await res.json();
-                const answer = data.choices?.[0]?.message?.content?.trim().toUpperCase();
-                if (answer && ["AWD", "FWD", "RWD"].includes(answer)) {
-                  updates.drivetrain = answer;
-                  results.drivetrainUpdated++;
-                } else {
-                  updates.drivetrain = "Okänd";
-                }
-              }
-            } catch (e) {
-              console.error(`Drivetrain error for car ${car.id}:`, e);
-              updates.drivetrain = "Okänd";
-              results.errors++;
-            }
-          } else {
-            updates.drivetrain = "Okänd";
-          }
-        }
-
-        // Color detection
-        if ((!car.color || car.color === "Unknown") && car.image_thumb_url) {
-          try {
-            const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-              method: "POST",
-              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: `You are a car color expert. Look at the car image and identify its color.\nReply with ONLY the color name in Swedish. Use standard color names:\nSvart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld\n\nReply with just the color name, nothing else. If you truly cannot determine the color, reply UNKNOWN.` },
-                  { role: "user", content: [
-                    { type: "text", text: `What color is this ${car.make || ""} ${car.model || ""} car?` },
-                    { type: "image_url", image_url: { url: car.image_thumb_url } },
-                  ]},
-                ],
-              }),
-            });
-            if (res.ok) {
-              const data = await res.json();
-              const colorAnswer = data.choices?.[0]?.message?.content?.trim();
-              if (colorAnswer && colorAnswer !== "UNKNOWN" && colorAnswer.length < 30) {
-                updates.color = colorAnswer;
+                const color = data.choices?.[0]?.message?.content?.trim();
+                updates.color = (color && color !== "UNKNOWN" && color.length < 30) ? color : "Okänd";
                 results.colorUpdated++;
-              } else {
-                updates.color = "Okänd";
               }
+            } else {
+              updates.color = "Okänd";
             }
-          } catch (e) {
-            console.error(`Color error for car ${car.id}:`, e);
-            updates.color = "Okänd";
-            results.errors++;
           }
-        } else {
-          // No image available, mark as Okänd to prevent re-processing
-          updates.color = "Okänd";
-        }
 
-        // Body type inference
-        if (!car.body_type || car.body_type === "Unknown") {
-          if (car.make || car.model_raw) {
-            try {
-              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: "google/gemini-2.5-flash-lite",
-                  messages: [
-                    { role: "system", content: `You are a car expert. Given a car's make, model, and raw model name, determine the body type.\nReply with ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, or UNKNOWN.\n\nRules:\n- SUV: XC60, XC90, Q5, Q7, X3, X5, GLC, GLE, Tucson, Tiguan, RAV4, CR-V, Kona, etc.\n- Sedan: S60, A4 Sedan, 3-serie Sedan, C-Klass Sedan, Camry, Accord, etc.\n- Kombi: V60, V90, A4 Avant, 3-serie Touring, C-Klass Kombi, Passat Variant, etc.\n- Halvkombi: Golf, Focus, i30, Civic HB, V40, etc.\n- Coupé: TT, 4-serie Coupé, C-Klass Coupé, RC, 86, etc.\n- Cab/Cabriolet: convertible models\n- Pickup: Hilux, Ranger, Amarok, L200, etc.\n- Minibuss: Multivan, Sharan, Galaxy, etc.\n- Småbil: i10, i20, Yaris, Polo, Up, Aygo, etc.\n- If you truly cannot determine → UNKNOWN\n\nReply with just the body type, nothing else.` },
-                    { role: "user", content: `Make: ${car.make || "unknown"}\nModel: ${car.model || "unknown"}\nModel raw: ${car.model_raw || "unknown"}` },
-                  ],
-                }),
-              });
-              if (res.ok) {
-                const data = await res.json();
-                const answer = data.choices?.[0]?.message?.content?.trim();
-                if (answer && answer !== "UNKNOWN" && answer.length < 20) {
-                  updates.body_type = answer;
-                  results.bodyTypeUpdated++;
-                } else {
-                  updates.body_type = "Okänd";
-                }
-              }
-            } catch (e) {
-              console.error(`Body type error for car ${car.id}:`, e);
-              updates.body_type = "Okänd";
-              results.errors++;
-            }
-          } else {
-            updates.body_type = "Okänd";
+          if (Object.keys(updates).length > 0) {
+            await supabase.from("Lovable").update(updates).eq("id", car.id);
           }
-        }
-
-        // Horsepower inference
-        if (!car.horsepower || car.horsepower === 0) {
-          if (car.model_raw || car.make) {
-            try {
-              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: "google/gemini-2.5-flash-lite",
-                  messages: [
-                    { role: "system", content: `You are a car expert. Given a car's make, model name, year, and fuel type, determine the horsepower (HP/PS).\nReply with ONLY the number as an integer. No text, no units.\nIf you truly cannot determine the horsepower, reply 0.\n\nExamples:\n- Volvo XC60 T6 AWD 2022 → 310\n- Audi A4 40 TFSI 2021 → 190\n- BMW 530e 2020 → 252\n- Tesla Model 3 Long Range 2023 → 351` },
-                    { role: "user", content: `Make: ${car.make || "unknown"}\nModel raw: ${car.model_raw || "unknown"}\nYear: ${car.year || "unknown"}\nFuel: ${car.fuel_type || "unknown"}` },
-                  ],
-                }),
-              });
-              if (res.ok) {
-                const data = await res.json();
-                const answer = data.choices?.[0]?.message?.content?.trim();
-                const hp = parseInt(answer, 10);
-                if (!isNaN(hp) && hp > 0) {
-                  updates.horsepower = hp;
-                  results.horsepowerUpdated++;
-                } else {
-                  updates.horsepower = -1; // Mark as attempted
-                }
-              }
-            } catch (e) {
-              console.error(`HP error for car ${car.id}:`, e);
-              updates.horsepower = -1;
-              results.errors++;
-            }
-          } else {
-            updates.horsepower = -1;
-          }
-        }
-
-        if (Object.keys(updates).length > 0) {
-          const { error: updateError } = await supabase.from("Lovable").update(updates).eq("id", car.id);
-          if (updateError) {
-            console.error(`Update error for car ${car.id}:`, updateError);
-            results.errors++;
-          }
+        } catch (e) {
+          console.error(`Error enriching car ${car.id}:`, e);
+          results.errors++;
         }
       }));
     }
 
-    const remaining = Math.max(0, (totalRemaining || 0) - cars.length);
+    const remaining = Math.max(0, (totalRemaining ?? 0) - cars.length);
 
     return new Response(
       JSON.stringify({
@@ -226,9 +245,8 @@ serve(async (req) => {
         processed: cars.length,
         remaining,
         ...results,
-        horsepowerUpdated: results.horsepowerUpdated,
         message: remaining > 0
-          ? `Berikade ${cars.length} bilar. ${remaining} kvar.`
+          ? `Berikade ${cars.length} bilar (${results.modelsCached} nya modeller cachade). ${remaining} kvar.`
           : `Klart! Berikade ${cars.length} bilar.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
