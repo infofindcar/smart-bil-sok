@@ -21,21 +21,39 @@ if (!SUPABASE_SYNC_URL || !SYNC_SECRET) {
   process.exit(1);
 }
 
-function parseModelRaw(modelRaw) {
-  if (!modelRaw) return { horsepower: null, drivetrain: null };
+// Märken som är RWD som standard (utan AWD-markering)
+const DEFAULT_RWD_MAKES = new Set([
+  "BMW", "Mercedes-Benz", "Jaguar", "Lexus", "Maserati",
+  "Alfa Romeo", "Dodge", "Chevrolet", "Ford", "Cadillac",
+  "Chrysler", "Jeep", "Porsche",
+]);
 
+// Märken som är AWD som standard
+const DEFAULT_AWD_MAKES = new Set(["Subaru"]);
+
+function parseModelRaw(modelRaw, make, model) {
   // Hästkrafter: "170hk", "218 hk", "130hp"
-  const hpMatch = modelRaw.match(/(\d{2,4})\s*h[pk]/i);
+  const raw = modelRaw ?? "";
+  const hpMatch = raw.match(/(\d{2,4})\s*h[pk]/i);
   const horsepower = hpMatch ? parseInt(hpMatch[1]) : null;
 
-  // Drivlina
+  // Drivlina – explicit nämnt i annonsen
   let drivetrain = null;
-  if (/quattro|xdrive|4matic|4motion|4x4|awd|allrad|syncro|e-awd|\b4M\b/i.test(modelRaw)) {
+  if (/quattro|xdrive|4matic|4motion|4x4|\bawd\b|allrad|syncro|e-awd|\b4M\b/i.test(raw)) {
     drivetrain = "AWD";
-  } else if (/\bfwd\b|framhjulsdrift/i.test(modelRaw)) {
+  } else if (/\bfwd\b|framhjulsdrift/i.test(raw)) {
     drivetrain = "FWD";
-  } else if (/\brwd\b|bakhjulsdrift/i.test(modelRaw)) {
+  } else if (/\brwd\b|bakhjulsdrift/i.test(raw)) {
     drivetrain = "RWD";
+  }
+
+  // Fallback baserat på märke om inget hittades i texten
+  if (!drivetrain && make) {
+    if (DEFAULT_AWD_MAKES.has(make)) {
+      drivetrain = "AWD";
+    } else if (DEFAULT_RWD_MAKES.has(make)) {
+      drivetrain = "RWD";
+    }
   }
 
   return { horsepower, drivetrain };
@@ -82,29 +100,29 @@ async function main() {
 
   // Mappa Blockets fältnamn till databasens kolumnnamn
   const mappedCars = cars
-    .filter((car) => car.id) // hoppa över bilar utan list-ID
+    .filter((car) => car.id && car.organisation_name) // bara handlare, hoppa över privata säljare
     .map((car) => {
-      const { horsepower, drivetrain } = parseModelRaw(car.model_specification);
+      const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make, car.model);
       return {
-      source_listing_id: String(car.id), // Blockets list-ID är nyckeln, matchar befintlig data
-      make: car.make ?? null,
-      model: car.model ?? null,
-      model_raw: car.model_specification ?? null,
-      year: car.year ?? null,
-      price: car.price?.amount ?? null,
-      mileage: car.mileage ?? null,
-      city: car.location ?? null,
-      fuel_type: car.fuel ?? null,
-      transmission: car.transmission ?? null,
-      drivetrain: drivetrain,
-      horsepower: horsepower,
-      body_type: car.registration_class?.value ?? null,
-      dealer_name: car.organisation_name ?? null,
-      image_thumb_url: car.image?.url ?? null,
-      listing_url: car.canonical_url ?? null,
-      regnr: car.regno ?? null,
-      source: "blocket",
-    };
+        source_listing_id: String(car.id),
+        make: car.make ?? null,
+        model: car.model ?? null,
+        model_raw: car.model_specification ?? null,
+        model_clean: car.model ?? null,
+        year: car.year ?? null,
+        price: car.price?.amount ?? null,
+        mileage: car.mileage ?? null,
+        city: car.location ?? null,
+        fuel_type: car.fuel ?? null,
+        transmission: car.transmission ?? null,
+        drivetrain: drivetrain,
+        horsepower: horsepower,
+        dealer_name: car.organisation_name ?? null,
+        image_thumb_url: car.image?.url ?? null,
+        listing_url: car.canonical_url ?? null,
+        regnr: car.regno ?? null,
+        source: "blocket",
+      };
     });
 
   console.log(`\nTotalt ${mappedCars.length} bilar hämtade. Skickar till Supabase...`);
