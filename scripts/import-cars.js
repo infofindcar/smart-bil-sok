@@ -38,7 +38,7 @@ async function fetchAllCars() {
     // Blocket-API returnerar typiskt en array direkt eller inpackad i ett objekt
     const cars = Array.isArray(data)
       ? data
-      : data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
+      : data.docs ?? data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
 
     if (cars.length === 0) {
       console.log(`  Sida ${page} är tom, avslutar hämtning.`);
