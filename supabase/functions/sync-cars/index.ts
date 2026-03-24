@@ -73,28 +73,26 @@ serve(async (req) => {
       }
     }
 
-    // Deactivate cars not in this sync
-    const { count: deactivated, error: deactivateError } = await supabase
+    // Ta bort bilar som inte sågs i denna sync
+    const { count: deleted, error: deleteError } = await supabase
       .from("Lovable")
-      .update({ is_active: false })
-      .lt("last_seen_at", syncStartedAt)
-      .eq("is_active", true)
-      .select("id", { count: "exact", head: true });
+      .delete({ count: "exact" })
+      .lt("last_seen_at", syncStartedAt);
 
-    if (deactivateError) {
-      console.error("Deactivation error:", deactivateError.message);
+    if (deleteError) {
+      console.error("Delete error:", deleteError.message);
     }
 
     const { count: countAfter } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true });
 
-    const added = Math.max(0, (countAfter ?? 0) - (countBefore ?? 0));
+    const added = Math.max(0, (countAfter ?? 0) - (countBefore ?? 0) + (deleted ?? 0));
     const updated = cars.length - added;
     const durationMs = Date.now() - new Date(syncStartedAt).getTime();
 
     console.log(
-      `sync-cars done: added=${added}, updated=${updated}, deactivated=${deactivated ?? 0}, errors=${upsertErrors}`
+      `sync-cars done: added=${added}, updated=${updated}, deleted=${deleted ?? 0}, errors=${upsertErrors}`
     );
 
     return new Response(
@@ -102,7 +100,7 @@ serve(async (req) => {
         success: true,
         added,
         updated,
-        deactivated: deactivated ?? 0,
+        deleted: deleted ?? 0,
         total: cars.length,
         upsertErrors,
         durationMs,
