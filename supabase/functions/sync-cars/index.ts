@@ -52,11 +52,16 @@ serve(async (req) => {
     // Upsert in batches of 200
     let upsertErrors = 0;
     for (let i = 0; i < cars.length; i += BATCH_SIZE) {
-      const batch = cars.slice(i, i + BATCH_SIZE).map((car) => ({
-        ...car,
-        is_active: true,
-        last_seen_at: syncStartedAt,
-      }));
+      const batch = cars.slice(i, i + BATCH_SIZE).map((car) => {
+        // Remove 'id' to avoid overwriting Supabase's auto-increment primary key
+        // with Blocket's own ID (which is stored in source_listing_id instead)
+        const { id: _blocketId, ...carFields } = car as Record<string, unknown>;
+        return {
+          ...carFields,
+          is_active: true,
+          last_seen_at: syncStartedAt,
+        };
+      });
 
       const { error } = await supabase
         .from("Lovable")
