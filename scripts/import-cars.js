@@ -62,9 +62,9 @@ async function main() {
 
   // Mappa Blockets fältnamn till databasens kolumnnamn
   const mappedCars = cars
-    .filter((car) => car.regno) // hoppa över bilar utan regnr
+    .filter((car) => car.id) // hoppa över bilar utan list-ID
     .map((car) => ({
-      source_listing_id: String(car.regno), // regnr är nyckeln, matchar befintlig data
+      source_listing_id: String(car.id), // Blockets list-ID är nyckeln, matchar befintlig data
       make: car.make ?? null,
       model: car.model ?? null,
       year: car.year ?? null,
