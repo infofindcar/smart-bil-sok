@@ -10,8 +10,8 @@ const corsHeaders = {
 // Antal bilar per iteration (AI-anrop körs parallellt inom varje batch)
 const CHUNK_SIZE = 25;
 const BATCH_SIZE = 8;
-// Max antal iterationer per anrop (skydd mot timeout ~540s)
-const MAX_ITERATIONS = 20;
+// Max antal iterationer per anrop (skydd mot Worker Limit ~150s)
+const MAX_ITERATIONS = 2;
 
 // ─────────────────────────────────────────────
 // Svensk fordonsskatt – deterministisk formel
