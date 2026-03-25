@@ -139,7 +139,8 @@ INFORMATION DU BEHÖVER SAMLA (alla är viktiga):
 8. Växellåda — automat eller manuell? (viktigt för komfort)
 9. Driftskostnad vs prestanda — vill kunden ha låga kostnader eller mer kraft?
 10. Årsmodell — vill kunden ha nyare eller äldre bil? (påverkar pris och utrustning)
-11. Eventuella specifika önskemål (märke, utrustning, etc.)
+11. Ålder — hur gammal är kunden? (påverkar försäkringskostnad markant för unga förare)
+12. Eventuella specifika önskemål (märke, utrustning, etc.)
 
 INTELLIGENTA REGLER:
 - Om kunden nämner lång pendling → du förstår att bränsleeffektivitet och komfort är viktigt, men fråga ändå om budget och plats
@@ -155,7 +156,7 @@ INTELLIGENTA REGLER:
 - Om kunden ger väldigt mycket info på en gång, hoppa över frågor du redan har svar på
 - Blanda inte ihop frågor — ställ en i taget för att det ska kännas personligt
 
-NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 11 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt för att verkligen kunna filtrera bort fel bilar och ge personliga motiveringar.
+NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 12 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt för att verkligen kunna filtrera bort fel bilar och ge personliga motiveringar.
 
 VIKTIG REGEL — ALLTID BEKRÄFTA INNAN SÖKNING:
 Innan du bestämmer dig för att söka (action: "search") MÅSTE du alltid ställa en sista bekräftelsefråga till kunden: "Är det något mer du vill lägga till innan jag söker?" eller liknande. Ge förslag som "Nej, sök nu!", "Jag vill lägga till något" osv. Först EFTER att kunden bekräftar att de är klara ska du returnera action: "search". Om kunden svarar att de vill lägga till något, fortsätt ställa frågor.
@@ -168,9 +169,10 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling"},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
+"age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe
 Giltiga drivetrain-värden: awd, fwd, rwd
@@ -307,6 +309,10 @@ serve(async (req) => {
       const filters = decision.filters || {};
       const reasoning = decision.reasoning || "";
       const customerProfile = decision.customerProfile || "";
+
+      // Extract user age if provided
+      const userAge = typeof filters.age === "number" && filters.age > 0 && filters.age < 120
+        ? Math.round(filters.age) : null;
 
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -586,6 +592,8 @@ Använd INTE emojis.${langInstruction}`,
           matchCount: cars.length,
           relaxed: relaxLevel > 0,
           relaxLevel,
+          userAge,
+          userCity: sanitizedCity,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

@@ -9,6 +9,36 @@ import { ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette, S
 import type { Car as CarType } from '@/components/GuidedSearch';
 import { calcAnnualTax, calcMonthlyFuelCost, type CarModel } from '@/lib/carData';
 
+// Insurance age multipliers (index into age brackets)
+function insuranceAgeMultiplier(age: number | null): number {
+  if (!age) return 1.0;
+  if (age < 22) return 2.0;
+  if (age < 25) return 1.7;
+  if (age < 30) return 1.3;
+  if (age < 40) return 1.1;
+  if (age < 60) return 1.0;
+  return 1.05;
+}
+
+// Insurance city multipliers
+const CITY_MULTIPLIERS: Record<string, number> = {
+  stockholm: 1.3, göteborg: 1.2, gothenburg: 1.2, malmö: 1.15, malmo: 1.15,
+  uppsala: 1.1, västerås: 1.05, örebro: 1.05, linköping: 1.05, helsingborg: 1.1,
+};
+
+function insuranceCityMultiplier(city: string | null): number {
+  if (!city) return 1.0;
+  return CITY_MULTIPLIERS[city.toLowerCase()] ?? 1.0;
+}
+
+function loadUserProfile(): { age: number | null; city: string | null } {
+  try {
+    const raw = sessionStorage.getItem('findcar-user-profile');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { age: null, city: null };
+}
+
 const formatPrice = (price: number | null) => {
   if (!price) return 'Kontakta säljare';
   return new Intl.NumberFormat('sv-SE').format(price) + ' kr';
@@ -63,6 +93,7 @@ const CarDetail = () => {
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
   const [carModel, setCarModel] = useState<CarModel | null>(null);
   const [isLoading, setIsLoading] = useState(!car);
+  const [livePrices, setLivePrices] = useState<{ petrol: number; diesel: number } | undefined>(undefined);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -92,6 +123,25 @@ const CarDetail = () => {
     }
   }, [car?.make, car?.model]);
 
+  // Fetch live fuel prices from app_config
+  useEffect(() => {
+    supabase
+      .from('app_config' as any)
+      .select('key,value')
+      .in('key', ['petrol_price_sek_per_liter', 'diesel_price_sek_per_liter'])
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const map: Record<string, number> = {};
+          for (const row of data as { key: string; value: string }[]) {
+            map[row.key] = parseFloat(row.value);
+          }
+          const petrol = map['petrol_price_sek_per_liter'];
+          const diesel = map['diesel_price_sek_per_liter'];
+          if (petrol && diesel) setLivePrices({ petrol, diesel });
+        }
+      });
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -120,12 +170,23 @@ const CarDetail = () => {
 
   const displayTitle = car.model_raw || `${car.model}`;
 
-  const fuelCost = calcMonthlyFuelCost(carModel?.fuel_consumption_l100km ?? null, car.fuel_type ?? null);
+  const userProfile = loadUserProfile();
+  const fuelCost = calcMonthlyFuelCost(carModel?.fuel_consumption_l100km ?? null, car.fuel_type ?? null, livePrices);
   const annualTax = calcAnnualTax(carModel?.co2_g_per_km ?? null, car.fuel_type ?? null);
   const monthlyTax = Math.round(annualTax / 12);
-  const insuranceLow  = carModel?.estimated_monthly_insurance_low  ?? null;
-  const insuranceHigh = carModel?.estimated_monthly_insurance_high ?? null;
-  const annualService = carModel?.estimated_annual_service_sek     ?? null;
+
+  // Apply age+city multipliers to insurance if we have user profile from Clutch
+  const ageMulti = insuranceAgeMultiplier(userProfile.age);
+  const cityMulti = insuranceCityMultiplier(userProfile.city ?? car.city);
+  const insuranceMult = ageMulti * cityMulti;
+  const hasPersonalInsurance = insuranceMult !== 1.0;
+  const insuranceLow  = carModel?.estimated_monthly_insurance_low
+    ? Math.round(carModel.estimated_monthly_insurance_low * insuranceMult)
+    : null;
+  const insuranceHigh = carModel?.estimated_monthly_insurance_high
+    ? Math.round(carModel.estimated_monthly_insurance_high * insuranceMult)
+    : null;
+  const annualService = carModel?.estimated_annual_service_sek ?? null;
 
   const description = generateDescription(car);
 
@@ -218,7 +279,9 @@ const CarDetail = () => {
                     ? `${new Intl.NumberFormat('sv-SE').format(insuranceLow)}–${new Intl.NumberFormat('sv-SE').format(insuranceHigh)} kr/mån`
                     : '700–1 400 kr/mån'}
                 </p>
-                <p className="text-[10px] text-muted-foreground/60">uppskattad</p>
+                <p className="text-[10px] text-muted-foreground/60">
+                  {hasPersonalInsurance ? 'personlig uppskattning' : 'uppskattad'}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Fordonsskatt</p>
@@ -238,7 +301,7 @@ const CarDetail = () => {
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground/60 italic">
-              * Försäkring och service är uppskattningar för denna bilmodell. Bränsle beräknat på {fuelCost.isExact ? 'verklig WLTP-förbrukning' : 'typisk förbrukning'} och {fuelCost.label === 'Laddning' ? '2,50 kr/kWh' : '22 kr/l'}. Fordonsskatt {carModel?.co2_g_per_km ? 'beräknad på faktiskt CO₂-värde' : 'uppskattad'}.
+              * Försäkring och service är uppskattningar för denna bilmodell{hasPersonalInsurance ? ', justerad efter din ålder/stad' : ''}. Bränsle beräknat på {fuelCost.isExact ? 'verklig WLTP-förbrukning' : 'typisk förbrukning'} och {fuelCost.label === 'Laddning' ? '2,50 kr/kWh' : `${livePrices ? (fuelCost.label === 'Diesel' ? livePrices.diesel : livePrices.petrol) : 22} kr/l (live-pris)`}. Fordonsskatt {carModel?.co2_g_per_km ? 'beräknad på faktiskt CO₂-värde' : 'uppskattad'}.
             </p>
           </div>
 

@@ -26,9 +26,9 @@ export interface CarModel {
   estimated_annual_service_sek: number | null;
 }
 
-// Aktuella drivmedelspriser i Sverige (uppdateras vid behov)
-const PETROL_PRICE_PER_L = 22;   // kr/l
-const DIESEL_PRICE_PER_L = 22;   // kr/l
+// Fallback-priser om live-data saknas
+const PETROL_PRICE_FALLBACK = 22;   // kr/l
+const DIESEL_PRICE_FALLBACK = 22;   // kr/l
 const ELECTRIC_PRICE_PER_KWH = 2.5; // kr/kWh
 const MONTHLY_KM = 1500;
 
@@ -39,7 +39,10 @@ const MONTHLY_KM = 1500;
 export function calcMonthlyFuelCost(
   consumptionL100: number | null,
   fuelType: string | null,
+  livePrices?: { petrol?: number; diesel?: number },
 ): { cost: number; label: string; isExact: boolean } {
+  const PETROL_PRICE_PER_L = livePrices?.petrol ?? PETROL_PRICE_FALLBACK;
+  const DIESEL_PRICE_PER_L = livePrices?.diesel ?? DIESEL_PRICE_FALLBACK;
   const fuel = (fuelType ?? '').toLowerCase();
 
   if (fuel.includes('el') || fuel.includes('electric')) {

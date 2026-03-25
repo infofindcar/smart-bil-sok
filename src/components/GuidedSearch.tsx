@@ -235,8 +235,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
-      setPhase('searching');
+        setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
+
+        // Save user profile for personalized insurance estimates in CarDetail
+        try {
+          sessionStorage.setItem('findcar-user-profile', JSON.stringify({
+            age: data.userAge ?? null,
+            city: data.userCity ?? null,
+          }));
+        } catch {}
 
         setPhase('results');
         setIsLoading(false);
