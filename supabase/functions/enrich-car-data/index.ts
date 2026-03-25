@@ -219,7 +219,7 @@ async function enrichModel(
     enriched_at:             new Date().toISOString(),
   };
 
-  await supabase.from("car_models").upsert(modelData, { onConflict: "make,model" });
+  await supabase.from("car_models").upsert(modelData as any, { onConflict: "make,model" });
   return modelData;
 }
 
