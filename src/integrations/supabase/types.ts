@@ -41,6 +41,132 @@ export type Database = {
         }
         Relationships: []
       }
+      app_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      car_makes: {
+        Row: {
+          country_of_origin: string | null
+          make: string
+          notes: string | null
+          roadside_assistance_years: number
+          warranty_km: number
+          warranty_years: number
+        }
+        Insert: {
+          country_of_origin?: string | null
+          make: string
+          notes?: string | null
+          roadside_assistance_years?: number
+          warranty_km?: number
+          warranty_years?: number
+        }
+        Update: {
+          country_of_origin?: string | null
+          make?: string
+          notes?: string | null
+          roadside_assistance_years?: number
+          warranty_km?: number
+          warranty_years?: number
+        }
+        Relationships: []
+      }
+      car_models: {
+        Row: {
+          annual_tax_sek: number | null
+          body_type: string | null
+          boot_space_liters: number | null
+          co2_g_per_km: number | null
+          created_at: string | null
+          drivetrain_default: string | null
+          electric_range_km: number | null
+          enriched_at: string | null
+          estimated_annual_service_sek: number | null
+          estimated_monthly_insurance_high: number | null
+          estimated_monthly_insurance_low: number | null
+          euro_ncap_stars: number | null
+          euro_ncap_year: number | null
+          fuel_consumption_l100km: number | null
+          id: number
+          make: string
+          max_towing_kg: number | null
+          model: string
+          ncap_source: string | null
+          reliability_notes: string | null
+          seats: number | null
+          typical_hp_max: number | null
+          typical_hp_min: number | null
+          zero_to_hundred_sec: number | null
+        }
+        Insert: {
+          annual_tax_sek?: number | null
+          body_type?: string | null
+          boot_space_liters?: number | null
+          co2_g_per_km?: number | null
+          created_at?: string | null
+          drivetrain_default?: string | null
+          electric_range_km?: number | null
+          enriched_at?: string | null
+          estimated_annual_service_sek?: number | null
+          estimated_monthly_insurance_high?: number | null
+          estimated_monthly_insurance_low?: number | null
+          euro_ncap_stars?: number | null
+          euro_ncap_year?: number | null
+          fuel_consumption_l100km?: number | null
+          id?: never
+          make: string
+          max_towing_kg?: number | null
+          model: string
+          ncap_source?: string | null
+          reliability_notes?: string | null
+          seats?: number | null
+          typical_hp_max?: number | null
+          typical_hp_min?: number | null
+          zero_to_hundred_sec?: number | null
+        }
+        Update: {
+          annual_tax_sek?: number | null
+          body_type?: string | null
+          boot_space_liters?: number | null
+          co2_g_per_km?: number | null
+          created_at?: string | null
+          drivetrain_default?: string | null
+          electric_range_km?: number | null
+          enriched_at?: string | null
+          estimated_annual_service_sek?: number | null
+          estimated_monthly_insurance_high?: number | null
+          estimated_monthly_insurance_low?: number | null
+          euro_ncap_stars?: number | null
+          euro_ncap_year?: number | null
+          fuel_consumption_l100km?: number | null
+          id?: never
+          make?: string
+          max_towing_kg?: number | null
+          model?: string
+          ncap_source?: string | null
+          reliability_notes?: string | null
+          seats?: number | null
+          typical_hp_max?: number | null
+          typical_hp_min?: number | null
+          zero_to_hundred_sec?: number | null
+        }
+        Relationships: []
+      }
       Lovable: {
         Row: {
           body_type: string | null
@@ -182,99 +308,6 @@ export type Database = {
           price?: number | null
           source?: string | null
           year?: number | null
-        }
-        Relationships: []
-      }
-      car_makes: {
-        Row: {
-          make: string
-          warranty_years: number
-          warranty_km: number
-          roadside_assistance_years: number
-          country_of_origin: string | null
-          notes: string | null
-        }
-        Insert: {
-          make: string
-          warranty_years?: number
-          warranty_km?: number
-          roadside_assistance_years?: number
-          country_of_origin?: string | null
-          notes?: string | null
-        }
-        Update: {
-          make?: string
-          warranty_years?: number
-          warranty_km?: number
-          roadside_assistance_years?: number
-          country_of_origin?: string | null
-          notes?: string | null
-        }
-        Relationships: []
-      }
-      car_models: {
-        Row: {
-          id: number
-          make: string
-          model: string
-          body_type: string | null
-          boot_space_liters: number | null
-          max_towing_kg: number | null
-          seats: number | null
-          typical_hp_min: number | null
-          typical_hp_max: number | null
-          zero_to_hundred_sec: number | null
-          drivetrain_default: string | null
-          fuel_consumption_l100km: number | null
-          electric_range_km: number | null
-          co2_g_per_km: number | null
-          euro_ncap_stars: number | null
-          euro_ncap_year: number | null
-          ncap_source: string | null
-          reliability_notes: string | null
-          enriched_at: string | null
-        }
-        Insert: {
-          id?: number
-          make: string
-          model: string
-          body_type?: string | null
-          boot_space_liters?: number | null
-          max_towing_kg?: number | null
-          seats?: number | null
-          typical_hp_min?: number | null
-          typical_hp_max?: number | null
-          zero_to_hundred_sec?: number | null
-          drivetrain_default?: string | null
-          fuel_consumption_l100km?: number | null
-          electric_range_km?: number | null
-          co2_g_per_km?: number | null
-          euro_ncap_stars?: number | null
-          euro_ncap_year?: number | null
-          ncap_source?: string | null
-          reliability_notes?: string | null
-          enriched_at?: string | null
-        }
-        Update: {
-          id?: number
-          make?: string
-          model?: string
-          body_type?: string | null
-          boot_space_liters?: number | null
-          max_towing_kg?: number | null
-          seats?: number | null
-          typical_hp_min?: number | null
-          typical_hp_max?: number | null
-          zero_to_hundred_sec?: number | null
-          drivetrain_default?: string | null
-          fuel_consumption_l100km?: number | null
-          electric_range_km?: number | null
-          co2_g_per_km?: number | null
-          euro_ncap_stars?: number | null
-          euro_ncap_year?: number | null
-          ncap_source?: string | null
-          reliability_notes?: string | null
-          enriched_at?: string | null
         }
         Relationships: []
       }
