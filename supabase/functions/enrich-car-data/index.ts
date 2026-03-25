@@ -327,7 +327,7 @@ serve(async (req) => {
 
           // Berika modellen om den inte finns i cache (AI + NCAP)
           if (!carModel && car.make && car.model) {
-            carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
+            carModel = await enrichModel(supabase as any, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
             modelCache[cacheKey] = carModel;
             results.modelsCached++;
           }
