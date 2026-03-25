@@ -435,6 +435,20 @@ serve(async (req) => {
         }
       }
 
+      // ── Hämta berikad data från car_models och car_makes ──
+      const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
+      const uniqueModels = [...new Set(cars.map((c: any) => c.model).filter(Boolean))];
+
+      const [modelsRes, makesRes] = await Promise.all([
+        supabase.from("car_models").select("*").in("make", uniqueMakes).in("model", uniqueModels),
+        supabase.from("car_makes").select("*").in("make", uniqueMakes),
+      ]);
+
+      const modelLookup: Record<string, any> = {};
+      for (const m of modelsRes.data ?? []) modelLookup[`${m.make}|||${m.model}`] = m;
+      const makeLookup: Record<string, any> = {};
+      for (const m of makesRes.data ?? []) makeLookup[m.make] = m;
+
       // Build context from conversation
       const userMessages = messages
         .filter((m: any) => m.role === "user")
@@ -449,10 +463,38 @@ serve(async (req) => {
       if (cars.length > 0) {
         try {
           const carSummaries = cars
-            .map(
-              (c: any) =>
-                `ID:${c.id} — ${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}, färg: ${c.color || "okänd"}`
-            )
+            .map((c: any) => {
+              const cm = modelLookup[`${c.make}|||${c.model}`];
+              const mk = makeLookup[c.make || ""];
+              const parts = [
+                `ID:${c.id}`,
+                `${c.make} ${c.model_raw || c.model} ${c.year}`,
+                `${c.price?.toLocaleString("sv-SE")} kr`,
+                `${c.mileage?.toLocaleString("sv-SE")} mil`,
+                c.fuel_type, c.body_type, c.city,
+                `färg: ${c.color || "okänd"}`,
+                c.drivetrain ? `drivlina: ${c.drivetrain}` : null,
+                c.horsepower && c.horsepower > 0 ? `${c.horsepower} hk` : null,
+                c.transmission ? `växellåda: ${c.transmission}` : null,
+              ];
+              // Berikad modelldata
+              if (cm) {
+                if (cm.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
+                if (cm.boot_space_liters) parts.push(`bagageutrymme: ${cm.boot_space_liters}L`);
+                if (cm.max_towing_kg) parts.push(`dragvikt: ${cm.max_towing_kg}kg`);
+                if (cm.zero_to_hundred_sec) parts.push(`0-100: ${cm.zero_to_hundred_sec}s`);
+                if (cm.seats) parts.push(`${cm.seats} säten`);
+                if (cm.electric_range_km) parts.push(`elräckvidd: ${cm.electric_range_km}km`);
+                if (cm.fuel_consumption_l100km) parts.push(`förbrukning: ${cm.fuel_consumption_l100km}l/100km`);
+                if (cm.co2_g_per_km) parts.push(`CO2: ${cm.co2_g_per_km}g/km`);
+                if (cm.reliability_notes) parts.push(`tillförlitlighet: ${cm.reliability_notes}`);
+              }
+              // Garanti från märkesdata
+              if (mk) {
+                parts.push(`garanti: ${mk.warranty_years}år/${(mk.warranty_km/1000).toFixed(0)}tkm`);
+              }
+              return parts.filter(Boolean).join(", ");
+            })
             .join("\n");
 
           const msgResponse = await fetch(
