@@ -104,6 +104,7 @@ async function enrichModel(
     bodyType, co2Raw, consumptionRaw, electricRangeRaw,
     hpMinRaw, hpMaxRaw, zeroHundredRaw, bootSpaceRaw,
     towingRaw, seatsRaw, drivetrainRaw, reliabilityNotes, ncapAI,
+    insuranceRaw, serviceRaw,
   ] = await Promise.all([
     askAI(apiKey, "Car expert. Reply ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN", `Body type of ${prompt}?`),
     askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg CO2 g/km). EVs: 0. Unknown: 0.", `CO2 g/km of ${prompt}?`),
@@ -118,11 +119,18 @@ async function enrichModel(
     askAI(apiKey, "Car expert. Reply ONLY one of: AWD, FWD, RWD, UNKNOWN (most common base model drivetrain).", `Default drivetrain of ${prompt}?`),
     askAI(apiKey, "Car expert. Reply in Swedish, max 2 sentences. Mention key strengths and any widely-known reliability issues. If nothing notable, reply NONE.", `Key reliability notes about ${prompt}?`),
     ncap ? Promise.resolve("") : askAI(apiKey, "Car expert. Reply ONLY an integer 1-5 (Euro NCAP stars). Unknown: 0.", `Euro NCAP stars of ${prompt}?`),
+    askAI(apiKey, "Swedish car insurance expert. Reply ONLY two integers separated by '-' representing typical monthly insurance cost in SEK for a used ${prompt} in Sweden (helförsäkring). Example: '700-1300'. Unknown: '700-1400'.", `Monthly insurance SEK range for used ${prompt} in Sweden?`),
+    askAI(apiKey, "Swedish car service expert. Reply ONLY an integer: typical annual service cost in SEK for a used ${prompt} in Sweden (oil change + inspection + minor parts). Unknown: 5000.", `Annual service cost SEK for used ${prompt} in Sweden?`),
   ]);
 
   const BODY_TYPES = ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"];
   const DRIVETRAINS = ["AWD","FWD","RWD"];
   const ncapStars = ncap ? ncap.stars : (parseInt(ncapAI) || null);
+
+  // Parsa försäkringsintervall t.ex. "700-1300"
+  const insuranceParts = insuranceRaw.match(/(\d+)\s*[-–]\s*(\d+)/);
+  const insuranceLow  = insuranceParts ? parseInt(insuranceParts[1]) : 700;
+  const insuranceHigh = insuranceParts ? parseInt(insuranceParts[2]) : 1400;
 
   const modelData: Record<string, unknown> = {
     make, model,
@@ -141,6 +149,9 @@ async function enrichModel(
     max_towing_kg:           parseInt(towingRaw) || null,
     seats:                   parseInt(seatsRaw) || 5,
     reliability_notes:       (reliabilityNotes && reliabilityNotes !== "NONE") ? reliabilityNotes : null,
+    estimated_monthly_insurance_low:  insuranceLow,
+    estimated_monthly_insurance_high: insuranceHigh,
+    estimated_annual_service_sek:     parseInt(serviceRaw) || 5000,
     enriched_at:             new Date().toISOString(),
   };
 

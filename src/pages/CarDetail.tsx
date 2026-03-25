@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette, Settings2, Sparkles } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
+import { calcAnnualTax, calcMonthlyFuelCost, type CarModel } from '@/lib/carData';
 
 const formatPrice = (price: number | null) => {
   if (!price) return 'Kontakta säljare';
@@ -60,6 +61,7 @@ const CarDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
+  const [carModel, setCarModel] = useState<CarModel | null>(null);
   const [isLoading, setIsLoading] = useState(!car);
 
   // Scroll to top on mount
@@ -77,6 +79,18 @@ const CarDetail = () => {
       fetchCar();
     }
   }, [id, car]);
+
+  useEffect(() => {
+    if (car?.make && car?.model) {
+      supabase
+        .from('car_models')
+        .select('*')
+        .eq('make', car.make)
+        .eq('model', car.model)
+        .maybeSingle()
+        .then(({ data }) => { if (data) setCarModel(data as CarModel); });
+    }
+  }, [car?.make, car?.model]);
 
   if (isLoading) {
     return (
@@ -106,21 +120,12 @@ const CarDetail = () => {
 
   const displayTitle = car.model_raw || `${car.model}`;
 
-  const fuelKey = car.fuel_type?.toLowerCase().includes('el')
-    ? 'el'
-    : car.fuel_type?.toLowerCase().includes('diesel')
-      ? 'diesel'
-      : car.fuel_type?.toLowerCase().includes('hybrid')
-        ? 'hybrid'
-        : 'bensin';
-
-  const fuelCosts: Record<string, { monthly: number; label: string }> = {
-    el: { monthly: 500, label: 'Laddning' },
-    diesel: { monthly: 2000, label: 'Diesel' },
-    bensin: { monthly: 2500, label: 'Bensin' },
-    hybrid: { monthly: 1500, label: 'Bränsle' },
-  };
-  const fuelCost = fuelCosts[fuelKey] || fuelCosts.bensin;
+  const fuelCost = calcMonthlyFuelCost(carModel?.fuel_consumption_l100km ?? null, car.fuel_type ?? null);
+  const annualTax = calcAnnualTax(carModel?.co2_g_per_km ?? null, car.fuel_type ?? null);
+  const monthlyTax = Math.round(annualTax / 12);
+  const insuranceLow  = carModel?.estimated_monthly_insurance_low  ?? null;
+  const insuranceHigh = carModel?.estimated_monthly_insurance_high ?? null;
+  const annualService = carModel?.estimated_annual_service_sek     ?? null;
 
   const description = generateDescription(car);
 
@@ -196,22 +201,44 @@ const CarDetail = () => {
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4">Uppskattade driftskostnader</h2>
+            <h2 className="text-xl font-bold mb-1">Driftskostnader</h2>
+            <p className="text-xs text-muted-foreground mb-4">Baserat på ca 1 500 km/mån</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              {[
-                { label: fuelCost.label, value: `${fuelCost.monthly} kr/mån` },
-                { label: 'Försäkring', value: '~800 kr/mån' },
-                { label: 'Skatt', value: '~300 kr/mån' },
-                { label: 'Service', value: '~400 kr/mån' },
-              ].map((cost) => (
-                <div key={cost.label}>
-                  <p className="text-xs text-muted-foreground">{cost.label}</p>
-                  <p className="font-semibold">{cost.value}</p>
-                </div>
-              ))}
+              <div>
+                <p className="text-xs text-muted-foreground">{fuelCost.label}</p>
+                <p className="font-semibold">
+                  {new Intl.NumberFormat('sv-SE').format(fuelCost.cost)} kr/mån
+                </p>
+                {!fuelCost.isExact && <p className="text-[10px] text-muted-foreground/60">uppskattad</p>}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Försäkring</p>
+                <p className="font-semibold">
+                  {insuranceLow && insuranceHigh
+                    ? `${new Intl.NumberFormat('sv-SE').format(insuranceLow)}–${new Intl.NumberFormat('sv-SE').format(insuranceHigh)} kr/mån`
+                    : '700–1 400 kr/mån'}
+                </p>
+                <p className="text-[10px] text-muted-foreground/60">uppskattad</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Fordonsskatt</p>
+                <p className="font-semibold">{new Intl.NumberFormat('sv-SE').format(monthlyTax)} kr/mån</p>
+                {carModel?.co2_g_per_km
+                  ? <p className="text-[10px] text-muted-foreground/60">{carModel.co2_g_per_km} g CO₂/km</p>
+                  : <p className="text-[10px] text-muted-foreground/60">uppskattad</p>}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Service/år</p>
+                <p className="font-semibold">
+                  {annualService
+                    ? `${new Intl.NumberFormat('sv-SE').format(annualService)} kr/år`
+                    : '4 000–6 000 kr/år'}
+                </p>
+                <p className="text-[10px] text-muted-foreground/60">uppskattad</p>
+              </div>
             </div>
             <p className="text-[11px] text-muted-foreground/60 italic">
-              * Uppskattade siffror baserade på genomsnittliga kostnader. Faktisk kostnad varierar beroende på körvanor, försäkringsbolag och region.
+              * Försäkring och service är uppskattningar för denna bilmodell. Bränsle beräknat på {fuelCost.isExact ? 'verklig WLTP-förbrukning' : 'typisk förbrukning'} och {fuelCost.label === 'Laddning' ? '2,50 kr/kWh' : '22 kr/l'}. Fordonsskatt {carModel?.co2_g_per_km ? 'beräknad på faktiskt CO₂-värde' : 'uppskattad'}.
             </p>
           </div>
 
