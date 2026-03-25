@@ -20,6 +20,10 @@ export type Car = {
   image_thumb_url: string | null;
   listing_url: string | null;
   regnr: string | null;
+  horsepower: number | null;
+  transmission: string | null;
+  dealer_name: string | null;
+  dealer_url: string | null;
 };
 
 export type CarReason = {
