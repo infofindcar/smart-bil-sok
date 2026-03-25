@@ -95,9 +95,12 @@ async function enrichModel(
   apiKey: string,
   make: string,
   model: string,
-  fuelType: string | null
+  fuelType: string | null,
+  modelRaw: string | null = null,
 ): Promise<Record<string, unknown>> {
   const prompt = `${make} ${model}`;
+  // Extra context from model_raw (e.g. "2.0 TDI 150hk") helps AI pick the right variant
+  const promptWithSpec = modelRaw ? `${make} ${model} (${modelRaw})` : prompt;
   const ncap = await lookupEuroNcap(make, model);
 
   const [
@@ -107,12 +110,12 @@ async function enrichModel(
     insuranceRaw, serviceRaw,
   ] = await Promise.all([
     askAI(apiKey, "Car expert. Reply ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN", `Body type of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg CO2 g/km). EVs: 0. Unknown: 0.", `CO2 g/km of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.", `Fuel consumption l/100km of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (WLTP electric range km). Non-EVs: 0.", `Electric range km WLTP of ${prompt}?`),
+    askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg CO2 g/km). EVs: 0. Unknown: 0.", `CO2 g/km of ${promptWithSpec}?`),
+    askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.", `Fuel consumption l/100km of ${promptWithSpec}?`),
+    askAI(apiKey, "Car expert. Reply ONLY an integer (WLTP electric range km for the specific variant if known, else typical for model). Non-EVs and non-PHEVs: 0.", `Electric range km WLTP of ${promptWithSpec}?`),
     askAI(apiKey, "Car expert. Reply ONLY an integer (minimum HP across engine variants). Unknown: 0.", `Min horsepower of ${prompt}?`),
     askAI(apiKey, "Car expert. Reply ONLY an integer (maximum HP across engine variants). Unknown: 0.", `Max horsepower of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY a decimal (fastest 0-100 km/h in seconds). Unknown: 0.", `Fastest 0-100 km/h sec of ${prompt}?`),
+    askAI(apiKey, "Car expert. Reply ONLY a decimal (typical 0-100 km/h time in seconds for the most common base petrol/diesel engine variant, NOT the performance variant). Unknown: 0.", `Typical base model 0-100 km/h sec of ${promptWithSpec}?`),
     askAI(apiKey, "Car expert. Reply ONLY an integer (typical boot space liters, standard position). Unknown: 0.", `Boot space liters of ${prompt}?`),
     askAI(apiKey, "Car expert. Reply ONLY an integer (max towing capacity kg). Unknown: 0.", `Max towing kg of ${prompt}?`),
     askAI(apiKey, "Car expert. Reply ONLY an integer (number of seats standard). Unknown: 5.", `Seats in ${prompt}?`),
@@ -224,7 +227,7 @@ async function processChunk(
 
   const { data: cars, error: fetchError } = await supabase
     .from("Lovable")
-    .select("id, make, model, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
+    .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
     .or(FILTER)
     .limit(CHUNK_SIZE);
 
@@ -243,6 +246,12 @@ async function processChunk(
 
   // ── Steg 1: Berika unika modeller SEKVENTIELLT (undviker rate limit) ──
   // Varje enrichModel = ~13 parallella AI-anrop. Vi kör max MAX_NEW_MODELS nya modeller per anrop.
+  // Bygg en map make|||model -> model_raw för att skicka med som kontext till AI
+  const modelRawMap: Record<string, string | null> = {};
+  for (const c of cars) {
+    if (c.make && c.model) modelRawMap[`${c.make}|||${c.model}`] = c.model_raw ?? null;
+  }
+
   const uniqueCombos = [...new Set(
     cars
       .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
@@ -254,7 +263,7 @@ async function processChunk(
     if (newModelsThisRun >= MAX_NEW_MODELS) break;
     const [make, model] = combo.split("|||");
     try {
-      const carModel = await enrichModel(supabase, apiKey, make, model, null);
+      const carModel = await enrichModel(supabase, apiKey, make, model, null, modelRawMap[combo] ?? null);
       modelCache[combo] = carModel;
       results.modelsCached++;
       newModelsThisRun++;
@@ -361,7 +370,7 @@ serve(async (req) => {
         const chunk = ids.slice(i, i + CHUNK_SIZE);
         const { data: cars } = await supabase
           .from("Lovable")
-          .select("id, make, model, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
+          .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
           .in("id", chunk);
 
         if (!cars || cars.length === 0) continue;
@@ -379,7 +388,7 @@ serve(async (req) => {
             let carModel = modelCache[cacheKey];
             if (carModel === undefined && car.make && car.model) {
               try {
-                carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
+                carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type, car.model_raw ?? null);
                 modelCache[cacheKey] = carModel;
                 totals.modelsCached++;
               } catch (e) {
