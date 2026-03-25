@@ -209,51 +209,65 @@ async function processChunk(
   for (let i = 0; i < cars.length; i += BATCH_SIZE) {
     const batch = cars.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(async (car) => {
-      try {
         const cacheKey = `${car.make}|||${car.model}`;
         let carModel = modelCache[cacheKey];
 
-        if (!carModel && car.make && car.model) {
-          carModel = await enrichModel(supabase, apiKey, car.make, car.model, car.fuel_type);
-          modelCache[cacheKey] = carModel;
-          results.modelsCached++;
+        // Berika modell-cache – separat try/catch så ett AI-fel inte stoppar färg/övrigt
+        if (carModel === undefined && car.make && car.model) {
+          try {
+            carModel = await enrichModel(supabase, apiKey, car.make, car.model, car.fuel_type);
+            modelCache[cacheKey] = carModel;
+            results.modelsCached++;
+          } catch (e) {
+            console.error(`enrichModel misslyckades för ${car.make} ${car.model}:`, e);
+            modelCache[cacheKey] = null; // markera som försökt – anropa inte igen
+          }
         }
 
         const updates: Record<string, unknown> = {};
 
-        if (carModel) {
-          // Skriv över Blockets generiska värden ("Personbil", "Transportbil") med specifik AI-typ
-          const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
-          if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
-            updates.body_type = carModel.body_type ?? car.body_type ?? "Okänd";
-            results.bodyTypeUpdated++;
+        try {
+          if (carModel) {
+            const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
+            if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
+              updates.body_type = carModel.body_type ?? "Okänd";
+              results.bodyTypeUpdated++;
+            }
+            if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
+              updates.drivetrain = carModel.drivetrain_default;
+              results.drivetrainUpdated++;
+            }
+            if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
+              const hp_min = carModel.typical_hp_min as number;
+              const hp_max = (carModel.typical_hp_max as number) || hp_min;
+              updates.horsepower = Math.round((hp_min + hp_max) / 2);
+              results.horsepowerUpdated++;
+            }
           }
-          if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
-            updates.drivetrain = carModel.drivetrain_default;
-            results.drivetrainUpdated++;
-          }
-          if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
-            const hp_min = carModel.typical_hp_min as number;
-            const hp_max = (carModel.typical_hp_max as number) || hp_min;
-            updates.horsepower = Math.round((hp_min + hp_max) / 2);
-            results.horsepowerUpdated++;
-          }
-        }
 
-        if (!car.color || car.color === "Unknown") {
-          updates.color = car.image_thumb_url
-            ? await detectColor(apiKey, car.image_thumb_url, car.make ?? "", car.model ?? "")
-            : "Okänd";
-          results.colorUpdated++;
-        }
+          if (!car.color || car.color === "Unknown") {
+            updates.color = car.image_thumb_url
+              ? await detectColor(apiKey, car.image_thumb_url, car.make ?? "", car.model ?? "")
+              : "Okänd";
+            results.colorUpdated++;
+          }
 
-        if (Object.keys(updates).length > 0) {
-          await supabase.from("Lovable").update(updates).eq("id", car.id);
+          // Om AI misslyckades med body_type, sätt "Okänd" så bilen lämnar kön
+          if (!updates.body_type) {
+            const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown"];
+            if (car.body_type && BLOCKET_GENERIC.includes(car.body_type)) {
+              updates.body_type = "Okänd";
+              results.bodyTypeUpdated++;
+            }
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await supabase.from("Lovable").update(updates).eq("id", car.id);
+          }
+        } catch (e) {
+          console.error(`Fel för bil ${car.id}:`, e);
+          results.errors++;
         }
-      } catch (e) {
-        console.error(`Fel för bil ${car.id}:`, e);
-        results.errors++;
-      }
     }));
   }
 
@@ -316,18 +330,23 @@ serve(async (req) => {
 
         for (let j = 0; j < cars.length; j += BATCH_SIZE) {
           await Promise.all(cars.slice(j, j + BATCH_SIZE).map(async (car) => {
-            try {
-              const cacheKey = `${car.make}|||${car.model}`;
-              let carModel = modelCache[cacheKey];
-              if (!carModel && car.make && car.model) {
+            const cacheKey = `${car.make}|||${car.model}`;
+            let carModel = modelCache[cacheKey];
+            if (carModel === undefined && car.make && car.model) {
+              try {
                 carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
                 modelCache[cacheKey] = carModel;
                 totals.modelsCached++;
+              } catch (e) {
+                console.error(`enrichModel misslyckades för ${car.make} ${car.model}:`, e);
+                modelCache[cacheKey] = null;
               }
-              const updates: Record<string, unknown> = {};
+            }
+            const updates: Record<string, unknown> = {};
+            try {
               if (carModel) {
                 const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
-                if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) { updates.body_type = carModel.body_type ?? car.body_type ?? "Okänd"; totals.bodyTypeUpdated++; }
+                if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) { updates.body_type = carModel.body_type ?? "Okänd"; totals.bodyTypeUpdated++; }
                 if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) { updates.drivetrain = carModel.drivetrain_default; totals.drivetrainUpdated++; }
                 if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
                   const hp_min = carModel.typical_hp_min as number;
@@ -338,6 +357,10 @@ serve(async (req) => {
               if (!car.color || car.color === "Unknown") {
                 updates.color = car.image_thumb_url ? await detectColor(LOVABLE_API_KEY, car.image_thumb_url, car.make ?? "", car.model ?? "") : "Okänd";
                 totals.colorUpdated++;
+              }
+              if (!updates.body_type) {
+                const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown"];
+                if (car.body_type && BLOCKET_GENERIC.includes(car.body_type)) { updates.body_type = "Okänd"; totals.bodyTypeUpdated++; }
               }
               if (Object.keys(updates).length > 0) await supabase.from("Lovable").update(updates).eq("id", car.id);
               totals.processed++;
