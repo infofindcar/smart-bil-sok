@@ -7,10 +7,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Antal bilar per iteration (AI-anrop körs parallellt inom varje batch)
-const CHUNK_SIZE = 25;
+// Antal bilar per chunk – hålls lågt för att undvika Worker Limit
+const CHUNK_SIZE = 8;
 const BATCH_SIZE = 8;
-// Max antal iterationer per anrop (skydd mot Worker Limit ~150s)
+// Max nya modeller att berika per anrop (varje modell = ~15s AI-tid)
+const MAX_NEW_MODELS = 3;
+// Max antal iterationer per anrop
 const MAX_ITERATIONS = 2;
 
 // ─────────────────────────────────────────────
@@ -182,21 +184,24 @@ async function processChunk(
   apiKey: string,
   modelCache: Record<string, Record<string, unknown>>
 ): Promise<{ processed: number; modelsCached: number; colorUpdated: number; bodyTypeUpdated: number; drivetrainUpdated: number; horsepowerUpdated: number; errors: number; remaining: number }> {
+  const FILTER = "color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil";
+  const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
+
   const { count: totalRemaining } = await supabase
     .from("Lovable")
     .select("id", { count: "exact", head: true })
-    .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil");
+    .or(FILTER);
 
   const { data: cars, error: fetchError } = await supabase
     .from("Lovable")
     .select("id, make, model, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
-    .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
+    .or(FILTER)
     .limit(CHUNK_SIZE);
 
   if (fetchError) throw fetchError;
   if (!cars || cars.length === 0) return { processed: 0, modelsCached: 0, colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, errors: 0, remaining: 0 };
 
-  // Fyll på cache med redan sparade modeller
+  // Ladda redan cachade modeller från DB
   const uniqueMakes  = [...new Set(cars.map((c) => c.make).filter(Boolean))];
   const uniqueModels = [...new Set(cars.map((c) => c.model).filter(Boolean))];
   const { data: cachedModels } = await supabase
@@ -206,70 +211,80 @@ async function processChunk(
 
   const results = { processed: cars.length, modelsCached: 0, colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, errors: 0, remaining: 0 };
 
-  for (let i = 0; i < cars.length; i += BATCH_SIZE) {
-    const batch = cars.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(async (car) => {
-        const cacheKey = `${car.make}|||${car.model}`;
-        let carModel = modelCache[cacheKey];
+  // ── Steg 1: Berika unika modeller SEKVENTIELLT (undviker rate limit) ──
+  // Varje enrichModel = ~13 parallella AI-anrop. Vi kör max MAX_NEW_MODELS nya modeller per anrop.
+  const uniqueCombos = [...new Set(
+    cars
+      .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
+      .map((c) => `${c.make}|||${c.model}`)
+  )];
 
-        // Berika modell-cache – separat try/catch så ett AI-fel inte stoppar färg/övrigt
-        if (carModel === undefined && car.make && car.model) {
-          try {
-            carModel = await enrichModel(supabase, apiKey, car.make, car.model, car.fuel_type);
-            modelCache[cacheKey] = carModel;
-            results.modelsCached++;
-          } catch (e) {
-            console.error(`enrichModel misslyckades för ${car.make} ${car.model}:`, e);
-            modelCache[cacheKey] = null; // markera som försökt – anropa inte igen
-          }
-        }
-
-        const updates: Record<string, unknown> = {};
-
-        try {
-          if (carModel) {
-            const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
-            if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
-              updates.body_type = carModel.body_type ?? "Okänd";
-              results.bodyTypeUpdated++;
-            }
-            if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
-              updates.drivetrain = carModel.drivetrain_default;
-              results.drivetrainUpdated++;
-            }
-            if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
-              const hp_min = carModel.typical_hp_min as number;
-              const hp_max = (carModel.typical_hp_max as number) || hp_min;
-              updates.horsepower = Math.round((hp_min + hp_max) / 2);
-              results.horsepowerUpdated++;
-            }
-          }
-
-          if (!car.color || car.color === "Unknown") {
-            updates.color = car.image_thumb_url
-              ? await detectColor(apiKey, car.image_thumb_url, car.make ?? "", car.model ?? "")
-              : "Okänd";
-            results.colorUpdated++;
-          }
-
-          // Om AI misslyckades med body_type, sätt "Okänd" så bilen lämnar kön
-          if (!updates.body_type) {
-            const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown"];
-            if (car.body_type && BLOCKET_GENERIC.includes(car.body_type)) {
-              updates.body_type = "Okänd";
-              results.bodyTypeUpdated++;
-            }
-          }
-
-          if (Object.keys(updates).length > 0) {
-            await supabase.from("Lovable").update(updates).eq("id", car.id);
-          }
-        } catch (e) {
-          console.error(`Fel för bil ${car.id}:`, e);
-          results.errors++;
-        }
-    }));
+  let newModelsThisRun = 0;
+  for (const combo of uniqueCombos) {
+    if (newModelsThisRun >= MAX_NEW_MODELS) break;
+    const [make, model] = combo.split("|||");
+    try {
+      const carModel = await enrichModel(supabase, apiKey, make, model, null);
+      modelCache[combo] = carModel;
+      results.modelsCached++;
+      newModelsThisRun++;
+      console.log(`Berikade modell: ${make} ${model} → ${carModel.body_type}`);
+    } catch (e) {
+      console.error(`enrichModel misslyckades för ${make} ${model}:`, e);
+      modelCache[combo] = null; // markera som försökt
+    }
   }
+
+  // ── Steg 2: Uppdatera bilar (färg parallellt, övrigt från modell-cache) ──
+  await Promise.all(cars.map(async (car) => {
+    const cacheKey = `${car.make}|||${car.model}`;
+    const carModel = modelCache[cacheKey]; // null = misslyckades, undefined = ej försökt än
+
+    const updates: Record<string, unknown> = {};
+
+    try {
+      if (carModel) {
+        if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
+          updates.body_type = carModel.body_type ?? "Okänd";
+          results.bodyTypeUpdated++;
+        }
+        if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
+          updates.drivetrain = carModel.drivetrain_default;
+          results.drivetrainUpdated++;
+        }
+        if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
+          const hp_min = carModel.typical_hp_min as number;
+          const hp_max = (carModel.typical_hp_max as number) || hp_min;
+          updates.horsepower = Math.round((hp_min + hp_max) / 2);
+          results.horsepowerUpdated++;
+        }
+      }
+
+      if (!car.color || car.color === "Unknown") {
+        updates.color = car.image_thumb_url
+          ? await detectColor(apiKey, car.image_thumb_url, car.make ?? "", car.model ?? "")
+          : "Okänd";
+        results.colorUpdated++;
+      }
+
+      // Fallback: bilen MÅSTE lämna kön oavsett om AI lyckades eller inte.
+      // Gäller null, Personbil, Transportbil, Unknown, Okänd – allt generiskt.
+      if (!updates.body_type && (!car.body_type || BLOCKET_GENERIC.includes(car.body_type))) {
+        // Om enrichModel ej försökt ännu (undefined), låt bilen ligga kvar i kön till nästa körning
+        if (carModel !== undefined) {
+          updates.body_type = "Okänd";
+          results.bodyTypeUpdated++;
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await supabase.from("Lovable").update(updates).eq("id", car.id);
+      }
+    } catch (e) {
+      console.error(`Fel för bil ${car.id}:`, e);
+      results.errors++;
+    }
+  }));
 
   results.remaining = Math.max(0, (totalRemaining ?? 0) - cars.length);
   return results;
