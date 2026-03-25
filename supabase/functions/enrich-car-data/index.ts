@@ -136,6 +136,10 @@ async function enrichModel(
       `Body type of ${prompt}?`
     ),
     askAI(apiKey,
+      "Car expert. Reply ONLY an integer (WLTP combined CO2 g/km). EVs: 0. Unknown: 0.",
+      `CO2 g/km of ${prompt}?`
+    ),
+    askAI(apiKey,
       "Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.",
       `Fuel consumption l/100km of ${prompt}?`
     ),
@@ -215,7 +219,7 @@ async function enrichModel(
     enriched_at:             new Date().toISOString(),
   };
 
-  await supabase.from("car_models").upsert(modelData, { onConflict: "make,model" });
+  await supabase.from("car_models").upsert(modelData as any, { onConflict: "make,model" });
   return modelData;
 }
 
@@ -323,7 +327,7 @@ serve(async (req) => {
 
           // Berika modellen om den inte finns i cache (AI + NCAP)
           if (!carModel && car.make && car.model) {
-            carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
+            carModel = await enrichModel(supabase as any, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
             modelCache[cacheKey] = carModel;
             results.modelsCached++;
           }
