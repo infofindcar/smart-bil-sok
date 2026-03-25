@@ -152,6 +152,25 @@ async function enrichModel(
 // Bildanalys för färg – unik per bil
 // ─────────────────────────────────────────────
 async function detectColor(apiKey: string, imageUrl: string, make: string, model: string): Promise<string> {
+  // Hämta bilden själv och skicka som base64 – Gemini kan inte nå Blockets CDN direkt
+  let imageContent: { type: string; image_url?: { url: string }; text?: string };
+  try {
+    const imgRes = await fetch(imageUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; car-color-detector/1.0)", "Referer": "https://www.blocket.se/" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (imgRes.ok) {
+      const buffer = await imgRes.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      const mime = imgRes.headers.get("content-type") || "image/jpeg";
+      imageContent = { type: "image_url", image_url: { url: `data:${mime};base64,${base64}` } };
+    } else {
+      imageContent = { type: "image_url", image_url: { url: imageUrl } };
+    }
+  } catch {
+    imageContent = { type: "image_url", image_url: { url: imageUrl } };
+  }
+
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -164,11 +183,11 @@ async function detectColor(apiKey: string, imageUrl: string, make: string, model
         role: "user",
         content: [
           { type: "text", text: `What color is this ${make} ${model}?` },
-          { type: "image_url", image_url: { url: imageUrl } },
+          imageContent,
         ],
       }],
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) return "Okänd";
   const data = await res.json();
