@@ -185,12 +185,12 @@ async function processChunk(
   const { count: totalRemaining } = await supabase
     .from("Lovable")
     .select("id", { count: "exact", head: true })
-    .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown");
+    .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil");
 
   const { data: cars, error: fetchError } = await supabase
     .from("Lovable")
     .select("id, make, model, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
-    .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown")
+    .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
     .limit(CHUNK_SIZE);
 
   if (fetchError) throw fetchError;
@@ -222,8 +222,10 @@ async function processChunk(
         const updates: Record<string, unknown> = {};
 
         if (carModel) {
-          if (!car.body_type || car.body_type === "Unknown") {
-            updates.body_type = carModel.body_type ?? "Okänd";
+          // Skriv över Blockets generiska värden ("Personbil", "Transportbil") med specifik AI-typ
+          const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
+          if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
+            updates.body_type = carModel.body_type ?? car.body_type ?? "Okänd";
             results.bodyTypeUpdated++;
           }
           if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
@@ -324,7 +326,8 @@ serve(async (req) => {
               }
               const updates: Record<string, unknown> = {};
               if (carModel) {
-                if (!car.body_type || car.body_type === "Unknown") { updates.body_type = carModel.body_type ?? "Okänd"; totals.bodyTypeUpdated++; }
+                const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
+                if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) { updates.body_type = carModel.body_type ?? car.body_type ?? "Okänd"; totals.bodyTypeUpdated++; }
                 if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) { updates.drivetrain = carModel.drivetrain_default; totals.drivetrainUpdated++; }
                 if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
                   const hp_min = carModel.typical_hp_min as number;
