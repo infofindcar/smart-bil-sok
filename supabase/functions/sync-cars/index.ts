@@ -95,38 +95,44 @@ serve(async (req) => {
       `sync-cars done: added=${added}, updated=${updated}, deleted=${deleted ?? 0}, errors=${upsertErrors}`
     );
 
-    // Trigga enrichment automatiskt för nya bilar
+    // Trigga enrichment för alla bilar som saknar berikningsdata
     let enrichTriggered = false;
-    if (added > 0) {
-      try {
-        // Hämta ID:n för bilar som saknar body_type eller färg (de nya)
-        const { data: newCars } = await supabase
-          .from("Lovable")
-          .select("id")
-          .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown")
-          .limit(500);
+    let enrichCount = 0;
+    try {
+      const { data: unenrichedCars } = await supabase
+        .from("Lovable")
+        .select("id")
+        .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
+        .limit(500);
 
-        if (newCars && newCars.length > 0) {
-          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-          const enrichUrl = `${supabaseUrl}/functions/v1/enrich-car-data`;
-          const enrichSecret = Deno.env.get("SYNC_SECRET")!;
+      if (unenrichedCars && unenrichedCars.length > 0) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const enrichUrl = `${supabaseUrl}/functions/v1/enrich-car-data`;
+        const enrichSecret = Deno.env.get("SYNC_SECRET")!;
 
-          // Fire-and-forget – vi väntar inte på att enrichment ska bli klar
-          fetch(enrichUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-sync-secret": enrichSecret,
-            },
-            body: JSON.stringify({ ids: newCars.map((c) => c.id) }),
-          }).catch((e) => console.error("enrich trigger failed:", e));
+        // Använd waitUntil så att fetch inte dödas när sync-cars returnerar sitt svar
+        const enrichPromise = fetch(enrichUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-sync-secret": enrichSecret,
+          },
+          body: JSON.stringify({ ids: unenrichedCars.map((c) => c.id) }),
+        }).then((r) => console.log(`enrich-car-data svarade: ${r.status}`))
+          .catch((e) => console.error("enrich trigger failed:", e));
 
-          enrichTriggered = true;
-          console.log(`Triggade enrichment för ${newCars.length} bilar`);
+        // @ts-ignore – EdgeRuntime finns i Supabase/Deno Deploy
+        if (typeof EdgeRuntime !== "undefined") {
+          // @ts-ignore
+          EdgeRuntime.waitUntil(enrichPromise);
         }
-      } catch (e) {
-        console.error("Kunde inte trigga enrichment:", e);
+
+        enrichTriggered = true;
+        enrichCount = unenrichedCars.length;
+        console.log(`Triggade enrichment för ${enrichCount} oberiköde bilar`);
       }
+    } catch (e) {
+      console.error("Kunde inte trigga enrichment:", e);
     }
 
     return new Response(
@@ -139,6 +145,7 @@ serve(async (req) => {
         upsertErrors,
         durationMs,
         enrichTriggered,
+        enrichCount,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
