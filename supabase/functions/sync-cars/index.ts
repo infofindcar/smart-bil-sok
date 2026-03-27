@@ -108,7 +108,7 @@ serve(async (req) => {
       const { data: unenrichedCars } = await supabase
         .from("Lovable")
         .select("id")
-        .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
+        .or("color.eq.Unknown,color.is.null,color.eq.Okänd,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
         .limit(40);
 
       if (unenrichedCars && unenrichedCars.length > 0) {

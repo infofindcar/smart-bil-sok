@@ -166,24 +166,8 @@ async function enrichModel(
 // Bildanalys för färg – unik per bil
 // ─────────────────────────────────────────────
 async function detectColor(apiKey: string, imageUrl: string, make: string, model: string): Promise<string> {
-  // Hämta bilden själv och skicka som base64 – Gemini kan inte nå Blockets CDN direkt
-  let imageContent: { type: string; image_url?: { url: string }; text?: string };
-  try {
-    const imgRes = await fetch(imageUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; car-color-detector/1.0)", "Referer": "https://www.blocket.se/" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (imgRes.ok) {
-      const buffer = await imgRes.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-      const mime = imgRes.headers.get("content-type") || "image/jpeg";
-      imageContent = { type: "image_url", image_url: { url: `data:${mime};base64,${base64}` } };
-    } else {
-      imageContent = { type: "image_url", image_url: { url: imageUrl } };
-    }
-  } catch {
-    imageContent = { type: "image_url", image_url: { url: imageUrl } };
-  }
+  // Skicka URL:en direkt till Gemini – Gemini når Blockets CDN bättre än edge functions gör
+  const imageContent = { type: "image_url", image_url: { url: imageUrl } };
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -218,7 +202,7 @@ async function processChunk(
   apiKey: string,
   modelCache: Record<string, Record<string, unknown>>
 ): Promise<{ processed: number; modelsCached: number; colorUpdated: number; bodyTypeUpdated: number; drivetrainUpdated: number; horsepowerUpdated: number; errors: number; remaining: number }> {
-  const FILTER = "color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil";
+  const FILTER = "color.eq.Unknown,color.is.null,color.eq.Okänd,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil";
   const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
 
   const { count: totalRemaining } = await supabase
