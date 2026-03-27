@@ -201,9 +201,9 @@ const Index = () => {
       {/* Results — premium reveal */}
       {showResults && cars.length > 0 && (() => {
       const topCars = cars.slice(0, 3);
-      const similarCars = cars.slice(3, 9);
+      const similarCars = cars.slice(3);
       return (
-         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} totalMatches={cars.length} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
           state: {
             cars: savedCars
           }

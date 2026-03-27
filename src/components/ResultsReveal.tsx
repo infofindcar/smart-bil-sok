@@ -19,6 +19,7 @@ const t = (key: string, lang: string) => T[key]?.[lang] || T[key]?.sv || key;
 interface ResultsRevealProps {
   cars: Car[];
   similarCars: Car[];
+  totalMatches?: number;
   savedCars: Car[];
   carReasons: CarReason[];
   resultMessage: string;
@@ -31,7 +32,7 @@ interface ResultsRevealProps {
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -118,7 +119,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-primary/20 shadow-lg shadow-primary/[0.08]">
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
                 <span className="text-sm font-semibold text-foreground tracking-wide">
-                  {cars.length} {t('matchesFound', language)}
+                  {(totalMatches ?? (cars.length + similarCars.length))} {t('matchesFound', language)}
                 </span>
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" style={{ animationDelay: '200ms' }} />
               </div>
