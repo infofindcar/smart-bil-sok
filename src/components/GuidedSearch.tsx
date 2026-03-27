@@ -432,7 +432,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               ))}
               <button
                 onClick={() => inputRef.current?.focus()}
-                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-secondary/30 bg-transparent hover:bg-secondary/5 text-secondary/70 hover:text-secondary transition-all duration-150 flex items-center gap-1"
+                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-border bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
               >
                 <PenLine className="h-3 w-3" />
                 {WRITE_OWN[language] || WRITE_OWN.sv}
