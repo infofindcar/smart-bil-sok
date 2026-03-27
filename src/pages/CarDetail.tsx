@@ -304,24 +304,27 @@ const CarDetail = () => {
 
           {/* Running costs */}
           <div className="bg-card rounded-2xl border border-border p-6 mb-6">
-            <h2 className="text-xl font-bold mb-1">Uppskattade månadskostnader</h2>
+            <h2 className="text-xl font-bold mb-1">Uppskattad månadskostnad</h2>
             <p className="text-xs text-muted-foreground mb-4">Baserat på 15 000 km/år</p>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
               {[
-                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr` },
-                { label: 'Skatt', value: `${fmt(monthlyTax)} kr` },
-                { label: 'Försäkring', value: insuranceLabel },
-                { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr' },
-                { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true },
+                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.label === 'Laddning' ? 'Beräknat på ~0,20 kWh/km och 2 kr/kWh' : modelData?.fuel_consumption_l100km ? `Baserat på ${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : 'Uppskattat genomsnitt för denna motortyp' },
+                { label: 'Skatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Baserat på ${co2} g CO₂/km` : 'Baserat på schablonberäkning' },
+                { label: 'Försäkring', value: insuranceLabel, explain: insuranceLow && insuranceHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning — din ålder, ort och körsträcka påverkar priset' },
+                { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
+                { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },
               ].map((cost) => (
-                <div key={cost.label}>
+                <div key={cost.label} className="group relative">
                   <p className="text-xs text-muted-foreground">{cost.label}</p>
                   <p className={`font-semibold ${(cost as any).bold ? 'text-primary text-lg' : ''}`}>{cost.value}</p>
+                  {(cost as any).explain && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{(cost as any).explain}</p>
+                  )}
                 </div>
               ))}
             </div>
             <p className="text-[11px] text-muted-foreground/60 italic">
-              * Uppskattade siffror baserade på genomsnittliga kostnader. Faktisk kostnad varierar beroende på körvanor, försäkringsbolag och region.
+              * Uppskattade siffror. Faktisk kostnad varierar beroende på din ålder, körvanor, försäkringsbolag och region.
             </p>
           </div>
 
