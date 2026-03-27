@@ -119,7 +119,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-primary/20 shadow-lg shadow-primary/[0.08]">
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
                 <span className="text-sm font-semibold text-foreground tracking-wide">
-                  {cars.length} {t('matchesFound', language)}
+                  {(totalMatches ?? (cars.length + similarCars.length))} {t('matchesFound', language)}
                 </span>
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" style={{ animationDelay: '200ms' }} />
               </div>
