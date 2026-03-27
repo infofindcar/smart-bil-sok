@@ -237,9 +237,10 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               variant="outline"
               className="rounded-xl px-6"
               onClick={onShowMore}
+              disabled={loadingMore}
             >
-              {t('showMore', language)}
-              <ChevronRight className="h-4 w-4 ml-1" />
+              {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
+              {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
             </Button>
           </div>
         </div>
