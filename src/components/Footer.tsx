@@ -16,7 +16,7 @@ export const Footer = () => {
             <img
               src={logo}
               alt="FindCar"
-              className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert drop-shadow-[0_4px_20px_rgba(255,255,255,0.08)]"
+              className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
             />
             <p className="text-secondary-foreground/60 leading-relaxed max-w-sm text-base">
               Sveriges objektiva bilrådgivare — driven av AI.

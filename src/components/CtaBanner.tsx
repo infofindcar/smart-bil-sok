@@ -14,7 +14,7 @@ export const CtaBanner = () => {
         <ScrollReveal>
           <div className="text-center space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold">
-              Redo att hitta din <span className="text-gradient">drömbi</span>l?
+              Redo att hitta din <span className="text-gradient">drömbil</span>?
             </h2>
             <p className="text-muted-foreground max-w-md mx-auto">
               Clutch hjälper dig helt gratis. Berätta vad du söker så gör vi resten.
