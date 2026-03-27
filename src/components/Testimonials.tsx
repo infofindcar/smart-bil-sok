@@ -3,17 +3,14 @@ import { Star } from 'lucide-react';
 
 const testimonials = [
   {
-    name: 'Anna K.',
     text: '"Hittade min drömkombi på 2 minuter. Clutch förstod exakt vad jag behövde!"',
     rating: 5,
   },
   {
-    name: 'Marcus L.',
     text: '"Sparade mig veckor av letande. AI:n rekommenderade bilar jag aldrig hade hittat själv."',
     rating: 5,
   },
   {
-    name: 'Sofia B.',
     text: '"Fantastiskt enkelt! Berättade bara att jag ville ha en elbil under 300k och fick perfekta förslag."',
     rating: 5,
   },
