@@ -109,6 +109,8 @@ const Index = () => {
       if (data?.cars?.length > 0) {
         setCars((prev) => [...prev, ...data.cars]);
         setCarReasons((prev) => [...prev, ...(data.carReasons || [])]);
+      } else {
+        toast.info('Inga fler bilar hittades med dina filter. Prova att justera din sökning.');
       }
     } catch (err) {
       console.error('Load more error:', err);
