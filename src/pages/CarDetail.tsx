@@ -56,6 +56,17 @@ const formatPrice = (price: number | null) => {
   return fmt(price) + ' kr';
 };
 
+const drivetrainLabel = (dt: string | null | undefined): string | null => {
+  if (!dt) return null;
+  const map: Record<string, string> = {
+    AWD: 'Fyrhjulsdrift', awd: 'Fyrhjulsdrift',
+    FWD: 'Framhjulsdrift', fwd: 'Framhjulsdrift',
+    RWD: 'Bakhjulsdrift', rwd: 'Bakhjulsdrift',
+    '"AWD"': 'Fyrhjulsdrift', '"FWD"': 'Framhjulsdrift', '"RWD"': 'Bakhjulsdrift',
+  };
+  return map[dt] || dt;
+};
+
 const fuelPricePerLiter: Record<string, number> = {
   bensin: 17.5,
   diesel: 19.5,
