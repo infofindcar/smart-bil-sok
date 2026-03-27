@@ -280,12 +280,18 @@ const CarDetail = () => {
               <div className="flex flex-wrap gap-2 mt-2">
                 {car.fuel_type && <Badge variant="secondary">{car.fuel_type}</Badge>}
                 {car.body_type && <Badge variant="outline">{car.body_type}</Badge>}
-                {car.drivetrain && <Badge variant="outline">{car.drivetrain}</Badge>}
+                {car.drivetrain && <Badge variant="outline">{drivetrainLabel(car.drivetrain)}</Badge>}
                 {car.transmission && <Badge variant="outline">{car.transmission}</Badge>}
               </div>
               {car.regnr && (
-                <div className="mt-2 inline-flex items-center bg-card border-2 border-foreground/20 rounded-md px-3 py-1">
-                  <span className="text-sm font-bold font-mono tracking-[0.2em] uppercase text-foreground">{car.regnr}</span>
+                <div className="mt-3 inline-flex items-center rounded overflow-hidden border border-border shadow-sm">
+                  <div className="bg-[#003399] px-1.5 py-1.5 flex flex-col items-center justify-center self-stretch">
+                    <span className="text-[8px] text-yellow-400 font-bold leading-none">★★★</span>
+                    <span className="text-[7px] text-white font-bold leading-none mt-0.5">S</span>
+                  </div>
+                  <div className="bg-white px-3 py-1">
+                    <span className="text-base font-bold font-mono tracking-[0.25em] uppercase text-gray-900">{car.regnr}</span>
+                  </div>
                 </div>
               )}
             </div>
