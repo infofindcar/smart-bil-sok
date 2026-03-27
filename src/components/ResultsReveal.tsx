@@ -31,7 +31,7 @@ interface ResultsRevealProps {
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
