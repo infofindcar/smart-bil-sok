@@ -116,7 +116,7 @@ const Index = () => {
 
         {/* CTA Button */}
         <div className="absolute bottom-20 z-10 flex flex-col items-center gap-3">
-          <Button onClick={scrollToSearch} size="sm" className="text-xs sm:text-sm px-5 py-2 rounded-full bg-background/80 text-foreground hover:bg-background/90 shadow-lg hover:scale-105 transition-transform">
+          <Button onClick={scrollToSearch} size="sm" variant="gradient" className="text-xs sm:text-sm px-6 py-2.5 rounded-full shadow-lg hover:scale-105 transition-transform">
             Hitta din bil
           </Button>
         </div>
