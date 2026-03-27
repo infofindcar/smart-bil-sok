@@ -191,20 +191,45 @@ const CarDetail = () => {
     modelData?.electric_range_km ?? null
   );
 
+  // Age-based insurance adjustment
+  const driverAge = (() => {
+    try {
+      const raw = sessionStorage.getItem('findcar-driver-age');
+      if (raw) return JSON.parse(raw) as number | null;
+    } catch {}
+    return null;
+  })();
+
   const insuranceLow = modelData?.estimated_monthly_insurance_low ?? null;
   const insuranceHigh = modelData?.estimated_monthly_insurance_high ?? null;
-  const insuranceLabel = insuranceLow && insuranceHigh
-    ? `${fmt(insuranceLow)}–${fmt(insuranceHigh)} kr/mån`
-    : insuranceLow
-      ? `~${fmt(insuranceLow)} kr/mån`
+
+  // Adjust insurance based on age: under 25 = +40%, over 50 = -15%
+  const ageMultiplier = driverAge
+    ? driverAge < 25 ? 1.4 : driverAge > 50 ? 0.85 : 1.0
+    : 1.0;
+
+  const adjInsLow = insuranceLow ? Math.round(insuranceLow * ageMultiplier) : null;
+  const adjInsHigh = insuranceHigh ? Math.round(insuranceHigh * ageMultiplier) : null;
+
+  const insuranceLabel = adjInsLow && adjInsHigh
+    ? `${fmt(adjInsLow)}–${fmt(adjInsHigh)} kr/mån`
+    : adjInsLow
+      ? `~${fmt(adjInsLow)} kr/mån`
       : '~800 kr/mån';
+
+  const insuranceExplain = (() => {
+    const base = adjInsLow && adjInsHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning';
+    if (driverAge && driverAge < 25) return `${base}. Justerat uppåt för förare under 25 år`;
+    if (driverAge && driverAge > 50) return `${base}. Justerat nedåt för erfaren förare (50+)`;
+    if (driverAge) return `${base}. Baserat på din ålder (${driverAge} år)`;
+    return `${base} — din ålder, ort och körsträcka påverkar priset`;
+  })();
 
   const annualService = modelData?.estimated_annual_service_sek ?? null;
   const monthlyService = annualService ? Math.round(annualService / 12) : null;
 
-  const totalMonthly = fuelEst.amount + monthlyTax
-    + (insuranceLow && insuranceHigh ? Math.round((insuranceLow + insuranceHigh) / 2) : 800)
-    + (monthlyService ?? 400);
+  const avgInsurance = adjInsLow && adjInsHigh ? Math.round((adjInsLow + adjInsHigh) / 2) : 800;
+  const totalMonthly = fuelEst.amount + monthlyTax + avgInsurance + (monthlyService ?? 400);
 
   /* ── Spec cards ── */
   const specs = [
