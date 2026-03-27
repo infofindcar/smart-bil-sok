@@ -1,4 +1,4 @@
-import { Heart } from 'lucide-react';
+import { Heart, Fuel, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import type { Car } from './GuidedSearch';
@@ -25,13 +25,21 @@ const BRAND_GRADIENTS: Record<string, string> = {
   Volkswagen: 'from-blue-800 to-blue-600',
 };
 
+/** Clean display title: use model (not model_raw which can contain junk like "Fordonskatt") */
+const getDisplayName = (car: Car) => {
+  const make = car.make || '';
+  const model = car.model || '';
+  return `${make} ${model}`.trim() || 'Okänd bil';
+};
+
 export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: CarCardProps) => {
   const navigate = useNavigate();
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
+  const displayName = getDisplayName(car);
 
   return (
     <div
-      className="group relative flex flex-col bg-card rounded-xl overflow-hidden shadow-warm border border-border hover-lift cursor-pointer"
+      className="group relative flex flex-col bg-card rounded-xl overflow-hidden border border-border/60 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
       onClick={() => navigate(`/car/${car.id}`, { state: { car } })}
     >
       {/* Image */}
@@ -39,8 +47,8 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
         {car.image_thumb_url ? (
           <img
             src={car.image_thumb_url}
-            alt={`${car.make} ${car.model}`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            alt={displayName}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
         ) : (
@@ -51,6 +59,16 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
           </div>
         )}
 
+        {/* Gradient overlay at bottom of image */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+
+        {/* Price badge on image */}
+        <div className="absolute bottom-2 left-2">
+          <span className="inline-block bg-background/90 backdrop-blur-sm text-primary font-bold text-sm px-3 py-1 rounded-lg shadow-sm">
+            {formatPrice(car.price)} kr
+          </span>
+        </div>
+
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -59,33 +77,40 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
           className="absolute top-2 right-2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
         >
           <Heart
-            className={`h-5 w-5 ${isSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
+            className={`h-5 w-5 transition-colors ${isSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground hover:text-destructive/70'}`}
           />
         </button>
       </div>
 
       {/* Info */}
       <div className="flex flex-col p-4 flex-1 min-w-0">
-        <h3 className="font-semibold text-base truncate">
-          {car.make} {car.model}
+        <h3 className="font-semibold text-base truncate text-foreground">
+          {displayName}
         </h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {car.year} • {car.mileage ? `${new Intl.NumberFormat('sv-SE').format(car.mileage)} mil` : '–'} • {car.city || '–'}
-        </p>
-        {car.regnr && (
-          <p className="text-[10px] font-mono text-muted-foreground/70 mt-0.5 uppercase tracking-wider">
-            {car.regnr}
-          </p>
-        )}
-        <p className="text-primary font-bold text-lg mt-2">{formatPrice(car.price)} kr</p>
-        <div className="flex flex-wrap gap-1 mt-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+          <span>{car.year || '–'}</span>
+          <span className="text-border">•</span>
+          <span>{car.mileage ? `${new Intl.NumberFormat('sv-SE').format(car.mileage)} mil` : '–'}</span>
+          {car.city && (
+            <>
+              <span className="text-border">•</span>
+              <span className="flex items-center gap-0.5">
+                <MapPin className="h-3 w-3" />
+                {car.city}
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-1.5 mt-3">
           {car.fuel_type && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0">
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-medium">
+              <Fuel className="h-3 w-3 mr-1" />
               {car.fuel_type}
             </Badge>
           )}
           {car.body_type && (
-            <Badge variant="outline" className="text-[10px] px-2 py-0">
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">
               {car.body_type}
             </Badge>
           )}
@@ -93,7 +118,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
 
         {/* Personlig motivering från Clutch */}
         {matchReason && (
-          <div className="mt-2 pt-2 border-t border-border/30">
+          <div className="mt-3 pt-2 border-t border-border/30">
             <p className="text-xs italic text-muted-foreground leading-relaxed">
               "{matchReason}"
             </p>

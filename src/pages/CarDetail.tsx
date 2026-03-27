@@ -177,7 +177,8 @@ const CarDetail = () => {
     );
   }
 
-  const displayTitle = car.model_raw || car.model || '';
+  // Use model (cleaned) instead of model_raw which can contain junk data
+  const displayTitle = car.model || '';
   const warranty = getWarranty(car.make);
 
   // Costs
@@ -354,7 +355,7 @@ const CarDetail = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
               {[
                 { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
-                { label: 'Skatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Baserat på ${co2} g CO₂/km` : 'Baserat på schablonberäkning' },
+                { label: 'Fordonsskatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Svensk fordonsskatt baserad på ${co2} g CO₂/km (${fmt(annualTax)} kr/år)` : `Uppskattad svensk fordonsskatt (${fmt(annualTax)} kr/år)` },
                 { label: 'Försäkring', value: insuranceLabel, explain: insuranceExplain },
                 { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
                 { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },

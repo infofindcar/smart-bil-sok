@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import logo from '@/assets/findcar-logo.png';
 
 export const Header = () => {
@@ -76,6 +77,7 @@ export const Header = () => {
           >
             Kontakta oss
           </a>
+          <ThemeToggle className={scrolled ? '' : 'text-white hover:bg-white/10'} />
           <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
           </Button>

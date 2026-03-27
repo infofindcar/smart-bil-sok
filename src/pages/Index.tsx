@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense, useCallback } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, useCallback, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { motion } from 'framer-motion';
 
 // Lazy-load below-fold sections
 const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) => ({ default: m.ResultsReveal })));
@@ -133,20 +134,30 @@ const Index = () => {
       }}>
 
         {/* FindCar logo + tagline */}
-        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+        <motion.div
+          className="absolute top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+          initial={{ opacity: 0, y: 30, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        >
           <div className="relative">
             <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
-            <img src={findcarLogoHero} alt="FindCar — AI-driven bilrådgivare" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto animate-float-subtle" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
+            <img src={findcarLogoHero} alt="FindCar — AI-driven bilrådgivare" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
           </div>
-        </div>
+        </motion.div>
 
 
         {/* CTA Button */}
-        <div className="absolute bottom-20 z-10 flex flex-col items-center gap-3">
+        <motion.div
+          className="absolute bottom-20 z-10 flex flex-col items-center gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
+        >
           <Button onClick={scrollToSearch} size="default" variant="gradient" className="text-sm sm:text-sm px-8 py-3 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform touch-target h-12 sm:h-10">
             Hitta din bil
           </Button>
-        </div>
+        </motion.div>
 
 
         <button onClick={scrollToSearch} className="absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
