@@ -30,16 +30,15 @@ export const Testimonials = () => {
         </ScrollReveal>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <ScrollReveal key={t.name}>
+          {testimonials.map((t, idx) => (
+            <ScrollReveal key={idx}>
               <div className="bg-testimonial-bg rounded-2xl p-6 border border-border">
                 <div className="flex gap-0.5 mb-3">
                   {Array.from({ length: t.rating }).map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-sm text-foreground leading-relaxed mb-4 italic">{t.text}</p>
-                <p className="text-xs font-semibold text-muted-foreground">— {t.name}</p>
+                <p className="text-sm text-foreground leading-relaxed italic">{t.text}</p>
               </div>
             </ScrollReveal>
           ))}
