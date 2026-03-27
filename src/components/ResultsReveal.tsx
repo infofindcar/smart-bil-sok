@@ -208,22 +208,18 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                 </div>
               </div>
 
-              {/* Horizontal scroll container */}
-              <div className="relative">
-                {/* Fade edge hints */}
-                <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-                <div className="similar-cars-scroll flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
-                  {similarCars.map((car) => (
-                    <div key={car.id} className="flex-shrink-0 w-[270px]">
-                      <CarCard
-                        car={car}
-                        isSaved={savedCars.some((c) => c.id === car.id)}
-                        onToggleSave={onToggleSave}
-                        matchReason={getReasonForCar(car.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
+              {/* Grid layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {similarCars.map((car) => (
+                  <div key={car.id}>
+                    <CarCard
+                      car={car}
+                      isSaved={savedCars.some((c) => c.id === car.id)}
+                      onToggleSave={onToggleSave}
+                      matchReason={getReasonForCar(car.id)}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
