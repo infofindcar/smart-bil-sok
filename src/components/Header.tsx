@@ -77,6 +77,7 @@ export const Header = () => {
           >
             Kontakta oss
           </a>
+          <ThemeToggle className={scrolled ? '' : 'text-white hover:bg-white/10'} />
           <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
           </Button>
