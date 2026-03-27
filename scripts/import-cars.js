@@ -207,13 +207,9 @@ Svara EXAKT i detta format (en rad per bil):
 // ─────────────────────────────────────────────
 // Modell-berikelse (cachas i car_models)
 // ─────────────────────────────────────────────
-async function loadModelCache(makes, models) {
-  if (!makes.length || !models.length) return {};
-  const makeFilter = makes.map((m) => `"${m}"`).join(",");
-  const modelFilter = models.map((m) => `"${m}"`).join(",");
-  const data = await supabaseRequest(
-    `/car_models?make=in.(${makeFilter})&model=in.(${modelFilter})&select=*`
-  );
+async function loadModelCache() {
+  // Hämta alla cachade modeller – tabellen är liten (hundratals rader max)
+  const data = await supabaseRequest("/car_models?select=*");
   const cache = {};
   for (const cm of data ?? []) cache[`${cm.make}|||${cm.model}`] = cm;
   return cache;
@@ -371,9 +367,7 @@ async function main() {
 
     // ── Steg 1: Ladda modell-cache från Supabase ──
     console.log("\n1. Laddar modell-cache från Supabase...");
-    const uniqueMakes  = [...new Set(mappedCars.map((c) => c.make).filter(Boolean))];
-    const uniqueModels = [...new Set(mappedCars.map((c) => c.model).filter(Boolean))];
-    const modelCache = await loadModelCache(uniqueMakes, uniqueModels);
+    const modelCache = await loadModelCache();
     console.log(`   ${Object.keys(modelCache).length} modeller redan cachade.`);
 
     // ── Steg 2: Berika nya modeller sekventiellt ──
