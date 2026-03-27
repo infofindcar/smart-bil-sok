@@ -425,7 +425,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-foreground/80 transition-all duration-150 shadow-sm"
+                  className="text-xs px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm"
                 >
                   {s}
                 </button>
