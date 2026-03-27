@@ -277,15 +277,6 @@ const CarDetail = () => {
                   </div>
                 </div>
               )}
-              {makeData?.country_of_origin && (
-                <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
-                  <Globe className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Ursprung</p>
-                    <p className="font-semibold text-sm">{makeData.country_of_origin}</p>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
