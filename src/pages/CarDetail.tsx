@@ -311,7 +311,7 @@ const CarDetail = () => {
             <p className="text-xs text-muted-foreground mb-4">Baserat på 15 000 km/år</p>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
               {[
-                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.label === 'Laddning' ? 'Beräknat på ~0,20 kWh/km och 2 kr/kWh' : modelData?.fuel_consumption_l100km ? `Baserat på ${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : 'Uppskattat genomsnitt för denna motortyp' },
+                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
                 { label: 'Skatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Baserat på ${co2} g CO₂/km` : 'Baserat på schablonberäkning' },
                 { label: 'Försäkring', value: insuranceLabel, explain: insuranceLow && insuranceHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning — din ålder, ort och körsträcka påverkar priset' },
                 { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
