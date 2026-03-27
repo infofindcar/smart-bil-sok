@@ -66,22 +66,24 @@ function estimateMonthlyFuel(
   fuelType: string | null,
   consumptionL100km: number | null,
   electricRangeKm: number | null
-): { amount: number; label: string } {
+): { amount: number; label: string; detail: string } {
   const fuel = (fuelType ?? '').toLowerCase();
   const kmPerMonth = 1250; // 15 000 km/år
 
   if (fuel.includes('el') || fuel.includes('electric')) {
-    // ~0.20 kWh/km * 2 kr/kWh
-    return { amount: Math.round(kmPerMonth * 0.20 * 2), label: 'Laddning' };
+    const kwh = 0.20; // kWh/km
+    const priceKwh = 2; // kr/kWh
+    const amount = Math.round(kmPerMonth * kwh * priceKwh);
+    return { amount, label: 'Drivmedel', detail: `Laddning: ~${kwh * 100} kWh/100km × ${priceKwh} kr/kWh` };
   }
 
   if (fuel.includes('hybrid') && electricRangeKm && electricRangeKm > 30) {
-    // Plug-in hybrid: ~50% el, 50% bensin
     const elCost = (kmPerMonth * 0.5) * 0.20 * 2;
     const fuelCost = consumptionL100km
       ? (kmPerMonth * 0.5 / 100) * consumptionL100km * 17.5
       : 800;
-    return { amount: Math.round(elCost + fuelCost), label: 'Bränsle + el' };
+    const amount = Math.round(elCost + fuelCost);
+    return { amount, label: 'Drivmedel', detail: `Laddhybrid: ~50% el + 50% bensin` };
   }
 
   if (consumptionL100km && consumptionL100km > 0) {
@@ -90,14 +92,15 @@ function estimateMonthlyFuel(
       : fuel.includes('e85')
         ? fuelPricePerLiter.e85
         : fuelPricePerLiter.bensin;
-    const label = fuel.includes('diesel') ? 'Diesel' : fuel.includes('e85') ? 'E85' : 'Bensin';
-    return { amount: Math.round((kmPerMonth / 100) * consumptionL100km * pricePerL), label };
+    const fuelName = fuel.includes('diesel') ? 'Diesel' : fuel.includes('e85') ? 'E85' : 'Bensin';
+    const amount = Math.round((kmPerMonth / 100) * consumptionL100km * pricePerL);
+    return { amount, label: 'Drivmedel', detail: `${fuelName}: ${String(consumptionL100km).replace('.', ',')} l/100km × ${pricePerL} kr/l` };
   }
 
   // Fallback
-  if (fuel.includes('diesel')) return { amount: 2000, label: 'Diesel' };
-  if (fuel.includes('hybrid')) return { amount: 1500, label: 'Bränsle' };
-  return { amount: 2500, label: 'Bensin' };
+  if (fuel.includes('diesel')) return { amount: 2000, label: 'Drivmedel', detail: 'Diesel, uppskattat genomsnitt' };
+  if (fuel.includes('hybrid')) return { amount: 1500, label: 'Drivmedel', detail: 'Hybrid, uppskattat genomsnitt' };
+  return { amount: 2500, label: 'Drivmedel', detail: 'Bensin, uppskattat genomsnitt' };
 }
 
 /* ── Component ── */
@@ -308,7 +311,7 @@ const CarDetail = () => {
             <p className="text-xs text-muted-foreground mb-4">Baserat på 15 000 km/år</p>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
               {[
-                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.label === 'Laddning' ? 'Beräknat på ~0,20 kWh/km och 2 kr/kWh' : modelData?.fuel_consumption_l100km ? `Baserat på ${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : 'Uppskattat genomsnitt för denna motortyp' },
+                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
                 { label: 'Skatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Baserat på ${co2} g CO₂/km` : 'Baserat på schablonberäkning' },
                 { label: 'Försäkring', value: insuranceLabel, explain: insuranceLow && insuranceHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning — din ålder, ort och körsträcka påverkar priset' },
                 { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
