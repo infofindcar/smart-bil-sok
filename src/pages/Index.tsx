@@ -136,9 +136,9 @@ const Index = () => {
         {/* FindCar logo + tagline */}
         <motion.div
           className="absolute top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-          initial={{ opacity: 0, y: 30, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
         >
           <div className="relative">
             <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
