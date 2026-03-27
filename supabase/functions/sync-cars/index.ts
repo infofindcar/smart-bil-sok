@@ -37,7 +37,13 @@ serve(async (req) => {
       );
     }
 
-    console.log(`sync-cars: received ${cars.length} cars, syncStartedAt=${syncStartedAt}`);
+    // Filtrera bort bilar utan bild direkt vid mottagning
+    const carsWithImage = cars.filter((car) => car.image_thumb_url);
+    const skippedNoImage = cars.length - carsWithImage.length;
+    if (skippedNoImage > 0) {
+      console.log(`sync-cars: hoppade över ${skippedNoImage} bilar utan bild`);
+    }
+    console.log(`sync-cars: received ${carsWithImage.length} bilar med bild (${skippedNoImage} utan bild), syncStartedAt=${syncStartedAt}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -51,8 +57,8 @@ serve(async (req) => {
 
     // Upsert in batches of 200
     let upsertErrors = 0;
-    for (let i = 0; i < cars.length; i += BATCH_SIZE) {
-      const batch = cars.slice(i, i + BATCH_SIZE).map((car) => {
+    for (let i = 0; i < carsWithImage.length; i += BATCH_SIZE) {
+      const batch = carsWithImage.slice(i, i + BATCH_SIZE).map((car) => {
         // Remove 'id' to avoid overwriting Supabase's auto-increment primary key
         // with Blocket's own ID (which is stored in source_listing_id instead)
         const { id: _blocketId, ...carFields } = car as Record<string, unknown>;
@@ -88,7 +94,7 @@ serve(async (req) => {
       .select("id", { count: "exact", head: true });
 
     const added = Math.max(0, (countAfter ?? 0) - (countBefore ?? 0) + (deleted ?? 0));
-    const updated = cars.length - added;
+    const updated = carsWithImage.length - added;
     const durationMs = Date.now() - new Date(syncStartedAt).getTime();
 
     console.log(
@@ -103,7 +109,7 @@ serve(async (req) => {
         .from("Lovable")
         .select("id")
         .or("color.eq.Unknown,color.is.null,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
-        .limit(500);
+        .limit(40);
 
       if (unenrichedCars && unenrichedCars.length > 0) {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -141,7 +147,8 @@ serve(async (req) => {
         added,
         updated,
         deleted: deleted ?? 0,
-        total: cars.length,
+        total: carsWithImage.length,
+        skippedNoImage,
         upsertErrors,
         durationMs,
         enrichTriggered,

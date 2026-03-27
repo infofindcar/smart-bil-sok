@@ -101,6 +101,7 @@ async function main() {
   // Mappa Blockets fältnamn till databasens kolumnnamn
   const mappedCars = cars
     .filter((car) => car.id && car.organisation_name) // bara handlare, hoppa över privata säljare
+    .filter((car) => car.image?.url) // hoppa över bilar utan bild
     .map((car) => {
       const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make, car.model);
       return {

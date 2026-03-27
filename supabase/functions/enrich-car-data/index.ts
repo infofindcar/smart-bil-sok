@@ -192,11 +192,11 @@ async function detectColor(apiKey: string, imageUrl: string, make: string, model
       model: "google/gemini-2.5-flash",
       messages: [{
         role: "system",
-        content: "Car color expert. Identify the primary car color in Swedish. Use ONLY these values: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Reply ONLY the color name in Swedish. If unsure reply UNKNOWN.",
+        content: "Car color expert. First check if this is a valid car exterior photo. If the image shows an interior, engine bay, wheels only, a placeholder, is blank/empty, or does not clearly show a car exterior – reply exactly: DELETE. Otherwise identify the primary exterior color in Swedish. Use ONLY these values: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Reply ONLY the color name or DELETE.",
       }, {
         role: "user",
         content: [
-          { type: "text", text: `What color is this ${make} ${model}?` },
+          { type: "text", text: `What color is this ${make} ${model}? Reply DELETE if not a valid exterior photo.` },
           imageContent,
         ],
       }],
@@ -206,6 +206,7 @@ async function detectColor(apiKey: string, imageUrl: string, make: string, model
   if (!res.ok) return "Okänd";
   const data = await res.json();
   const color = data.choices?.[0]?.message?.content?.trim() ?? "";
+  if (color === "DELETE") return "__DELETE__";
   return (color && color !== "UNKNOWN" && color.length < 30) ? color : "Okänd";
 }
 
@@ -300,16 +301,24 @@ async function processChunk(
       }
 
       if (!car.color || car.color === "Unknown") {
-        updates.color = car.image_thumb_url
+        const detectedColor = car.image_thumb_url
           ? await detectColor(apiKey, car.image_thumb_url, car.make ?? "", car.model ?? "")
-          : "Okänd";
+          : "__DELETE__";
+
+        if (detectedColor === "__DELETE__") {
+          // Bilden är interiör, tom eller ogiltig – radera bilen
+          await supabase.from("Lovable").delete().eq("id", car.id);
+          console.log(`Raderade bil ${car.id} (${car.make} ${car.model}) – ogiltig bild`);
+          results.errors++; // räknas som avvikelse, inte som lyckad berikelse
+          return;
+        }
+
+        updates.color = detectedColor;
         results.colorUpdated++;
       }
 
       // Fallback: bilen MÅSTE lämna kön oavsett om AI lyckades eller inte.
-      // Gäller null, Personbil, Transportbil, Unknown, Okänd – allt generiskt.
       if (!updates.body_type && (!car.body_type || BLOCKET_GENERIC.includes(car.body_type))) {
-        // Om enrichModel ej försökt ännu (undefined), låt bilen ligga kvar i kön till nästa körning
         if (carModel !== undefined) {
           updates.body_type = "Okänd";
           results.bodyTypeUpdated++;
@@ -382,20 +391,33 @@ serve(async (req) => {
           .in("make", uniqueMakes).in("model", uniqueModels);
         for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
 
+        // ── Steg 1: Berika unika modeller SEKVENTIELLT med MAX_NEW_MODELS-gräns ──
+        const uniqueCombosChunk = [...new Set(
+          cars
+            .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
+            .map((c) => `${c.make}|||${c.model}`)
+        )];
+        let newModelsThisChunk = 0;
+        for (const combo of uniqueCombosChunk) {
+          if (newModelsThisChunk >= MAX_NEW_MODELS) break;
+          const [mk, mo] = combo.split("|||");
+          const modelRawForCombo = cars.find((c) => c.make === mk && c.model === mo)?.model_raw ?? null;
+          try {
+            const cm = await enrichModel(supabase, LOVABLE_API_KEY, mk, mo, null, modelRawForCombo);
+            modelCache[combo] = cm;
+            totals.modelsCached++;
+            newModelsThisChunk++;
+          } catch (e) {
+            console.error(`enrichModel misslyckades för ${mk} ${mo}:`, e);
+            modelCache[combo] = null;
+          }
+        }
+
+        // ── Steg 2: Uppdatera bilar parallellt (färg + metadata från cache) ──
         for (let j = 0; j < cars.length; j += BATCH_SIZE) {
           await Promise.all(cars.slice(j, j + BATCH_SIZE).map(async (car) => {
             const cacheKey = `${car.make}|||${car.model}`;
-            let carModel = modelCache[cacheKey];
-            if (carModel === undefined && car.make && car.model) {
-              try {
-                carModel = await enrichModel(supabase, LOVABLE_API_KEY, car.make, car.model, car.fuel_type, car.model_raw ?? null);
-                modelCache[cacheKey] = carModel;
-                totals.modelsCached++;
-              } catch (e) {
-                console.error(`enrichModel misslyckades för ${car.make} ${car.model}:`, e);
-                modelCache[cacheKey] = null;
-              }
-            }
+            const carModel = modelCache[cacheKey];
             const updates: Record<string, unknown> = {};
             try {
               if (carModel) {
@@ -409,7 +431,18 @@ serve(async (req) => {
                 }
               }
               if (!car.color || car.color === "Unknown") {
-                updates.color = car.image_thumb_url ? await detectColor(LOVABLE_API_KEY, car.image_thumb_url, car.make ?? "", car.model ?? "") : "Okänd";
+                const detectedColor = car.image_thumb_url
+                  ? await detectColor(LOVABLE_API_KEY, car.image_thumb_url, car.make ?? "", car.model ?? "")
+                  : "__DELETE__";
+
+                if (detectedColor === "__DELETE__") {
+                  await supabase.from("Lovable").delete().eq("id", car.id);
+                  console.log(`Raderade bil ${car.id} (${car.make} ${car.model}) – ogiltig bild`);
+                  totals.errors++;
+                  return;
+                }
+
+                updates.color = detectedColor;
                 totals.colorUpdated++;
               }
               if (!updates.body_type) {
