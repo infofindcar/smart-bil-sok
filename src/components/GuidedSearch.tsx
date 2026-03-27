@@ -290,6 +290,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     sessionStorage.removeItem(CHAT_STORAGE_KEY);
     sessionStorage.removeItem('findcar-search-state');
     sessionStorage.removeItem('findcar-results-revealed');
+    sessionStorage.removeItem('findcar-driver-age');
   };
 
   const handleLanguageChange = (newLang: string) => {
