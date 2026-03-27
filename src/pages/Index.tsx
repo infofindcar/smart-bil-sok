@@ -134,17 +134,18 @@ const Index = () => {
       }}>
 
         {/* FindCar logo + tagline */}
-        <motion.div
-          className="absolute top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: 'easeOut' }}
-        >
-          <div className="relative">
-            <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
-            <img src={findcarLogoHero} alt="FindCar — AI-driven bilrådgivare" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
-          </div>
-        </motion.div>
+        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+          >
+            <div className="relative">
+              <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
+              <img src={findcarLogoHero} alt="FindCar — AI-driven bilrådgivare" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
+            </div>
+          </motion.div>
+        </div>
 
 
         {/* CTA Button */}
