@@ -552,7 +552,7 @@ serve(async (req) => {
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
 
-        return query.order("price", { ascending: true }).limit(9);
+        return query.order("price", { ascending: true }).limit(18);
       };
 
       // Fire levels 0 and 1 in parallel
