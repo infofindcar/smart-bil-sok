@@ -230,42 +230,53 @@ serve(async (req) => {
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
       const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
-      // Build a relaxed query (level 1) to get more variety
-      let query = sb.from("Lovable").select("*")
-        .gte("price", Math.floor(minPrice * 0.7))
-        .lte("price", Math.ceil(maxPrice * 1.3));
+      // Progressive relaxation: try with filters, then relax
+      const buildLoadMoreQuery = (level: number) => {
+        const priceMult = [1.3, 1.6, 2.5][level] || 2.5;
+        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
+        let q = sb.from("Lovable").select("*")
+          .gte("price", Math.floor(minPrice * priceMinMult))
+          .lte("price", Math.ceil(maxPrice * priceMult));
 
-      if (city) query = query.ilike("city", `%${city}%`);
-      if (make) query = query.ilike("make", `%${make}%`);
-      if (fuels.length > 0) {
-        const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
-        if (ff) query = query.or(ff);
-      }
-      if (bodies.length > 0) {
-        const bf = bodies.map((x: string) => bodyPatterns[x]).filter(Boolean).map((p: string) => `body_type.ilike.${p}`);
-        const mf: string[] = [];
-        for (const bt of bodies) { const ms = modelBodyTypeMap[bt]; if (ms) for (const m of ms) mf.push(`model.ilike.%${m}%`); }
-        const all = [...bf, ...mf, "body_type.eq.Unknown", "body_type.is.null"].join(",");
-        if (all) query = query.or(all);
-      }
-      if (dt) {
-        const vals = drivetrainPatterns[dt];
-        if (vals) query = query.or(vals.map(v => `drivetrain.eq.${v}`).join(",") + ",drivetrain.eq.Unknown,drivetrain.is.null");
-      }
-      if (yMin) query = query.gte("year", yMin);
-      if (yMax) query = query.lte("year", yMax);
+        // Level 0: all filters except city
+        // Level 1: drop body type too
+        // Level 2: only price + fuel
+        if (make && level < 2) q = q.ilike("make", `%${make}%`);
+        if (fuels.length > 0 && level < 3) {
+          const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
+          if (ff) q = q.or(ff);
+        }
+        if (bodies.length > 0 && level < 1) {
+          const bf = bodies.map((x: string) => bodyPatterns[x]).filter(Boolean).map((p: string) => `body_type.ilike.${p}`);
+          const mf: string[] = [];
+          for (const bt of bodies) { const ms = modelBodyTypeMap[bt]; if (ms) for (const m of ms) mf.push(`model.ilike.%${m}%`); }
+          const all = [...bf, ...mf, "body_type.eq.Unknown", "body_type.is.null"].join(",");
+          if (all) q = q.or(all);
+        }
+        if (dt && level < 2) {
+          const vals = drivetrainPatterns[dt];
+          if (vals) q = q.or(vals.map(v => `drivetrain.eq.${v}`).join(",") + ",drivetrain.eq.Unknown,drivetrain.is.null");
+        }
+        if (yMin && level < 2) q = q.gte("year", yMin);
+        if (yMax && level < 2) q = q.lte("year", yMax);
 
-      // Exclude already-shown cars
-      if (exclude.length > 0) {
-        // Supabase doesn't have a direct "not in" for arrays easily, use filter
+        // Exclude already-shown cars
         for (const eid of exclude) {
-          query = query.neq("id", eid);
+          q = q.neq("id", eid);
+        }
+
+        return q.order("price", { ascending: true }).limit(9);
+      };
+
+      // Try progressively relaxed queries
+      let cars: any[] = [];
+      for (let level = 0; level <= 2; level++) {
+        const { data: moreCars } = await buildLoadMoreQuery(level);
+        if (moreCars && moreCars.length > 0) {
+          cars = moreCars;
+          break;
         }
       }
-
-      query = query.order("price", { ascending: true }).limit(9);
-      const { data: moreCars } = await query;
-      const cars = moreCars || [];
 
       // Generate reasons for new cars
       let carReasons: { carId: number; reason: string }[] = [];
