@@ -204,7 +204,9 @@ const Index = () => {
         <CtaBanner />
       </Suspense>
       <Footer />
-      <CookieBanner />
+      <Suspense fallback={null}>
+        <CookieBanner />
+      </Suspense>
     </div>;
 };
 export default Index;
