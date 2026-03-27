@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette,
   Settings2, Sparkles, Zap, Shield, Weight, Package,
-  Timer, Droplets, Leaf, ShieldCheck, Globe, BatteryCharging,
+  Timer, Droplets, Leaf, ShieldCheck, BatteryCharging,
 } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
