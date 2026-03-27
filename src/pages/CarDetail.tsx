@@ -177,7 +177,8 @@ const CarDetail = () => {
     );
   }
 
-  const displayTitle = car.model_raw || car.model || '';
+  // Use model (cleaned) instead of model_raw which can contain junk data
+  const displayTitle = car.model || '';
   const warranty = getWarranty(car.make);
 
   // Costs
