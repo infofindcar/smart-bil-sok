@@ -56,10 +56,10 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
             e.stopPropagation();
             onToggleSave?.(car);
           }}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
+          className="absolute top-2 right-2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
         >
           <Heart
-            className={`h-4 w-4 ${isSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
+            className={`h-5 w-5 ${isSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
           />
         </button>
       </div>

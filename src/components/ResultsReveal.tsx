@@ -232,7 +232,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
           >
             <Button
               variant="outline"
-              className="rounded-xl px-6"
+              className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
               onClick={onShowMore}
               disabled={loadingMore}
             >

@@ -94,7 +94,7 @@ export const Header = () => {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-background/95 backdrop-blur-md border-b border-border/50 animate-fade-in">
-          <div className="px-4 py-4 space-y-3">
+          <div className="px-5 py-3 space-y-1">
             <a
               href="#how-it-works"
               onClick={(e) => {
@@ -102,7 +102,7 @@ export const Header = () => {
                 setMobileOpen(false);
                 document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="block text-sm text-primary hover:text-primary/80 transition-colors py-2"
+              className="block text-base font-medium text-primary hover:text-primary/80 active:bg-accent/50 transition-colors py-3 touch-target rounded-lg px-3 -mx-3"
             >
               Så fungerar det
             </a>
@@ -113,19 +113,21 @@ export const Header = () => {
                 setMobileOpen(false);
                 document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="block text-sm text-primary hover:text-primary/80 transition-colors py-2"
+              className="block text-base font-medium text-primary hover:text-primary/80 active:bg-accent/50 transition-colors py-3 touch-target rounded-lg px-3 -mx-3"
             >
               Vanliga frågor
             </a>
             <a
               href="mailto:kontakt@findcar.se"
-              className="block text-sm text-primary hover:text-primary/80 transition-colors py-2"
+              className="block text-base font-medium text-primary hover:text-primary/80 active:bg-accent/50 transition-colors py-3 touch-target rounded-lg px-3 -mx-3"
             >
               Kontakta oss
             </a>
-            <Button size="sm" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl">
-              Hitta din bil
-            </Button>
+            <div className="pt-2 pb-1">
+              <Button size="default" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl text-base h-12">
+                Hitta din bil
+              </Button>
+            </div>
           </div>
         </div>
       )}
