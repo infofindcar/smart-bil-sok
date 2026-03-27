@@ -381,8 +381,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                  <Sparkles className="h-3 w-3 text-secondary" />
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
+                  <Sparkles className="h-3 w-3 text-primary" />
                 </div>
               )}
               <div
