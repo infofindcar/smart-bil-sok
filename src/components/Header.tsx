@@ -23,7 +23,7 @@ export const Header = () => {
   // When not scrolled (transparent header over hero), use white text
   const navLinkBase = 'transition-colors font-medium';
   const navLinkClass = scrolled
-    ? `${navLinkBase} text-sm text-foreground/70 hover:text-foreground`
+    ? `${navLinkBase} text-sm text-primary hover:text-primary/80`
     : `${navLinkBase} text-[15px] text-white/90 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]`;
 
   const hamburgerClass = scrolled
