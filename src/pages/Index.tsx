@@ -200,13 +200,11 @@ const Index = () => {
       const topCars = cars.slice(0, 3);
       const similarCars = cars.slice(3, 9);
       return (
-        <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
           state: {
             cars: savedCars
           }
-        })} onShowMore={() => searchRef.current?.scrollIntoView({
-          behavior: 'smooth'
-        })} getReasonForCar={getReasonForCar} />);
+        })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />);
 
     })()}
 
