@@ -381,8 +381,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                  <Sparkles className="h-3 w-3 text-secondary" />
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
+                  <Sparkles className="h-3 w-3 text-primary" />
                 </div>
               )}
               <div
@@ -403,8 +403,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {isLoading && phase !== 'searching' && (
             <div className="flex justify-start gap-2 animate-fade-in">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                <Sparkles className="h-3 w-3 text-secondary" />
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
+                <Sparkles className="h-3 w-3 text-primary" />
               </div>
               <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-3">
                 <div className="flex gap-1">
@@ -425,14 +425,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-foreground/80 transition-all duration-150 shadow-sm"
+                  className="text-xs px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm"
                 >
                   {s}
                 </button>
               ))}
               <button
                 onClick={() => inputRef.current?.focus()}
-                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-secondary/30 bg-transparent hover:bg-secondary/5 text-secondary/70 hover:text-secondary transition-all duration-150 flex items-center gap-1"
+                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-border bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
               >
                 <PenLine className="h-3 w-3" />
                 {WRITE_OWN[language] || WRITE_OWN.sv}
@@ -446,7 +446,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           <div className="px-4 md:px-5 pb-3 flex justify-end">
             <button
               onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
-              className="text-[11px] px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
+              className="text-[11px] px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
             >
               <Search className="h-3 w-3" />
               {SEARCH_NOW[language] || SEARCH_NOW.sv}
