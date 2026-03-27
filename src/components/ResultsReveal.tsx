@@ -96,7 +96,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
     const allRevealed = revealedCount >= cars.length;
 
     return (
-      <section ref={ref} className="relative px-4 pb-20">
+      <section ref={ref} className="relative px-3 sm:px-4 pb-16 sm:pb-20">
         {/* Decorative background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-primary/[0.04] blur-[120px]" />
