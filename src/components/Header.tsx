@@ -119,7 +119,7 @@ export const Header = () => {
             </a>
             <a
               href="mailto:kontakt@findcar.se"
-              className="block text-sm text-foreground/70 hover:text-foreground transition-colors py-2"
+              className="block text-sm text-primary hover:text-primary/80 transition-colors py-2"
             >
               Kontakta oss
             </a>

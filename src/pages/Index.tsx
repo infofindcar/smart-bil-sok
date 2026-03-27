@@ -191,15 +191,23 @@ const Index = () => {
         <section id="how-it-works">
           <HowItWorks />
         </section>
-        <SectionDivider variant="bg-to-alt" />
+      </Suspense>
+      <SectionDivider variant="bg-to-alt" />
+      <Suspense fallback={null}>
         <WhyFindCar />
-        <SectionDivider variant="alt-to-bg" />
+      </Suspense>
+      <SectionDivider variant="alt-to-bg" />
+      <Suspense fallback={null}>
         <Testimonials />
-        <SectionDivider variant="bg-to-alt" />
+      </Suspense>
+      <SectionDivider variant="bg-to-alt" />
+      <Suspense fallback={null}>
         <section id="faq">
           <FAQ />
         </section>
-        <SectionDivider variant="alt-to-bg" />
+      </Suspense>
+      <SectionDivider variant="alt-to-bg" />
+      <Suspense fallback={null}>
         <CtaBanner />
       </Suspense>
       <Footer />
