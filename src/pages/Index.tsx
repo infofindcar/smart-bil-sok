@@ -93,6 +93,28 @@ const Index = () => {
   const getReasonForCar = (carId: number) => {
     return carReasons.find((r) => r.carId === carId)?.reason;
   };
+  const [loadingMore, setLoadingMore] = useState(false);
+  const handleLoadMore = useCallback(async () => {
+    try {
+      const stored = sessionStorage.getItem('findcar-last-filters');
+      if (!stored) return;
+      const { filters, customerProfile } = JSON.parse(stored);
+      setLoadingMore(true);
+      const excludeIds = cars.map((c) => c.id);
+      const { data, error } = await supabase.functions.invoke('guided-search', {
+        body: { action: 'load_more', filters, excludeIds, customerProfile, language },
+      });
+      if (error) throw error;
+      if (data?.cars?.length > 0) {
+        setCars((prev) => [...prev, ...data.cars]);
+        setCarReasons((prev) => [...prev, ...(data.carReasons || [])]);
+      }
+    } catch (err) {
+      console.error('Load more error:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cars, language]);
   const scrollProgress = useScrollProgress();
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
