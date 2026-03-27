@@ -26,11 +26,12 @@ interface ResultsRevealProps {
   onToggleSave: (car: Car) => void;
   onCompare: () => void;
   onShowMore: () => void;
+  loadingMore?: boolean;
   getReasonForCar: (carId: number) => string | undefined;
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -236,9 +237,10 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               variant="outline"
               className="rounded-xl px-6"
               onClick={onShowMore}
+              disabled={loadingMore}
             >
-              {t('showMore', language)}
-              <ChevronRight className="h-4 w-4 ml-1" />
+              {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
+              {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
             </Button>
           </div>
         </div>

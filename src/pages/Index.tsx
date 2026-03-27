@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
@@ -92,6 +93,28 @@ const Index = () => {
   const getReasonForCar = (carId: number) => {
     return carReasons.find((r) => r.carId === carId)?.reason;
   };
+  const [loadingMore, setLoadingMore] = useState(false);
+  const handleLoadMore = useCallback(async () => {
+    try {
+      const stored = sessionStorage.getItem('findcar-last-filters');
+      if (!stored) return;
+      const { filters, customerProfile } = JSON.parse(stored);
+      setLoadingMore(true);
+      const excludeIds = cars.map((c) => c.id);
+      const { data, error } = await supabase.functions.invoke('guided-search', {
+        body: { action: 'load_more', filters, excludeIds, customerProfile, language },
+      });
+      if (error) throw error;
+      if (data?.cars?.length > 0) {
+        setCars((prev) => [...prev, ...data.cars]);
+        setCarReasons((prev) => [...prev, ...(data.carReasons || [])]);
+      }
+    } catch (err) {
+      console.error('Load more error:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cars, language]);
   const scrollProgress = useScrollProgress();
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
@@ -177,13 +200,11 @@ const Index = () => {
       const topCars = cars.slice(0, 3);
       const similarCars = cars.slice(3, 9);
       return (
-        <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
           state: {
             cars: savedCars
           }
-        })} onShowMore={() => searchRef.current?.scrollIntoView({
-          behavior: 'smooth'
-        })} getReasonForCar={getReasonForCar} />);
+        })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />);
 
     })()}
 

@@ -243,6 +243,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         if (data.filters?.driverAge) {
           sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
         }
+        // Save search filters + customer profile for "load more"
+        if (data.filters || data.customerProfile) {
+          sessionStorage.setItem('findcar-last-filters', JSON.stringify({
+            filters: data.filters,
+            customerProfile: data.customerProfile || '',
+          }));
+        }
         setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
