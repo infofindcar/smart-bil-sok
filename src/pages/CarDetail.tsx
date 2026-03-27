@@ -238,7 +238,7 @@ const CarDetail = () => {
     { icon: Fuel, label: 'Drivmedel', value: car.fuel_type },
     { icon: MapPin, label: 'Plats', value: car.city },
     { icon: Palette, label: 'Färg', value: car.color && car.color !== 'Okänd' ? car.color : null },
-    { icon: Settings2, label: 'Drivlina', value: car.drivetrain || modelData?.drivetrain_default },
+    { icon: Settings2, label: 'Drivlina', value: drivetrainLabel(car.drivetrain || modelData?.drivetrain_default) },
     { icon: Zap, label: 'Hästkrafter', value: car.horsepower ? `${car.horsepower} hk` : modelData?.typical_hp_min ? `${modelData.typical_hp_min}–${modelData.typical_hp_max ?? modelData.typical_hp_min} hk` : null },
     { icon: Settings2, label: 'Växellåda', value: car.transmission },
     { icon: Timer, label: '0–100 km/h', value: formatZeroHundred(modelData?.zero_to_hundred_sec ?? null) },
