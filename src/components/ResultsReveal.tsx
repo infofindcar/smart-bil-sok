@@ -26,6 +26,7 @@ interface ResultsRevealProps {
   onToggleSave: (car: Car) => void;
   onCompare: () => void;
   onShowMore: () => void;
+  loadingMore?: boolean;
   getReasonForCar: (carId: number) => string | undefined;
 }
 
