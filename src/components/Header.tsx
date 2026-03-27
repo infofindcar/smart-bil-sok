@@ -84,10 +84,10 @@ export const Header = () => {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className={`md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors ${hamburgerClass}`}
+          className={`md:hidden w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors touch-target ${hamburgerClass}`}
           aria-label="Meny"
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
 
