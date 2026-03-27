@@ -561,11 +561,19 @@ serve(async (req) => {
         buildQuery(1),
       ]);
 
+      // Sort results by proximity to budget midpoint, then take top 9
+      const budgetMid = (minPrice + maxPrice) / 2;
+      const sortByBudgetProximity = (arr: any[]) => {
+        return arr
+          .sort((a, b) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+          .slice(0, 9);
+      };
+
       if (res0.data && res0.data.length > 0) {
-        cars = res0.data;
+        cars = sortByBudgetProximity(res0.data);
         relaxLevel = 0;
       } else if (res1.data && res1.data.length > 0) {
-        cars = res1.data;
+        cars = sortByBudgetProximity(res1.data);
         relaxLevel = 1;
       } else {
         // Try levels 2 and 3 in parallel
@@ -574,13 +582,15 @@ serve(async (req) => {
           buildQuery(3),
         ]);
         if (res2.data && res2.data.length > 0) {
-          cars = res2.data;
+          cars = sortByBudgetProximity(res2.data);
           relaxLevel = 2;
         } else if (res3.data && res3.data.length > 0) {
-          cars = res3.data;
+          cars = sortByBudgetProximity(res3.data);
           relaxLevel = 3;
         }
       }
+      
+      console.log(`Search: budget=${minPrice}-${maxPrice}, relaxLevel=${relaxLevel}, found=${cars.length}, prices=${cars.map((c:any)=>c.price).join(",")}`);
 
       // ── Hämta berikad data från car_models och car_makes ──
       const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
