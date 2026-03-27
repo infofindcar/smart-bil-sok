@@ -245,7 +245,9 @@ const CarDetail = () => {
                 {car.transmission && <Badge variant="outline">{car.transmission}</Badge>}
               </div>
               {car.regnr && (
-                <p className="text-xs font-mono text-muted-foreground/70 mt-1 uppercase tracking-wider">{car.regnr}</p>
+                <div className="mt-2 inline-flex items-center bg-card border-2 border-foreground/20 rounded-md px-3 py-1">
+                  <span className="text-sm font-bold font-mono tracking-[0.2em] uppercase text-foreground">{car.regnr}</span>
+                </div>
               )}
             </div>
             <p className="text-3xl font-bold text-primary">{formatPrice(car.price)}</p>
