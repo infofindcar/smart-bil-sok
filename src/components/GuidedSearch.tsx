@@ -239,7 +239,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
-      setPhase('searching');
+        // Save driver age if available for insurance calculation
+        if (data.filters?.driverAge) {
+          sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
+        }
+        setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
         setPhase('results');
