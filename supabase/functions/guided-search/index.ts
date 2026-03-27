@@ -265,15 +265,20 @@ serve(async (req) => {
           q = q.neq("id", eid);
         }
 
-        return q.order("price", { ascending: true }).limit(9);
+        return q.order("price", { ascending: true }).limit(18);
       };
+
+      // Sort by proximity to budget midpoint
+      const budgetMid = (minPrice + maxPrice) / 2;
 
       // Try progressively relaxed queries
       let cars: any[] = [];
       for (let level = 0; level <= 2; level++) {
         const { data: moreCars } = await buildLoadMoreQuery(level);
         if (moreCars && moreCars.length > 0) {
-          cars = moreCars;
+          cars = moreCars
+            .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+            .slice(0, 9);
           break;
         }
       }
