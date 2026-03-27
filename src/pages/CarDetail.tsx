@@ -56,6 +56,17 @@ const formatPrice = (price: number | null) => {
   return fmt(price) + ' kr';
 };
 
+const drivetrainLabel = (dt: string | null | undefined): string | null => {
+  if (!dt) return null;
+  const map: Record<string, string> = {
+    AWD: 'Fyrhjulsdrift', awd: 'Fyrhjulsdrift',
+    FWD: 'Framhjulsdrift', fwd: 'Framhjulsdrift',
+    RWD: 'Bakhjulsdrift', rwd: 'Bakhjulsdrift',
+    '"AWD"': 'Fyrhjulsdrift', '"FWD"': 'Framhjulsdrift', '"RWD"': 'Bakhjulsdrift',
+  };
+  return map[dt] || dt;
+};
+
 const fuelPricePerLiter: Record<string, number> = {
   bensin: 17.5,
   diesel: 19.5,
@@ -180,20 +191,45 @@ const CarDetail = () => {
     modelData?.electric_range_km ?? null
   );
 
+  // Age-based insurance adjustment
+  const driverAge = (() => {
+    try {
+      const raw = sessionStorage.getItem('findcar-driver-age');
+      if (raw) return JSON.parse(raw) as number | null;
+    } catch {}
+    return null;
+  })();
+
   const insuranceLow = modelData?.estimated_monthly_insurance_low ?? null;
   const insuranceHigh = modelData?.estimated_monthly_insurance_high ?? null;
-  const insuranceLabel = insuranceLow && insuranceHigh
-    ? `${fmt(insuranceLow)}–${fmt(insuranceHigh)} kr/mån`
-    : insuranceLow
-      ? `~${fmt(insuranceLow)} kr/mån`
+
+  // Adjust insurance based on age: under 25 = +40%, over 50 = -15%
+  const ageMultiplier = driverAge
+    ? driverAge < 25 ? 1.4 : driverAge > 50 ? 0.85 : 1.0
+    : 1.0;
+
+  const adjInsLow = insuranceLow ? Math.round(insuranceLow * ageMultiplier) : null;
+  const adjInsHigh = insuranceHigh ? Math.round(insuranceHigh * ageMultiplier) : null;
+
+  const insuranceLabel = adjInsLow && adjInsHigh
+    ? `${fmt(adjInsLow)}–${fmt(adjInsHigh)} kr/mån`
+    : adjInsLow
+      ? `~${fmt(adjInsLow)} kr/mån`
       : '~800 kr/mån';
+
+  const insuranceExplain = (() => {
+    const base = adjInsLow && adjInsHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning';
+    if (driverAge && driverAge < 25) return `${base}. Justerat uppåt för förare under 25 år`;
+    if (driverAge && driverAge > 50) return `${base}. Justerat nedåt för erfaren förare (50+)`;
+    if (driverAge) return `${base}. Baserat på din ålder (${driverAge} år)`;
+    return `${base} — din ålder, ort och körsträcka påverkar priset`;
+  })();
 
   const annualService = modelData?.estimated_annual_service_sek ?? null;
   const monthlyService = annualService ? Math.round(annualService / 12) : null;
 
-  const totalMonthly = fuelEst.amount + monthlyTax
-    + (insuranceLow && insuranceHigh ? Math.round((insuranceLow + insuranceHigh) / 2) : 800)
-    + (monthlyService ?? 400);
+  const avgInsurance = adjInsLow && adjInsHigh ? Math.round((adjInsLow + adjInsHigh) / 2) : 800;
+  const totalMonthly = fuelEst.amount + monthlyTax + avgInsurance + (monthlyService ?? 400);
 
   /* ── Spec cards ── */
   const specs = [
@@ -202,7 +238,7 @@ const CarDetail = () => {
     { icon: Fuel, label: 'Drivmedel', value: car.fuel_type },
     { icon: MapPin, label: 'Plats', value: car.city },
     { icon: Palette, label: 'Färg', value: car.color && car.color !== 'Okänd' ? car.color : null },
-    { icon: Settings2, label: 'Drivlina', value: car.drivetrain || modelData?.drivetrain_default },
+    { icon: Settings2, label: 'Drivlina', value: drivetrainLabel(car.drivetrain || modelData?.drivetrain_default) },
     { icon: Zap, label: 'Hästkrafter', value: car.horsepower ? `${car.horsepower} hk` : modelData?.typical_hp_min ? `${modelData.typical_hp_min}–${modelData.typical_hp_max ?? modelData.typical_hp_min} hk` : null },
     { icon: Settings2, label: 'Växellåda', value: car.transmission },
     { icon: Timer, label: '0–100 km/h', value: formatZeroHundred(modelData?.zero_to_hundred_sec ?? null) },
@@ -244,12 +280,18 @@ const CarDetail = () => {
               <div className="flex flex-wrap gap-2 mt-2">
                 {car.fuel_type && <Badge variant="secondary">{car.fuel_type}</Badge>}
                 {car.body_type && <Badge variant="outline">{car.body_type}</Badge>}
-                {car.drivetrain && <Badge variant="outline">{car.drivetrain}</Badge>}
+                {car.drivetrain && <Badge variant="outline">{drivetrainLabel(car.drivetrain)}</Badge>}
                 {car.transmission && <Badge variant="outline">{car.transmission}</Badge>}
               </div>
               {car.regnr && (
-                <div className="mt-2 inline-flex items-center bg-card border-2 border-foreground/20 rounded-md px-3 py-1">
-                  <span className="text-sm font-bold font-mono tracking-[0.2em] uppercase text-foreground">{car.regnr}</span>
+                <div className="mt-3 inline-flex items-center rounded overflow-hidden border border-border shadow-sm">
+                  <div className="bg-[#003399] px-1.5 py-1.5 flex flex-col items-center justify-center self-stretch">
+                    <span className="text-[8px] text-yellow-400 font-bold leading-none">★★★</span>
+                    <span className="text-[7px] text-white font-bold leading-none mt-0.5">S</span>
+                  </div>
+                  <div className="bg-white px-3 py-1">
+                    <span className="text-base font-bold font-mono tracking-[0.25em] uppercase text-gray-900">{car.regnr}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -313,7 +355,7 @@ const CarDetail = () => {
               {[
                 { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
                 { label: 'Skatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Baserat på ${co2} g CO₂/km` : 'Baserat på schablonberäkning' },
-                { label: 'Försäkring', value: insuranceLabel, explain: insuranceLow && insuranceHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning — din ålder, ort och körsträcka påverkar priset' },
+                { label: 'Försäkring', value: insuranceLabel, explain: insuranceExplain },
                 { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
                 { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },
               ].map((cost) => (

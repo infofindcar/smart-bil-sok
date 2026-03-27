@@ -239,7 +239,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
-      setPhase('searching');
+        // Save driver age if available for insurance calculation
+        if (data.filters?.driverAge) {
+          sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
+        }
+        setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
         setPhase('results');
@@ -286,6 +290,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     sessionStorage.removeItem(CHAT_STORAGE_KEY);
     sessionStorage.removeItem('findcar-search-state');
     sessionStorage.removeItem('findcar-results-revealed');
+    sessionStorage.removeItem('findcar-driver-age');
   };
 
   const handleLanguageChange = (newLang: string) => {
