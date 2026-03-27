@@ -355,7 +355,7 @@ const CarDetail = () => {
               {[
                 { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
                 { label: 'Skatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Baserat på ${co2} g CO₂/km` : 'Baserat på schablonberäkning' },
-                { label: 'Försäkring', value: insuranceLabel, explain: insuranceLow && insuranceHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning — din ålder, ort och körsträcka påverkar priset' },
+                { label: 'Försäkring', value: insuranceLabel, explain: insuranceExplain },
                 { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
                 { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },
               ].map((cost) => (
