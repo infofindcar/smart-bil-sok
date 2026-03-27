@@ -96,7 +96,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
     const allRevealed = revealedCount >= cars.length;
 
     return (
-      <section ref={ref} className="relative px-4 pb-20">
+      <section ref={ref} className="relative px-3 sm:px-4 pb-16 sm:pb-20">
         {/* Decorative background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-primary/[0.04] blur-[120px]" />
@@ -160,7 +160,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
             </div>
 
             {/* Cards grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {cars.map((car, index) => (
                 <div
                   key={car.id}
@@ -209,7 +209,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               </div>
 
               {/* Grid layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {similarCars.map((car) => (
                   <div key={car.id}>
                     <CarCard
@@ -232,7 +232,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
           >
             <Button
               variant="outline"
-              className="rounded-xl px-6"
+              className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
               onClick={onShowMore}
               disabled={loadingMore}
             >

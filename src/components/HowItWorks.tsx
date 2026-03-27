@@ -54,7 +54,7 @@ export const HowItWorks = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {steps.map((step) => (
             <ScrollReveal key={step.number}>
               <div className="bg-card rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
