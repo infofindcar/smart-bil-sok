@@ -335,7 +335,7 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { messages: _m2, language: _l2 } = body;
+    const { messages: _m2, language: _l2 } = body; // already destructured above
 
     // Language instruction map
     const langInstructions: Record<string, string> = {
