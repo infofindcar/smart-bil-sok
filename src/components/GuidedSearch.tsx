@@ -166,9 +166,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   useEffect(() => {
     const container = chatContainerRef.current;
     if (container) {
-      // Use rAF to ensure DOM is updated, then smooth-scroll via CSS property
       requestAnimationFrame(() => {
-        container.style.scrollBehavior = 'smooth';
         container.scrollTop = container.scrollHeight;
       });
     }
