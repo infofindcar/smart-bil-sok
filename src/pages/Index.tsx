@@ -154,7 +154,7 @@ const Index = () => {
               variant="gradient"
               className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg active:scale-95 transition-transform"
             >
-              Matcha mig med en bil
+              Hitta din bil
             </Button>
             <p className="text-white/50 text-xs">
               ✔ Tar 30 sek · Gratis · Inga bindningar
