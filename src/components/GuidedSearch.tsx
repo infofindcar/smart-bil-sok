@@ -386,7 +386,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
                     : 'bg-muted/50 text-foreground rounded-bl-sm'
