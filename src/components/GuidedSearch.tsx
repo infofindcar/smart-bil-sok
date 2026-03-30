@@ -332,7 +332,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-secondary/[0.15] bg-card backdrop-blur-xl shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)]">
+      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-secondary/[0.15] bg-card backdrop-blur-xl shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)] md:shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)]">
         {/* Header */}
         <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
           <div className="flex items-center gap-3">
@@ -373,7 +373,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="px-4 md:px-5 py-4 space-y-3 max-h-[340px] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[180px]"
+          className="px-4 md:px-5 py-4 space-y-3 max-h-[55vh] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[180px]"
         >
           {messages.map((msg) => (
             <div
@@ -386,7 +386,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
                     : 'bg-muted/50 text-foreground rounded-bl-sm'
@@ -420,21 +420,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Quick-reply suggestions */}
         {showSuggestions && (
           <div className="px-4 md:px-5 pb-3">
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-1.5">
               {lastAssistantMsg!.suggestions!.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm"
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm text-left"
                 >
                   {s}
                 </button>
               ))}
               <button
                 onClick={() => inputRef.current?.focus()}
-                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-border bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
+                className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-dashed border-border bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
               >
-                <PenLine className="h-3 w-3" />
+                <PenLine className="h-4 w-4 md:h-3 md:w-3" />
                 {WRITE_OWN[language] || WRITE_OWN.sv}
               </button>
             </div>
@@ -495,15 +495,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
                 disabled={isLoading}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '40px' }}
+                className="w-full resize-none bg-transparent px-3.5 py-3 md:py-2.5 text-base md:text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '44px' }}
               />
             </div>
             <Button
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-10 w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              className="h-11 w-11 md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>

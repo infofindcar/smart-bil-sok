@@ -34,7 +34,7 @@ const benefits = [
 
 export const WhyFindCar = () => {
   return (
-    <section className="py-16 md:py-24 px-4 bg-section-alt">
+    <section className="py-12 md:py-24 px-4 bg-section-alt">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-12 md:mb-16">
@@ -44,7 +44,7 @@ export const WhyFindCar = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-2 gap-5 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {benefits.map((b, i) => (
             <ScrollReveal key={b.title} delay={i * 100}>
               <div className="bg-card rounded-2xl p-6 md:p-8 border border-border hover-lift h-full flex flex-col">

@@ -43,7 +43,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
       onClick={() => navigate(`/car/${car.id}`, { state: { car } })}
     >
       {/* Image */}
-      <div className="relative w-full h-40 sm:h-48 flex-shrink-0 overflow-hidden">
+      <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden">
         {car.image_thumb_url ? (
           <img
             src={car.image_thumb_url}
@@ -74,7 +74,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
             e.stopPropagation();
             onToggleSave?.(car);
           }}
-          className="absolute top-2 right-2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
+          className="absolute top-2 right-2 w-12 h-12 md:w-10 md:h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
         >
           <Heart
             className={`h-5 w-5 transition-colors ${isSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground hover:text-destructive/70'}`}

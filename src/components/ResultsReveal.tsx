@@ -208,8 +208,8 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                 </div>
               </div>
 
-              {/* Grid layout */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              {/* Mobile: horizontal scroll, Desktop: grid */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {similarCars.map((car) => (
                   <div key={car.id}>
                     <CarCard
@@ -220,6 +220,20 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                     />
                   </div>
                 ))}
+              </div>
+              <div className="md:hidden -mx-3 px-3">
+                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 similar-cars-scroll">
+                  {similarCars.map((car) => (
+                    <div key={car.id} className="snap-start shrink-0 w-[80vw] max-w-[320px]">
+                      <CarCard
+                        car={car}
+                        isSaved={savedCars.some((c) => c.id === car.id)}
+                        onToggleSave={onToggleSave}
+                        matchReason={getReasonForCar(car.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
