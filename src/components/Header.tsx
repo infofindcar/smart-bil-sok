@@ -83,12 +83,12 @@ export const Header = () => {
           >
             Vanliga frågor
           </a>
-          <a
-            href="mailto:kontakt@findcar.se"
+          <button
+            onClick={() => setContactOpen(true)}
             className={navLinkClass}
           >
             Kontakta oss
-          </a>
+          </button>
           <ThemeToggle className={scrolled ? '' : 'text-white hover:bg-white/10'} />
           <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
@@ -134,12 +134,15 @@ export const Header = () => {
           >
             Vanliga frågor
           </a>
-          <a
-            href="mailto:kontakt@findcar.se"
-            className="text-[15px] font-medium text-foreground/80 hover:text-foreground py-3 px-2 rounded-lg hover:bg-accent/40 transition-colors"
+          <button
+            onClick={() => {
+              setMobileOpen(false);
+              setContactOpen(true);
+            }}
+            className="text-[15px] font-medium text-foreground/80 hover:text-foreground py-3 px-2 rounded-lg hover:bg-accent/40 transition-colors text-left"
           >
             Kontakta oss
-          </a>
+          </button>
           <div className="pt-3">
             <Button size="sm" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl text-sm h-11">
               Hitta din bil
@@ -147,6 +150,46 @@ export const Header = () => {
           </div>
         </nav>
       </div>
+
+      {/* Contact Dialog */}
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Kontakta oss</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Har du frågor eller funderingar? Hör gärna av dig!
+            </p>
+            <a
+              href="mailto:kontakt@findcar.se"
+              className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent/50 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">E-post</p>
+                <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">kontakt@findcar.se</p>
+              </div>
+            </a>
+            <a
+              href="https://www.linkedin.com/company/findcar-se"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent/50 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Linkedin className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">LinkedIn</p>
+                <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">FindCar på LinkedIn</p>
+              </div>
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };
