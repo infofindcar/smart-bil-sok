@@ -276,7 +276,9 @@ const Index = () => {
         <section id="faq">
           <FAQ />
         </section>
-        <SectionDivider variant="alt-to-bg" />
+        <div className="hidden md:block">
+          <SectionDivider variant="alt-to-bg" />
+        </div>
         <CtaBanner />
       </Suspense>
       <Footer />

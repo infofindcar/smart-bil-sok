@@ -47,7 +47,7 @@ export const WhyFindCar = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {benefits.map((b, i) => (
             <ScrollReveal key={b.title} delay={i * 100}>
-              <div className="bg-card rounded-2xl p-6 md:p-8 border border-border hover-lift h-full flex flex-col">
+              <div className="bg-card rounded-2xl p-5 md:p-8 border border-border hover-lift h-full flex flex-col">
                 {/* Icon */}
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
                   <b.icon className="h-6 w-6 text-primary" />
