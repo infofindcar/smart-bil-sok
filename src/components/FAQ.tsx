@@ -24,18 +24,6 @@ const faqs = [
     a: 'Nej, FindCar är kostnadsfritt för dig som bilköpare. Du betalar inget för att få matchning eller rekommendationer.',
   },
   {
-    q: 'Var kommer bilarna ifrån?',
-    a: 'Bilarna kommer från professionella bilhandlare som FindCar samarbetar med. Vi visar endast bilar som uppfyller dina behov och krav – inte hela marknaden.',
-  },
-  {
-    q: 'Vad händer när jag hittat en bil som passar?',
-    a: 'När du hittar en bil som känns rätt kan du enkelt gå vidare och ta kontakt med bilhandlaren. Eftersom du redan matchats utifrån dina behov är du ofta mer köpklar, vilket gör köpprocessen smidigare.',
-  },
-  {
-    q: 'Måste jag köpa bilen via FindCar?',
-    a: 'Nej. FindCar hjälper dig att hitta rätt bil, men beslutet är alltid ditt. Du väljer själv om, när och hur du vill gå vidare.',
-  },
-  {
     q: 'Är detta bara för erfarna bilköpare?',
     a: 'Nej. FindCar är särskilt hjälpsamt om du tycker att bilköp känns krångligt eller tidskrävande. Vi är byggda för både förstagångsköpare och mer erfarna bilägare.',
   },
