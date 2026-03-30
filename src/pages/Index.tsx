@@ -206,7 +206,7 @@ const Index = () => {
       {/* Seamless transition handled by the gradient overlay inside the hero */}
 
       {/* Search */}
-      <section ref={searchRef} data-search-section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section ref={searchRef} data-search-section className="relative py-8 md:py-24 px-3 md:px-4 overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />

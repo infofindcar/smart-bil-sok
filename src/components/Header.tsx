@@ -93,41 +93,43 @@ export const Header = () => {
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — fullscreen overlay */}
       {mobileOpen && (
-        <div className="md:hidden bg-background/95 backdrop-blur-md border-b border-border/50 animate-fade-in">
-          <div className="px-5 py-3 space-y-1">
-            <a
-              href="#how-it-works"
-              onClick={(e) => {
-                e.preventDefault();
-                setMobileOpen(false);
-                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="block text-base font-medium text-primary hover:text-primary/80 active:bg-accent/50 transition-colors py-3 touch-target rounded-lg px-3 -mx-3"
-            >
-              Så fungerar det
-            </a>
-            <a
-              href="#faq"
-              onClick={(e) => {
-                e.preventDefault();
-                setMobileOpen(false);
-                document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="block text-base font-medium text-primary hover:text-primary/80 active:bg-accent/50 transition-colors py-3 touch-target rounded-lg px-3 -mx-3"
-            >
-              Vanliga frågor
-            </a>
-            <a
-              href="mailto:kontakt@findcar.se"
-              className="block text-base font-medium text-primary hover:text-primary/80 active:bg-accent/50 transition-colors py-3 touch-target rounded-lg px-3 -mx-3"
-            >
-              Kontakta oss
-            </a>
-            <div className="pt-2 pb-1">
-              <Button size="default" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl text-base h-12">
-                Hitta din bil
+        <div className="md:hidden fixed inset-0 top-14 z-50 bg-background/98 backdrop-blur-xl animate-fade-in">
+          <div className="flex flex-col px-6 pt-8 pb-6 h-full">
+            <div className="space-y-1 flex-1">
+              <a
+                href="#how-it-works"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileOpen(false);
+                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex items-center text-lg font-medium text-foreground hover:text-primary active:bg-accent/50 transition-colors rounded-xl px-4 h-14"
+              >
+                Så fungerar det
+              </a>
+              <a
+                href="#faq"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileOpen(false);
+                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex items-center text-lg font-medium text-foreground hover:text-primary active:bg-accent/50 transition-colors rounded-xl px-4 h-14"
+              >
+                Vanliga frågor
+              </a>
+              <a
+                href="mailto:kontakt@findcar.se"
+                className="flex items-center text-lg font-medium text-foreground hover:text-primary active:bg-accent/50 transition-colors rounded-xl px-4 h-14"
+              >
+                Kontakta oss
+              </a>
+            </div>
+            <div className="pt-4">
+              <Button size="default" variant="gradient" onClick={scrollToSearch} className="w-full rounded-2xl text-base h-14">
+                Matcha mig med en bil
               </Button>
             </div>
           </div>
