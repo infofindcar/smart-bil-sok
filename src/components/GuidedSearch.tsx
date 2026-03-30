@@ -406,11 +406,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
                 <Sparkles className="h-3 w-3 text-primary" />
               </div>
-              <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-5 py-3.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
                 </div>
               </div>
             </div>
