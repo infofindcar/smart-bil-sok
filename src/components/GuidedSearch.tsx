@@ -156,6 +156,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputAreaRef = useRef<HTMLDivElement>(null);
   const isAutoFollowRef = useRef(true);
   const isTypingRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
@@ -250,6 +251,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [stopScrollLoop]);
 
+  // Keep input area visible on the page when suggestions/buttons appear
+  useEffect(() => {
+    if (!isLoading && !isTypingRef.current) {
+      setTimeout(() => {
+        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 80);
+    }
+  }, [isLoading, messages.length]);
+
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -283,6 +293,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       } else {
         isTypingRef.current = false;
         queueScrollToBottom(true);
+        // Scroll input area into view on the page so user doesn't have to scroll manually
+        setTimeout(() => {
+          inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 120);
         onDone?.();
       }
     };
@@ -575,7 +589,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div className="px-4 md:px-5 pb-4 pt-3 md:pt-2 border-t border-border/50">
+        <div ref={inputAreaRef} className="px-4 md:px-5 pb-4 pt-3 md:pt-2 border-t border-border/50">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
