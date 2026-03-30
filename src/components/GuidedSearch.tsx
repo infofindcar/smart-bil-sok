@@ -476,6 +476,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             <div
               key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
+              style={{ transition: 'all 0.2s ease-out' }}
+            >
             >
               {msg.role === 'assistant' && (
                 <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
