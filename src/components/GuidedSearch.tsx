@@ -157,100 +157,160 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isAutoFollowRef = useRef(true);
+  const isTypingRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const targetScrollTopRef = useRef(0);
 
-  // Persist chat state
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
 
-  // --- Smooth chase scroll loop ---
-  // Runs continuously while typing; interpolates toward bottom
-  const startScrollChase = useCallback(() => {
-    if (scrollRafRef.current) return; // already running
-    const chase = () => {
-      const container = chatContainerRef.current;
-      if (container && isAutoFollowRef.current) {
-        const target = container.scrollHeight - container.clientHeight;
-        const diff = target - container.scrollTop;
-        if (diff > 1) {
-          // Lerp factor: fast for big gaps, eased for small
-          const step = diff > 100 ? diff * 0.4 : diff * 0.25;
-          container.scrollTop += Math.max(step, 1);
-        }
-      }
-      scrollRafRef.current = requestAnimationFrame(chase);
-    };
-    scrollRafRef.current = requestAnimationFrame(chase);
-  }, []);
-
-  const stopScrollChase = useCallback(() => {
-    if (scrollRafRef.current) {
+  const stopScrollLoop = useCallback(() => {
+    if (scrollRafRef.current !== null) {
       cancelAnimationFrame(scrollRafRef.current);
       scrollRafRef.current = null;
     }
   }, []);
 
-  // Detect manual scroll-up to pause auto-follow
+  const startScrollLoop = useCallback(() => {
+    if (scrollRafRef.current !== null) return;
+
+    const step = () => {
+      const container = chatContainerRef.current;
+      if (!container) {
+        scrollRafRef.current = null;
+        return;
+      }
+
+      const target = targetScrollTopRef.current;
+      const diff = target - container.scrollTop;
+
+      if (Math.abs(diff) <= 1) {
+        container.scrollTop = target;
+        scrollRafRef.current = null;
+        return;
+      }
+
+      if (Math.abs(diff) <= 12) {
+        container.scrollTop = target;
+      } else if (Math.abs(diff) > 140) {
+        container.scrollTop += diff * 0.52;
+      } else {
+        container.scrollTop += diff * 0.34;
+      }
+
+      scrollRafRef.current = requestAnimationFrame(step);
+    };
+
+    scrollRafRef.current = requestAnimationFrame(step);
+  }, []);
+
+  const queueScrollToBottom = useCallback((force = false) => {
+    const container = chatContainerRef.current;
+    if (!container || (!force && !isAutoFollowRef.current)) return;
+
+    requestAnimationFrame(() => {
+      const liveContainer = chatContainerRef.current;
+      if (!liveContainer || (!force && !isAutoFollowRef.current)) return;
+
+      targetScrollTopRef.current = Math.max(0, liveContainer.scrollHeight - liveContainer.clientHeight);
+      startScrollLoop();
+    });
+  }, [startScrollLoop]);
+
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
+
     const onScroll = () => {
-      const distFromBottom = container.scrollHeight - container.clientHeight - container.scrollTop;
-      isAutoFollowRef.current = distFromBottom < 60;
+      const distanceFromBottom = container.scrollHeight - container.clientHeight - container.scrollTop;
+      isAutoFollowRef.current = distanceFromBottom < 72;
     };
+
     container.addEventListener('scroll', onScroll, { passive: true });
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Snap-scroll on new messages or loading change (not during typing)
   useEffect(() => {
-    const container = chatContainerRef.current;
-    if (container) {
-      isAutoFollowRef.current = true;
-      requestAnimationFrame(() => {
-        container.scrollTop = container.scrollHeight;
-      });
-    }
-  }, [messages.length, isLoading]);
+    queueScrollToBottom(true);
+  }, [messages.length, isLoading, queueScrollToBottom]);
 
-  // Cleanup scroll chase on unmount
-  useEffect(() => () => stopScrollChase(), [stopScrollChase]);
+  useEffect(() => {
+    queueScrollToBottom(false);
+  }, [visibleText, queueScrollToBottom]);
 
-  const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
-    let i = 0;
-    // Start the scroll chase loop for smooth following
-    isAutoFollowRef.current = true;
-    startScrollChase();
-
-    const tick = () => {
-      // Dynamic chunk: 2-4 chars per tick, pause at punctuation
-      const prevChar = i > 0 ? fullText[i - 1] : '';
-      const isPause = '.!?'.includes(prevChar);
-      const chunk = isPause ? 1 : (2 + Math.floor(Math.random() * 2)); // 2-3 normally
-      i = Math.min(i + chunk, fullText.length);
-      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
-
-      if (i < fullText.length) {
-        const delay = isPause ? 80 + Math.random() * 60 : 18 + Math.random() * 12;
-        typingTimeoutRef.current = setTimeout(tick, delay);
-      } else {
-        stopScrollChase();
-        // Final snap to bottom
-        const container = chatContainerRef.current;
-        if (container) {
-          requestAnimationFrame(() => {
-            container.scrollTop = container.scrollHeight;
-          });
-        }
-        onDone?.();
+  useEffect(() => {
+    return () => {
+      stopScrollLoop();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
     };
-    setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
-    typingTimeoutRef.current = setTimeout(tick, 250);
+  }, [stopScrollLoop]);
+
+  const buildTypingChunks = (text: string) => {
+    const tokens = text.match(/\S+\s*/g) ?? [text];
+    const chunks: string[] = [];
+    let buffer = '';
+
+    tokens.forEach((token) => {
+      buffer += token;
+      const endsSentence = /[.!?…]\s*$/.test(token);
+      const endsClause = /[,;:]\s*$/.test(token);
+      const reachedComfortSize = buffer.length >= 18;
+
+      if (endsSentence || endsClause || reachedComfortSize) {
+        chunks.push(buffer);
+        buffer = '';
+      }
+    });
+
+    if (buffer) chunks.push(buffer);
+
+    return chunks;
   };
 
+  const getChunkDelay = (chunk: string, remainingChars: number) => {
+    if (/[.!?…]\s*$/.test(chunk)) return 115;
+    if (/[,;:]\s*$/.test(chunk)) return 75;
+    if (remainingChars > 180) return 26;
+    if (remainingChars > 90) return 32;
+    return 40;
+  };
+
+  const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    const chunks = buildTypingChunks(fullText);
+    let index = 0;
+    let rendered = '';
+
+    isTypingRef.current = true;
+    isAutoFollowRef.current = true;
+    setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
+
+    const tick = () => {
+      rendered += chunks[index] ?? '';
+      index += 1;
+
+      setVisibleText((prev) => ({ ...prev, [msgId]: rendered }));
+
+      if (index < chunks.length) {
+        const nextDelay = getChunkDelay(chunks[index - 1] ?? '', fullText.length - rendered.length);
+        typingTimeoutRef.current = setTimeout(tick, nextDelay);
+        return;
+      }
+
+      isTypingRef.current = false;
+      queueScrollToBottom(true);
+      onDone?.();
+    };
+
+    typingTimeoutRef.current = setTimeout(tick, 180);
+  };
   const addAssistantMessage = (
     content: string,
     suggestions?: string[],
