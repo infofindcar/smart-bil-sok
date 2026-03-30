@@ -27,7 +27,7 @@ export const Header = () => {
     ? `${navLinkBase} text-sm text-primary hover:text-primary/80`
     : `${navLinkBase} text-[15px] text-white/90 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]`;
 
-  const hamburgerClass = scrolled
+  const hamburgerClass = (scrolled || mobileOpen)
     ? 'text-foreground'
     : 'text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]';
 
