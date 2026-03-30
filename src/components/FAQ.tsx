@@ -58,7 +58,7 @@ export const FAQ = () => {
                 value={`faq-${i}`}
                 className="bg-card rounded-xl border border-border px-4"
               >
-                <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline">
+                <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline min-h-[48px] py-4">
                   {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-sm text-muted-foreground leading-relaxed">

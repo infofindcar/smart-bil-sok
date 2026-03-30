@@ -18,18 +18,37 @@ const testimonials = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-16 md:py-24 px-4 bg-background">
+    <section className="py-12 md:py-24 px-4 bg-background">
       <div className="max-w-4xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">Vad våra användare säger</h2>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-4xl font-bold">Vad våra användare säger</h2>
             <p className="text-sm text-muted-foreground mt-2">
               Tidig feedback från våra beta-användare
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* MOBILE: horizontal snap-scroll */}
+        <div className="md:hidden -mx-4 px-4">
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 similar-cars-scroll">
+            {testimonials.map((t, idx) => (
+              <div key={idx} className="snap-start shrink-0 w-[85vw] max-w-[340px]">
+                <div className="bg-testimonial-bg rounded-2xl p-6 border border-border h-full">
+                  <div className="flex gap-0.5 mb-3">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed italic">{t.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* DESKTOP: grid */}
+        <div className="hidden md:grid md:grid-cols-3 gap-6">
           {testimonials.map((t, idx) => (
             <ScrollReveal key={idx}>
               <div className="bg-testimonial-bg rounded-2xl p-6 border border-border">

@@ -34,7 +34,7 @@ const benefits = [
 
 export const WhyFindCar = () => {
   return (
-    <section className="py-16 md:py-24 px-4 bg-section-alt">
+    <section className="py-12 md:py-24 px-4 bg-section-alt">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-12 md:mb-16">
