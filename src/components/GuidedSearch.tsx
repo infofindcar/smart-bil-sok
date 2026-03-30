@@ -251,29 +251,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [stopScrollLoop]);
 
-  // Keep input area visible on the page when suggestions/buttons appear or typing finishes
-  useEffect(() => {
-    if (!isLoading && !isTypingRef.current) {
-      // Short delay to let DOM update with suggestions/buttons before scrolling
-      const timer = setTimeout(() => {
-        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, messages.length]);
-
-  // Also scroll when visibleText finishes (typing done for a message)
-  useEffect(() => {
-    const lastMsg = messages[messages.length - 1];
-    if (!lastMsg || lastMsg.role === 'user') return;
-    const displayed = visibleText[lastMsg.id];
-    if (displayed !== undefined && displayed.length === lastMsg.content.length) {
-      // Typing just completed — ensure input stays in view
-      setTimeout(() => {
-        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }, 150);
-    }
-  }, [visibleText, messages]);
+  // Avoid page-level auto-scroll on load/mobile; keep scrolling contained to the chat panel.
 
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     if (typingTimeoutRef.current) {
