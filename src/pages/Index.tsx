@@ -6,7 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { StickyMobileCTA } from '@/components/StickyMobileCTA';
+
 import { motion } from 'framer-motion';
 
 // Lazy-load below-fold sections
@@ -279,7 +279,7 @@ const Index = () => {
         <CtaBanner />
       </Suspense>
       <Footer />
-      <StickyMobileCTA />
+      
       <Suspense fallback={null}>
         <CookieBanner />
       </Suspense>
