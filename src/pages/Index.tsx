@@ -197,19 +197,19 @@ const Index = () => {
         </button>
 
         {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-64 md:h-80 z-10 pointer-events-none" style={{
+        <div className="absolute bottom-0 left-0 right-0 h-80 md:h-80 z-10 pointer-events-none" style={{
         background: `linear-gradient(to bottom, 
-          transparent 0%, 
-          hsl(var(--background) / 0.05) 15%,
-          hsl(var(--background) / 0.15) 30%, 
-          hsl(var(--background) / 0.35) 45%,
-          hsl(var(--background) / 0.58) 58%,
-          hsl(var(--background) / 0.78) 70%,
-          hsl(var(--background) / 0.92) 82%,
-          hsl(var(--background) / 0.98) 92%,
-          hsl(var(--background)) 100%)`,
-        transition: 'opacity 0.4s ease-out',
-        opacity: Math.max(0.5, Math.min(scrollProgress * 1.8, 1))
+          transparent 0%,
+          hsl(var(--background) / 0.03) 10%,
+          hsl(var(--background) / 0.08) 20%,
+          hsl(var(--background) / 0.18) 30%, 
+          hsl(var(--background) / 0.32) 40%,
+          hsl(var(--background) / 0.50) 50%,
+          hsl(var(--background) / 0.68) 60%,
+          hsl(var(--background) / 0.82) 70%,
+          hsl(var(--background) / 0.92) 80%,
+          hsl(var(--background) / 0.98) 90%,
+          hsl(var(--background)) 100%)`
       }} />
       </section>
 
