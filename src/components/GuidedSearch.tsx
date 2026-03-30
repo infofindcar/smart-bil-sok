@@ -249,67 +249,44 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [stopScrollLoop]);
 
-  const buildTypingChunks = (text: string) => {
-    const tokens = text.match(/\S+\s*/g) ?? [text];
-    const chunks: string[] = [];
-    let buffer = '';
-
-    tokens.forEach((token) => {
-      buffer += token;
-      const endsSentence = /[.!?…]\s*$/.test(token);
-      const endsClause = /[,;:]\s*$/.test(token);
-      const reachedComfortSize = buffer.length >= 18;
-
-      if (endsSentence || endsClause || reachedComfortSize) {
-        chunks.push(buffer);
-        buffer = '';
-      }
-    });
-
-    if (buffer) chunks.push(buffer);
-
-    return chunks;
-  };
-
-  const getChunkDelay = (chunk: string, remainingChars: number) => {
-    if (/[.!?…]\s*$/.test(chunk)) return 115;
-    if (/[,;:]\s*$/.test(chunk)) return 75;
-    if (remainingChars > 180) return 26;
-    if (remainingChars > 90) return 32;
-    return 40;
-  };
-
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    const chunks = buildTypingChunks(fullText);
-    let index = 0;
-    let rendered = '';
-
+    let i = 0;
     isTypingRef.current = true;
     isAutoFollowRef.current = true;
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
-    const tick = () => {
-      rendered += chunks[index] ?? '';
-      index += 1;
-
-      setVisibleText((prev) => ({ ...prev, [msgId]: rendered }));
-
-      if (index < chunks.length) {
-        const nextDelay = getChunkDelay(chunks[index - 1] ?? '', fullText.length - rendered.length);
-        typingTimeoutRef.current = setTimeout(tick, nextDelay);
-        return;
-      }
-
-      isTypingRef.current = false;
-      queueScrollToBottom(true);
-      onDone?.();
+    const getCharDelay = (char: string, nextChar: string) => {
+      // Longer pause after sentence-ending punctuation
+      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 220 + Math.random() * 80;
+      // Medium pause after clause punctuation
+      if (',;:'.includes(char) && nextChar === ' ') return 100 + Math.random() * 40;
+      // Slight pause after emoji sequences
+      if (char === ' ' && i > 2) return 30 + Math.random() * 15;
+      // Normal typing speed with slight human variance
+      return 22 + Math.random() * 18;
     };
 
-    typingTimeoutRef.current = setTimeout(tick, 180);
+    const tick = () => {
+      i += 1;
+      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+
+      if (i < fullText.length) {
+        const currentChar = fullText[i - 1] || '';
+        const nextChar = fullText[i] || '';
+        const delay = getCharDelay(currentChar, nextChar);
+        typingTimeoutRef.current = setTimeout(tick, delay);
+      } else {
+        isTypingRef.current = false;
+        queueScrollToBottom(true);
+        onDone?.();
+      }
+    };
+
+    typingTimeoutRef.current = setTimeout(tick, 200);
   };
   const addAssistantMessage = (
     content: string,
