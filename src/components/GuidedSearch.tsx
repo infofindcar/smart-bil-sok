@@ -286,10 +286,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       } else {
         isTypingRef.current = false;
         queueScrollToBottom(true);
-        // Scroll input area into view on the page so user doesn't have to scroll manually
-        setTimeout(() => {
-          inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 120);
         onDone?.();
       }
     };
