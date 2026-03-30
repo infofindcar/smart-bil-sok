@@ -162,7 +162,7 @@ export const Header = () => {
               Har du frågor eller funderingar? Hör gärna av dig!
             </p>
             <a
-              href="mailto:kontakt@findcar.se"
+              href="mailto:info@findcar.se"
               className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent/50 transition-colors group"
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -170,7 +170,7 @@ export const Header = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">E-post</p>
-                <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">kontakt@findcar.se</p>
+                <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">info@findcar.se</p>
               </div>
             </a>
             <a
