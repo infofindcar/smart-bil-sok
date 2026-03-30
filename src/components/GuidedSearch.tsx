@@ -167,10 +167,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     const container = chatContainerRef.current;
     if (container) {
       requestAnimationFrame(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth',
-        });
+        container.scrollTop = container.scrollHeight;
       });
     }
   }, [messages, isLoading, visibleText]);
