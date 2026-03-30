@@ -503,7 +503,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-10 w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              className="h-11 w-11 md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>
