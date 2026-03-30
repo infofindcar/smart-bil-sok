@@ -34,9 +34,11 @@ export const Header = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
-        scrolled
-          ? 'bg-background/80 backdrop-blur-md border-b border-border/50'
-          : 'bg-transparent border-b border-transparent'
+        mobileOpen
+          ? 'bg-background border-b border-border/50'
+          : scrolled
+            ? 'bg-background/80 backdrop-blur-md border-b border-border/50'
+            : 'bg-transparent border-b border-transparent'
       }`}
     >
       <div className="w-full px-4 sm:px-6 lg:px-10 h-14 md:h-16 flex items-center justify-between">
