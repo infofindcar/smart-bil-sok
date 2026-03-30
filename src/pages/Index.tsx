@@ -126,7 +126,7 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section
-      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px bg-[#1a2332]"
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-start overflow-visible bg-[#1a2332]"
       style={{
         backgroundImage: 'url(/images/hero_findcar.jpg)',
         backgroundSize: 'cover',
@@ -195,26 +195,25 @@ const Index = () => {
       }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
         </button>
+      </section>
 
-        {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-80 md:h-80 z-10 pointer-events-none" style={{
-        background: `linear-gradient(to bottom, 
+      {/* Seamless fade zone between hero and content — overlaps both sections */}
+      <div className="relative z-20 -mt-40 md:-mt-48 h-56 md:h-64 pointer-events-none" aria-hidden="true" style={{
+        background: `linear-gradient(to bottom,
           transparent 0%,
-          hsl(var(--background) / 0.03) 10%,
-          hsl(var(--background) / 0.08) 20%,
-          hsl(var(--background) / 0.18) 30%, 
-          hsl(var(--background) / 0.32) 40%,
-          hsl(var(--background) / 0.50) 50%,
-          hsl(var(--background) / 0.68) 60%,
-          hsl(var(--background) / 0.82) 70%,
+          hsl(var(--background) / 0.06) 12%,
+          hsl(var(--background) / 0.16) 24%,
+          hsl(var(--background) / 0.30) 36%,
+          hsl(var(--background) / 0.48) 48%,
+          hsl(var(--background) / 0.65) 58%,
+          hsl(var(--background) / 0.80) 68%,
           hsl(var(--background) / 0.92) 80%,
           hsl(var(--background) / 0.98) 90%,
           hsl(var(--background)) 100%)`
       }} />
-      </section>
 
       {/* Search */}
-      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-8 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-4 pb-8 md:py-24 px-3 md:px-4 overflow-hidden -mt-12 md:-mt-16">
 
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
