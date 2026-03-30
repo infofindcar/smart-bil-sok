@@ -143,12 +143,6 @@ const Index = () => {
             transition={{ duration: 0.8, ease: 'easeOut' }}
             className="space-y-5 w-full max-w-sm"
           >
-            <img 
-              src={findcarLogoHero} 
-              alt="FindCar" 
-              className="h-16 w-auto mx-auto mb-4" 
-              style={{ filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5))' }} 
-            />
             <h1 className="text-3xl font-bold text-white leading-tight">
               Hitta rätt bil<br />– utan stress
             </h1>
