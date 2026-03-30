@@ -7,8 +7,16 @@ export const StickyMobileCTA = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show after scrolling past 80vh (hero section)
-      setVisible(window.scrollY > window.innerHeight * 0.7);
+      const searchSection = document.querySelector('[data-search-section]');
+      if (!searchSection) {
+        setVisible(window.scrollY > window.innerHeight * 0.7);
+        return;
+      }
+      const rect = searchSection.getBoundingClientRect();
+      const pastHero = window.scrollY > window.innerHeight * 0.7;
+      // Hide when search section is in view (user is chatting with Clutch)
+      const searchInView = rect.top < window.innerHeight * 0.8 && rect.bottom > window.innerHeight * 0.2;
+      setVisible(pastHero && !searchInView);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
