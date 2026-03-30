@@ -488,8 +488,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                     ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
                     : 'bg-muted/50 text-foreground rounded-bl-sm'
                 }`}
-                style={isTypingMsg(msg) ? { display: 'grid', gridTemplateRows: '1fr' } : undefined}
-              >
               >
                 {getDisplayText(msg)}
                 {isTypingMsg(msg) && (
