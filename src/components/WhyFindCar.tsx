@@ -37,7 +37,7 @@ export const WhyFindCar = () => {
     <section className="py-8 md:py-24 px-4 bg-section-alt">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-12 md:mb-16">
+          <div className="text-center mb-8 md:mb-16">
             <h2 className="text-3xl md:text-4xl font-bold">
               Varför <span className="text-gradient">FindCar</span>?
             </h2>
