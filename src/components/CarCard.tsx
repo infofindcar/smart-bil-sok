@@ -43,7 +43,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
       onClick={() => navigate(`/car/${car.id}`, { state: { car } })}
     >
       {/* Image */}
-      <div className="relative w-full h-40 sm:h-48 flex-shrink-0 overflow-hidden">
+      <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden">
         {car.image_thumb_url ? (
           <img
             src={car.image_thumb_url}
