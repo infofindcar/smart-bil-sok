@@ -43,7 +43,7 @@ const faqs = [
 
 export const FAQ = () => {
   return (
-    <section className="py-12 md:py-24 px-4 bg-section-alt">
+    <section className="py-8 md:py-24 px-4 bg-section-alt">
       <div className="max-w-2xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-10">

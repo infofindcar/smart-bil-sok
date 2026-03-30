@@ -9,7 +9,7 @@ export const CtaBanner = () => {
   };
 
   return (
-    <section className="py-12 md:py-24 px-4 bg-background">
+    <section className="py-8 md:py-24 px-4 bg-background">
       <div className="max-w-2xl mx-auto">
         <ScrollReveal>
           <div className="text-center space-y-5 md:space-y-6">
