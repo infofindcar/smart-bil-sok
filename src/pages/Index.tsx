@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { StickyMobileCTA } from '@/components/StickyMobileCTA';
 import { motion } from 'framer-motion';
 
 // Lazy-load below-fold sections
@@ -196,22 +197,24 @@ const Index = () => {
         </button>
 
         {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-52 md:h-72 z-10 pointer-events-none" style={{
-        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.12) 30%, hsl(var(--background) / 0.45) 62%, hsl(var(--background) / 0.82) 82%, hsl(var(--background)) 100%)`,
-        opacity: Math.max(0.32, Math.min(scrollProgress * 1.5, 1))
+        <div className="absolute bottom-0 left-0 right-0 h-64 md:h-80 z-10 pointer-events-none" style={{
+        background: `linear-gradient(to bottom, 
+          transparent 0%, 
+          hsl(var(--background) / 0.05) 15%,
+          hsl(var(--background) / 0.15) 30%, 
+          hsl(var(--background) / 0.35) 45%,
+          hsl(var(--background) / 0.58) 58%,
+          hsl(var(--background) / 0.78) 70%,
+          hsl(var(--background) / 0.92) 82%,
+          hsl(var(--background) / 0.98) 92%,
+          hsl(var(--background)) 100%)`,
+        transition: 'opacity 0.4s ease-out',
+        opacity: Math.max(0.5, Math.min(scrollProgress * 1.8, 1))
       }} />
       </section>
 
       {/* Search */}
-      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-12 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
-        <div
-          className="absolute inset-x-0 top-0 h-24 pointer-events-none z-[1]"
-          aria-hidden="true"
-          style={{
-            background:
-              'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 38%, hsl(var(--background) / 0.45) 74%, transparent 100%)',
-          }}
-        />
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-8 pb-8 md:py-24 px-3 md:px-4 overflow-hidden -mt-16 md:-mt-0">
 
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -276,6 +279,7 @@ const Index = () => {
         <CtaBanner />
       </Suspense>
       <Footer />
+      <StickyMobileCTA />
       <Suspense fallback={null}>
         <CookieBanner />
       </Suspense>
