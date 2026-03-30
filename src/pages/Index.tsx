@@ -126,18 +126,18 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section
-      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-start overflow-visible bg-[#1a2332]"
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]"
       style={{
         backgroundImage: 'url(/images/hero_findcar.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
-        {/* Stronger overlay on mobile for readability */}
+        {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/50 md:bg-black/30 z-[1]" />
 
-        {/* MOBILE hero content — vertically stacked, centered */}
-        <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-6 pt-24 pb-16 flex-1 w-full">
+        {/* MOBILE hero content — centered in viewport */}
+        <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-6 w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -195,25 +195,23 @@ const Index = () => {
       }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
         </button>
+
+        {/* Bottom fade — inside hero, no seam possible */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 z-[2] pointer-events-none" style={{
+          background: `linear-gradient(to bottom,
+            transparent 0%,
+            hsl(var(--background) / 0.08) 15%,
+            hsl(var(--background) / 0.22) 30%,
+            hsl(var(--background) / 0.42) 45%,
+            hsl(var(--background) / 0.62) 58%,
+            hsl(var(--background) / 0.80) 70%,
+            hsl(var(--background) / 0.93) 85%,
+            hsl(var(--background)) 100%)`
+        }} />
       </section>
 
-      {/* Seamless fade zone between hero and content — overlaps both sections */}
-      <div className="relative z-20 -mt-40 md:-mt-48 h-56 md:h-64 pointer-events-none" aria-hidden="true" style={{
-        background: `linear-gradient(to bottom,
-          transparent 0%,
-          hsl(var(--background) / 0.06) 12%,
-          hsl(var(--background) / 0.16) 24%,
-          hsl(var(--background) / 0.30) 36%,
-          hsl(var(--background) / 0.48) 48%,
-          hsl(var(--background) / 0.65) 58%,
-          hsl(var(--background) / 0.80) 68%,
-          hsl(var(--background) / 0.92) 80%,
-          hsl(var(--background) / 0.98) 90%,
-          hsl(var(--background)) 100%)`
-      }} />
-
       {/* Search */}
-      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-4 pb-8 md:py-24 px-3 md:px-4 overflow-hidden -mt-12 md:-mt-16">
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-6 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
 
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
