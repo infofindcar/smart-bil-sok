@@ -251,14 +251,29 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [stopScrollLoop]);
 
-  // Keep input area visible on the page when suggestions/buttons appear
+  // Keep input area visible on the page when suggestions/buttons appear or typing finishes
   useEffect(() => {
     if (!isLoading && !isTypingRef.current) {
-      setTimeout(() => {
-        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 80);
+      // Short delay to let DOM update with suggestions/buttons before scrolling
+      const timer = setTimeout(() => {
+        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isLoading, messages.length]);
+
+  // Also scroll when visibleText finishes (typing done for a message)
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.role === 'user') return;
+    const displayed = visibleText[lastMsg.id];
+    if (displayed !== undefined && displayed.length === lastMsg.content.length) {
+      // Typing just completed — ensure input stays in view
+      setTimeout(() => {
+        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 150);
+    }
+  }, [visibleText, messages]);
 
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     if (typingTimeoutRef.current) {
@@ -295,7 +310,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         queueScrollToBottom(true);
         // Scroll input area into view on the page so user doesn't have to scroll manually
         setTimeout(() => {
-          inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 120);
         onDone?.();
       }
