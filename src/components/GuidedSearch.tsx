@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
@@ -156,36 +156,99 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const isAutoFollowRef = useRef(true);
+  const scrollRafRef = useRef<number | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Persist chat state
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
 
-  // Scroll only within the chat container, not the whole page
+  // --- Smooth chase scroll loop ---
+  // Runs continuously while typing; interpolates toward bottom
+  const startScrollChase = useCallback(() => {
+    if (scrollRafRef.current) return; // already running
+    const chase = () => {
+      const container = chatContainerRef.current;
+      if (container && isAutoFollowRef.current) {
+        const target = container.scrollHeight - container.clientHeight;
+        const diff = target - container.scrollTop;
+        if (diff > 1) {
+          // Lerp factor: fast for big gaps, eased for small
+          const step = diff > 100 ? diff * 0.4 : diff * 0.25;
+          container.scrollTop += Math.max(step, 1);
+        }
+      }
+      scrollRafRef.current = requestAnimationFrame(chase);
+    };
+    scrollRafRef.current = requestAnimationFrame(chase);
+  }, []);
+
+  const stopScrollChase = useCallback(() => {
+    if (scrollRafRef.current) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
+  }, []);
+
+  // Detect manual scroll-up to pause auto-follow
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      const distFromBottom = container.scrollHeight - container.clientHeight - container.scrollTop;
+      isAutoFollowRef.current = distFromBottom < 60;
+    };
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Snap-scroll on new messages or loading change (not during typing)
   useEffect(() => {
     const container = chatContainerRef.current;
     if (container) {
+      isAutoFollowRef.current = true;
       requestAnimationFrame(() => {
         container.scrollTop = container.scrollHeight;
       });
     }
-  }, [messages, isLoading, visibleText]);
+  }, [messages.length, isLoading]);
+
+  // Cleanup scroll chase on unmount
+  useEffect(() => () => stopScrollChase(), [stopScrollChase]);
 
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     let i = 0;
-    const speed = 15;
+    // Start the scroll chase loop for smooth following
+    isAutoFollowRef.current = true;
+    startScrollChase();
+
     const tick = () => {
-      i += 1;
+      // Dynamic chunk: 2-4 chars per tick, pause at punctuation
+      const prevChar = i > 0 ? fullText[i - 1] : '';
+      const isPause = '.!?'.includes(prevChar);
+      const chunk = isPause ? 1 : (2 + Math.floor(Math.random() * 2)); // 2-3 normally
+      i = Math.min(i + chunk, fullText.length);
       setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+
       if (i < fullText.length) {
-        setTimeout(tick, speed + Math.random() * 10);
+        const delay = isPause ? 80 + Math.random() * 60 : 18 + Math.random() * 12;
+        typingTimeoutRef.current = setTimeout(tick, delay);
       } else {
+        stopScrollChase();
+        // Final snap to bottom
+        const container = chatContainerRef.current;
+        if (container) {
+          requestAnimationFrame(() => {
+            container.scrollTop = container.scrollHeight;
+          });
+        }
         onDone?.();
       }
     };
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
-    setTimeout(tick, 250);
+    typingTimeoutRef.current = setTimeout(tick, 250);
   };
 
   const addAssistantMessage = (
@@ -370,7 +433,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="px-4 md:px-5 py-4 space-y-3 max-h-[60vh] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[220px]"
+          className="px-4 md:px-5 py-4 space-y-3 max-h-[60vh] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[220px] pb-6"
         >
           {messages.map((msg) => (
             <div
