@@ -158,7 +158,7 @@ const Index = () => {
               Hitta din bil
             </Button>
             <p className="text-white/50 text-xs">
-              ✔ Tar 30 sek · Gratis · Inga bindningar
+              ✔ Tar 30 sek · Gratis · Objektiv rådgivning
             </p>
           </motion.div>
         </div>
