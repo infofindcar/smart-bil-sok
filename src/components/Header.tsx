@@ -95,7 +95,7 @@ export const Header = () => {
 
       {/* Mobile menu — fullscreen overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 top-14 z-50 bg-background/98 backdrop-blur-xl animate-fade-in">
+        <div className="md:hidden fixed inset-0 top-14 z-50 bg-background backdrop-blur-xl animate-fade-in">
           <div className="flex flex-col px-6 pt-8 pb-6 h-full">
             <div className="space-y-1 flex-1">
               <a
