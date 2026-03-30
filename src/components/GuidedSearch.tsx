@@ -373,7 +373,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="px-4 md:px-5 py-4 space-y-3 max-h-[55vh] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[180px]"
+          className="px-4 md:px-5 py-4 space-y-3 max-h-[60vh] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[220px]"
         >
           {messages.map((msg) => (
             <div
@@ -476,7 +476,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div className="px-4 md:px-5 pb-4 pt-2 border-t border-border/30">
+        <div className="px-4 md:px-5 pb-4 pt-3 md:pt-2 border-t border-border/50">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${

@@ -129,7 +129,7 @@ export const Header = () => {
             </div>
             <div className="pt-4">
               <Button size="default" variant="gradient" onClick={scrollToSearch} className="w-full rounded-2xl text-base h-14">
-                Matcha mig med en bil
+                Hitta din bil
               </Button>
             </div>
           </div>
