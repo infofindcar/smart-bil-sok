@@ -176,7 +176,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const startScrollLoop = useCallback(() => {
     if (scrollRafRef.current !== null) return;
 
-    const step = () => {
+    let lastTime = 0;
+    const step = (timestamp: number) => {
       const container = chatContainerRef.current;
       if (!container) {
         scrollRafRef.current = null;
@@ -186,19 +187,19 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const target = targetScrollTopRef.current;
       const diff = target - container.scrollTop;
 
-      if (Math.abs(diff) <= 1) {
+      if (Math.abs(diff) <= 0.5) {
         container.scrollTop = target;
         scrollRafRef.current = null;
         return;
       }
 
-      if (Math.abs(diff) <= 12) {
-        container.scrollTop = target;
-      } else if (Math.abs(diff) > 140) {
-        container.scrollTop += diff * 0.52;
-      } else {
-        container.scrollTop += diff * 0.34;
-      }
+      // Use dt-based interpolation for frame-rate independent smoothness
+      const dt = lastTime ? Math.min((timestamp - lastTime) / 16.67, 2) : 1;
+      lastTime = timestamp;
+
+      // Gentle easing — never jump, always glide
+      const factor = Math.abs(diff) > 200 ? 0.18 : 0.12;
+      container.scrollTop += diff * factor * dt;
 
       scrollRafRef.current = requestAnimationFrame(step);
     };
@@ -476,6 +477,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             <div
               key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
+              style={{ transition: 'all 0.2s ease-out' }}
             >
               {msg.role === 'assistant' && (
                 <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
@@ -483,7 +485,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 </div>
               )}
               <div
-                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed ${
+                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
                     : 'bg-muted/50 text-foreground rounded-bl-sm'
