@@ -279,7 +279,7 @@ const Index = () => {
         <CtaBanner />
       </Suspense>
       <Footer />
-      <StickyMobileCTA />
+      
       <Suspense fallback={null}>
         <CookieBanner />
       </Suspense>
