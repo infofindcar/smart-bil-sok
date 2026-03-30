@@ -134,60 +134,35 @@ const Index = () => {
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-black/50 md:bg-black/30 z-[1]" />
+        <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
-        {/* MOBILE hero content — centered in viewport */}
-        <div className="md:hidden relative z-10 flex flex-col items-center justify-center text-center px-6 w-full">
+        {/* Hero content — unified for mobile & desktop */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="space-y-5 w-full max-w-sm"
+            className="space-y-6 w-full max-w-sm md:max-w-lg"
           >
-            <h1 className="text-3xl font-bold text-white leading-tight">
+            <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
+            <p className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight font-serif">
               Hitta rätt bil<br />– utan stress
-            </h1>
-            <p className="text-white/70 text-base leading-relaxed">
+            </p>
+            <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-md mx-auto">
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </p>
             <Button
               onClick={scrollToSearch}
               variant="gradient"
-              className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg active:scale-95 transition-transform"
+              className="w-full md:w-auto h-14 md:h-12 rounded-2xl md:rounded-full text-base md:text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform md:px-10"
             >
               Hitta din bil
             </Button>
-            <p className="text-white/50 text-xs">
+            <p className="text-white/50 text-xs md:text-sm">
               ✔ Tar 30 sek · Gratis · Objektiv rådgivning
             </p>
           </motion.div>
         </div>
-
-        {/* DESKTOP hero content — original layout */}
-        <div className="hidden md:block absolute top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: 'easeOut' }}
-          >
-            <div className="relative">
-              <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
-              <img src={findcarLogoHero} alt="FindCar — AI-driven bilrådgivare" className="h-64 lg:h-80 w-auto" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
-            </div>
-          </motion.div>
-        </div>
-
-        {/* DESKTOP CTA Button */}
-        <motion.div
-          className="hidden md:flex absolute bottom-20 z-10 flex-col items-center gap-3"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
-        >
-          <Button onClick={scrollToSearch} size="default" variant="gradient" className="text-sm px-8 py-3 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform touch-target h-10">
-            Hitta din bil
-          </Button>
-        </motion.div>
 
         {/* Bounce arrow — desktop only */}
         <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
