@@ -495,8 +495,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
                 disabled={isLoading}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '40px' }}
+                className="w-full resize-none bg-transparent px-3.5 py-3 md:py-2.5 text-base md:text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '44px' }}
               />
             </div>
             <Button
