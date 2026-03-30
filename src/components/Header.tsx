@@ -39,13 +39,13 @@ export const Header = () => {
           : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-10 h-14 md:h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
           <img
             src={logo}
             alt="FindCar"
-            className={`h-16 sm:h-18 md:h-20 lg:h-22 w-auto transition-all duration-300 group-hover:brightness-110 ${
-              scrolled ? 'h-12 sm:h-14 md:h-16 drop-shadow-lg' : 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)] brightness-110'
+            className={`h-10 sm:h-14 md:h-20 lg:h-22 w-auto transition-all duration-300 group-hover:brightness-110 ${
+              scrolled ? 'h-9 sm:h-12 md:h-16 drop-shadow-lg' : 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)] brightness-110'
             }`}
           />
         </Link>
