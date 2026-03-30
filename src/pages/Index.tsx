@@ -126,7 +126,7 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section
-      className="relative min-h-[75vh] md:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px bg-[#1a2332]"
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px bg-[#1a2332]"
       style={{
         backgroundImage: 'url(/images/hero_findcar.jpg)',
         backgroundSize: 'cover',
