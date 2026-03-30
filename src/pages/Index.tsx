@@ -196,14 +196,23 @@ const Index = () => {
         </button>
 
         {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 md:h-72 z-10 pointer-events-none" style={{
-        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.24) 42%, hsl(var(--background) / 0.7) 76%, hsl(var(--background)) 100%)`,
-        opacity: Math.max(0.45, Math.min(scrollProgress * 1.8, 1))
+        <div className="absolute bottom-0 left-0 right-0 h-52 md:h-72 z-10 pointer-events-none" style={{
+        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.12) 30%, hsl(var(--background) / 0.45) 62%, hsl(var(--background) / 0.82) 82%, hsl(var(--background)) 100%)`,
+        opacity: Math.max(0.32, Math.min(scrollProgress * 1.5, 1))
       }} />
       </section>
 
       {/* Search */}
-      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-10 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-12 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
+        <div
+          className="absolute inset-x-0 top-0 h-24 pointer-events-none z-[1]"
+          aria-hidden="true"
+          style={{
+            background:
+              'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 38%, hsl(var(--background) / 0.45) 74%, transparent 100%)',
+          }}
+        />
+
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
@@ -211,7 +220,7 @@ const Index = () => {
           <div className="absolute bottom-0 -left-20 w-[250px] h-[250px] rounded-full bg-primary/[0.05] blur-[80px]" />
         </div>
 
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative z-10 max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/[0.08] border border-secondary/[0.12] mb-5">
