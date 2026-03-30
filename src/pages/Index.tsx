@@ -196,14 +196,14 @@ const Index = () => {
         </button>
 
         {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-64 md:h-72 z-10 pointer-events-none" style={{
-        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.3) 40%, hsl(var(--background) / 0.7) 70%, hsl(var(--background)) 100%)`,
-        opacity: Math.max(0.5, Math.min(scrollProgress * 2, 1))
+        <div className="absolute bottom-0 left-0 right-0 h-40 md:h-72 z-10 pointer-events-none" style={{
+        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.24) 42%, hsl(var(--background) / 0.7) 76%, hsl(var(--background)) 100%)`,
+        opacity: Math.max(0.45, Math.min(scrollProgress * 1.8, 1))
       }} />
       </section>
 
       {/* Search */}
-      <section ref={searchRef} data-search-section className="relative pt-8 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-10 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
