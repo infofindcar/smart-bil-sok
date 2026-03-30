@@ -210,8 +210,8 @@ const Index = () => {
         }} />
       </section>
 
-      {/* Search */}
-      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-6 pb-8 md:py-24 px-3 md:px-4 overflow-hidden">
+      {/* Search — pulled up to overlap hero fade and eliminate any seam */}
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-6 pb-8 md:py-24 px-3 md:px-4 overflow-hidden -mt-1">
 
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
