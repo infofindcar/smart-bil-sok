@@ -42,7 +42,7 @@ const steps: Step[] = [
 
 export const HowItWorks = () => {
   return (
-    <section className="py-12 md:py-24 px-4 bg-background">
+    <section className="py-12 md:py-16 px-4 bg-background">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-14">

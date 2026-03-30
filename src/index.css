@@ -165,7 +165,7 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Section divider gradient transitions */
 .section-divider {
-  height: 5rem;
+  height: 2.5rem;
   background: linear-gradient(to bottom, var(--div-from), var(--div-to));
   pointer-events: none;
 }
