@@ -251,6 +251,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [stopScrollLoop]);
 
+  // Keep input area visible on the page when suggestions/buttons appear
+  useEffect(() => {
+    if (!isLoading && !isTypingRef.current) {
+      setTimeout(() => {
+        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 80);
+    }
+  }, [isLoading, messages.length]);
+
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
