@@ -156,6 +156,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputAreaRef = useRef<HTMLDivElement>(null);
   const isAutoFollowRef = useRef(true);
   const isTypingRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
