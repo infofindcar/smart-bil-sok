@@ -483,11 +483,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 </div>
               )}
               <div
-                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed ${
+                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
                     : 'bg-muted/50 text-foreground rounded-bl-sm'
                 }`}
+                style={isTypingMsg(msg) ? { display: 'grid', gridTemplateRows: '1fr' } : undefined}
+              >
               >
                 {getDisplayText(msg)}
                 {isTypingMsg(msg) && (
