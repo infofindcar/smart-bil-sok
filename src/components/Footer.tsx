@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Mail, Instagram, Linkedin, ArrowUpRight } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
+import kthLogo from '@/assets/kth-logo.png';
 
 export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
