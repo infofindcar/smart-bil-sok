@@ -112,7 +112,7 @@ export const Footer = () => {
           </p>
           <p className="flex items-center gap-1.5 text-xs italic text-secondary-foreground/30 tracking-wide">
             Byggd på
-            <img src="/images/kth-logo.png" alt="KTH" className="h-3.5 w-auto inline-block opacity-50" />
+            <img src={kthLogo} alt="KTH" className="h-3.5 w-auto inline-block opacity-50" loading="lazy" />
             KTH
           </p>
         </div>
