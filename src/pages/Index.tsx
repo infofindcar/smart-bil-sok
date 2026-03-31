@@ -134,7 +134,7 @@ const Index = () => {
         <img
           src="/images/hero_mobile.webp"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-[center_85%] block md:hidden will-change-transform"
+          className="absolute inset-0 w-full h-full object-cover object-center block md:hidden will-change-transform"
           loading="eager"
           decoding="async"
           fetchPriority="high"
