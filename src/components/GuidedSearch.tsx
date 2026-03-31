@@ -529,22 +529,22 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Quick-reply suggestions */}
         {showSuggestions && (
-          <div className="px-4 md:px-5 pb-3">
-            <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-1.5">
+          <div className="px-4 md:px-6 pb-3">
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5">
               {lastAssistantMsg!.suggestions!.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm text-left active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1"
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border text-foreground/80 transition-all duration-150 text-left active:scale-[0.98]"
                 >
                   {s}
                 </button>
               ))}
               <button
                 onClick={() => inputRef.current?.focus()}
-                className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-dashed border-border bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
+                className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-dashed border-border/40 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
               >
-                <PenLine className="h-4 w-4 md:h-3 md:w-3" />
+                <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
                 {WRITE_OWN[language] || WRITE_OWN.sv}
               </button>
             </div>
