@@ -1,6 +1,7 @@
 import { forwardRef, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CarCard } from '@/components/CarCard';
+import { CarCardSkeleton } from '@/components/CarCardSkeleton';
 import { Sparkles, Scale, ChevronRight, Lightbulb, Trophy } from 'lucide-react';
 import type { Car, CarReason } from './GuidedSearch';
 
