@@ -1,22 +1,28 @@
 
 
-## Plan: Förbättra bekräftelsemeddelandet efter inskickat formulär
+## Plan: Lägg till röstinmatning i Clutch-chatten
 
 ### Vad som ändras
 
-Uppdaterar texten som visas efter att formuläret skickats (rad 401-407 i `CarDetail.tsx`) till ett mer informativt och förtroendeingivande meddelande.
+En mikrofonknapp läggs till bredvid textfältet i chatten. Användaren kan trycka på den för att tala — talet omvandlas till text via webbläsarens inbyggda `Web Speech API` (SpeechRecognition) och fylls i automatiskt i textfältet.
 
-### Ny text
+### Tekniska detaljer
 
-**Rubrik:** "Tack för din förfrågan!"
+**Fil: `src/components/GuidedSearch.tsx`**
 
-**Brödtext:** "Återförsäljaren har mottagit din förfrågan och kontaktar dig så snart som möjligt. Håll utkik i din inkorg och telefon!"
+1. **Importera `Mic` och `MicOff`** ikoner från lucide-react
+2. **Lägg till state**: `isListening` (boolean) för att spåra om mikrofonen är aktiv
+3. **Skapa en `SpeechRecognition`-instans** (med `webkitSpeechRecognition` fallback) som:
+   - Sätter `lang` baserat på nuvarande språk (sv-SE / en-US)
+   - Fyller `inputValue` med transkriberad text via `onresult`
+   - Hanterar `onerror` och `onend` för att återställa state
+4. **Rendera en mikrofonknapp** mellan textfältet och skicka-knappen:
+   - Inaktiv: visar `Mic`-ikon, klick startar lyssning
+   - Aktiv: visar `MicOff` med pulsanimation, klick stoppar
+   - Om webbläsaren inte stöder Speech API → knappen visas inte
+5. **Continuous mode**: Lyssnar kontinuerligt tills användaren stoppar, text appendas till befintlig input
 
-Eventuellt lägga till bilens namn i texten, t.ex. "...angående **{car.make} {model}**" för att bekräfta vilken bil det gäller.
+### Ingen backend-ändring behövs
 
-### Teknisk ändring
-
-**Fil: `src/pages/CarDetail.tsx`** (rad 401-407)
-- Uppdatera rubrik och beskrivningstext i success-staten
-- Lägg till bilnamnet i meddelandet för tydlighet
+Web Speech API körs helt i webbläsaren — ingen server eller API-nyckel krävs.
 
