@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { PasswordGate } from "@/components/PasswordGate";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import CarDetail from "./pages/CarDetail";
 import CarComparison from "./pages/CarComparison";
@@ -22,6 +23,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <PasswordGate>
             <Routes>
               <Route path="/" element={<Index />} />
