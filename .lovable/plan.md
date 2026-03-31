@@ -1,28 +1,22 @@
 
 
-## Plan: Lägg till röstinmatning i Clutch-chatten
+## Plan: Realtids-rösttranskription och visuell mikrofon-indikator
 
 ### Vad som ändras
 
-En mikrofonknapp läggs till bredvid textfältet i chatten. Användaren kan trycka på den för att tala — talet omvandlas till text via webbläsarens inbyggda `Web Speech API` (SpeechRecognition) och fylls i automatiskt i textfältet.
+1. **Realtids-text medan man pratar**: Ändra `interimResults` till `true` i SpeechRecognition-konfigurationen. Uppdatera `onresult`-hanteraren så att interim-resultat visas löpande i textfältet och ersätts med slutgiltiga resultat när de kommer.
+
+2. **Visuell lyssnings-indikator**: Ersätt den enkla `animate-pulse` med en mer tydlig "lyssnar"-animation — pulsande ringar runt mikrofon-knappen som indikerar att ljud fångas.
 
 ### Tekniska detaljer
 
 **Fil: `src/components/GuidedSearch.tsx`**
 
-1. **Importera `Mic` och `MicOff`** ikoner från lucide-react
-2. **Lägg till state**: `isListening` (boolean) för att spåra om mikrofonen är aktiv
-3. **Skapa en `SpeechRecognition`-instans** (med `webkitSpeechRecognition` fallback) som:
-   - Sätter `lang` baserat på nuvarande språk (sv-SE / en-US)
-   - Fyller `inputValue` med transkriberad text via `onresult`
-   - Hanterar `onerror` och `onend` för att återställa state
-4. **Rendera en mikrofonknapp** mellan textfältet och skicka-knappen:
-   - Inaktiv: visar `Mic`-ikon, klick startar lyssning
-   - Aktiv: visar `MicOff` med pulsanimation, klick stoppar
-   - Om webbläsaren inte stöder Speech API → knappen visas inte
-5. **Continuous mode**: Lyssnar kontinuerligt tills användaren stoppar, text appendas till befintlig input
+- Sätt `recognition.interimResults = true`
+- Lägg till en `interimTranscriptRef` som håller koll på den senaste interim-texten
+- I `onresult`: samla ihop alla `isFinal`-resultat plus senaste interim, sätt `inputValue` till `confirmedText + interimText`
+- Uppdatera mikrofon-knappens styling: lägg till animerade ringar (pseudo-element via extra `<span>`-lager) som pulserar ut när `isListening` är true
 
-### Ingen backend-ändring behövs
-
-Web Speech API körs helt i webbläsaren — ingen server eller API-nyckel krävs.
+**Fil: `src/index.css`**
+- Lägg till en `@keyframes mic-ripple` animation för de pulsande ringarna
 
