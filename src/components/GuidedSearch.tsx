@@ -127,13 +127,6 @@ const RESTART: Record<string, string> = {
   fi: 'Aloita alusta',
 };
 
-const SUBTITLE: Record<string, string> = {
-  sv: 'Objektiv bilrådgivare',
-  en: 'Objective car advisor',
-  no: 'Objektiv bilrådgiver',
-  da: 'Objektiv bilrådgiver',
-  fi: 'Objektiivinen autoneuvoja',
-};
 
 const CHAT_STORAGE_KEY = 'findcar-chat-state';
 
