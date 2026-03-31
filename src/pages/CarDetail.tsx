@@ -5,10 +5,14 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
-  ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette,
+  ArrowLeft, Fuel, Calendar, Gauge, MapPin, Car, Palette,
   Settings2, Sparkles, Zap, Shield, Weight, Package,
-  Timer, Droplets, Leaf, ShieldCheck, BatteryCharging,
+  Timer, Droplets, Leaf, ShieldCheck, BatteryCharging, Send, CheckCircle,
 } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
@@ -122,7 +126,15 @@ const CarDetail = () => {
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
   const [isLoading, setIsLoading] = useState(!car);
   const [modelData, setModelData] = useState<CarModelData | null>(null);
-  const [makeData, setMakeData] = useState<CarMakeData | null>(null);
+  const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
+
+  // Contact form state
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
@@ -383,13 +395,109 @@ const CarDetail = () => {
             </div>
           )}
 
-          {/* CTA */}
-          {car.listing_url && (
-            <Button className="w-full h-14 text-lg" onClick={() => window.open(car.listing_url!, '_blank')}>
-              <ExternalLink className="h-5 w-5 mr-2" />
-              Kontakta återförsäljare
-            </Button>
-          )}
+          {/* Contact form */}
+          <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+            {formSubmitted ? (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <CheckCircle className="h-12 w-12 text-primary" />
+                <h2 className="text-xl font-bold">Tack för din förfrågan!</h2>
+                <p className="text-muted-foreground text-center text-sm">
+                  Vi har tagit emot ditt meddelande och återkommer så snart vi kan.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <Send className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-bold">Kontakta säljare</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">
+                  Fyll i dina uppgifter så hör vi av oss angående denna {car.make} {displayTitle}.
+                </p>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!formName.trim() || !formEmail.trim() || !formPhone.trim()) {
+                      toast.error('Vänligen fyll i alla obligatoriska fält.');
+                      return;
+                    }
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(formEmail.trim())) {
+                      toast.error('Vänligen ange en giltig e-postadress.');
+                      return;
+                    }
+                    setFormSubmitting(true);
+                    const { error } = await supabase.from('leads').insert([{
+                      car_id: car.id,
+                      customer_name: formName.trim(),
+                      customer_email: formEmail.trim(),
+                      customer_phone: formPhone.trim(),
+                      message: formMessage.trim() || null,
+                      dealer_name: car.dealer_name || null,
+                    }]);
+                    setFormSubmitting(false);
+                    if (error) {
+                      toast.error('Något gick fel. Försök igen.');
+                    } else {
+                      setFormSubmitted(true);
+                      toast.success('Din förfrågan har skickats!');
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <Label htmlFor="lead-name">Namn *</Label>
+                    <Input
+                      id="lead-name"
+                      placeholder="Ditt namn"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      required
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lead-email">E-post *</Label>
+                    <Input
+                      id="lead-email"
+                      type="email"
+                      placeholder="din@email.se"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      required
+                      maxLength={255}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lead-phone">Telefonnummer *</Label>
+                    <Input
+                      id="lead-phone"
+                      type="tel"
+                      placeholder="07X XXX XX XX"
+                      value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      required
+                      maxLength={20}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lead-message">Övrig fråga (valfritt)</Label>
+                    <Textarea
+                      id="lead-message"
+                      placeholder="Har du någon specifik fråga om bilen?"
+                      value={formMessage}
+                      onChange={(e) => setFormMessage(e.target.value)}
+                      maxLength={1000}
+                      rows={3}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full h-12 text-base" disabled={formSubmitting}>
+                    {formSubmitting ? 'Skickar...' : 'Skicka förfrågan'}
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       </main>
       <Footer />
