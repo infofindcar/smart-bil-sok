@@ -607,6 +607,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
                 disabled={isLoading}
                 rows={1}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                name="clutch-chat-input"
                 className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
                 style={{ minHeight: '42px' }}
               />
