@@ -154,8 +154,9 @@ const Index = () => {
 
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
-        <div className="relative z-10 flex flex-col items-center justify-between text-center px-6 w-full min-h-[100svh] md:hidden py-20">
-          {/* Top: headline + subtitle together */}
+        <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden">
+          {/* Top: headline + subtitle — positioned ~40% down */}
+          <div className="flex-1 flex items-end pb-4" style={{ flex: '0 0 42%' }}>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
