@@ -398,11 +398,14 @@ const CarDetail = () => {
           {/* Contact form */}
           <div className="bg-card rounded-2xl border border-border p-6 mb-6">
             {formSubmitted ? (
-              <div className="flex flex-col items-center gap-3 py-6">
-                <CheckCircle className="h-12 w-12 text-primary" />
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <CheckCircle className="h-14 w-14 text-primary" />
                 <h2 className="text-xl font-bold">Tack för din förfrågan!</h2>
-                <p className="text-muted-foreground text-center text-sm">
-                  Vi har tagit emot ditt meddelande och återkommer så snart vi kan.
+                <p className="text-muted-foreground text-sm max-w-xs">
+                  Återförsäljaren har mottagit din förfrågan angående <span className="font-semibold text-foreground">{car.make} {displayTitle}</span> och kontaktar dig så snart som möjligt.
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Håll utkik i din inkorg och telefon!
                 </p>
               </div>
             ) : (
