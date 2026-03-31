@@ -166,6 +166,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetScrollTopRef = useRef(0);
 
+  const confirmedTextRef = useRef('');
+
   const toggleListening = useCallback(() => {
     if (isListening) {
       recognitionRef.current?.stop();
@@ -176,21 +178,32 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     if (!SpeechRecognitionAPI) return;
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = language === 'en' ? 'en-US' : 'sv-SE';
+    confirmedTextRef.current = inputValue;
     recognition.onresult = (event: any) => {
-      const last = event.results[event.results.length - 1];
-      if (last.isFinal) {
-        const transcript = last[0].transcript;
-        setInputValue((prev) => (prev ? prev + ' ' + transcript : transcript));
+      let finalTranscript = '';
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
       }
+      if (finalTranscript) {
+        confirmedTextRef.current = (confirmedTextRef.current ? confirmedTextRef.current + ' ' : '') + finalTranscript.trim();
+      }
+      const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
+      setInputValue(display.trim());
     };
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [isListening, language]);
+  }, [isListening, language, inputValue]);
 
 
   useEffect(() => {
