@@ -402,16 +402,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         if (data.cars?.length > 0) {
           const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
-          addAssistantMessage(
-            `🎯 ${resultMsg}`,
-            undefined,
-            () => {
-              onResults(data.cars, resultMsg, data.carReasons || []);
-              setTimeout(() => {
-                onScrollToResults?.();
-              }, 600);
-            }
-          );
+          onResults(data.cars, resultMsg, data.carReasons || []);
+          setTimeout(() => {
+            onScrollToResults?.();
+          }, 600);
         } else {
           // No results — show message with suggestions
           addAssistantMessage(
