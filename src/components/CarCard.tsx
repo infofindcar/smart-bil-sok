@@ -46,13 +46,15 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/car/${car.id}`, { state: { car } }); } }}
     >
       {/* Image */}
-      <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden">
+      <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden bg-muted">
         {car.image_thumb_url ? (
           <img
             src={car.image_thumb_url}
             alt={displayName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
+            onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
+            style={{ opacity: 0, transition: 'opacity 0.4s ease-in' }}
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>

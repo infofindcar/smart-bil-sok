@@ -143,8 +143,9 @@ export const Header = () => {
           >
             Kontakta oss
           </button>
-          <div className="pt-3">
-            <Button size="sm" variant="gradient" onClick={scrollToSearch} className="w-full rounded-xl text-sm h-11">
+          <div className="flex items-center gap-3 pt-3 border-t border-border/20">
+            <ThemeToggle className="text-foreground" />
+            <Button size="sm" variant="gradient" onClick={scrollToSearch} className="flex-1 rounded-xl text-sm h-11">
               Hitta din bil
             </Button>
           </div>

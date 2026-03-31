@@ -359,6 +359,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     e?.preventDefault();
     const text = (overrideText || inputValue).trim();
     if (!text || isLoading) return;
+    navigator.vibrate?.(10);
 
     if (isListening && recognitionRef.current) {
       recognitionRef.current.onresult = null;
@@ -672,7 +673,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             {speechSupported && (
               <button
                 type="button"
-                onClick={toggleListening}
+                onClick={() => { navigator.vibrate?.(10); toggleListening(); }}
                 disabled={isLoading}
                 className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
                   isListening
