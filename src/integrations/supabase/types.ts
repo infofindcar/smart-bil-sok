@@ -167,6 +167,86 @@ export type Database = {
         }
         Relationships: []
       }
+      dealers: {
+        Row: {
+          created_at: string | null
+          dealer_name: string
+          dealer_url: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dealer_name: string
+          dealer_url?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dealer_name?: string
+          dealer_url?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          car_id: number | null
+          created_at: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          dealer_email: string | null
+          dealer_name: string | null
+          id: string
+          message: string | null
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          car_id?: number | null
+          created_at?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          dealer_email?: string | null
+          dealer_name?: string | null
+          id?: string
+          message?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          car_id?: number | null
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          dealer_email?: string | null
+          dealer_name?: string | null
+          id?: string
+          message?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "Lovable"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Lovable: {
         Row: {
           body_type: string | null
