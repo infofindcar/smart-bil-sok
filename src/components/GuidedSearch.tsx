@@ -632,61 +632,87 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
-          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-            <div
-              className={`flex-1 relative rounded-xl border transition-all duration-200 ${
-                inputFocused
-                  ? 'border-secondary/30 ring-1 ring-secondary/10'
-                  : 'border-border/30'
-              } bg-background/60`}
-            >
-              <textarea
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
-                onKeyDown={handleKeyDown}
-                placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
-                disabled={isLoading}
-                rows={1}
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                name="clutch-chat-input"
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '42px' }}
-              />
-            </div>
-            {speechSupported && (
+          {isListening ? (
+            /* Voice recording mode — dark bar with waveform */
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleListening}
-                disabled={isLoading}
-                className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
-                  isListening
-                    ? 'bg-destructive/10 border-destructive/40 text-destructive'
-                    : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
-                } disabled:opacity-50`}
+                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 flex items-center justify-center bg-foreground/10 border border-border/30 text-foreground hover:bg-foreground/20 transition-all"
               >
-                {isListening && (
-                  <>
-                    <span className="absolute inset-0 rounded-xl border-2 border-destructive/50 mic-ripple" />
-                    <span className="absolute inset-0 rounded-xl border-2 border-destructive/30 mic-ripple mic-ripple-delay" />
-                  </>
-                )}
-                {isListening ? <MicOff className="h-4 w-4 relative z-10" /> : <Mic className="h-4 w-4" />}
+                <Square className="h-3.5 w-3.5 fill-current" />
               </button>
-            )}
-            <Button
-              type="submit"
-              size="icon"
-              disabled={!inputValue.trim() || isLoading}
-              className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
-            >
-              <Send className="h-3.5 w-3.5" />
-            </Button>
-          </form>
+              <div className="flex-1 relative rounded-xl bg-foreground/5 border border-border/20 h-[42px] md:h-10 flex items-center px-4 overflow-hidden">
+                <div className="voice-waveform w-full flex items-center justify-center gap-[2px] h-full">
+                  {Array.from({ length: 48 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="inline-block w-[2px] rounded-full bg-primary/60 voice-bar"
+                      style={{
+                        animationDelay: `${i * 0.04}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                onClick={(e) => { toggleListening(); setTimeout(() => handleSendMessage(e as any), 100); }}
+                disabled={!inputValue.trim()}
+                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : (
+            /* Normal text input mode */
+            <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+              <div
+                className={`flex-1 relative rounded-xl border transition-all duration-200 ${
+                  inputFocused
+                    ? 'border-secondary/30 ring-1 ring-secondary/10'
+                    : 'border-border/30'
+                } bg-background/60`}
+              >
+                <textarea
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
+                  disabled={isLoading}
+                  rows={1}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  name="clutch-chat-input"
+                  className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
+                  style={{ minHeight: '42px' }}
+                />
+              </div>
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={isLoading}
+                  className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60 disabled:opacity-50"
+                >
+                  <Mic className="h-4 w-4" />
+                </button>
+              )}
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!inputValue.trim() || isLoading}
+                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     </div>
