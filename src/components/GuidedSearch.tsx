@@ -166,6 +166,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetScrollTopRef = useRef(0);
 
+  const confirmedTextRef = useRef('');
+
   const toggleListening = useCallback(() => {
     if (isListening) {
       recognitionRef.current?.stop();
@@ -176,21 +178,32 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     if (!SpeechRecognitionAPI) return;
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = language === 'en' ? 'en-US' : 'sv-SE';
+    confirmedTextRef.current = inputValue;
     recognition.onresult = (event: any) => {
-      const last = event.results[event.results.length - 1];
-      if (last.isFinal) {
-        const transcript = last[0].transcript;
-        setInputValue((prev) => (prev ? prev + ' ' + transcript : transcript));
+      let finalTranscript = '';
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
       }
+      if (finalTranscript) {
+        confirmedTextRef.current = (confirmedTextRef.current ? confirmedTextRef.current + ' ' : '') + finalTranscript.trim();
+      }
+      const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
+      setInputValue(display.trim());
     };
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [isListening, language]);
+  }, [isListening, language, inputValue]);
 
 
   useEffect(() => {
@@ -650,13 +663,19 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 type="button"
                 onClick={toggleListening}
                 disabled={isLoading}
-                className={`h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
                   isListening
-                    ? 'bg-destructive/10 border-destructive/40 text-destructive animate-pulse'
+                    ? 'bg-destructive/10 border-destructive/40 text-destructive'
                     : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
                 } disabled:opacity-50`}
               >
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {isListening && (
+                  <>
+                    <span className="absolute inset-0 rounded-xl border-2 border-destructive/50 mic-ripple" />
+                    <span className="absolute inset-0 rounded-xl border-2 border-destructive/30 mic-ripple mic-ripple-delay" />
+                  </>
+                )}
+                {isListening ? <MicOff className="h-4 w-4 relative z-10" /> : <Mic className="h-4 w-4" />}
               </button>
             )}
             <Button
