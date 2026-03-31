@@ -285,7 +285,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     el.style.height = `${el.scrollHeight}px`;
   }, [inputValue]);
 
-
+  useEffect(() => {
     queueScrollToBottom(true);
   }, [messages.length, isLoading, queueScrollToBottom]);
 
