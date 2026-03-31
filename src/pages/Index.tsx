@@ -130,9 +130,17 @@ const Index = () => {
       {/* Hero with video background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Responsive hero backgrounds */}
-        <img src="/images/hero_mobile.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_85%] block md:hidden" loading="eager" decoding="async" fetchPriority="high" />
-        <img src="/images/hero_findcar.jpg" alt="" className="absolute inset-0 w-full h-full object-cover hidden md:block" loading="eager" decoding="async" fetchPriority="high" />
+        {/* Responsive hero backgrounds — WebP with parallax on mobile */}
+        <img
+          src="/images/hero_mobile.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-[center_85%] block md:hidden will-change-transform"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          style={{ transform: `translateY(${parallaxY}px)` }}
+        />
+        <img src="/images/hero_findcar.webp" alt="" className="absolute inset-0 w-full h-full object-cover hidden md:block" loading="eager" decoding="async" fetchPriority="high" />
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
