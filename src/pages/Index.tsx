@@ -154,21 +154,22 @@ const Index = () => {
 
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
-        <div className="relative z-10 flex flex-col items-center justify-start pt-28 text-center px-6 w-full min-h-[100svh] md:hidden">
+        <div className="relative z-10 flex flex-col items-center justify-between text-center px-6 w-full min-h-[100svh] md:hidden py-20">
+          {/* Top: headline + subtitle together */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-6 w-full max-w-sm"
+            className="mt-16 space-y-4"
           >
-            <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
+            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
               className="text-3xl font-bold text-white leading-tight font-serif"
             >
-              Hitta rätt bil<br />– utan stress
+              Din objektiva<br />bilrådgivare
             </motion.p>
             <motion.p
               initial={{ opacity: 0, y: 15 }}
@@ -178,19 +179,22 @@ const Index = () => {
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+          </motion.div>
+
+          {/* Bottom: CTA + social proof below the car */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+            className="flex flex-col items-center gap-4 mb-8"
+          >
+            <Button
+              onClick={scrollToSearch}
+              variant="gradient"
+              className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform hero-cta-glow"
             >
-              <Button
-                onClick={scrollToSearch}
-                variant="gradient"
-                className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform hero-cta-glow"
-              >
-                Hitta din bil
-              </Button>
-            </motion.div>
+              Hitta din bil
+            </Button>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
