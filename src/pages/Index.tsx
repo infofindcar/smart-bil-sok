@@ -190,16 +190,10 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
               className="flex flex-col items-center gap-2"
             >
-              <div className="flex items-center gap-1.5">
-                <div className="flex -space-x-2">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="w-7 h-7 rounded-full border-2 border-white/20 bg-gradient-to-br from-secondary/60 to-primary/60 flex items-center justify-center text-[10px] text-white font-medium">
-                      {['A', 'M', 'K', 'J'][i]}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-white/60 text-xs ml-1">
-                  <span className="text-white/80 font-medium">1 200+</span> bilsökningar gjorda
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <p className="text-white/70 text-xs">
+                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
                 </p>
               </div>
               <p className="text-white/50 text-xs md:text-sm">
