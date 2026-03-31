@@ -1,29 +1,29 @@
 
 
-## Plan: Byt mobil hero-bild till ny högkvalitetsbild
+## Plan: Ersätt "Kontakta återförsäljare" med kontaktformulär
 
-### Vad
-Ersätt den nuvarande mobila hero-bakgrundsbilden med den nya uppladdade bilden (sjö/berg/moln) i full kvalitet. Endast mobilvy påverkas.
+### Vad som ändras
 
-### Ändringar
+Den nuvarande CTA-knappen "Kontakta återförsäljare" (som öppnar en extern länk) ersätts med ett inbyggt kontaktformulär som samlar in kundens uppgifter och sparar dem i Supabase `leads`-tabellen.
 
-**1. Kopiera bilden**
-- `user-uploads://thugbong-d11u-qXfsF8-unsplash-2.jpg` → `public/images/hero_mobile.jpg` (skriver över den gamla)
+### Formuläret
 
-**2. Ändra `src/pages/Index.tsx` (rad 128-137)**
-- Ta bort inline `style={{ backgroundImage }}` från hero-`<section>`
-- Lägg till två `<img>`-element inuti hero, före overlay:
+Fält:
+- **Namn** (obligatoriskt)
+- **E-post** (obligatoriskt)
+- **Telefonnummer** (obligatoriskt)
+- **Övrig fråga** (valfritt, textarea)
 
-```tsx
-<section className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-  {/* Responsive hero backgrounds */}
-  <img src="/images/hero_mobile.jpg" alt="" className="absolute inset-0 w-full h-full object-cover block md:hidden" loading="eager" decoding="async" fetchPriority="high" />
-  <img src="/images/hero_findcar.jpg" alt="" className="absolute inset-0 w-full h-full object-cover hidden md:block" loading="eager" decoding="async" fetchPriority="high" />
-  
-  {/* Overlay */}
-  <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
-```
+Knappen "Skicka förfrågan" sparar till `leads`-tabellen med `car_id`, `customer_name`, `customer_email`, `customer_phone`, `message`, samt `dealer_name` från bilen.
 
-- `fetchPriority="high"` + `loading="eager"` = bilden laddas med högsta prioritet utan komprimering
-- Desktop helt oförändrad
+### Tekniska detaljer
+
+**Fil: `src/pages/CarDetail.tsx`**
+- Ta bort den befintliga CTA-knappen (rad 386-392) som öppnar `listing_url`
+- Lägg till state för formulärfält och submit-status
+- Rendera ett formulär i ett snyggt kort med validering
+- Vid submit: `supabase.from('leads').insert(...)` med bilens `id`, `dealer_name` och kundens uppgifter
+- Visa bekräftelse efter lyckad inskickning
+
+**Ingen databasändring behövs** — `leads`-tabellen har redan alla nödvändiga kolumner (`car_id`, `customer_name`, `customer_email`, `customer_phone`, `message`, `dealer_name`, `status`) och RLS tillåter publika inserts.
 
