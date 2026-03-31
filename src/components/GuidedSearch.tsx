@@ -277,7 +277,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Auto-resize textarea when inputValue changes (voice or clear)
   useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = '0px';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [inputValue]);
+
+
     queueScrollToBottom(true);
   }, [messages.length, isLoading, queueScrollToBottom]);
 
