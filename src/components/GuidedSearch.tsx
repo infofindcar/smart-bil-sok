@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, MicOff } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, Square } from 'lucide-react';
 
 export type Car = {
   id: number;
