@@ -322,3 +322,23 @@ html::-webkit-scrollbar-thumb:hover {
 .hero-cta-glow {
   animation: cta-glow-pulse 3s ease-in-out infinite;
 }
+
+/* Accessibility: visible focus rings */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse, .animate-bounce {
+    animation: none !important;
+  }
+}
