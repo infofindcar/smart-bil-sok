@@ -380,7 +380,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       }
     } catch (err) {
       console.error('Guided search error:', err);
-      addAssistantMessage('Något gick fel. Försök igen!');
+      const errorMessages: Record<string, string> = {
+        sv: 'Oj, något gick fel med sökningen. Kontrollera din internetanslutning och försök igen.',
+        en: 'Oops, something went wrong. Check your connection and try again.',
+        no: 'Noe gikk galt. Sjekk tilkoblingen og prøv igjen.',
+        da: 'Noget gik galt. Tjek din forbindelse og prøv igen.',
+        fi: 'Jokin meni pieleen. Tarkista yhteys ja yritä uudelleen.',
+      };
+      addAssistantMessage(
+        errorMessages[language] || errorMessages.sv,
+        [language === 'sv' ? 'Försök igen' : 'Try again']
+      );
       setIsLoading(false);
     }
   };

@@ -253,6 +253,16 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
             </Button>
           </div>
+
+          {/* Skeleton loading placeholders when loading more */}
+          {loadingMore && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-6">
+              {[1, 2, 3].map((i) => (
+                <CarCardSkeleton key={`skeleton-${i}`} />
+              ))}
+            </div>
+          )}
+          </div>
         </div>
       </section>
     );
