@@ -262,7 +262,6 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               ))}
             </div>
           )}
-          </div>
         </div>
       </section>
     );
