@@ -112,7 +112,7 @@ export const Footer = () => {
           </p>
           <p className="flex items-center gap-2 text-xs italic text-secondary-foreground/50 tracking-wide">
             Byggd på
-            <img src={kthLogo} alt="KTH" className="h-8 w-auto inline-block brightness-0 invert" loading="lazy" />
+            <img src={kthLogo} alt="KTH" className="h-10 w-auto inline-block brightness-0 invert" loading="lazy" />
           </p>
         </div>
       </div>
