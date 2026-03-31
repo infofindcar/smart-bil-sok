@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, MicOff } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -153,6 +153,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -162,6 +165,33 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const scrollRafRef = useRef<number | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetScrollTopRef = useRef(0);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) return;
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = language === 'en' ? 'en-US' : 'sv-SE';
+    recognition.onresult = (event: any) => {
+      const last = event.results[event.results.length - 1];
+      if (last.isFinal) {
+        const transcript = last[0].transcript;
+        setInputValue((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isListening, language]);
+
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
@@ -615,6 +645,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 style={{ minHeight: '42px' }}
               />
             </div>
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={isLoading}
+                className={`h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                  isListening
+                    ? 'bg-destructive/10 border-destructive/40 text-destructive animate-pulse'
+                    : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
+                } disabled:opacity-50`}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
             <Button
               type="submit"
               size="icon"
