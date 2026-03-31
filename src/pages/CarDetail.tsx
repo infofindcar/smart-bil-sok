@@ -126,7 +126,15 @@ const CarDetail = () => {
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
   const [isLoading, setIsLoading] = useState(!car);
   const [modelData, setModelData] = useState<CarModelData | null>(null);
-  const [makeData, setMakeData] = useState<CarMakeData | null>(null);
+  const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
+
+  // Contact form state
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
