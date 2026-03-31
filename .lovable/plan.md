@@ -1,29 +1,22 @@
 
 
-## Plan: Ersätt "Kontakta återförsäljare" med kontaktformulär
+## Plan: Förbättra bekräftelsemeddelandet efter inskickat formulär
 
 ### Vad som ändras
 
-Den nuvarande CTA-knappen "Kontakta återförsäljare" (som öppnar en extern länk) ersätts med ett inbyggt kontaktformulär som samlar in kundens uppgifter och sparar dem i Supabase `leads`-tabellen.
+Uppdaterar texten som visas efter att formuläret skickats (rad 401-407 i `CarDetail.tsx`) till ett mer informativt och förtroendeingivande meddelande.
 
-### Formuläret
+### Ny text
 
-Fält:
-- **Namn** (obligatoriskt)
-- **E-post** (obligatoriskt)
-- **Telefonnummer** (obligatoriskt)
-- **Övrig fråga** (valfritt, textarea)
+**Rubrik:** "Tack för din förfrågan!"
 
-Knappen "Skicka förfrågan" sparar till `leads`-tabellen med `car_id`, `customer_name`, `customer_email`, `customer_phone`, `message`, samt `dealer_name` från bilen.
+**Brödtext:** "Återförsäljaren har mottagit din förfrågan och kontaktar dig så snart som möjligt. Håll utkik i din inkorg och telefon!"
 
-### Tekniska detaljer
+Eventuellt lägga till bilens namn i texten, t.ex. "...angående **{car.make} {model}**" för att bekräfta vilken bil det gäller.
 
-**Fil: `src/pages/CarDetail.tsx`**
-- Ta bort den befintliga CTA-knappen (rad 386-392) som öppnar `listing_url`
-- Lägg till state för formulärfält och submit-status
-- Rendera ett formulär i ett snyggt kort med validering
-- Vid submit: `supabase.from('leads').insert(...)` med bilens `id`, `dealer_name` och kundens uppgifter
-- Visa bekräftelse efter lyckad inskickning
+### Teknisk ändring
 
-**Ingen databasändring behövs** — `leads`-tabellen har redan alla nödvändiga kolumner (`car_id`, `customer_name`, `customer_email`, `customer_phone`, `message`, `dealer_name`, `status`) och RLS tillåter publika inserts.
+**Fil: `src/pages/CarDetail.tsx`** (rad 401-407)
+- Uppdatera rubrik och beskrivningstext i success-staten
+- Lägg till bilnamnet i meddelandet för tydlighet
 
