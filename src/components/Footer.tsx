@@ -112,7 +112,7 @@ export const Footer = () => {
           </p>
           <div className="flex items-center gap-1 text-xs italic text-secondary-foreground/50 tracking-wide leading-none">
             <span>Framtagen på KTH</span>
-            <img src={kthLogo} alt="KTH" className="h-10 w-auto brightness-0 invert object-contain" loading="lazy" />
+            <img src={kthLogo} alt="KTH" className="h-16 w-auto brightness-0 invert object-contain" loading="lazy" />
           </div>
         </div>
       </div>
