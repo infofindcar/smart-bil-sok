@@ -153,19 +153,20 @@ const Index = () => {
         <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
         {/* Hero content — unified for mobile & desktop */}
-        <div className="relative z-10 flex flex-col items-center justify-start pt-28 md:pt-24 text-center px-6 w-full min-h-[100svh] md:min-h-0">
+        {/* Mobile hero content */}
+        <div className="relative z-10 flex flex-col items-center justify-start pt-28 text-center px-6 w-full min-h-[100svh] md:hidden">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-6 w-full max-w-sm md:max-w-lg"
+            className="space-y-6 w-full max-w-sm"
           >
             <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight font-serif"
+              className="text-3xl font-bold text-white leading-tight font-serif"
             >
               Hitta rätt bil<br />– utan stress
             </motion.p>
@@ -173,7 +174,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-base md:text-lg leading-relaxed max-w-md mx-auto"
+              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
@@ -185,13 +186,11 @@ const Index = () => {
               <Button
                 onClick={scrollToSearch}
                 variant="gradient"
-                className="w-full md:w-auto h-14 md:h-12 rounded-2xl md:rounded-full text-base md:text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform md:px-10 hero-cta-glow"
+                className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform hero-cta-glow"
               >
                 Hitta din bil
               </Button>
             </motion.div>
-
-            {/* Social proof */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -204,7 +203,70 @@ const Index = () => {
                   <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
                 </p>
               </div>
-              <p className="text-white/50 text-xs md:text-sm">
+              <p className="text-white/50 text-xs">
+                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Desktop hero content — spread vertically */}
+        <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
+          {/* Top: headline over the mountains */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-8"
+          >
+            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="text-5xl lg:text-6xl font-bold text-white leading-tight font-serif"
+            >
+              Din objektiva<br />bilrådgivare
+            </motion.p>
+          </motion.div>
+
+          {/* Middle: subtitle just above the car */}
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+            className="text-white/70 text-lg leading-relaxed max-w-md mx-auto -mt-8"
+          >
+            Vi matchar dig med bilar baserat på din livsstil, budget och behov
+          </motion.p>
+
+          {/* Bottom: CTA + social proof below the car */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+            className="flex flex-col items-center gap-4 mb-12"
+          >
+            <Button
+              onClick={scrollToSearch}
+              variant="gradient"
+              className="h-12 rounded-full text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform px-10 hero-cta-glow"
+            >
+              Hitta din bil
+            </Button>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <p className="text-white/70 text-xs">
+                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
+                </p>
+              </div>
+              <p className="text-white/50 text-sm">
                 ✔ Tar 30 sek · Gratis · Objektiv rådgivning
               </p>
             </motion.div>
