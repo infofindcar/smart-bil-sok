@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Mail, Instagram, Linkedin, ArrowUpRight } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
+import kthLogo from '@/assets/kth-logo.png';
 
 export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -109,8 +110,10 @@ export const Footer = () => {
           <p className="text-xs text-secondary-foreground/40">
             © {new Date().getFullYear()} FindCar. Alla rättigheter förbehållna.
           </p>
-          <p className="text-xs text-secondary-foreground/30">
-            Byggd i Sverige 🇸🇪
+          <p className="flex items-center gap-1.5 text-xs italic text-secondary-foreground/30 tracking-wide">
+            Byggd på
+            <img src={kthLogo} alt="KTH" className="h-3.5 w-auto inline-block opacity-50" loading="lazy" />
+            KTH
           </p>
         </div>
       </div>
