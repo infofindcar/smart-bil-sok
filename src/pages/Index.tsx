@@ -145,7 +145,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
         {/* Hero content — unified for mobile & desktop */}
-        <div className="relative z-10 flex flex-col items-center justify-start pt-28 md:pt-0 md:justify-center text-center px-6 w-full min-h-[100svh] md:min-h-0">
+        <div className="relative z-10 flex flex-col items-center justify-start pt-28 md:pt-24 text-center px-6 w-full min-h-[100svh] md:min-h-0">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
