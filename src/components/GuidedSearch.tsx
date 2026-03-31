@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, Square } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, MicOff } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -154,7 +154,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const recognitionRef = useRef<any>(null);
   const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
@@ -168,59 +167,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const targetScrollTopRef = useRef(0);
 
   const confirmedTextRef = useRef('');
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const [barHeights, setBarHeights] = useState<number[]>(new Array(32).fill(2));
-
-  const startAudioAnalyser = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const ctx = new AudioContext();
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.6;
-      source.connect(analyser);
-      audioContextRef.current = ctx;
-      analyserRef.current = analyser;
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      const update = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const bars: number[] = [];
-        const step = Math.floor(dataArray.length / 32);
-        for (let i = 0; i < 32; i++) {
-          const val = dataArray[i * step] / 255;
-          bars.push(Math.max(2, val * 24));
-        }
-        setBarHeights(bars);
-        animFrameRef.current = requestAnimationFrame(update);
-      };
-      update();
-    } catch {
-      // microphone access denied — keep static bars
-    }
-  }, []);
-
-  const stopAudioAnalyser = useCallback(() => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    analyserRef.current = null;
-    setBarHeights(new Array(32).fill(2));
-  }, []);
 
   const toggleListening = useCallback(() => {
     if (isListening) {
       recognitionRef.current?.stop();
-      stopAudioAnalyser();
       setIsListening(false);
-      setIsTranscribing(true);
-      // Clear transcribing state after a short delay
-      setTimeout(() => setIsTranscribing(false), 1500);
       return;
     }
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -247,13 +198,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
       setInputValue(display.trim());
     };
-    recognition.onerror = () => { setIsListening(false); stopAudioAnalyser(); };
-    recognition.onend = () => { setIsListening(false); stopAudioAnalyser(); };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
     recognition.start();
-    startAudioAnalyser();
     setIsListening(true);
-  }, [isListening, language, inputValue, startAudioAnalyser, stopAudioAnalyser]);
+  }, [isListening, language, inputValue]);
 
 
   useEffect(() => {
@@ -682,92 +632,59 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
-          {(isListening || isTranscribing) ? (
-            /* Voice recording mode — dark bar with live waveform */
-            <div className="flex items-center gap-2">
+          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+            <div
+              className={`flex-1 relative rounded-xl border transition-all duration-200 ${
+                isListening
+                  ? 'border-primary/40 ring-2 ring-primary/20'
+                  : inputFocused
+                    ? 'border-secondary/30 ring-1 ring-secondary/10'
+                    : 'border-border/30'
+              } bg-background/60`}
+            >
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                onKeyDown={handleKeyDown}
+                placeholder={isListening
+                  ? (language === 'en' ? 'Listening...' : 'Lyssnar...')
+                  : (PLACEHOLDERS[language] || PLACEHOLDERS.sv)}
+                disabled={isLoading}
+                rows={1}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                name="clutch-chat-input"
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '42px' }}
+              />
+            </div>
+            {speechSupported && (
               <button
                 type="button"
                 onClick={toggleListening}
-                disabled={isTranscribing}
-                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 flex items-center justify-center bg-foreground/10 border border-border/30 text-foreground hover:bg-foreground/20 transition-all disabled:opacity-50"
+                disabled={isLoading}
+                className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                  isListening
+                    ? 'bg-primary/10 border-primary/40 text-primary mic-listening'
+                    : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
+                } disabled:opacity-50`}
               >
-                <Square className="h-3.5 w-3.5 fill-current" />
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
-              <div className="flex-1 relative rounded-xl bg-foreground/5 border border-border/20 h-[42px] md:h-10 flex items-center px-4 overflow-hidden">
-                {isTranscribing ? (
-                  <span className="text-sm text-muted-foreground animate-pulse">
-                    {language === 'en' ? 'Transcribing...' : 'Transkriberar...'}
-                  </span>
-                ) : (
-                  <div className="w-full flex items-center justify-center gap-[2px] h-full">
-                    {barHeights.map((h, i) => (
-                      <span
-                        key={i}
-                        className="inline-block w-[2px] rounded-full bg-primary/60 transition-[height] duration-75"
-                        style={{ height: `${h}px` }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Button
-                type="button"
-                size="icon"
-                onClick={(e) => { toggleListening(); setTimeout(() => handleSendMessage(e as any), 100); }}
-                disabled={!inputValue.trim() || isTranscribing}
-                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
-              >
-                <Send className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ) : (
-            /* Normal text input mode */
-            <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-              <div
-                className={`flex-1 relative rounded-xl border transition-all duration-200 ${
-                  inputFocused
-                    ? 'border-secondary/30 ring-1 ring-secondary/10'
-                    : 'border-border/30'
-                } bg-background/60`}
-              >
-                <textarea
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
-                  disabled={isLoading}
-                  rows={1}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  name="clutch-chat-input"
-                  className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
-                  style={{ minHeight: '42px' }}
-                />
-              </div>
-              {speechSupported && (
-                <button
-                  type="button"
-                  onClick={toggleListening}
-                  disabled={isLoading}
-                  className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60 disabled:opacity-50"
-                >
-                  <Mic className="h-4 w-4" />
-                </button>
-              )}
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!inputValue.trim() || isLoading}
-                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
-              >
-                <Send className="h-3.5 w-3.5" />
-              </Button>
-            </form>
-          )}
+            )}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!inputValue.trim() || isLoading}
+              className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </Button>
+          </form>
         </div>
       </div>
     </div>
