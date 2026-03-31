@@ -445,24 +445,23 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     <div className="w-full max-w-3xl mx-auto">
       <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-2xl shadow-sm">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
-          <div className="flex items-center gap-3">
+        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
-                <Sparkles className="h-4.5 w-4.5 text-secondary" />
+              <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-secondary" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border-[1.5px] border-card" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
-              <p className="text-[11px] text-muted-foreground">{SUBTITLE[language] || SUBTITLE.sv}</p>
+              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch</h3>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
+              className="text-[11px] bg-transparent border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
             >
               <option value="sv">🇸🇪 SV</option>
               <option value="en">🇬🇧 EN</option>
@@ -472,11 +471,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </select>
             <button
               onClick={() => handleReset()}
-              className="text-[11px] flex items-center gap-1 border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
+              className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
               title={RESTART[language] || RESTART.sv}
             >
               <RotateCcw className="h-3 w-3" />
-              {RESTART[language] || RESTART.sv}
             </button>
           </div>
         </div>
