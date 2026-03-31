@@ -155,13 +155,13 @@ const Index = () => {
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden">
-          {/* Top: headline + subtitle — positioned ~40% down */}
-          <div className="flex-1 flex items-end pb-4" style={{ flex: '0 0 42%' }}>
+          {/* Spacer to push headline to ~38% from top */}
+          <div style={{ flex: '0 0 35%' }} />
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-16 space-y-4"
+            className="space-y-3"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
@@ -182,12 +182,15 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
+          {/* Flexible spacer — car is visible here */}
+          <div className="flex-1" />
+
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-8"
+            className="flex flex-col items-center gap-4 mb-10 w-full"
           >
             <Button
               onClick={scrollToSearch}
