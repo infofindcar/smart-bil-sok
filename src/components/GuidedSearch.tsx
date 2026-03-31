@@ -380,7 +380,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       }
     } catch (err) {
       console.error('Guided search error:', err);
-      addAssistantMessage('Något gick fel. Försök igen!');
+      const errorMessages: Record<string, string> = {
+        sv: 'Oj, något gick fel med sökningen. Kontrollera din internetanslutning och försök igen.',
+        en: 'Oops, something went wrong. Check your connection and try again.',
+        no: 'Noe gikk galt. Sjekk tilkoblingen og prøv igjen.',
+        da: 'Noget gik galt. Tjek din forbindelse og prøv igen.',
+        fi: 'Jokin meni pieleen. Tarkista yhteys ja yritä uudelleen.',
+      };
+      addAssistantMessage(
+        errorMessages[language] || errorMessages.sv,
+        [language === 'sv' ? 'Försök igen' : 'Try again']
+      );
       setIsLoading(false);
     }
   };
@@ -527,7 +537,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm text-left"
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm text-left active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1"
                 >
                   {s}
                 </button>
