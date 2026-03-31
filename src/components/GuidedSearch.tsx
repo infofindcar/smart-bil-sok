@@ -658,7 +658,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 autoCorrect="off"
                 spellCheck={false}
                 name="clutch-chat-input"
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
                 style={{ minHeight: '42px' }}
               />
             </div>
