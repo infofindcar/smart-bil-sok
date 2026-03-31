@@ -645,6 +645,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 style={{ minHeight: '42px' }}
               />
             </div>
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={isLoading}
+                className={`h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                  isListening
+                    ? 'bg-destructive/10 border-destructive/40 text-destructive animate-pulse'
+                    : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
+                } disabled:opacity-50`}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
             <Button
               type="submit"
               size="icon"
