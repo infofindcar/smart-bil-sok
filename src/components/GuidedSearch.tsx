@@ -359,6 +359,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     e?.preventDefault();
     const text = (overrideText || inputValue).trim();
     if (!text || isLoading) return;
+    navigator.vibrate?.(10);
 
     if (isListening && recognitionRef.current) {
       recognitionRef.current.onresult = null;
