@@ -112,7 +112,7 @@ export const Footer = () => {
           </p>
           <p className="flex items-center gap-0.5 text-xs italic text-secondary-foreground/50 tracking-wide">
             Framtagen på KTH
-            <img src={kthLogo} alt="KTH" className="h-14 w-auto inline-block brightness-0 invert -ml-0.5" loading="lazy" />
+            <img src={kthLogo} alt="KTH" className="h-14 w-auto inline-block brightness-0 invert -ml-0.5 self-center" loading="lazy" style={{ marginBottom: '-2px' }} />
           </p>
         </div>
       </div>
