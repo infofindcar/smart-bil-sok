@@ -682,34 +682,39 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
-          {isListening ? (
-            /* Voice recording mode — dark bar with waveform */
+          {(isListening || isTranscribing) ? (
+            /* Voice recording mode — dark bar with live waveform */
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleListening}
-                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 flex items-center justify-center bg-foreground/10 border border-border/30 text-foreground hover:bg-foreground/20 transition-all"
+                disabled={isTranscribing}
+                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 flex items-center justify-center bg-foreground/10 border border-border/30 text-foreground hover:bg-foreground/20 transition-all disabled:opacity-50"
               >
                 <Square className="h-3.5 w-3.5 fill-current" />
               </button>
               <div className="flex-1 relative rounded-xl bg-foreground/5 border border-border/20 h-[42px] md:h-10 flex items-center px-4 overflow-hidden">
-                <div className="voice-waveform w-full flex items-center justify-center gap-[2px] h-full">
-                  {Array.from({ length: 48 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="inline-block w-[2px] rounded-full bg-primary/60 voice-bar"
-                      style={{
-                        animationDelay: `${i * 0.04}s`,
-                      }}
-                    />
-                  ))}
-                </div>
+                {isTranscribing ? (
+                  <span className="text-sm text-muted-foreground animate-pulse">
+                    {language === 'en' ? 'Transcribing...' : 'Transkriberar...'}
+                  </span>
+                ) : (
+                  <div className="w-full flex items-center justify-center gap-[2px] h-full">
+                    {barHeights.map((h, i) => (
+                      <span
+                        key={i}
+                        className="inline-block w-[2px] rounded-full bg-primary/60 transition-[height] duration-75"
+                        style={{ height: `${h}px` }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <Button
                 type="button"
                 size="icon"
                 onClick={(e) => { toggleListening(); setTimeout(() => handleSendMessage(e as any), 100); }}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isTranscribing}
                 className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
               >
                 <Send className="h-3.5 w-3.5" />

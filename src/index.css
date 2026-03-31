@@ -330,16 +330,6 @@ html::-webkit-scrollbar-thumb:hover {
   border-radius: 4px;
 }
 
-/* Voice waveform animation */
-@keyframes voice-bar {
-  0%, 100% { height: 4px; }
-  50% { height: 20px; }
-}
-.voice-bar {
-  height: 4px;
-  animation: voice-bar 0.8s ease-in-out infinite;
-}
-
 /* Reduced motion: respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
