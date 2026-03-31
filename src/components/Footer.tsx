@@ -111,7 +111,7 @@ export const Footer = () => {
             © {new Date().getFullYear()} FindCar. Alla rättigheter förbehållna.
           </p>
           <p className="flex items-center gap-0.5 text-xs italic text-secondary-foreground/50 tracking-wide">
-            Byggd på
+            Framtagen på
             <img src={kthLogo} alt="KTH" className="h-14 w-auto inline-block brightness-0 invert -ml-0.5" loading="lazy" />
           </p>
         </div>
