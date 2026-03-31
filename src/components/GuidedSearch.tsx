@@ -586,14 +586,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div ref={inputAreaRef} className="px-4 md:px-5 pb-4 pt-3 md:pt-2 border-t border-border/50">
+        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
                 inputFocused
-                  ? 'border-secondary/40 shadow-[0_0_0_2px_hsl(var(--secondary)/0.06)]'
-                  : 'border-border/40'
-              } bg-background/80`}
+                  ? 'border-secondary/30 ring-1 ring-secondary/10'
+                  : 'border-border/30'
+              } bg-background/60`}
             >
               <textarea
                 ref={inputRef}
@@ -605,15 +605,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
                 disabled={isLoading}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3.5 py-3 md:py-2.5 text-base md:text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '44px' }}
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '42px' }}
               />
             </div>
             <Button
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-11 w-11 md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>
