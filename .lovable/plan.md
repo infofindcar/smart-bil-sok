@@ -1,16 +1,29 @@
 
 
-## Problem
+## Plan: Byt mobil hero-bild till ny högkvalitetsbild
 
-Hero-sektionen på mobil har `min-h-[75vh]` vilket gör att den bara täcker ~75% av skärmen. Användaren ser innehållet under hero redan vid sidladdning — det ska vara en fullskärms hero som tar upp hela viewport.
+### Vad
+Ersätt den nuvarande mobila hero-bakgrundsbilden med den nya uppladdade bilden (sjö/berg/moln) i full kvalitet. Endast mobilvy påverkas.
 
-## Plan
+### Ändringar
 
-**Fil: `src/pages/Index.tsx`**
+**1. Kopiera bilden**
+- `user-uploads://thugbong-d11u-qXfsF8-unsplash-2.jpg` → `public/images/hero_mobile.jpg` (skriver över den gamla)
 
-Ändra hero-sektionens höjd på mobil från `min-h-[75vh]` till `min-h-[100svh]` (small viewport height, hanterar mobila adressfält korrekt) så att hero täcker hela skärmen.
+**2. Ändra `src/pages/Index.tsx` (rad 128-137)**
+- Ta bort inline `style={{ backgroundImage }}` från hero-`<section>`
+- Lägg till två `<img>`-element inuti hero, före overlay:
 
-- Rad 129: Ändra `min-h-[75vh] md:min-h-screen` → `min-h-[100svh] md:min-h-screen`
+```tsx
+<section className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
+  {/* Responsive hero backgrounds */}
+  <img src="/images/hero_mobile.jpg" alt="" className="absolute inset-0 w-full h-full object-cover block md:hidden" loading="eager" decoding="async" fetchPriority="high" />
+  <img src="/images/hero_findcar.jpg" alt="" className="absolute inset-0 w-full h-full object-cover hidden md:block" loading="eager" decoding="async" fetchPriority="high" />
+  
+  {/* Overlay */}
+  <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
+```
 
-Det är en enradsändring. `svh` (small viewport height) är den korrekta enheten för mobil — den tar hänsyn till att mobilens adressfält kan vara synligt, så hero fyller exakt den synliga ytan.
+- `fetchPriority="high"` + `loading="eager"` = bilden laddas med högsta prioritet utan komprimering
+- Desktop helt oförändrad
 
