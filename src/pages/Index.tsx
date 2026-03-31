@@ -156,7 +156,7 @@ const Index = () => {
         {/* Mobile hero content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden">
           {/* Spacer to push headline to ~38% from top */}
-          <div style={{ flex: '0 0 22%' }} />
+          <div style={{ flex: '0 0 48%' }} />
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
