@@ -646,7 +646,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <textarea
                 ref={inputRef}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = '0px';
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
