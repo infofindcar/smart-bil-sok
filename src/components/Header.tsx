@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Mail, Linkedin } from 'lucide-react';
+import { Menu, X, Mail, Linkedin, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -185,6 +185,20 @@ export const Header = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">LinkedIn</p>
                 <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">FindCar på LinkedIn</p>
+              </div>
+            </a>
+            <a
+              href="https://instagram.com/findcar.se"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent/50 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Instagram className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Instagram</p>
+                <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">@findcar.se</p>
               </div>
             </a>
           </div>
