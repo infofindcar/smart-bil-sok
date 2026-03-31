@@ -212,12 +212,12 @@ const Index = () => {
 
         {/* Desktop hero content — spread vertically */}
         <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
-          {/* Top: headline over the mountains */}
+          {/* Top: headline + subtitle together */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-24"
+            className="mt-24 space-y-4"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
@@ -228,17 +228,15 @@ const Index = () => {
             >
               Din objektiva<br />bilrådgivare
             </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+              className="text-white/70 text-lg leading-relaxed max-w-md mx-auto"
+            >
+              Vi matchar dig med bilar baserat på din livsstil, budget och behov
+            </motion.p>
           </motion.div>
-
-          {/* Middle: subtitle just above the car */}
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-            className="text-white/70 text-lg leading-relaxed max-w-md mx-auto -mt-8"
-          >
-            Vi matchar dig med bilar baserat på din livsstil, budget och behov
-          </motion.p>
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
