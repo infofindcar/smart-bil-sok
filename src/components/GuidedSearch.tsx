@@ -363,8 +363,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             `🎯 ${resultMsg}`,
             undefined,
             () => {
-              // Trigger results after typewriter finishes
               onResults(data.cars, resultMsg, data.carReasons || []);
+              setTimeout(() => {
+                onScrollToResults?.();
+              }, 600);
             }
           );
         } else {
@@ -442,27 +444,26 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     !isTypingMsg(lastAssistantMsg);
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-secondary/[0.15] bg-card backdrop-blur-xl shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)] md:shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)]">
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-2xl shadow-sm">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
-          <div className="flex items-center gap-3">
+        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
-                <Sparkles className="h-4.5 w-4.5 text-secondary" />
+              <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-secondary" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border-[1.5px] border-card" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
-              <p className="text-[11px] text-muted-foreground">{SUBTITLE[language] || SUBTITLE.sv}</p>
+              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch</h3>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
+              className="text-[11px] bg-transparent border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
             >
               <option value="sv">🇸🇪 SV</option>
               <option value="en">🇬🇧 EN</option>
@@ -472,11 +473,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </select>
             <button
               onClick={() => handleReset()}
-              className="text-[11px] flex items-center gap-1 border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
+              className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
               title={RESTART[language] || RESTART.sv}
             >
               <RotateCcw className="h-3 w-3" />
-              {RESTART[language] || RESTART.sv}
             </button>
           </div>
         </div>
@@ -484,7 +484,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="px-4 md:px-5 py-4 space-y-3 max-h-[60vh] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[220px] pb-6"
+          className="px-4 md:px-6 py-4 space-y-3 max-h-[55vh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px] pb-6"
         >
           {messages.map((msg) => (
             <div
@@ -493,15 +493,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               style={{ transition: 'all 0.2s ease-out' }}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
-                  <Sparkles className="h-3 w-3 text-primary" />
+                <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                  <Sparkles className="h-3 w-3 text-secondary/70" />
                 </div>
               )}
               <div
-                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-3 md:py-2.5 text-base md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
+                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
-                    : 'bg-muted/50 text-foreground rounded-bl-sm'
+                    ? 'bg-secondary text-secondary-foreground rounded-br-sm'
+                    : 'bg-muted/40 text-foreground rounded-bl-sm'
                 }`}
               >
                 {getDisplayText(msg)}
@@ -515,8 +515,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {isLoading && phase !== 'searching' && (
             <div className="flex justify-start gap-2 animate-fade-in">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/20 to-primary/15 flex items-center justify-center shrink-0 mt-1 border border-secondary/20">
-                <Sparkles className="h-3 w-3 text-primary" />
+              <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                <Sparkles className="h-3 w-3 text-secondary/70" />
               </div>
               <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-5 py-3.5">
                 <div className="flex items-center gap-1.5">
@@ -531,22 +531,22 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Quick-reply suggestions */}
         {showSuggestions && (
-          <div className="px-4 md:px-5 pb-3">
-            <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-1.5">
+          <div className="px-4 md:px-6 pb-3">
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5">
               {lastAssistantMsg!.suggestions!.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-foreground/90 transition-all duration-150 shadow-sm text-left active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1"
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border text-foreground/80 transition-all duration-150 text-left active:scale-[0.98]"
                 >
                   {s}
                 </button>
               ))}
               <button
                 onClick={() => inputRef.current?.focus()}
-                className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-3 md:py-1.5 rounded-xl md:rounded-lg border border-dashed border-border bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
+                className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-dashed border-border/40 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
               >
-                <PenLine className="h-4 w-4 md:h-3 md:w-3" />
+                <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
                 {WRITE_OWN[language] || WRITE_OWN.sv}
               </button>
             </div>
@@ -588,14 +588,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div ref={inputAreaRef} className="px-4 md:px-5 pb-4 pt-3 md:pt-2 border-t border-border/50">
+        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
                 inputFocused
-                  ? 'border-secondary/40 shadow-[0_0_0_2px_hsl(var(--secondary)/0.06)]'
-                  : 'border-border/40'
-              } bg-background/80`}
+                  ? 'border-secondary/30 ring-1 ring-secondary/10'
+                  : 'border-border/30'
+              } bg-background/60`}
             >
               <textarea
                 ref={inputRef}
@@ -607,15 +607,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
                 disabled={isLoading}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3.5 py-3 md:py-2.5 text-base md:text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '44px' }}
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
+                style={{ minHeight: '42px' }}
               />
             </div>
             <Button
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-11 w-11 md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>
