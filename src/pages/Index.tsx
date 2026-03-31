@@ -181,7 +181,7 @@ const Index = () => {
           </motion.div>
 
           {/* Spacer between headline and CTA */}
-          <div className="h-[18svh]" />
+          <div className="h-[10svh]" />
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
