@@ -359,12 +359,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     const text = (overrideText || inputValue).trim();
     if (!text || isLoading) return;
 
-    if (isListening) {
-      recognitionRef.current?.stop();
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
       setIsListening(false);
     }
-    setInputValue('');
     confirmedTextRef.current = '';
+    setInputValue('');
     const userMsg = addUserMessage(text);
     setIsLoading(true);
 
