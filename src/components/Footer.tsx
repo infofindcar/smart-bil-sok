@@ -110,10 +110,10 @@ export const Footer = () => {
           <p className="text-xs text-secondary-foreground/40">
             © {new Date().getFullYear()} FindCar. Alla rättigheter förbehållna.
           </p>
-          <p className="flex items-center gap-0.5 text-xs italic text-secondary-foreground/50 tracking-wide">
-            Framtagen på KTH
-            <img src={kthLogo} alt="KTH" className="h-14 w-auto inline-block brightness-0 invert -ml-0.5" loading="lazy" />
-          </p>
+          <div className="flex items-center gap-1 text-xs italic text-secondary-foreground/50 tracking-wide leading-none">
+            <span>Framtagen på KTH</span>
+            <img src={kthLogo} alt="KTH" className="h-10 w-auto brightness-0 invert object-contain" loading="lazy" />
+          </div>
         </div>
       </div>
     </footer>
