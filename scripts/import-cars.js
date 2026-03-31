@@ -101,8 +101,8 @@ async function fetchInterval(priceMin, priceMax) {
     if (page > 1) await sleep(200);
 
     const url = priceMax >= 999999999
-      ? `${BLOCKET_API_BASE}?page=${page}&price_min=${priceMin}`
-      : `${BLOCKET_API_BASE}?page=${page}&price_min=${priceMin}&price_max=${priceMax}`;
+      ? `${BLOCKET_API_BASE}?page=${page}&price_from=${priceMin}`
+      : `${BLOCKET_API_BASE}?page=${page}&price_from=${priceMin}&price_to=${priceMax}`;
 
     let res;
     try {
