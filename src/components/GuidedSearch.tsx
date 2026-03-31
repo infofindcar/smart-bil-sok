@@ -154,6 +154,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const recognitionRef = useRef<any>(null);
   const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
@@ -167,11 +168,59 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const targetScrollTopRef = useRef(0);
 
   const confirmedTextRef = useRef('');
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const [barHeights, setBarHeights] = useState<number[]>(new Array(32).fill(2));
+
+  const startAudioAnalyser = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const ctx = new AudioContext();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.6;
+      source.connect(analyser);
+      audioContextRef.current = ctx;
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const update = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const bars: number[] = [];
+        const step = Math.floor(dataArray.length / 32);
+        for (let i = 0; i < 32; i++) {
+          const val = dataArray[i * step] / 255;
+          bars.push(Math.max(2, val * 24));
+        }
+        setBarHeights(bars);
+        animFrameRef.current = requestAnimationFrame(update);
+      };
+      update();
+    } catch {
+      // microphone access denied — keep static bars
+    }
+  }, []);
+
+  const stopAudioAnalyser = useCallback(() => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    setBarHeights(new Array(32).fill(2));
+  }, []);
 
   const toggleListening = useCallback(() => {
     if (isListening) {
       recognitionRef.current?.stop();
+      stopAudioAnalyser();
       setIsListening(false);
+      setIsTranscribing(true);
+      // Clear transcribing state after a short delay
+      setTimeout(() => setIsTranscribing(false), 1500);
       return;
     }
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -198,12 +247,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
       setInputValue(display.trim());
     };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => { setIsListening(false); stopAudioAnalyser(); };
+    recognition.onend = () => { setIsListening(false); stopAudioAnalyser(); };
     recognitionRef.current = recognition;
     recognition.start();
+    startAudioAnalyser();
     setIsListening(true);
-  }, [isListening, language, inputValue]);
+  }, [isListening, language, inputValue, startAudioAnalyser, stopAudioAnalyser]);
 
 
   useEffect(() => {
@@ -632,34 +682,39 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
-          {isListening ? (
-            /* Voice recording mode — dark bar with waveform */
+          {(isListening || isTranscribing) ? (
+            /* Voice recording mode — dark bar with live waveform */
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleListening}
-                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 flex items-center justify-center bg-foreground/10 border border-border/30 text-foreground hover:bg-foreground/20 transition-all"
+                disabled={isTranscribing}
+                className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 flex items-center justify-center bg-foreground/10 border border-border/30 text-foreground hover:bg-foreground/20 transition-all disabled:opacity-50"
               >
                 <Square className="h-3.5 w-3.5 fill-current" />
               </button>
               <div className="flex-1 relative rounded-xl bg-foreground/5 border border-border/20 h-[42px] md:h-10 flex items-center px-4 overflow-hidden">
-                <div className="voice-waveform w-full flex items-center justify-center gap-[2px] h-full">
-                  {Array.from({ length: 48 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="inline-block w-[2px] rounded-full bg-primary/60 voice-bar"
-                      style={{
-                        animationDelay: `${i * 0.04}s`,
-                      }}
-                    />
-                  ))}
-                </div>
+                {isTranscribing ? (
+                  <span className="text-sm text-muted-foreground animate-pulse">
+                    {language === 'en' ? 'Transcribing...' : 'Transkriberar...'}
+                  </span>
+                ) : (
+                  <div className="w-full flex items-center justify-center gap-[2px] h-full">
+                    {barHeights.map((h, i) => (
+                      <span
+                        key={i}
+                        className="inline-block w-[2px] rounded-full bg-primary/60 transition-[height] duration-75"
+                        style={{ height: `${h}px` }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <Button
                 type="button"
                 size="icon"
                 onClick={(e) => { toggleListening(); setTimeout(() => handleSendMessage(e as any), 100); }}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isTranscribing}
                 className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-full shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
               >
                 <Send className="h-3.5 w-3.5" />
