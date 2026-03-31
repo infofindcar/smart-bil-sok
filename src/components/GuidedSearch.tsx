@@ -277,6 +277,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Auto-resize textarea when inputValue changes (voice or clear)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = '0px';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [inputValue]);
+
   useEffect(() => {
     queueScrollToBottom(true);
   }, [messages.length, isLoading, queueScrollToBottom]);
@@ -646,7 +654,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <textarea
                 ref={inputRef}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = '0px';
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
@@ -659,7 +672,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 autoCorrect="off"
                 spellCheck={false}
                 name="clutch-chat-input"
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[100px]"
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
                 style={{ minHeight: '42px' }}
               />
             </div>
