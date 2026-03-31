@@ -154,7 +154,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
