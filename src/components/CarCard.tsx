@@ -39,8 +39,11 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
 
   return (
     <div
-      className="group relative flex flex-col bg-card rounded-xl overflow-hidden border border-border/60 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
+      className="group relative flex flex-col bg-card rounded-xl overflow-hidden border border-border/60 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/8 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
       onClick={() => navigate(`/car/${car.id}`, { state: { car } })}
+      tabIndex={0}
+      role="button"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/car/${car.id}`, { state: { car } }); } }}
     >
       {/* Image */}
       <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden">
