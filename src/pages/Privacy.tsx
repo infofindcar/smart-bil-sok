@@ -51,6 +51,7 @@ const Privacy = () => {
     </main>
     <Footer />
   </div>
-);
+  );
+};
 
 export default Privacy;
