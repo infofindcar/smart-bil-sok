@@ -123,7 +123,7 @@ const Index = () => {
       setLoadingMore(false);
     }
   }, [cars, language]);
-  const scrollProgress = useScrollProgress();
+  const { progress: scrollProgress, parallaxY } = useScrollProgress();
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
