@@ -571,11 +571,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           )}
         </div>
 
-        {/* Quick-reply suggestions */}
-        {showSuggestions && (
+        {/* Quick-reply suggestions + Search now button */}
+        {(showSuggestions || (phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user'))) && (
           <div className="px-4 md:px-6 pb-3">
-            <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5">
-              {lastAssistantMsg!.suggestions!.map((s) => (
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5 items-stretch md:items-center">
+              {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
@@ -584,27 +584,25 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   {s}
                 </button>
               ))}
-              <button
-                onClick={() => inputRef.current?.focus()}
-                className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-dashed border-border/40 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
-              >
-                <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
-                {WRITE_OWN[language] || WRITE_OWN.sv}
-              </button>
+              {showSuggestions && (
+                <button
+                  onClick={() => inputRef.current?.focus()}
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-dashed border-border/40 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
+                >
+                  <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+                  {WRITE_OWN[language] || WRITE_OWN.sv}
+                </button>
+              )}
+              {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
+                <button
+                  onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
+                  className="w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
+                >
+                  <Search className="h-3 w-3" />
+                  {SEARCH_NOW[language] || SEARCH_NOW.sv}
+                </button>
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Search now button — always visible during chatting when user has sent at least one message */}
-        {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
-          <div className="px-4 md:px-5 pb-3 flex justify-end">
-            <button
-              onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
-              className="text-[11px] px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
-            >
-              <Search className="h-3 w-3" />
-              {SEARCH_NOW[language] || SEARCH_NOW.sv}
-            </button>
           </div>
         )}
 
