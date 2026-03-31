@@ -147,28 +147,65 @@ const Index = () => {
         {/* Hero content — unified for mobile & desktop */}
         <div className="relative z-10 flex flex-col items-center justify-start pt-28 md:pt-0 md:justify-center text-center px-6 w-full min-h-[100svh] md:min-h-0">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="space-y-6 w-full max-w-sm md:max-w-lg"
           >
             <h1 className="sr-only">FindCar — Hitta din perfekta bil med AI i Sverige</h1>
-            <p className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight font-serif">
-              Hitta rätt bil<br />– utan stress
-            </p>
-            <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-md mx-auto">
-              Vi matchar dig med bilar baserat på din livsstil, budget och behov
-            </p>
-            <Button
-              onClick={scrollToSearch}
-              variant="gradient"
-              className="w-full md:w-auto h-14 md:h-12 rounded-2xl md:rounded-full text-base md:text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform md:px-10"
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight font-serif"
             >
-              Hitta din bil
-            </Button>
-            <p className="text-white/50 text-xs md:text-sm">
-              ✔ Tar 30 sek · Gratis · Objektiv rådgivning
-            </p>
+              Hitta rätt bil<br />– utan stress
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+              className="text-white/70 text-base md:text-lg leading-relaxed max-w-md mx-auto"
+            >
+              Vi matchar dig med bilar baserat på din livsstil, budget och behov
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+            >
+              <Button
+                onClick={scrollToSearch}
+                variant="gradient"
+                className="w-full md:w-auto h-14 md:h-12 rounded-2xl md:rounded-full text-base md:text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform md:px-10 hero-cta-glow"
+              >
+                Hitta din bil
+              </Button>
+            </motion.div>
+
+            {/* Social proof */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="flex -space-x-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="w-7 h-7 rounded-full border-2 border-white/20 bg-gradient-to-br from-secondary/60 to-primary/60 flex items-center justify-center text-[10px] text-white font-medium">
+                      {['A', 'M', 'K', 'J'][i]}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-white/60 text-xs ml-1">
+                  <span className="text-white/80 font-medium">1 200+</span> bilsökningar gjorda
+                </p>
+              </div>
+              <p className="text-white/50 text-xs md:text-sm">
+                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
+              </p>
+            </motion.div>
           </motion.div>
         </div>
 
