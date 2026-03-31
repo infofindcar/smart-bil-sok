@@ -663,13 +663,19 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 type="button"
                 onClick={toggleListening}
                 disabled={isLoading}
-                className={`h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
                   isListening
-                    ? 'bg-destructive/10 border-destructive/40 text-destructive animate-pulse'
+                    ? 'bg-destructive/10 border-destructive/40 text-destructive'
                     : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
                 } disabled:opacity-50`}
               >
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {isListening && (
+                  <>
+                    <span className="absolute inset-0 rounded-xl border-2 border-destructive/50 mic-ripple" />
+                    <span className="absolute inset-0 rounded-xl border-2 border-destructive/30 mic-ripple mic-ripple-delay" />
+                  </>
+                )}
+                {isListening ? <MicOff className="h-4 w-4 relative z-10" /> : <Mic className="h-4 w-4" />}
               </button>
             )}
             <Button
