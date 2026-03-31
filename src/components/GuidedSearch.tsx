@@ -360,13 +360,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         if (data.cars?.length > 0) {
           const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
           addAssistantMessage(
-            `🎯 ${resultMsg}`,
-            undefined,
-            () => {
-              // Trigger results after typewriter finishes
-              onResults(data.cars, resultMsg, data.carReasons || []);
-            }
-          );
+363:             `🎯 ${resultMsg}`,
+364:             undefined,
+365:             () => {
+366:               onResults(data.cars, resultMsg, data.carReasons || []);
+367:               // Smooth scroll to results after a brief delay
+368:               setTimeout(() => {
+369:                 onScrollToResults?.();
+370:               }, 600);
+371:             }
+372:           );
         } else {
           // No results — show message with suggestions
           addAssistantMessage(
