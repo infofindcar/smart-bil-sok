@@ -193,6 +193,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   }, [isListening, language]);
 
 
+  useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
 
