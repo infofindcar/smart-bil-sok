@@ -23,19 +23,22 @@ import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
+  const [parallaxY, setParallaxY] = useState(0);
   useEffect(() => {
     const handleScroll = () => {
       const vh = window.innerHeight;
       const scrollY = window.scrollY;
       const p = Math.min(scrollY / (vh * 0.8), 1);
       setProgress(p);
+      // Parallax: image moves slower than scroll (0.35 factor)
+      setParallaxY(scrollY * 0.35);
     };
     window.addEventListener('scroll', handleScroll, {
       passive: true
     });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  return progress;
+  return { progress, parallaxY };
 };
 const SectionDivider = ({
   variant
