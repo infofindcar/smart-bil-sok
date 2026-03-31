@@ -180,8 +180,8 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
-          {/* Flexible spacer — car is visible here */}
-          <div className="flex-1" />
+          {/* Spacer between headline and CTA */}
+          <div className="h-[18svh]" />
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
