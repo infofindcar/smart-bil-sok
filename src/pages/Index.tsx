@@ -140,7 +140,15 @@ const Index = () => {
           fetchPriority="high"
           style={{ transform: `translateY(${parallaxY}px)` }}
         />
-        <img src="/images/hero_findcar.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block" loading="eager" decoding="async" fetchPriority="high" />
+        <img
+          src="/images/hero_findcar.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block will-change-transform"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          style={{ transform: `translateY(${parallaxY}px)` }}
+        />
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
