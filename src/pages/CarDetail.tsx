@@ -5,10 +5,14 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
-  ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette,
+  ArrowLeft, Fuel, Calendar, Gauge, MapPin, Car, Palette,
   Settings2, Sparkles, Zap, Shield, Weight, Package,
-  Timer, Droplets, Leaf, ShieldCheck, BatteryCharging,
+  Timer, Droplets, Leaf, ShieldCheck, BatteryCharging, Send, CheckCircle,
 } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
