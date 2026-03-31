@@ -109,6 +109,10 @@ const bodyPatterns: Record<string, string> = {
   sedan: "%Sedan%",
   halvkombi: "%Halvkombi%",
   coupe: "%Coup%",
+  cab: "%Cab%",
+  pickup: "%Pickup%",
+  minibuss: "%Minibuss%",
+  smabil: "%Småbil%",
 };
 
 const drivetrainPatterns: Record<string, string[]> = {
@@ -119,9 +123,45 @@ const drivetrainPatterns: Record<string, string[]> = {
 
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
-  suv: ["XC90", "XC60", "XC40", "EX90", "EX60", "EX40", "EX30", "RAV4", "CR-V", "Tiguan", "Tucson", "Kona", "Sportage", "Niro", "Q3", "Q5", "Q7", "Q8", "X1", "X3", "X5", "X7", "GLC", "GLE", "GLB", "EQA", "EQB", "EQC", "Model Y", "Model X", "ID.4", "ID.5", "Enyaq", "Karoq", "Kodiaq", "Forester", "Outback"],
-  kombi: ["V60", "V90", "V70", "V50", "V40", "A4 Avant", "A6 Avant", "3 Touring", "5 Touring", "Octavia Combi", "Superb Combi", "Passat Sportscombi", "Golf Sportscombi"],
-  sedan: ["S60", "S90", "S80", "S40", "A4 Sedan", "A6 Sedan", "3 Series", "5 Series", "C-Class", "E-Class", "Model 3", "Model S"],
+  suv: [
+    "XC90", "XC60", "XC40", "EX90", "EX60", "EX40", "EX30",
+    "RAV4", "CR-V", "Tiguan", "Tucson", "Kona", "Sportage", "Niro",
+    "Q3", "Q5", "Q7", "Q8", "X1", "X3", "X5", "X7",
+    "GLC", "GLE", "GLB", "EQA", "EQB", "EQC",
+    "Model Y", "Model X",
+    "ID.4", "ID.5",
+    "Enyaq", "Karoq", "Kodiaq",
+    "Forester", "Outback",
+    "Formentor", "Ateca", "Tarraco",
+    "Polestar 3",
+    "MG ZS", "MG HS", "MG4",
+    "EV6", "EV9", "Sorento", "Stonic",
+    "Arona", "Taigo",
+    "Captur", "Kadjar", "Koleos", "Austral",
+    "C5 Aircross", "3008", "5008",
+    "Grandland", "Mokka", "Crossland",
+    "Ioniq 5", "Ioniq 6", "Ioniq 7",
+    "bZ4X", "Yaris Cross", "C-HR",
+    "Scala", "Kamiq",
+    "Ceed SW", "Stinger",
+  ],
+  kombi: [
+    "V60", "V90", "V70", "V50", "V40",
+    "A4 Avant", "A6 Avant",
+    "3 Touring", "5 Touring",
+    "Octavia Combi", "Superb Combi",
+    "Passat Sportscombi", "Golf Sportscombi",
+    "Polestar 2",
+  ],
+  sedan: [
+    "S60", "S90", "S80", "S40",
+    "A4 Sedan", "A6 Sedan",
+    "3 Series", "5 Series",
+    "C-Class", "E-Class",
+    "Model 3", "Model S",
+    "Polestar 2",
+    "Ioniq 6",
+  ],
 };
 
 const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du har ett naturligt samtal med kunden för att förstå exakt vilken bil som passar dem bäst. Du ska kännas som en riktig människa som bryr sig.
@@ -148,7 +188,7 @@ INTELLIGENTA REGLER:
 - Om kunden nämner stad → liten bil och el/hybrid, men fråga om de kör långa sträckor ibland
 - Om kunden säger "låg driftskostnad" → förstå att el/hybrid och lågt miltal är viktigt
 - Om kunden nämner en färg → notera och filtrera på den
-- Om kunden nämner automat/manuell → notera det (vi kan inte filtrera direkt men nämn det i motiveringar)
+- Om kunden nämner automat/manuell → notera och filtrera på det. Informera kunden om inga matchande bilar hittas.
 - Ställ MAX EN fråga per meddelande
 - Var kort, varm och naturlig — som en kompis som kan bilar
 - Använd INTE emojis
@@ -174,8 +214,9 @@ Om du har tillräckligt med info för att söka:
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
-Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe
+Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
 Giltiga drivetrain-värden: awd, fwd, rwd
+Giltiga transmission-värden: manuell, automat
 Giltiga useCase-värden: pendling, familj, langresa, stad, blandat`;
 
 serve(async (req) => {
@@ -333,6 +374,7 @@ serve(async (req) => {
       const sanitizedColor = sanitizeStringFilter(filters.color);
       const sanitizedDrivetrain = typeof filters.drivetrain === "string" && filters.drivetrain in drivetrainPatterns
         ? filters.drivetrain : null;
+      const sanitizedTransmission = sanitizeStringFilter(filters.transmission);
 
       // Validate fuel and body type arrays against known values
       const validFuels = Array.isArray(filters.fuel)
@@ -348,26 +390,41 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
-      // Progressive relaxation search — run levels 0 and 1 in parallel for speed
+      // Track which filters were dropped at each level for transparent messaging
+      const droppedAtLevel: string[][] = [[], [], [], [], []];
+
+      // Progressive relaxation (5 levels):
+      // Level 0: everything strict
+      // Level 1: drop city, pris ±30%
+      // Level 2: drop color, pris ±50%
+      // Level 3: drop body_type, make, year, pris ±60%
+      // Level 4: drop transmission, drivetrain, fuel, pris ×0-10
+      const PRICE_MULT     = [1,    1.3,  1.5,  1.6,  10];
+      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.4,  0];
+      const MIN_RESULTS    = 3;
+
       let cars: any[] = [];
       let relaxLevel = 0;
 
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select("*");
 
-        const priceMult = [1, 1.3, 1.6, 10][level];
-        const priceMinMult = [1, 0.7, 0.5, 0][level];
         query = query
-          .gte("price", Math.floor(minPrice * priceMinMult))
-          .lte("price", Math.ceil(maxPrice * priceMult));
+          .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
+          .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
 
+        // Level 0-: city
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
         }
-        if (sanitizedMake && level < 2) {
+
+        // Level 0-2: make
+        if (sanitizedMake && level < 3) {
           query = query.ilike("make", `%${sanitizedMake}%`);
         }
-        if (validFuels.length > 0 && level < 2) {
+
+        // Level 0-3: fuel
+        if (validFuels.length > 0 && level < 4) {
           const fuelFilters = validFuels
             .map((f: string) => fuelPatterns[f])
             .filter(Boolean)
@@ -375,14 +432,14 @@ serve(async (req) => {
             .join(",");
           if (fuelFilters) query = query.or(fuelFilters);
         }
-        if (validBodyTypes.length > 0 && level < 1) {
-          // Match by body_type field, Unknown/null body_type, OR by model name
+
+        // Level 0-2: body_type
+        if (validBodyTypes.length > 0 && level < 3) {
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
             .map((p: string) => `body_type.ilike.${p}`);
-          
-          // Also match model names that imply the body type
+
           const modelFilters: string[] = [];
           for (const bt of validBodyTypes) {
             const models = modelBodyTypeMap[bt];
@@ -392,52 +449,72 @@ serve(async (req) => {
               }
             }
           }
-          
-          // Include cars with Unknown/null body_type
-          const allFilters = [...bodyFilters, ...modelFilters, "body_type.eq.Unknown", "body_type.is.null"].join(",");
+
+          // Level 2+: include Unknown/null body_type to fill results
+          const unknownFilters = level >= 2 ? ["body_type.eq.Unknown", "body_type.is.null"] : [];
+          const allFilters = [...bodyFilters, ...modelFilters, ...unknownFilters].join(",");
           if (allFilters) query = query.or(allFilters);
         }
-        if (sanitizedColor && level < 1) {
-          // Match exact color, quoted (AI-inferred) color, and Unknown/null
-          query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.is.null`);
+
+        // Level 0-1: color (strict – no Unknown/null)
+        // Level 2+: color with Unknown/null fallback (lazy color detection)
+        if (sanitizedColor && level < 2) {
+          query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%`);
+        } else if (sanitizedColor && level >= 2) {
+          query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.eq.Okänd,color.is.null`);
         }
-        if (sanitizedDrivetrain && level < 2) {
+
+        // Level 0-3: drivetrain
+        if (sanitizedDrivetrain && level < 4) {
           const dtValues = drivetrainPatterns[sanitizedDrivetrain];
           if (dtValues) {
-            const dtFilters = dtValues.map(v => `drivetrain.eq.${v}`).join(",");
+            const dtFilters = dtValues.map((v: string) => `drivetrain.eq.${v}`).join(",");
             query = query.or(`${dtFilters},drivetrain.eq.Unknown,drivetrain.is.null`);
           }
         }
-        if (yearMin && level < 2) query = query.gte("year", yearMin);
-        if (yearMax && level < 2) query = query.lte("year", yearMax);
+
+        // Level 0-3: transmission
+        if (sanitizedTransmission && level < 4) {
+          if (sanitizedTransmission.toLowerCase().includes("anuell")) {
+            query = query.or("transmission.ilike.%anuell%,transmission.ilike.%anual%,transmission.is.null");
+          } else if (sanitizedTransmission.toLowerCase().includes("utomat")) {
+            query = query.or("transmission.ilike.%utomat%,transmission.is.null");
+          }
+        }
+
+        // Level 0-2: year range
+        if (yearMin && level < 3) query = query.gte("year", yearMin);
+        if (yearMax && level < 3) query = query.lte("year", yearMax);
 
         return query.order("price", { ascending: true }).limit(9);
       };
 
-      // Fire levels 0 and 1 in parallel
-      const [res0, res1] = await Promise.all([
-        buildQuery(0),
-        buildQuery(1),
-      ]);
-
-      if (res0.data && res0.data.length > 0) {
-        cars = res0.data;
-        relaxLevel = 0;
-      } else if (res1.data && res1.data.length > 0) {
-        cars = res1.data;
-        relaxLevel = 1;
-      } else {
-        // Try levels 2 and 3 in parallel
-        const [res2, res3] = await Promise.all([
-          buildQuery(2),
-          buildQuery(3),
-        ]);
-        if (res2.data && res2.data.length > 0) {
-          cars = res2.data;
-          relaxLevel = 2;
-        } else if (res3.data && res3.data.length > 0) {
-          cars = res3.data;
-          relaxLevel = 3;
+      // Run levels sequentially, stop when >= MIN_RESULTS found
+      for (let level = 0; level <= 4; level++) {
+        // For speed: run current level and next level in parallel when possible
+        if (level < 4) {
+          const [resCurr, resNext] = await Promise.all([
+            buildQuery(level),
+            buildQuery(level + 1),
+          ]);
+          if (resCurr.data && resCurr.data.length >= MIN_RESULTS) {
+            cars = resCurr.data;
+            relaxLevel = level;
+            break;
+          }
+          if (resNext.data && resNext.data.length >= MIN_RESULTS) {
+            cars = resNext.data;
+            relaxLevel = level + 1;
+            break;
+          }
+          // Skip to level+2 in next iteration
+          level++;
+        } else {
+          const res = await buildQuery(level);
+          if (res.data && res.data.length > 0) {
+            cars = res.data;
+            relaxLevel = level;
+          }
         }
       }
 
@@ -491,7 +568,12 @@ Svara ENBART med JSON (ingen markdown, inga code fences):
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxLevel > 0 ? "Sökningen breddades för att hitta resultat." : ""}`,
+                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxLevel > 0 ? `Sökningen breddades (nivå ${relaxLevel}) för att hitta resultat. Informera kort om vad som justerades: ${[
+                      relaxLevel >= 1 ? "plats ignorerades" : "",
+                      relaxLevel >= 2 ? "färgkravet lättades" : "",
+                      relaxLevel >= 3 ? "karosstyp/märke/årsmodell lättades" : "",
+                      relaxLevel >= 4 ? "växellåda/drivlina/drivmedel lättades" : "",
+                    ].filter(Boolean).join(", ")}.` : ""}`,
                   },
                 ],
               }),

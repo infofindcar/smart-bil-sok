@@ -26,7 +26,31 @@ jobs:
         env:
           SUPABASE_SYNC_URL: ${{ secrets.SUPABASE_SYNC_URL }}
           SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
-          LOVABLE_API_KEY: ${{ secrets.LOVABLE_API_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/import-cars.js
+
+      - name: Berika bilar
+        env:
+          SUPABASE_ENRICH_URL: ${{ secrets.SUPABASE_ENRICH_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: |
+          node -e "
+          async function loop() {
+            const url = process.env.SUPABASE_ENRICH_URL;
+            const secret = process.env.SYNC_SECRET;
+            let remaining = Infinity, calls = 0;
+            while (remaining > 0 && calls < 100) {
+              const r = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','x-sync-secret':secret},
+                body: JSON.stringify({limit:50})
+              });
+              const d = await r.json();
+              if (!d.success) { console.error('Fel:', d.error); break; }
+              console.log('Batch '+(++calls)+': berikade='+d.processed+' kvar='+d.remaining);
+              remaining = d.remaining;
+              if (d.processed === 0) break;
+            }
+            console.log('Berikelse klar efter '+calls+' batchar.');
+          }
+          loop().catch(e=>{console.error(e);process.exit(1);});
+          "

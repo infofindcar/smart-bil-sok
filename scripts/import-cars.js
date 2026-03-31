@@ -1,31 +1,57 @@
 // scripts/import-cars.js
 //
-// Hämtar billistings från blocket-api.se, berikar med AI (färg + modelldata)
-// och skickar färdiga bilar till Supabase Edge Function (sync-cars).
+// Hämtar billistings från blocket-api.se och skickar dem till Supabase Edge Function (sync-cars).
+// Berikelse (färg, modelldata) sker separat via enrich-batch.
 //
 // HUR DU ANVÄNDER DET:
-//   Sätt miljövariabler och kör:
-//     SUPABASE_SYNC_URL=... SYNC_SECRET=... LOVABLE_API_KEY=... SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/import-cars.js
+//   SUPABASE_SYNC_URL=... SYNC_SECRET=... node scripts/import-cars.js
 //
 //   KRAV: Node.js version 18 eller nyare (ingen npm install behövs)
 
 const BLOCKET_API_BASE = "https://blocket-api.se/v1/search/car";
-const TOTAL_PAGES = 20;
+const PAGES_PER_INTERVAL = 50;
 
-const SUPABASE_SYNC_URL        = process.env.SUPABASE_SYNC_URL;
-const SYNC_SECRET              = process.env.SYNC_SECRET;
-const LOVABLE_API_KEY          = process.env.LOVABLE_API_KEY;
-const SUPABASE_URL             = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// 30 prisintervall som täcker hela prisskalan (SEK)
+// Varje intervall kan ge upp till 2 500 unika bilar (50 sidor × 50 bilar)
+const PRICE_INTERVALS = [
+  [0,        25000],
+  [25000,    50000],
+  [50000,    75000],
+  [75000,    100000],
+  [100000,   125000],
+  [125000,   150000],
+  [150000,   175000],
+  [175000,   200000],
+  [200000,   225000],
+  [225000,   250000],
+  [250000,   275000],
+  [275000,   300000],
+  [300000,   325000],
+  [325000,   350000],
+  [350000,   375000],
+  [375000,   400000],
+  [400000,   425000],
+  [425000,   450000],
+  [450000,   475000],
+  [475000,   500000],
+  [500000,   550000],
+  [550000,   600000],
+  [600000,   700000],
+  [700000,   800000],
+  [800000,   900000],
+  [900000,   1000000],
+  [1000000,  1250000],
+  [1250000,  1500000],
+  [1500000,  2000000],
+  [2000000,  999999999],
+];
+
+const SUPABASE_SYNC_URL = process.env.SUPABASE_SYNC_URL;
+const SYNC_SECRET       = process.env.SYNC_SECRET;
 
 if (!SUPABASE_SYNC_URL || !SYNC_SECRET) {
   console.error("FEL: SUPABASE_SYNC_URL och SYNC_SECRET krävs.");
   process.exit(1);
-}
-
-const canEnrich = LOVABLE_API_KEY && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY;
-if (!canEnrich) {
-  console.warn("Varning: LOVABLE_API_KEY / SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY saknas – hoppar över AI-berikelse.");
 }
 
 // ─────────────────────────────────────────────
@@ -60,376 +86,146 @@ function parseModelRaw(modelRaw, make) {
   return { horsepower, drivetrain };
 }
 
-// ─────────────────────────────────────────────
-// Supabase REST helper
-// ─────────────────────────────────────────────
-async function supabaseRequest(path, options = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
-    ...options,
-    headers: {
-      "apikey": SUPABASE_SERVICE_ROLE_KEY,
-      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation",
-      ...(options.headers ?? {}),
-    },
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Supabase ${res.status}: ${err}`);
-  }
-  return res.json();
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ─────────────────────────────────────────────
-// AI helper – Gemini Flash Lite
+// Hämta ett prisintervall (upp till PAGES_PER_INTERVAL sidor)
 // ─────────────────────────────────────────────
-async function askAI(system, user, retries = 2) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
+async function fetchInterval(priceMin, priceMax) {
+  const cars = [];
+
+  for (let page = 1; page <= PAGES_PER_INTERVAL; page++) {
+    // 200ms paus för att undvika Blocket rate limiting
+    if (page > 1) await sleep(200);
+
+    const url = priceMax >= 999999999
+      ? `${BLOCKET_API_BASE}?page=${page}&price_min=${priceMin}`
+      : `${BLOCKET_API_BASE}?page=${page}&price_min=${priceMin}&price_max=${priceMax}`;
+
+    let res;
     try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-        }),
-        signal: AbortSignal.timeout(20000),
-      });
-      if (!res.ok) throw new Error(`AI ${res.status}`);
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content?.trim() ?? "";
+      res = await fetch(url);
     } catch (e) {
-      if (attempt === retries) throw e;
-      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-    }
-  }
-  return "";
-}
-
-// ─────────────────────────────────────────────
-// Batch-färgdetektering – 10 bilar per anrop
-// ─────────────────────────────────────────────
-async function detectColorsBatch(cars) {
-  // cars = [{ id, make, model, image_thumb_url }]
-  const results = {};
-
-  // Dela upp i grupper om 10
-  for (let i = 0; i < cars.length; i += 10) {
-    const batch = cars.slice(i, i + 10);
-
-    try {
-      const imageContents = batch.flatMap((car, idx) => [
-        { type: "text", text: `Bil ${idx + 1} (${car.make} ${car.model}):` },
-        { type: "image_url", image_url: { url: car.image_thumb_url } },
-      ]);
-
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            {
-              role: "system",
-              content: `Färgexpert för bilar. Du får ${batch.length} bilder med bilar numrerade 1-${batch.length}.
-För varje bild:
-- Om det är en giltig exteriörfoto: ange färgen på svenska
-- Om det är interiör, motor, hjul, tom/blank bild: skriv DELETE
-
-Använd BARA dessa färger: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld
-
-Svara EXAKT i detta format (en rad per bil):
-1:Svart
-2:Vit
-3:DELETE`,
-            },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: `Ange färg för alla ${batch.length} bilar:` },
-                ...imageContents,
-              ],
-            },
-          ],
-        }),
-        signal: AbortSignal.timeout(30000),
-      });
-
-      if (!res.ok) {
-        console.warn(`Batch-färg misslyckades (${res.status}), sätter Okänd för batch ${i / 10 + 1}`);
-        batch.forEach((car) => { results[car.source_listing_id] = "Okänd"; });
-        continue;
-      }
-
-      const data = await res.json();
-      const text = data.choices?.[0]?.message?.content?.trim() ?? "";
-
-      // Parsa svaret: "1:Svart\n2:DELETE\n3:Grå\n..."
-      const lines = text.split("\n");
-      const VALID_COLORS = new Set([
-        "Svart","Vit","Silver","Grå","Blå","Röd","Grön","Brun","Beige",
-        "Orange","Gul","Lila","Mörkblå","Ljusblå","Mörkgrå","Ljusgrå",
-        "Mörkgrön","Vinröd","Koppar","Guld",
-      ]);
-
-      batch.forEach((car, idx) => {
-        const line = lines.find((l) => l.startsWith(`${idx + 1}:`));
-        const value = line ? line.split(":").slice(1).join(":").trim() : "";
-        if (value === "DELETE") {
-          results[car.source_listing_id] = "__DELETE__";
-        } else if (VALID_COLORS.has(value)) {
-          results[car.source_listing_id] = value;
-        } else {
-          results[car.source_listing_id] = "Okänd";
-        }
-      });
-
-      console.log(`  Färg batch ${Math.floor(i / 10) + 1}/${Math.ceil(cars.length / 10)} klar`);
-    } catch (e) {
-      console.warn(`Batch-färg fel:`, e.message);
-      batch.forEach((car) => { results[car.source_listing_id] = "Okänd"; });
-    }
-  }
-
-  return results;
-}
-
-// ─────────────────────────────────────────────
-// Modell-berikelse (cachas i car_models)
-// ─────────────────────────────────────────────
-async function loadModelCache() {
-  // Hämta alla cachade modeller – tabellen är liten (hundratals rader max)
-  const data = await supabaseRequest("/car_models?select=*");
-  const cache = {};
-  for (const cm of data ?? []) cache[`${cm.make}|||${cm.model}`] = cm;
-  return cache;
-}
-
-async function enrichModel(make, model, modelRaw, cache) {
-  const key = `${make}|||${model}`;
-  if (cache[key]) return cache[key];
-
-  const prompt = `${make} ${model}`;
-  const promptWithSpec = modelRaw ? `${make} ${model} (${modelRaw})` : prompt;
-
-  console.log(`  Ny modell: ${make} ${model} – hämtar AI-data...`);
-
-  const [
-    bodyType, co2Raw, consumptionRaw, electricRangeRaw,
-    hpMinRaw, hpMaxRaw, zeroHundredRaw, bootSpaceRaw,
-    towingRaw, seatsRaw, drivetrainRaw, reliabilityNotes,
-    ncapAI, insuranceRaw, serviceRaw,
-  ] = await Promise.all([
-    askAI("Car expert. Reply ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN", `Body type of ${prompt}?`),
-    askAI("Car expert. Reply ONLY a number (WLTP avg CO2 g/km). EVs: 0. Unknown: 0.", `CO2 g/km of ${promptWithSpec}?`),
-    askAI("Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.", `Fuel consumption l/100km of ${promptWithSpec}?`),
-    askAI("Car expert. Reply ONLY an integer (WLTP electric range km). Non-EVs: 0.", `Electric range km WLTP of ${promptWithSpec}?`),
-    askAI("Car expert. Reply ONLY an integer (minimum HP across variants). Unknown: 0.", `Min horsepower of ${prompt}?`),
-    askAI("Car expert. Reply ONLY an integer (maximum HP across variants). Unknown: 0.", `Max horsepower of ${prompt}?`),
-    askAI("Car expert. Reply ONLY a decimal (typical 0-100 km/h for base petrol/diesel, NOT performance variant). Unknown: 0.", `Typical base model 0-100 km/h sec of ${promptWithSpec}?`),
-    askAI("Car expert. Reply ONLY an integer (typical boot space liters). Unknown: 0.", `Boot space liters of ${prompt}?`),
-    askAI("Car expert. Reply ONLY an integer (max towing kg). Unknown: 0.", `Max towing kg of ${prompt}?`),
-    askAI("Car expert. Reply ONLY an integer (standard seats). Unknown: 5.", `Seats in ${prompt}?`),
-    askAI("Car expert. Reply ONLY one of: AWD, FWD, RWD, UNKNOWN.", `Default drivetrain of ${prompt}?`),
-    askAI("Car expert. Reply in Swedish, max 2 sentences about reliability. If nothing notable: NONE.", `Reliability notes about ${prompt}?`),
-    askAI("Car expert. Reply ONLY integer 1-5 (Euro NCAP stars). Unknown: 0.", `Euro NCAP stars of ${prompt}?`),
-    askAI("Swedish insurance expert. Reply ONLY two integers like '700-1300' (monthly SEK, helförsäkring used car).", `Monthly insurance SEK for used ${prompt} in Sweden?`),
-    askAI("Swedish service expert. Reply ONLY an integer (annual service SEK, used car). Unknown: 5000.", `Annual service cost SEK for used ${prompt} in Sweden?`),
-  ]);
-
-  const BODY_TYPES = ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"];
-  const DRIVETRAINS = ["AWD","FWD","RWD"];
-  const insuranceParts = insuranceRaw.match(/(\d+)\s*[-–]\s*(\d+)/);
-
-  const modelData = {
-    make, model,
-    body_type:               BODY_TYPES.includes(bodyType) ? bodyType : null,
-    fuel_consumption_l100km: parseFloat(consumptionRaw) || null,
-    electric_range_km:       parseInt(electricRangeRaw) || null,
-    co2_g_per_km:            parseInt(co2Raw) || null,
-    euro_ncap_stars:         parseInt(ncapAI) || null,
-    drivetrain_default:      DRIVETRAINS.includes(drivetrainRaw) ? drivetrainRaw : null,
-    typical_hp_min:          parseInt(hpMinRaw) || null,
-    typical_hp_max:          parseInt(hpMaxRaw) || null,
-    zero_to_hundred_sec:     parseFloat(zeroHundredRaw) || null,
-    boot_space_liters:       parseInt(bootSpaceRaw) || null,
-    max_towing_kg:           parseInt(towingRaw) || null,
-    seats:                   parseInt(seatsRaw) || 5,
-    reliability_notes:       (reliabilityNotes && reliabilityNotes !== "NONE") ? reliabilityNotes : null,
-    estimated_monthly_insurance_low:  insuranceParts ? parseInt(insuranceParts[1]) : 700,
-    estimated_monthly_insurance_high: insuranceParts ? parseInt(insuranceParts[2]) : 1400,
-    estimated_annual_service_sek:     parseInt(serviceRaw) || 5000,
-    enriched_at: new Date().toISOString(),
-  };
-
-  // Spara i car_models
-  try {
-    await supabaseRequest("/car_models?on_conflict=make,model", {
-      method: "POST",
-      headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
-      body: JSON.stringify(modelData),
-    });
-  } catch (e) {
-    console.warn(`  Kunde inte spara modell ${make} ${model}:`, e.message);
-  }
-
-  cache[key] = modelData;
-  return modelData;
-}
-
-// ─────────────────────────────────────────────
-// Hämta alla bilar från Blocket
-// ─────────────────────────────────────────────
-async function fetchAllCars() {
-  const allCars = [];
-
-  for (let page = 1; page <= TOTAL_PAGES; page++) {
-    console.log(`Hämtar sida ${page}/${TOTAL_PAGES}...`);
-
-    const res = await fetch(`${BLOCKET_API_BASE}?page=${page}`);
-    if (!res.ok) {
-      console.warn(`  Varning: sida ${page} misslyckades (${res.status}), hoppar över.`);
-      continue;
-    }
-
-    const data = await res.json();
-    const cars = Array.isArray(data)
-      ? data
-      : data.docs ?? data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
-
-    if (cars.length === 0) {
-      console.log(`  Sida ${page} är tom, avslutar hämtning.`);
+      console.warn(`  Nätverksfel sida ${page} [${priceMin}-${priceMax}]:`, e.message);
       break;
     }
 
-    allCars.push(...cars);
-    console.log(`  Fick ${cars.length} bilar (totalt: ${allCars.length})`);
+    if (!res.ok) {
+      console.warn(`  Sida ${page} misslyckades (${res.status}), avslutar intervall.`);
+      break;
+    }
+
+    const data = await res.json();
+    const pageCars = Array.isArray(data)
+      ? data
+      : data.docs ?? data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
+
+    if (pageCars.length === 0) break;
+
+    cars.push(...pageCars);
   }
 
-  return allCars;
+  return cars;
 }
 
 // ─────────────────────────────────────────────
 // Main
 // ─────────────────────────────────────────────
 async function main() {
-  const cars = await fetchAllCars();
+  const seen = new Set();
+  const allMapped = [];
+  let totalFetched = 0;
+  let leasingCount = 0;
+  let privateCount = 0;
+  let noImageCount = 0;
 
-  if (cars.length === 0) {
+  for (let i = 0; i < PRICE_INTERVALS.length; i++) {
+    const [priceMin, priceMax] = PRICE_INTERVALS[i];
+    const label = priceMax >= 999999999 ? `${priceMin}+` : `${priceMin}-${priceMax}`;
+    console.log(`Intervall ${i + 1}/${PRICE_INTERVALS.length}: ${label} kr`);
+
+    const raw = await fetchInterval(priceMin, priceMax);
+    totalFetched += raw.length;
+
+    let intervalKept = 0;
+
+    for (const car of raw) {
+      if (!car.id) continue;
+
+      // Deduplicera på source_listing_id
+      const sid = String(car.id);
+      if (seen.has(sid)) continue;
+      seen.add(sid);
+
+      // Filtrera bort leasing
+      if (car.sales_form === 5 || car.ad_type === 200) {
+        leasingCount++;
+        continue;
+      }
+
+      // Heuristik-fallback: ny bil med månadsbelopp (trolig leasing)
+      if ((car.year ?? 0) >= 2025 && (car.price?.amount ?? 0) < 10000) {
+        leasingCount++;
+        continue;
+      }
+
+      // Filtrera bort privat (organisation_name saknas)
+      if (!car.organisation_name) {
+        privateCount++;
+        continue;
+      }
+
+      // Filtrera bort bilar utan bild
+      if (!car.image?.url) {
+        noImageCount++;
+        continue;
+      }
+
+      const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make);
+
+      allMapped.push({
+        source_listing_id: sid,
+        make:          car.make ?? null,
+        model:         car.model ?? null,
+        model_raw:     car.model_specification ?? null,
+        model_clean:   car.model ?? null,
+        year:          car.year ?? null,
+        price:         car.price?.amount ?? null,
+        mileage:       car.mileage ?? null,
+        city:          car.location ?? null,
+        fuel_type:     car.fuel ?? null,
+        transmission:  car.transmission ?? null,
+        drivetrain,
+        horsepower,
+        dealer_name:   car.organisation_name ?? null,
+        image_thumb_url: car.image?.url ?? null,
+        listing_url:   car.canonical_url ?? null,
+        regnr:         car.regno ?? null,
+        source:        "blocket",
+      });
+      intervalKept++;
+    }
+
+    console.log(`  Råa: ${raw.length}, Unika kvar: ${intervalKept} (totalt buffrat: ${allMapped.length})`);
+
+    // 500ms paus mellan intervall
+    if (i < PRICE_INTERVALS.length - 1) await sleep(500);
+  }
+
+  console.log(`\n=== IMPORT KLAR ===`);
+  console.log(`  Totalt hämtat:       ${totalFetched}`);
+  console.log(`  Unika bilar:         ${seen.size}`);
+  console.log(`  Leasing filtrerade:  ${leasingCount}`);
+  console.log(`  Privat filtrerade:   ${privateCount}`);
+  console.log(`  Utan bild:           ${noImageCount}`);
+  console.log(`  Skickar till sync:   ${allMapped.length}`);
+
+  if (allMapped.length === 0) {
     console.error("Inga bilar hittades. Kontrollera API:et.");
     process.exit(1);
   }
-
-  // Filtrera och mappa grunddata
-  const mappedCars = cars
-    .filter((car) => car.id && car.organisation_name)
-    .filter((car) => car.image?.url)
-    .map((car) => {
-      const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make);
-      return {
-        source_listing_id: String(car.id),
-        make: car.make ?? null,
-        model: car.model ?? null,
-        model_raw: car.model_specification ?? null,
-        model_clean: car.model ?? null,
-        year: car.year ?? null,
-        price: car.price?.amount ?? null,
-        mileage: car.mileage ?? null,
-        city: car.location ?? null,
-        fuel_type: car.fuel ?? null,
-        transmission: car.transmission ?? null,
-        drivetrain: drivetrain,
-        horsepower: horsepower,
-        dealer_name: car.organisation_name ?? null,
-        image_thumb_url: car.image?.url ?? null,
-        listing_url: car.canonical_url ?? null,
-        regnr: car.regno ?? null,
-        source: "blocket",
-      };
-    });
-
-  console.log(`\nTotalt ${mappedCars.length} bilar hämtade.`);
-
-  if (!canEnrich) {
-    console.log("Skickar bilar utan berikelse...");
-  } else {
-    console.log("\n=== BERIKELSE STARTAR ===");
-
-    // ── Steg 1: Ladda modell-cache från Supabase ──
-    console.log("\n1. Laddar modell-cache från Supabase...");
-    const modelCache = await loadModelCache();
-    console.log(`   ${Object.keys(modelCache).length} modeller redan cachade.`);
-
-    // ── Steg 2: Berika nya modeller sekventiellt ──
-    const newCombos = [...new Set(
-      mappedCars
-        .filter((c) => c.make && c.model && !modelCache[`${c.make}|||${c.model}`])
-        .map((c) => `${c.make}|||${c.model}`)
-    )];
-
-    console.log(`\n2. Berikar ${newCombos.length} nya modeller med AI...`);
-    let modelsDone = 0;
-    for (const combo of newCombos) {
-      const [make, model] = combo.split("|||");
-      const modelRaw = mappedCars.find((c) => c.make === make && c.model === model)?.model_raw ?? null;
-      try {
-        await enrichModel(make, model, modelRaw, modelCache);
-        modelsDone++;
-        console.log(`   ${modelsDone}/${newCombos.length}: ${make} ${model} ✓`);
-      } catch (e) {
-        console.warn(`   Misslyckades: ${make} ${model} – ${e.message}`);
-        modelCache[combo] = null;
-      }
-    }
-
-    // ── Steg 3: Applicera modelldata på varje bil ──
-    console.log("\n3. Applicerar modelldata på bilar...");
-    const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
-    for (const car of mappedCars) {
-      const cm = modelCache[`${car.make}|||${car.model}`];
-      if (!cm) continue;
-
-      if (!car.drivetrain && cm.drivetrain_default) car.drivetrain = cm.drivetrain_default;
-      if (!car.horsepower && cm.typical_hp_min) {
-        car.horsepower = Math.round((cm.typical_hp_min + (cm.typical_hp_max ?? cm.typical_hp_min)) / 2);
-      }
-    }
-
-    // ── Steg 4: Batch-färgdetektering ──
-    console.log(`\n4. Detekterar färg för ${mappedCars.length} bilar (batch om 10)...`);
-    const colorResults = await detectColorsBatch(mappedCars);
-
-    let deleted = 0;
-    const finalCars = mappedCars.filter((car) => {
-      const color = colorResults[car.source_listing_id];
-      if (color === "__DELETE__") {
-        deleted++;
-        return false; // ta bort bilen
-      }
-      car.color = color ?? "Okänd";
-      return true;
-    });
-
-    console.log(`   ${finalCars.length} bilar med färg, ${deleted} borttagna (ogiltig bild).`);
-    console.log("\n=== BERIKELSE KLAR ===");
-
-    // Ersätt mappedCars med finalCars
-    mappedCars.length = 0;
-    mappedCars.push(...finalCars);
-  }
-
-  // ── Skicka till Supabase ──
-  console.log(`\nSkickar ${mappedCars.length} bilar till Supabase...`);
 
   const syncResponse = await fetch(SUPABASE_SYNC_URL, {
     method: "POST",
@@ -437,7 +233,7 @@ async function main() {
       "Content-Type": "application/json",
       "x-sync-secret": SYNC_SECRET,
     },
-    body: JSON.stringify({ cars: mappedCars }),
+    body: JSON.stringify({ cars: allMapped }),
   });
 
   const result = await syncResponse.json();

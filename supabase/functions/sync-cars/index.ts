@@ -101,46 +101,6 @@ serve(async (req) => {
       `sync-cars done: added=${added}, updated=${updated}, deleted=${deleted ?? 0}, errors=${upsertErrors}`
     );
 
-    // Trigga enrichment för alla bilar som saknar berikningsdata
-    let enrichTriggered = false;
-    let enrichCount = 0;
-    try {
-      const { data: unenrichedCars } = await supabase
-        .from("Lovable")
-        .select("id")
-        .or("color.eq.Unknown,color.is.null,color.eq.Okänd,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil")
-        .limit(40);
-
-      if (unenrichedCars && unenrichedCars.length > 0) {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const enrichUrl = `${supabaseUrl}/functions/v1/enrich-car-data`;
-        const enrichSecret = Deno.env.get("SYNC_SECRET")!;
-
-        // Använd waitUntil så att fetch inte dödas när sync-cars returnerar sitt svar
-        const enrichPromise = fetch(enrichUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-sync-secret": enrichSecret,
-          },
-          body: JSON.stringify({ ids: unenrichedCars.map((c) => c.id) }),
-        }).then((r) => console.log(`enrich-car-data svarade: ${r.status}`))
-          .catch((e) => console.error("enrich trigger failed:", e));
-
-        // @ts-ignore – EdgeRuntime finns i Supabase/Deno Deploy
-        if (typeof EdgeRuntime !== "undefined") {
-          // @ts-ignore
-          EdgeRuntime.waitUntil(enrichPromise);
-        }
-
-        enrichTriggered = true;
-        enrichCount = unenrichedCars.length;
-        console.log(`Triggade enrichment för ${enrichCount} oberiköde bilar`);
-      }
-    } catch (e) {
-      console.error("Kunde inte trigga enrichment:", e);
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -151,8 +111,8 @@ serve(async (req) => {
         skippedNoImage,
         upsertErrors,
         durationMs,
-        enrichTriggered,
-        enrichCount,
+        enrichTriggered: false,
+        enrichCount: 0,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
