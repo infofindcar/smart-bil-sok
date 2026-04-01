@@ -45,7 +45,6 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    // Use count queries to handle 60k+ cars (Supabase default limit is 1000)
     const [
       totalRes,
       withImagesRes,
@@ -56,6 +55,7 @@ const Admin = () => {
       needsEnrichmentRes,
       citiesData,
       makesData,
+      latestCarRes,
     ] = await Promise.all([
       supabase.from('Lovable').select('*', { count: 'exact', head: true }),
       supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('image_thumb_url', 'is', null),
@@ -66,12 +66,24 @@ const Admin = () => {
       supabase.from('Lovable').select('*', { count: 'exact', head: true }).or('drivetrain.is.null,drivetrain.eq.Unknown,color.is.null,color.eq.Unknown,body_type.is.null,body_type.eq.Unknown,horsepower.is.null,horsepower.eq.0'),
       supabase.from('Lovable').select('city'),
       supabase.from('Lovable').select('make'),
+      supabase.from('Lovable').select('created_at').order('created_at', { ascending: false }).limit(1),
     ]);
 
     const total = totalRes.count ?? 0;
-    // For cities/makes we need distinct values - fetch up to limit and count unique
     const cities = new Set((citiesData.data ?? []).map((c: any) => c.city)).size;
     const makes = new Set((makesData.data ?? []).map((c: any) => c.make)).size;
+
+    // Find cars added in the latest import batch (same created_at minute)
+    let newFromLastImport = 0;
+    let lastImportTime = '';
+    if (latestCarRes.data && latestCarRes.data.length > 0) {
+      const latestTime = new Date(latestCarRes.data[0].created_at!);
+      // Consider cars within 2 hours of the latest as same import batch
+      const cutoff = new Date(latestTime.getTime() - 2 * 60 * 60 * 1000).toISOString();
+      const newCarsRes = await supabase.from('Lovable').select('*', { count: 'exact', head: true }).gte('created_at', cutoff);
+      newFromLastImport = newCarsRes.count ?? 0;
+      lastImportTime = latestTime.toLocaleString('sv-SE');
+    }
 
     setStats({
       total,
@@ -83,6 +95,8 @@ const Admin = () => {
       bodyTypeEnriched: bodyTypeRes.count ?? 0,
       horsepowerEnriched: horsepowerRes.count ?? 0,
       needsEnrichment: needsEnrichmentRes.count ?? 0,
+      newFromLastImport,
+      lastImportTime,
     });
   };
 
