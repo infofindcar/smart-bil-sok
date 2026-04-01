@@ -45,31 +45,45 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type, horsepower');
-    if (data) {
-      const total = data.length;
-      const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown' && c.drivetrain !== 'Okänd').length;
-      const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown' && c.color !== 'Okänd').length;
-      const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown' && c.body_type !== 'Okänd').length;
-      const horsepowerEnriched = data.filter((c) => c.horsepower && c.horsepower > 0).length;
-      const needsEnrichment = data.filter((c) =>
-        !c.drivetrain || c.drivetrain === 'Unknown' ||
-        !c.color || c.color === 'Unknown' ||
-        !c.body_type || c.body_type === 'Unknown' ||
-        !c.horsepower || c.horsepower === 0
-      ).length;
-      setStats({
-        total,
-        withImages: data.filter((c) => c.image_thumb_url).length,
-        cities: new Set(data.map((c) => c.city)).size,
-        makes: new Set(data.map((c) => c.make)).size,
-        drivetrainEnriched,
-        colorEnriched,
-        bodyTypeEnriched,
-        horsepowerEnriched,
-        needsEnrichment,
-      });
-    }
+    // Use count queries to handle 60k+ cars (Supabase default limit is 1000)
+    const [
+      totalRes,
+      withImagesRes,
+      drivetrainRes,
+      colorRes,
+      bodyTypeRes,
+      horsepowerRes,
+      needsEnrichmentRes,
+      citiesData,
+      makesData,
+    ] = await Promise.all([
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('image_thumb_url', 'is', null),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('drivetrain', 'is', null).not('drivetrain', 'eq', 'Unknown').not('drivetrain', 'eq', 'Okänd'),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('color', 'is', null).not('color', 'eq', 'Unknown').not('color', 'eq', 'Okänd'),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('body_type', 'is', null).not('body_type', 'eq', 'Unknown').not('body_type', 'eq', 'Okänd'),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('horsepower', 'is', null).gt('horsepower', 0),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).or('drivetrain.is.null,drivetrain.eq.Unknown,color.is.null,color.eq.Unknown,body_type.is.null,body_type.eq.Unknown,horsepower.is.null,horsepower.eq.0'),
+      supabase.from('Lovable').select('city'),
+      supabase.from('Lovable').select('make'),
+    ]);
+
+    const total = totalRes.count ?? 0;
+    // For cities/makes we need distinct values - fetch up to limit and count unique
+    const cities = new Set((citiesData.data ?? []).map((c: any) => c.city)).size;
+    const makes = new Set((makesData.data ?? []).map((c: any) => c.make)).size;
+
+    setStats({
+      total,
+      withImages: withImagesRes.count ?? 0,
+      cities,
+      makes,
+      drivetrainEnriched: drivetrainRes.count ?? 0,
+      colorEnriched: colorRes.count ?? 0,
+      bodyTypeEnriched: bodyTypeRes.count ?? 0,
+      horsepowerEnriched: horsepowerRes.count ?? 0,
+      needsEnrichment: needsEnrichmentRes.count ?? 0,
+    });
   };
 
   const addLog = useCallback((msg: string) => {
