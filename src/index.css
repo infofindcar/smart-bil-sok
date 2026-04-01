@@ -49,8 +49,8 @@
     --popover-foreground: 45 20% 95%;
     --primary: 190 75% 50%;
     --primary-foreground: 205 55% 10%;
-    --secondary: 200 30% 70%;
-    --secondary-foreground: 205 55% 10%;
+    --secondary: 205 50% 15%;
+    --secondary-foreground: 45 20% 90%;
     --muted: 205 40% 20%;
     --muted-foreground: 200 20% 65%;
     --accent: 190 40% 20%;
@@ -78,6 +78,9 @@
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    background-color: #1a2332;
   }
   body {
     @apply bg-background text-foreground font-sans;
@@ -162,7 +165,7 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Section divider gradient transitions */
 .section-divider {
-  height: 5rem;
+  height: 2.5rem;
   background: linear-gradient(to bottom, var(--div-from), var(--div-to));
   pointer-events: none;
 }
@@ -309,4 +312,42 @@ html::-webkit-scrollbar-thumb:hover {
 }
 .similar-cars-scroll::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Hero CTA glow effect */
+@keyframes cta-glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--secondary) / 0.3), 0 0 40px hsl(var(--secondary) / 0.1); }
+  50% { box-shadow: 0 0 30px hsl(var(--secondary) / 0.5), 0 0 60px hsl(var(--secondary) / 0.2); }
+}
+.hero-cta-glow {
+  animation: cta-glow-pulse 3s ease-in-out infinite;
+}
+
+/* Accessibility: visible focus rings */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Mic listening glow */
+@keyframes mic-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+}
+.mic-listening {
+  animation: mic-glow 1.5s ease-in-out infinite;
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse, .animate-bounce {
+    animation: none !important;
+  }
 }

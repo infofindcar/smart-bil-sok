@@ -42,23 +42,48 @@ const steps: Step[] = [
 
 export const HowItWorks = () => {
   return (
-    <section className="py-16 md:py-24 px-4 bg-background">
+    <section className="py-12 md:py-16 px-4 bg-background">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold">Så fungerar det</h2>
-            <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-              Att hitta din perfekta bil har aldrig varit enklare. Låt Clutch
-              göra det tunga arbetet.
+          <div className="text-center mb-8 md:mb-14">
+            <h2 className="text-2xl md:text-4xl font-bold">Så fungerar det</h2>
+            <p className="text-muted-foreground mt-2 md:mt-3 max-w-xl mx-auto text-sm">
+              Enkelt att komma igång i 3 steg
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* MOBILE: vertical list with icon + text, no images */}
+        <div className="md:hidden space-y-4">
+          {steps.map((step) => (
+            <ScrollReveal key={step.number}>
+              <div className="flex items-start gap-4 bg-card rounded-2xl border p-5">
+                <div className="relative shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <step.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shadow">
+                    {step.number}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold leading-snug mb-1">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+
+        {/* DESKTOP: original card grid with images */}
+        <div className="hidden md:grid grid-cols-3 gap-6">
           {steps.map((step) => (
             <ScrollReveal key={step.number}>
               <div className="bg-card rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                {/* Image with number badge */}
                 <div className="relative">
                   <div className="aspect-[16/10] overflow-hidden">
                     <img
@@ -68,15 +93,13 @@ export const HowItWorks = () => {
                       loading="lazy"
                     />
                   </div>
-                  <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md transition-transform duration-300 group-hover:scale-110">
+                  <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md">
                     {step.number}
                   </span>
                 </div>
-
-                {/* Content */}
                 <div className="p-6 flex flex-col gap-3 flex-1">
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0 transition-colors duration-300 hover:bg-primary/10">
-                    <step.icon className="h-6 w-6 text-step-icon transition-transform duration-300 hover:scale-110" />
+                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
+                    <step.icon className="h-6 w-6 text-step-icon" />
                   </div>
                   <h3 className="text-lg font-bold leading-snug">
                     {step.title}

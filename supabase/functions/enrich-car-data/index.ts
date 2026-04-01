@@ -109,21 +109,60 @@ async function enrichModel(
     towingRaw, seatsRaw, drivetrainRaw, reliabilityNotes, ncapAI,
     insuranceRaw, serviceRaw,
   ] = await Promise.all([
-    askAI(apiKey, "Car expert. Reply ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN", `Body type of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg CO2 g/km). EVs: 0. Unknown: 0.", `CO2 g/km of ${promptWithSpec}?`),
-    askAI(apiKey, "Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.", `Fuel consumption l/100km of ${promptWithSpec}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (WLTP electric range km for the specific variant if known, else typical for model). Non-EVs and non-PHEVs: 0.", `Electric range km WLTP of ${promptWithSpec}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (minimum HP across engine variants). Unknown: 0.", `Min horsepower of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (maximum HP across engine variants). Unknown: 0.", `Max horsepower of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY a decimal (typical 0-100 km/h time in seconds for the most common base petrol/diesel engine variant, NOT the performance variant). Unknown: 0.", `Typical base model 0-100 km/h sec of ${promptWithSpec}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (typical boot space liters, standard position). Unknown: 0.", `Boot space liters of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (max towing capacity kg). Unknown: 0.", `Max towing kg of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY an integer (number of seats standard). Unknown: 5.", `Seats in ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply ONLY one of: AWD, FWD, RWD, UNKNOWN (most common base model drivetrain).", `Default drivetrain of ${prompt}?`),
-    askAI(apiKey, "Car expert. Reply in Swedish, max 2 sentences. Mention key strengths and any widely-known reliability issues. If nothing notable, reply NONE.", `Key reliability notes about ${prompt}?`),
-    ncap ? Promise.resolve("") : askAI(apiKey, "Car expert. Reply ONLY an integer 1-5 (Euro NCAP stars). Unknown: 0.", `Euro NCAP stars of ${prompt}?`),
-    askAI(apiKey, "Swedish car insurance expert. Reply ONLY two integers separated by '-' representing typical monthly insurance cost in SEK for a used ${prompt} in Sweden (helförsäkring). Example: '700-1300'. Unknown: '700-1400'.", `Monthly insurance SEK range for used ${prompt} in Sweden?`),
-    askAI(apiKey, "Swedish car service expert. Reply ONLY an integer: typical annual service cost in SEK for a used ${prompt} in Sweden (oil change + inspection + minor parts). Unknown: 5000.", `Annual service cost SEK for used ${prompt} in Sweden?`),
+    askAI(apiKey,
+      "Car expert. Reply ONLY one of: SUV, Sedan, Kombi, Halvkombi, Coupé, Cab, Pickup, Minibuss, Småbil, UNKNOWN",
+      `Body type of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (WLTP combined CO2 g/km). EVs: 0. Unknown: 0.",
+      `CO2 g/km of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY a number (WLTP avg liters/100km). EVs: 0. Unknown: 0.",
+      `Fuel consumption l/100km of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (WLTP electric range km). Non-EVs: 0.",
+      `Electric range km WLTP of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (minimum HP across engine variants). Unknown: 0.",
+      `Min horsepower of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (maximum HP across engine variants). Unknown: 0.",
+      `Max horsepower of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY a decimal (fastest 0-100 km/h in seconds). Unknown: 0.",
+      `Fastest 0-100 km/h sec of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (typical boot space liters, standard position). Unknown: 0.",
+      `Boot space liters of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (max towing capacity kg). Unknown: 0.",
+      `Max towing kg of ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY an integer (number of seats standard). Unknown: 5.",
+      `Seats in ${prompt}?`
+    ),
+    askAI(apiKey,
+      "Car expert. Reply ONLY one of: AWD, FWD, RWD, UNKNOWN (most common base model drivetrain).",
+      `Default drivetrain of ${prompt}?`
+    ),
+    // Reliability notes på svenska – kort och kärnfull
+    askAI(apiKey,
+      "Car expert. Reply in Swedish, max 2 sentences. Mention key strengths and any widely-known reliability issues. If nothing notable, reply NONE.",
+      `Key reliability notes about ${prompt}?`
+    ),
+    // NCAP via AI som fallback om webbsökning misslyckades
+    ncap ? Promise.resolve("") : askAI(apiKey,
+      "Car expert. Reply ONLY an integer 1-5 (Euro NCAP stars). Unknown: 0.",
+      `Euro NCAP stars of ${prompt}?`
+    ),
   ]);
 
   const BODY_TYPES = ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"];
@@ -158,7 +197,7 @@ async function enrichModel(
     enriched_at:             new Date().toISOString(),
   };
 
-  await supabase.from("car_models").upsert(modelData, { onConflict: "make,model" });
+  await supabase.from("car_models").upsert(modelData as any, { onConflict: "make,model" });
   return modelData;
 }
 
@@ -375,25 +414,35 @@ serve(async (req) => {
           .in("make", uniqueMakes).in("model", uniqueModels);
         for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
 
-        // ── Steg 1: Berika unika modeller SEKVENTIELLT med MAX_NEW_MODELS-gräns ──
-        const uniqueCombosChunk = [...new Set(
-          cars
-            .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
-            .map((c) => `${c.make}|||${c.model}`)
-        )];
-        let newModelsThisChunk = 0;
-        for (const combo of uniqueCombosChunk) {
-          if (newModelsThisChunk >= MAX_NEW_MODELS) break;
-          const [mk, mo] = combo.split("|||");
-          const modelRawForCombo = cars.find((c) => c.make === mk && c.model === mo)?.model_raw ?? null;
-          try {
-            const cm = await enrichModel(supabase, LOVABLE_API_KEY, mk, mo, null, modelRawForCombo);
-            modelCache[combo] = cm;
-            totals.modelsCached++;
-            newModelsThisChunk++;
-          } catch (e) {
-            console.error(`enrichModel misslyckades för ${mk} ${mo}:`, e);
-            modelCache[combo] = null;
+    const modelCache: Record<string, Record<string, unknown>> = {};
+    for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
+
+    // ── Ladda car_makes (garanti) per märke ──
+    const { data: makesData } = await supabase
+      .from("car_makes").select("*").in("make", uniqueMakes);
+    const makesCache: Record<string, Record<string, unknown>> = {};
+    for (const mk of makesData ?? []) makesCache[mk.make] = mk;
+
+    console.log(`Bilar: ${cars.length}, modell-cache: ${Object.keys(modelCache).length}/${uniqueModels.length}`);
+
+    const results = {
+      colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0,
+      horsepowerUpdated: 0, modelsCached: 0, errors: 0,
+    };
+
+    for (let i = 0; i < cars.length; i += BATCH_SIZE) {
+      const batch = cars.slice(i, i + BATCH_SIZE);
+
+      await Promise.all(batch.map(async (car) => {
+        try {
+          const cacheKey = `${car.make}|||${car.model}`;
+          let carModel = modelCache[cacheKey];
+
+          // Berika modellen om den inte finns i cache (AI + NCAP)
+          if (!carModel && car.make && car.model) {
+            carModel = await enrichModel(supabase as any, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
+            modelCache[cacheKey] = carModel;
+            results.modelsCached++;
           }
         }
 

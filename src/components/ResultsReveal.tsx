@@ -1,6 +1,7 @@
 import { forwardRef, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CarCard } from '@/components/CarCard';
+import { CarCardSkeleton } from '@/components/CarCardSkeleton';
 import { Sparkles, Scale, ChevronRight, Lightbulb, Trophy } from 'lucide-react';
 import type { Car, CarReason } from './GuidedSearch';
 
@@ -19,6 +20,7 @@ const t = (key: string, lang: string) => T[key]?.[lang] || T[key]?.sv || key;
 interface ResultsRevealProps {
   cars: Car[];
   similarCars: Car[];
+  totalMatches?: number;
   savedCars: Car[];
   carReasons: CarReason[];
   resultMessage: string;
@@ -26,11 +28,12 @@ interface ResultsRevealProps {
   onToggleSave: (car: Car) => void;
   onCompare: () => void;
   onShowMore: () => void;
+  loadingMore?: boolean;
   getReasonForCar: (carId: number) => string | undefined;
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -94,7 +97,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
     const allRevealed = revealedCount >= cars.length;
 
     return (
-      <section ref={ref} className="relative px-4 pb-20">
+      <section ref={ref} className="relative px-3 sm:px-4 pb-16 sm:pb-20">
         {/* Decorative background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-primary/[0.04] blur-[120px]" />
@@ -117,7 +120,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-primary/20 shadow-lg shadow-primary/[0.08]">
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
                 <span className="text-sm font-semibold text-foreground tracking-wide">
-                  {cars.length} {t('matchesFound', language)}
+                  {(totalMatches ?? (cars.length + similarCars.length))} {t('matchesFound', language)}
                 </span>
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" style={{ animationDelay: '200ms' }} />
               </div>
@@ -158,7 +161,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
             </div>
 
             {/* Cards grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {cars.map((car, index) => (
                 <div
                   key={car.id}
@@ -206,22 +209,30 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                 </div>
               </div>
 
-              {/* Horizontal scroll container */}
-              <div className="relative">
-                {/* Fade edge hints */}
-                <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-                <div className="similar-cars-scroll flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
-                  {similarCars.map((car) => (
-                    <div key={car.id} className="flex-shrink-0 w-[270px]">
-                      <CarCard
-                        car={car}
-                        isSaved={savedCars.some((c) => c.id === car.id)}
-                        onToggleSave={onToggleSave}
-                        matchReason={getReasonForCar(car.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
+              {/* Mobile: horizontal scroll, Desktop: grid */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {similarCars.map((car) => (
+                  <div key={car.id}>
+                    <CarCard
+                      car={car}
+                      isSaved={savedCars.some((c) => c.id === car.id)}
+                      onToggleSave={onToggleSave}
+                      matchReason={getReasonForCar(car.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="md:hidden flex flex-col gap-4">
+                {similarCars.map((car) => (
+                  <div key={car.id}>
+                    <CarCard
+                      car={car}
+                      isSaved={savedCars.some((c) => c.id === car.id)}
+                      onToggleSave={onToggleSave}
+                      matchReason={getReasonForCar(car.id)}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -234,13 +245,23 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
           >
             <Button
               variant="outline"
-              className="rounded-xl px-6"
+              className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
               onClick={onShowMore}
+              disabled={loadingMore}
             >
-              {t('showMore', language)}
-              <ChevronRight className="h-4 w-4 ml-1" />
+              {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
+              {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
             </Button>
           </div>
+
+          {/* Skeleton loading placeholders when loading more */}
+          {loadingMore && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-6">
+              {[1, 2, 3].map((i) => (
+                <CarCardSkeleton key={`skeleton-${i}`} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     );

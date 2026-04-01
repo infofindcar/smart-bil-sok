@@ -164,44 +164,60 @@ const modelBodyTypeMap: Record<string, string[]> = {
   ],
 };
 
-const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du har ett naturligt samtal med kunden för att förstå exakt vilken bil som passar dem bäst. Du ska kännas som en riktig människa som bryr sig.
+const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du pratar med vanliga människor — inte bilmekaniker. Förklara saker enkelt och tydligt så att vem som helst förstår. Du ska kännas som en riktigt kunnig kompis som hjälper till.
 
-DITT MÅL: Ställ tillräckligt med frågor för att verkligen förstå kundens situation och kunna hitta EXAKT rätt bil. Ju mer du vet, desto bättre resultat. Du ska ställa minst 5 frågor innan du söker.
+DITT MÅL: Ställ genomtänkta frågor för att verkligen förstå kundens livssituation och hitta EXAKT rätt bil. Ju mer du vet, desto bättre matchning. Ställ minst 5 frågor innan du söker.
 
-INFORMATION DU BEHÖVER SAMLA (alla är viktiga):
+EXTREMT VIKTIGT — HÅLL DIG KORT:
+- Varje meddelande ska vara MAX 2-3 korta meningar.
+- Bekräfta kort (en halv mening), ställ sedan EN fråga.
+- Förklara bara VARFÖR du frågar om det inte är uppenbart, och gör det på max en mening.
+- Undvik att upprepa vad kunden redan sagt i detalj.
+- Skriv som i ett sms — inte som ett mejl.
+
+EXEMPEL PÅ BRA SVAR:
+"Smart med elbil för pendling! Hur långt kör du till jobbet ungefär? Det avgör vilken räckvidd du behöver."
+
+EXEMPEL PÅ FÖR LÅNGT SVAR (UNDVIK):
+"Vad kul att du funderar på elbil! Det är verkligen ett bra val för pendling eftersom driftskostnaden är mycket lägre jämfört med bensin och diesel. Dessutom slipper du trängselskatt i många städer. Nu undrar jag, hur långt kör du till jobbet varje dag? Det är viktigt att veta för att kunna rekommendera en bil med tillräcklig räckvidd så att du inte behöver ladda på vägen."
+
+VIKTIGT — HUR DU STÄLLER FRÅGOR:
+- Förklara kort VARFÖR du frågar när det inte är uppenbart.
+- Ge korta förklaringar av tekniska termer. T.ex. istället för "AWD, FWD eller RWD?" skriv "Behöver du fyrhjulsdrift? Bra i snö men kostar lite mer."
+- Var personlig och referera till det kunden redan sagt.
+
+INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 1. Vad bilen ska användas till (pendling, familj, stad, långresor, blandat)
 2. Budget (ungefärligt prisintervall)
-3. Var personen bor (stad/region — för att hitta bilar i närheten)
-4. Hur långt de kör dagligen/veckovis (påverkar drivlina-val)
-5. Drivlina-preferens (el, hybrid, bensin, diesel) — eller om de inte vet, hjälp dem
-6. Karosstyp (SUV, kombi, sedan, etc.) — eller härledd från behov
-7. Färgpreferens — har kunden önskemål om färg? (vi har data på detta)
-8. Växellåda — automat eller manuell? (viktigt för komfort)
-9. Driftskostnad vs prestanda — vill kunden ha låga kostnader eller mer kraft?
-10. Årsmodell — vill kunden ha nyare eller äldre bil? (påverkar pris och utrustning)
-11. Ålder — hur gammal är kunden? (påverkar försäkringskostnad markant för unga förare)
-12. Eventuella specifika önskemål (märke, utrustning, etc.)
+3. Var personen bor (stad/region)
+4. Hur långt de kör per dag/vecka
+5. Drivmedel (el, hybrid, bensin, diesel)
+6. Karosstyp — fråga begripligt: "Hög bil som SUV, praktisk kombi, eller sportig sedan?"
+7. Färgpreferens
+8. Växellåda (automat/manuell)
+9. Driftskostnad vs prestanda
+10. Årsmodell
+11. Ålder på föraren (påverkar försäkring)
+12. Eventuella specifika önskemål
 
 INTELLIGENTA REGLER:
-- Om kunden nämner lång pendling → du förstår att bränsleeffektivitet och komfort är viktigt, men fråga ändå om budget och plats
-- Om kunden nämner familj → du förstår att utrymme och säkerhet är viktigt, men fråga hur stor familjen är
-- Om kunden nämner stad → liten bil och el/hybrid, men fråga om de kör långa sträckor ibland
-- Om kunden säger "låg driftskostnad" → förstå att el/hybrid och lågt miltal är viktigt
-- Om kunden nämner en färg → notera och filtrera på den
-- Om kunden nämner automat/manuell → notera och filtrera på det. Informera kunden om inga matchande bilar hittas.
+- Lång pendling → nämn att bränsleeffektivitet blir viktigt
+- Familj → fråga om storlek och barnvagnsbehov
+- Stad → nämn att mindre bil är smidigare
+- Låg driftskostnad → nämn elbil kort
+- Norrland/vinter → nämn fyrhjulsdrift
 - Ställ MAX EN fråga per meddelande
-- Var kort, varm och naturlig — som en kompis som kan bilar
+- Var kort, varm och naturlig
 - Använd INTE emojis
-- Bekräfta kort vad kunden sa innan du ställer nästa fråga (t.ex. "Okej, pendling alltså!")
-- Om kunden ger väldigt mycket info på en gång, hoppa över frågor du redan har svar på
-- Blanda inte ihop frågor — ställ en i taget för att det ska kännas personligt
+- Bekräfta KORT vad kunden sa innan nästa fråga
+- Hoppa över frågor du redan har svar på
 
-NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 12 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt för att verkligen kunna filtrera bort fel bilar och ge personliga motiveringar.
+NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 12 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt.
 
 VIKTIG REGEL — ALLTID BEKRÄFTA INNAN SÖKNING:
-Innan du bestämmer dig för att söka (action: "search") MÅSTE du alltid ställa en sista bekräftelsefråga till kunden: "Är det något mer du vill lägga till innan jag söker?" eller liknande. Ge förslag som "Nej, sök nu!", "Jag vill lägga till något" osv. Först EFTER att kunden bekräftar att de är klara ska du returnera action: "search". Om kunden svarar att de vill lägga till något, fortsätt ställa frågor.
+Innan du söker (action: "search") MÅSTE du ställa en sista bekräftelsefråga. Ge förslag som "Nej, sök nu!", "Jag vill lägga till något". Först EFTER bekräftelse ska du returnera action: "search".
 
-NÄR DU STÄLLER EN FRÅGA, inkludera även "suggestions" — 2-4 korta svarsförslag som kunden kan klicka på. Dessa ska vara relevanta för frågan.
+NÄR DU STÄLLER EN FRÅGA, inkludera "suggestions" — 2-4 korta svarsförslag.
 
 SVAR-FORMAT (svara ENBART med JSON, ingen markdown, inga code fences):
 
@@ -209,7 +225,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
@@ -242,7 +258,152 @@ serve(async (req) => {
 
     // Parse and validate input
     const body = await req.json();
-    const { messages, language } = body;
+    const { messages, language, action: reqAction, filters: reqFilters, excludeIds, customerProfile: reqProfile } = body;
+
+    // ── LOAD MORE: skip AI, reuse filters ──
+    if (reqAction === "load_more" && reqFilters) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(supabaseUrl, supabaseKey);
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+      const f = reqFilters;
+      const budgetResult = sanitizeBudget(f.budget);
+      let minPrice = 0, maxPrice = 99999999;
+      if (budgetResult) { minPrice = budgetResult.min; maxPrice = budgetResult.max; }
+
+      const city = sanitizeStringFilter(f.city);
+      const make = sanitizeStringFilter(f.make);
+      const color = sanitizeStringFilter(f.color);
+      const dt = typeof f.drivetrain === "string" && f.drivetrain in drivetrainPatterns ? f.drivetrain : null;
+      const fuels = Array.isArray(f.fuel) ? f.fuel.filter((x: string) => x in fuelPatterns) : [];
+      const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
+      const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
+      const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
+      const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
+
+      // Progressive relaxation: try with filters, then relax
+      const buildLoadMoreQuery = (level: number) => {
+        const priceMult = [1.3, 1.6, 2.5][level] || 2.5;
+        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
+        let q = sb.from("Lovable").select("*")
+          .gte("price", Math.floor(minPrice * priceMinMult))
+          .lte("price", Math.ceil(maxPrice * priceMult));
+
+        // Level 0: all filters except city
+        // Level 1: drop body type too
+        // Level 2: only price + fuel
+        if (make && level < 2) q = q.ilike("make", `%${make}%`);
+        if (fuels.length > 0 && level < 3) {
+          const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
+          if (ff) q = q.or(ff);
+        }
+        if (bodies.length > 0 && level < 1) {
+          const bf = bodies.map((x: string) => bodyPatterns[x]).filter(Boolean).map((p: string) => `body_type.ilike.${p}`);
+          const mf: string[] = [];
+          for (const bt of bodies) { const ms = modelBodyTypeMap[bt]; if (ms) for (const m of ms) mf.push(`model.ilike.%${m}%`); }
+          const all = [...bf, ...mf, "body_type.eq.Unknown", "body_type.is.null"].join(",");
+          if (all) q = q.or(all);
+        }
+        if (dt && level < 2) {
+          const vals = drivetrainPatterns[dt];
+          if (vals) q = q.or(vals.map(v => `drivetrain.eq.${v}`).join(",") + ",drivetrain.eq.Unknown,drivetrain.is.null");
+        }
+        if (yMin && level < 2) q = q.gte("year", yMin);
+        if (yMax && level < 2) q = q.lte("year", yMax);
+
+        // Exclude already-shown cars
+        for (const eid of exclude) {
+          q = q.neq("id", eid);
+        }
+
+        return q.order("price", { ascending: true }).limit(18);
+      };
+
+      // Sort by proximity to budget midpoint
+      const budgetMid = (minPrice + maxPrice) / 2;
+
+      // Try progressively relaxed queries
+      let cars: any[] = [];
+      for (let level = 0; level <= 2; level++) {
+        const { data: moreCars } = await buildLoadMoreQuery(level);
+        if (moreCars && moreCars.length > 0) {
+          cars = moreCars
+            .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+            .slice(0, 9);
+          break;
+        }
+      }
+
+      // Generate reasons for new cars
+      let carReasons: { carId: number; reason: string }[] = [];
+      let message = "";
+
+      if (cars.length > 0 && LOVABLE_API_KEY) {
+        const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
+        const uniqueModels = [...new Set(cars.map((c: any) => c.model).filter(Boolean))];
+        const [modelsRes, makesRes] = await Promise.all([
+          sb.from("car_models").select("*").in("make", uniqueMakes).in("model", uniqueModels),
+          sb.from("car_makes").select("*").in("make", uniqueMakes),
+        ]);
+        const modelLookup: Record<string, any> = {};
+        for (const m of modelsRes.data ?? []) modelLookup[`${m.make}|||${m.model}`] = m;
+        const makeLookup: Record<string, any> = {};
+        for (const m of makesRes.data ?? []) makeLookup[m.make] = m;
+
+        const carSummaries = cars.map((c: any) => {
+          const cm = modelLookup[`${c.make}|||${c.model}`];
+          const mk = makeLookup[c.make || ""];
+          const parts = [`ID:${c.id}`, `${c.make} ${c.model_raw || c.model} ${c.year}`, `${c.price?.toLocaleString("sv-SE")} kr`, `${c.mileage?.toLocaleString("sv-SE")} mil`, c.fuel_type, c.body_type, c.city];
+          if (cm?.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
+          if (cm?.boot_space_liters) parts.push(`bagageutrymme: ${cm.boot_space_liters}L`);
+          if (mk) parts.push(`garanti: ${mk.warranty_years}år`);
+          return parts.filter(Boolean).join(", ");
+        }).join("\n");
+
+        const langInst = { sv: "\n\nSvara på svenska.", en: "\n\nRespond in English.", no: "\n\nSvar på norsk.", da: "\n\nSvar på dansk.", fi: "\n\nVastaa suomeksi." }[language as string] || "\n\nSvara på svenska.";
+
+        try {
+          const msgResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [{
+                role: "system",
+                content: `Du är Clutch. Ge korta motiveringar (1 mening per bil) för ytterligare bilförslag baserat på kundprofilen. Använd INTE emojis.${langInst}\n\nSvara ENBART med JSON:\n{"message":"Kort intro","carReasons":[{"carId":123,"reason":"Motivering"}]}`
+              }, {
+                role: "user",
+                content: `Kundprofil: "${reqProfile || ""}"\n\nFler bilar:\n${carSummaries}`
+              }],
+            }),
+          });
+          if (msgResp.ok) {
+            const d = await msgResp.json();
+            const c = d.choices?.[0]?.message?.content?.trim();
+            if (c) {
+              try {
+                const p = JSON.parse(c.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim());
+                message = p.message || "";
+                carReasons = p.carReasons || [];
+              } catch { message = c; }
+            }
+          }
+        } catch (e) { console.error("Load more AI reason failed"); }
+      }
+
+      if (!message) message = `Här är ${cars.length} fler bilar som kan passa dig!`;
+
+      return new Response(JSON.stringify({
+        action: "search",
+        message,
+        cars,
+        carReasons,
+        matchCount: cars.length,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Continue with normal conversation flow
 
     // Language instruction map
     const langInstructions: Record<string, string> = {
@@ -486,37 +647,59 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
-        return query.order("price", { ascending: true }).limit(9);
+        return query.order("price", { ascending: true }).limit(18);
       };
 
-      // Run levels sequentially, stop when >= MIN_RESULTS found
-      for (let level = 0; level <= 4; level++) {
-        // For speed: run current level and next level in parallel when possible
-        if (level < 4) {
-          const [resCurr, resNext] = await Promise.all([
-            buildQuery(level),
-            buildQuery(level + 1),
-          ]);
-          if (resCurr.data && resCurr.data.length >= MIN_RESULTS) {
-            cars = resCurr.data;
-            relaxLevel = level;
-            break;
-          }
-          if (resNext.data && resNext.data.length >= MIN_RESULTS) {
-            cars = resNext.data;
-            relaxLevel = level + 1;
-            break;
-          }
-          // Skip to level+2 in next iteration
-          level++;
-        } else {
-          const res = await buildQuery(level);
-          if (res.data && res.data.length > 0) {
-            cars = res.data;
-            relaxLevel = level;
-          }
+      // Fire levels 0 and 1 in parallel
+      const [res0, res1] = await Promise.all([
+        buildQuery(0),
+        buildQuery(1),
+      ]);
+
+      // Sort results by proximity to budget midpoint, then take top 9
+      const budgetMid = (minPrice + maxPrice) / 2;
+      const sortByBudgetProximity = (arr: any[]) => {
+        return arr
+          .sort((a, b) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+          .slice(0, 9);
+      };
+
+      if (res0.data && res0.data.length > 0) {
+        cars = sortByBudgetProximity(res0.data);
+        relaxLevel = 0;
+      } else if (res1.data && res1.data.length > 0) {
+        cars = sortByBudgetProximity(res1.data);
+        relaxLevel = 1;
+      } else {
+        // Try levels 2 and 3 in parallel
+        const [res2, res3] = await Promise.all([
+          buildQuery(2),
+          buildQuery(3),
+        ]);
+        if (res2.data && res2.data.length > 0) {
+          cars = sortByBudgetProximity(res2.data);
+          relaxLevel = 2;
+        } else if (res3.data && res3.data.length > 0) {
+          cars = sortByBudgetProximity(res3.data);
+          relaxLevel = 3;
         }
       }
+      
+      console.log(`Search: budget=${minPrice}-${maxPrice}, relaxLevel=${relaxLevel}, found=${cars.length}, prices=${cars.map((c:any)=>c.price).join(",")}`);
+
+      // ── Hämta berikad data från car_models och car_makes ──
+      const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
+      const uniqueModels = [...new Set(cars.map((c: any) => c.model).filter(Boolean))];
+
+      const [modelsRes, makesRes] = await Promise.all([
+        supabase.from("car_models").select("*").in("make", uniqueMakes).in("model", uniqueModels),
+        supabase.from("car_makes").select("*").in("make", uniqueMakes),
+      ]);
+
+      const modelLookup: Record<string, any> = {};
+      for (const m of modelsRes.data ?? []) modelLookup[`${m.make}|||${m.model}`] = m;
+      const makeLookup: Record<string, any> = {};
+      for (const m of makesRes.data ?? []) makeLookup[m.make] = m;
 
       // Build context from conversation
       const userMessages = messages
@@ -532,10 +715,38 @@ serve(async (req) => {
       if (cars.length > 0) {
         try {
           const carSummaries = cars
-            .map(
-              (c: any) =>
-                `ID:${c.id} — ${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}, färg: ${c.color || "okänd"}`
-            )
+            .map((c: any) => {
+              const cm = modelLookup[`${c.make}|||${c.model}`];
+              const mk = makeLookup[c.make || ""];
+              const parts = [
+                `ID:${c.id}`,
+                `${c.make} ${c.model_raw || c.model} ${c.year}`,
+                `${c.price?.toLocaleString("sv-SE")} kr`,
+                `${c.mileage?.toLocaleString("sv-SE")} mil`,
+                c.fuel_type, c.body_type, c.city,
+                `färg: ${c.color || "okänd"}`,
+                c.drivetrain ? `drivlina: ${c.drivetrain}` : null,
+                c.horsepower && c.horsepower > 0 ? `${c.horsepower} hk` : null,
+                c.transmission ? `växellåda: ${c.transmission}` : null,
+              ];
+              // Berikad modelldata
+              if (cm) {
+                if (cm.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
+                if (cm.boot_space_liters) parts.push(`bagageutrymme: ${cm.boot_space_liters}L`);
+                if (cm.max_towing_kg) parts.push(`dragvikt: ${cm.max_towing_kg}kg`);
+                if (cm.zero_to_hundred_sec) parts.push(`0-100: ${cm.zero_to_hundred_sec}s`);
+                if (cm.seats) parts.push(`${cm.seats} säten`);
+                if (cm.electric_range_km) parts.push(`elräckvidd: ${cm.electric_range_km}km`);
+                if (cm.fuel_consumption_l100km) parts.push(`förbrukning: ${cm.fuel_consumption_l100km}l/100km`);
+                if (cm.co2_g_per_km) parts.push(`CO2: ${cm.co2_g_per_km}g/km`);
+                if (cm.reliability_notes) parts.push(`tillförlitlighet: ${cm.reliability_notes}`);
+              }
+              // Garanti från märkesdata
+              if (mk) {
+                parts.push(`garanti: ${mk.warranty_years}år/${(mk.warranty_km/1000).toFixed(0)}tkm`);
+              }
+              return parts.filter(Boolean).join(", ");
+            })
             .join("\n");
 
           const msgResponse = await fetch(
@@ -551,12 +762,21 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Du ska göra två saker:
+                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare som pratar med vanliga människor. Du har tillgång till detaljerad data om varje bil. Du ska göra två saker:
 
 1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar kundens situation.
 2. För VARJE bil, ge en kort personlig motivering (1 mening) om varför just den bilen passar kunden baserat på deras specifika behov.
 
-Var specifik: nämn varför biltypen/drivlinan/färgen/priset passar deras livsstil. Använd INTE emojis.${langInstruction}
+Använd den berikade datan aktivt i dina motiveringar men förklara enkelt:
+- Säkerhet: Euro NCAP-stjärnor (förklara kort vad det innebär om relevant)
+- Prestanda: hästkrafter, 0-100
+- Praktiskt: bagageutrymme, dragvikt, antal säten
+- Ekonomi: bränsleförbrukning, CO2, elräckvidd, garanti, uppskattade driftskostnader
+- Tillförlitlighet: kända problem eller styrkor
+- Komfort: drivlina (skriv "fyrhjulsdrift" istället för AWD), växellåda
+- Om kundens ålder är känd: nämn att försäkringskostnaden påverkas av ålder
+
+Var specifik — nämn siffror när de är relevanta (t.ex. "5 NCAP-stjärnor vilket är högsta betyget", "450L bagageutrymme, plats för barnvagn och väskor"). Använd INTE emojis.${langInstruction}
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
@@ -671,6 +891,8 @@ Använd INTE emojis.${langInstruction}`,
           cars,
           carReasons,
           suggestions,
+          filters: { ...filters, driverAge: typeof filters.driverAge === "number" ? filters.driverAge : null },
+          customerProfile,
           matchCount: cars.length,
           relaxed: relaxLevel > 0,
           relaxLevel,

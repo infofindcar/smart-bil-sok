@@ -1,34 +1,22 @@
 
 
-## Intresseanmälan på lösenordssidan
+## Plan: Realtids-rösttranskription och visuell mikrofon-indikator
 
-Lägger till ett e-postformulär under lösenordsskyddet. Inget befintligt i databasen (bilar, analytics, sökfunktioner) påverkas.
+### Vad som ändras
 
-### Steg 1: Ny databastabell `waitlist`
-- Skapas med en migration (bredvid dina befintliga tabeller)
-- Kolumner: `id` (uuid), `email` (text, unik), `created_at` (timestamptz)
-- RLS: tillåt INSERT för alla, blockera SELECT/UPDATE/DELETE
-- Dina bilar och andra tabeller rörs inte
+1. **Realtids-text medan man pratar**: Ändra `interimResults` till `true` i SpeechRecognition-konfigurationen. Uppdatera `onresult`-hanteraren så att interim-resultat visas löpande i textfältet och ersätts med slutgiltiga resultat när de kommer.
 
-### Steg 2: Uppdatera PasswordGate.tsx
-- Under texten "Denna tjänst är lösenordsskyddad under beta" läggs till:
-  - En linje/separator
-  - Texten "Vill du få tillgång först och följa resan?"
-  - Ett e-postfält med en skicka-knapp
-  - Bekräftelsetext: "Tack! Vi hör av oss."
-- Sparar direkt till `waitlist`-tabellen via Supabase-klienten
-- Ingen edge function behövs, ingen extern tjänst
+2. **Visuell lyssnings-indikator**: Ersätt den enkla `animate-pulse` med en mer tydlig "lyssnar"-animation — pulsande ringar runt mikrofon-knappen som indikerar att ljud fångas.
 
-### Vad som INTE ändras
-- `cars`-tabellen (alla bilar kvar som vanligt)
-- `ny find car`-tabellen
-- `guided-search` edge function
-- `verify-password` edge function
-- Alla andra komponenter och sidor
+### Tekniska detaljer
 
-### Tekniskt
-- Migration: `CREATE TABLE waitlist (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, email text NOT NULL UNIQUE, created_at timestamptz DEFAULT now())`
-- RLS: en RESTRICTIVE policy som nekar allt, plus en PERMISSIVE INSERT-policy for anon
-- Frontend: `supabase.from('waitlist').insert({ email })` — ingen autentisering krävs
-- Duplicate-hantering: vid samma e-post igen visas ändå "Tack"-meddelande
-- Du ser alla anmälningar i Supabase Table Editor (supabase.com/dashboard)
+**Fil: `src/components/GuidedSearch.tsx`**
+
+- Sätt `recognition.interimResults = true`
+- Lägg till en `interimTranscriptRef` som håller koll på den senaste interim-texten
+- I `onresult`: samla ihop alla `isFinal`-resultat plus senaste interim, sätt `inputValue` till `confirmedText + interimText`
+- Uppdatera mikrofon-knappens styling: lägg till animerade ringar (pseudo-element via extra `<span>`-lager) som pulserar ut när `isListening` är true
+
+**Fil: `src/index.css`**
+- Lägg till en `@keyframes mic-ripple` animation för de pulsande ringarna
+

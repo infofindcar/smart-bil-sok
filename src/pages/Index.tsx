@@ -1,9 +1,13 @@
-import { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, useCallback, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
+
+import { motion } from 'framer-motion';
 
 // Lazy-load below-fold sections
 const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) => ({ default: m.ResultsReveal })));
@@ -19,19 +23,22 @@ import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
+  const [parallaxY, setParallaxY] = useState(0);
   useEffect(() => {
     const handleScroll = () => {
       const vh = window.innerHeight;
       const scrollY = window.scrollY;
       const p = Math.min(scrollY / (vh * 0.8), 1);
       setProgress(p);
+      // Parallax: image moves slower than scroll (0.35 factor)
+      setParallaxY(scrollY * 0.35);
     };
     window.addEventListener('scroll', handleScroll, {
       passive: true
     });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  return progress;
+  return { progress, parallaxY };
 };
 const SectionDivider = ({
   variant
@@ -92,55 +99,208 @@ const Index = () => {
   const getReasonForCar = (carId: number) => {
     return carReasons.find((r) => r.carId === carId)?.reason;
   };
-  const scrollProgress = useScrollProgress();
+  const [loadingMore, setLoadingMore] = useState(false);
+  const handleLoadMore = useCallback(async () => {
+    try {
+      const stored = sessionStorage.getItem('findcar-last-filters');
+      if (!stored) return;
+      const { filters, customerProfile } = JSON.parse(stored);
+      setLoadingMore(true);
+      const excludeIds = cars.map((c) => c.id);
+      const { data, error } = await supabase.functions.invoke('guided-search', {
+        body: { action: 'load_more', filters, excludeIds, customerProfile, language },
+      });
+      if (error) throw error;
+      if (data?.cars?.length > 0) {
+        setCars((prev) => [...prev, ...data.cars]);
+        setCarReasons((prev) => [...prev, ...(data.carReasons || [])]);
+      } else {
+        toast.info('Inga fler bilar hittades med dina filter. Prova att justera din sökning.');
+      }
+    } catch (err) {
+      console.error('Load more error:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cars, language]);
+  const { progress: scrollProgress, parallaxY } = useScrollProgress();
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
       {/* Hero with video background */}
       <section
-      className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-start overflow-hidden -mb-px"
-      style={{
-        backgroundImage: 'url(/images/hero_findcar.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}>
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
+        {/* Responsive hero backgrounds — WebP with parallax on mobile */}
+        <img
+          src="/images/hero_mobile.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center block md:hidden will-change-transform"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          style={{ transform: `translateY(${parallaxY}px)` }}
+        />
+        <img
+          src="/images/hero_findcar.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block will-change-transform"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          style={{ transform: `translateY(${parallaxY}px)` }}
+        />
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
-        {/* FindCar logo + tagline */}
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-          <div className="relative">
-            <img src={findcarLogoHero} alt="FindCar" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto animate-float-subtle" style={{ filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3)) drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }} />
-            
-          </div>
+        {/* Hero content — unified for mobile & desktop */}
+        {/* Mobile hero content */}
+        <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[30svh]">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-3"
+          >
+            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="text-3xl font-bold text-white leading-tight font-serif"
+            >
+              Din objektiva<br />bilrådgivare
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
+            >
+              Vi matchar dig med bilar baserat på din livsstil, budget och behov
+            </motion.p>
+          </motion.div>
+
+          {/* Spacer between headline and CTA */}
+          <div className="h-[10svh]" />
+
+          {/* Bottom: CTA + social proof below the car */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+            className="flex flex-col items-center gap-4 mb-10 w-full"
+          >
+            <Button
+              onClick={scrollToSearch}
+              variant="gradient"
+              className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform hero-cta-glow"
+            >
+              Hitta din bil
+            </Button>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <p className="text-white/70 text-xs">
+                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
+                </p>
+              </div>
+              <p className="text-white/50 text-xs">
+                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
+              </p>
+            </motion.div>
+          </motion.div>
         </div>
 
+        {/* Desktop hero content — spread vertically */}
+        <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
+          {/* Top: headline + subtitle together */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-24 space-y-4"
+          >
+            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="text-5xl lg:text-6xl font-bold text-white leading-tight font-serif"
+            >
+              Din objektiva<br />bilrådgivare
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+              className="text-white/70 text-lg leading-relaxed max-w-md mx-auto"
+            >
+              Vi matchar dig med bilar baserat på din livsstil, budget och behov
+            </motion.p>
+          </motion.div>
 
-        {/* CTA Button */}
-        <div className="absolute bottom-20 z-10 flex flex-col items-center gap-3">
-          <Button onClick={scrollToSearch} size="sm" className="text-xs sm:text-sm px-5 py-2 rounded-full bg-background/80 text-foreground hover:bg-background/90 shadow-lg hover:scale-105 transition-transform">
-            Hitta din bil
-          </Button>
+          {/* Bottom: CTA + social proof below the car */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+            className="flex flex-col items-center gap-4 mb-12"
+          >
+            <Button
+              onClick={scrollToSearch}
+              variant="gradient"
+              className="h-12 rounded-full text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform px-10 hero-cta-glow"
+            >
+              Hitta din bil
+            </Button>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <p className="text-white/70 text-xs">
+                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
+                </p>
+              </div>
+              <p className="text-white/50 text-sm">
+                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
+              </p>
+            </motion.div>
+          </motion.div>
         </div>
 
-
-        <button onClick={scrollToSearch} className="absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
+        {/* Bounce arrow — desktop only */}
+        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
         opacity: 1 - scrollProgress * 3
       }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
         </button>
 
-        {/* Extended bottom fade for smoother hero-to-content transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-72 z-10 pointer-events-none" style={{
-        background: `linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.5) 60%, hsl(var(--background)) 100%)`,
-        opacity: Math.max(0.3, Math.min(scrollProgress * 2, 1))
-      }} />
+        {/* Bottom fade — inside hero, no seam possible */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 z-[2] pointer-events-none" style={{
+          background: `linear-gradient(to bottom,
+            transparent 0%,
+            hsl(var(--background) / 0.08) 15%,
+            hsl(var(--background) / 0.22) 30%,
+            hsl(var(--background) / 0.42) 45%,
+            hsl(var(--background) / 0.62) 58%,
+            hsl(var(--background) / 0.80) 70%,
+            hsl(var(--background) / 0.93) 85%,
+            hsl(var(--background)) 100%)`
+        }} />
       </section>
 
-      {/* Bridge transition zone between hero and search */}
-      {/* Seamless transition handled by the gradient overlay inside the hero */}
+      {/* Search — pulled up to overlap hero fade and eliminate any seam */}
+      <section ref={searchRef} data-search-section className="relative z-10 bg-background pt-6 pb-8 md:py-16 px-3 md:px-4 overflow-hidden -mt-1">
 
-      {/* Search */}
-      <section ref={searchRef} data-search-section className="relative py-16 md:py-24 px-4 overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
@@ -148,7 +308,7 @@ const Index = () => {
           <div className="absolute bottom-0 -left-20 w-[250px] h-[250px] rounded-full bg-primary/[0.05] blur-[80px]" />
         </div>
 
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/[0.08] border border-secondary/[0.12] mb-5">
@@ -176,15 +336,13 @@ const Index = () => {
       {/* Results — premium reveal */}
       {showResults && cars.length > 0 && (() => {
       const topCars = cars.slice(0, 3);
-      const similarCars = cars.slice(3, 9);
+      const similarCars = cars.slice(3);
       return (
-        <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} totalMatches={cars.length} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
           state: {
             cars: savedCars
           }
-        })} onShowMore={() => searchRef.current?.scrollIntoView({
-          behavior: 'smooth'
-        })} getReasonForCar={getReasonForCar} />);
+        })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />);
 
     })()}
 
@@ -200,11 +358,16 @@ const Index = () => {
         <section id="faq">
           <FAQ />
         </section>
-        <SectionDivider variant="alt-to-bg" />
+        <div className="hidden md:block">
+          <SectionDivider variant="alt-to-bg" />
+        </div>
         <CtaBanner />
       </Suspense>
       <Footer />
-      <CookieBanner />
+      
+      <Suspense fallback={null}>
+        <CookieBanner />
+      </Suspense>
     </div>;
 };
 export default Index;

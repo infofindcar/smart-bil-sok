@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, MicOff } from 'lucide-react';
 
 export type Car = {
   id: number;
@@ -20,6 +20,10 @@ export type Car = {
   image_thumb_url: string | null;
   listing_url: string | null;
   regnr: string | null;
+  horsepower: number | null;
+  transmission: string | null;
+  dealer_name: string | null;
+  dealer_url: string | null;
 };
 
 export type CarReason = {
@@ -123,13 +127,6 @@ const RESTART: Record<string, string> = {
   fi: 'Aloita alusta',
 };
 
-const SUBTITLE: Record<string, string> = {
-  sv: 'Objektiv bilrådgivare',
-  en: 'Objective car advisor',
-  no: 'Objektiv bilrådgiver',
-  da: 'Objektiv bilrådgiver',
-  fi: 'Objektiivinen autoneuvoja',
-};
 
 const CHAT_STORAGE_KEY = 'findcar-chat-state';
 
@@ -149,44 +146,196 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputAreaRef = useRef<HTMLDivElement>(null);
+  const isAutoFollowRef = useRef(true);
+  const isTypingRef = useRef(false);
+  const scrollRafRef = useRef<number | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const targetScrollTopRef = useRef(0);
 
-  // Persist chat state
+  const confirmedTextRef = useRef('');
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) return;
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = language === 'en' ? 'en-US' : 'sv-SE';
+    confirmedTextRef.current = inputValue;
+    recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      if (finalTranscript) {
+        confirmedTextRef.current = (confirmedTextRef.current ? confirmedTextRef.current + ' ' : '') + finalTranscript.trim();
+      }
+      const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
+      setInputValue(display.trim());
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isListening, language, inputValue]);
+
+
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
 
-  // Scroll only within the chat container, not the whole page
+  const stopScrollLoop = useCallback(() => {
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
+  }, []);
+
+  const startScrollLoop = useCallback(() => {
+    if (scrollRafRef.current !== null) return;
+
+    let lastTime = 0;
+    const step = (timestamp: number) => {
+      const container = chatContainerRef.current;
+      if (!container) {
+        scrollRafRef.current = null;
+        return;
+      }
+
+      const target = targetScrollTopRef.current;
+      const diff = target - container.scrollTop;
+
+      if (Math.abs(diff) <= 0.5) {
+        container.scrollTop = target;
+        scrollRafRef.current = null;
+        return;
+      }
+
+      // Use dt-based interpolation for frame-rate independent smoothness
+      const dt = lastTime ? Math.min((timestamp - lastTime) / 16.67, 2) : 1;
+      lastTime = timestamp;
+
+      // Gentle easing — never jump, always glide
+      const factor = Math.abs(diff) > 200 ? 0.18 : 0.12;
+      container.scrollTop += diff * factor * dt;
+
+      scrollRafRef.current = requestAnimationFrame(step);
+    };
+
+    scrollRafRef.current = requestAnimationFrame(step);
+  }, []);
+
+  const queueScrollToBottom = useCallback((force = false) => {
+    const container = chatContainerRef.current;
+    if (!container || (!force && !isAutoFollowRef.current)) return;
+
+    requestAnimationFrame(() => {
+      const liveContainer = chatContainerRef.current;
+      if (!liveContainer || (!force && !isAutoFollowRef.current)) return;
+
+      targetScrollTopRef.current = Math.max(0, liveContainer.scrollHeight - liveContainer.clientHeight);
+      startScrollLoop();
+    });
+  }, [startScrollLoop]);
+
   useEffect(() => {
     const container = chatContainerRef.current;
-    if (container) {
-      requestAnimationFrame(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth',
-        });
-      });
-    }
-  }, [messages, isLoading, visibleText]);
+    if (!container) return;
+
+    const onScroll = () => {
+      const distanceFromBottom = container.scrollHeight - container.clientHeight - container.scrollTop;
+      isAutoFollowRef.current = distanceFromBottom < 72;
+    };
+
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Auto-resize textarea when inputValue changes (voice or clear)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = '0px';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [inputValue]);
+
+  useEffect(() => {
+    queueScrollToBottom(true);
+  }, [messages.length, isLoading, queueScrollToBottom]);
+
+  useEffect(() => {
+    queueScrollToBottom(false);
+  }, [visibleText, queueScrollToBottom]);
+
+  useEffect(() => {
+    return () => {
+      stopScrollLoop();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [stopScrollLoop]);
+
+  // Avoid page-level auto-scroll on load/mobile; keep scrolling contained to the chat panel.
 
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
     let i = 0;
-    const speed = 15;
+    isTypingRef.current = true;
+    isAutoFollowRef.current = true;
+    setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
+
+    const getCharDelay = (char: string, nextChar: string) => {
+      // Longer pause after sentence-ending punctuation
+      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 220 + Math.random() * 80;
+      // Medium pause after clause punctuation
+      if (',;:'.includes(char) && nextChar === ' ') return 100 + Math.random() * 40;
+      // Slight pause after emoji sequences
+      if (char === ' ' && i > 2) return 30 + Math.random() * 15;
+      // Normal typing speed with slight human variance
+      return 22 + Math.random() * 18;
+    };
+
     const tick = () => {
       i += 1;
       setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+
       if (i < fullText.length) {
-        setTimeout(tick, speed + Math.random() * 10);
+        const currentChar = fullText[i - 1] || '';
+        const nextChar = fullText[i] || '';
+        const delay = getCharDelay(currentChar, nextChar);
+        typingTimeoutRef.current = setTimeout(tick, delay);
       } else {
+        isTypingRef.current = false;
+        queueScrollToBottom(true);
         onDone?.();
       }
     };
-    setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
-    setTimeout(tick, 250);
-  };
 
+    typingTimeoutRef.current = setTimeout(tick, 200);
+  };
   const addAssistantMessage = (
     content: string,
     suggestions?: string[],
@@ -210,7 +359,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     e?.preventDefault();
     const text = (overrideText || inputValue).trim();
     if (!text || isLoading) return;
+    navigator.vibrate?.(10);
 
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+    }
+    confirmedTextRef.current = '';
     setInputValue('');
     const userMsg = addUserMessage(text);
     setIsLoading(true);
@@ -235,6 +394,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
+        // Save driver age if available for insurance calculation
+        if (data.filters?.driverAge) {
+          sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
+        }
+        // Save search filters + customer profile for "load more"
+        if (data.filters || data.customerProfile) {
+          sessionStorage.setItem('findcar-last-filters', JSON.stringify({
+            filters: data.filters,
+            customerProfile: data.customerProfile || '',
+          }));
+        }
         setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
@@ -251,14 +421,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         if (data.cars?.length > 0) {
           const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
-          addAssistantMessage(
-            `🎯 ${resultMsg}`,
-            undefined,
-            () => {
-              // Trigger results after typewriter finishes
-              onResults(data.cars, resultMsg, data.carReasons || []);
-            }
-          );
+          onResults(data.cars, resultMsg, data.carReasons || []);
+          setTimeout(() => {
+            onScrollToResults?.();
+          }, 600);
         } else {
           // No results — show message with suggestions
           addAssistantMessage(
@@ -272,7 +438,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       }
     } catch (err) {
       console.error('Guided search error:', err);
-      addAssistantMessage('Något gick fel. Försök igen!');
+      const errorMessages: Record<string, string> = {
+        sv: 'Oj, något gick fel med sökningen. Kontrollera din internetanslutning och försök igen.',
+        en: 'Oops, something went wrong. Check your connection and try again.',
+        no: 'Noe gikk galt. Sjekk tilkoblingen og prøv igjen.',
+        da: 'Noget gik galt. Tjek din forbindelse og prøv igen.',
+        fi: 'Jokin meni pieleen. Tarkista yhteys ja yritä uudelleen.',
+      };
+      addAssistantMessage(
+        errorMessages[language] || errorMessages.sv,
+        [language === 'sv' ? 'Försök igen' : 'Try again']
+      );
       setIsLoading(false);
     }
   };
@@ -290,6 +466,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     sessionStorage.removeItem(CHAT_STORAGE_KEY);
     sessionStorage.removeItem('findcar-search-state');
     sessionStorage.removeItem('findcar-results-revealed');
+    sessionStorage.removeItem('findcar-driver-age');
   };
 
   const handleLanguageChange = (newLang: string) => {
@@ -323,27 +500,26 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     !isTypingMsg(lastAssistantMsg);
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="clutch-card rounded-2xl md:rounded-3xl overflow-hidden border border-secondary/[0.15] bg-card backdrop-blur-xl shadow-[0_8px_60px_-12px_hsl(var(--secondary)/0.12)]">
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-2xl shadow-sm">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between bg-gradient-to-r from-secondary/[0.04] to-primary/[0.03]">
-          <div className="flex items-center gap-3">
+        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center border border-secondary/10">
-                <Sparkles className="h-4.5 w-4.5 text-secondary" />
+              <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-secondary" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border-[1.5px] border-card" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch <span className="text-[10px] font-medium text-secondary/70 ml-0.5">AI</span></h3>
-              <p className="text-[11px] text-muted-foreground">{SUBTITLE[language] || SUBTITLE.sv}</p>
+              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch</h3>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="text-[11px] bg-transparent border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
+              className="text-[11px] bg-transparent border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
             >
               <option value="sv">🇸🇪 SV</option>
               <option value="en">🇬🇧 EN</option>
@@ -353,11 +529,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </select>
             <button
               onClick={() => handleReset()}
-              className="text-[11px] flex items-center gap-1 border border-border/40 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
+              className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
               title={RESTART[language] || RESTART.sv}
             >
               <RotateCcw className="h-3 w-3" />
-              {RESTART[language] || RESTART.sv}
             </button>
           </div>
         </div>
@@ -365,23 +540,24 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="px-4 md:px-5 py-4 space-y-3 max-h-[340px] md:max-h-[380px] overflow-y-auto chat-scrollbar min-h-[180px]"
+          className="px-4 md:px-6 py-4 space-y-3 max-h-[55vh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px] pb-6"
         >
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
+              style={{ transition: 'all 0.2s ease-out' }}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                  <Sparkles className="h-3 w-3 text-secondary" />
+                <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                  <Sparkles className="h-3 w-3 text-secondary/70" />
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-br from-secondary to-secondary/90 text-secondary-foreground rounded-br-sm shadow-sm'
-                    : 'bg-muted/50 text-foreground rounded-bl-sm'
+                    ? 'bg-secondary text-secondary-foreground rounded-br-sm'
+                    : 'bg-muted/40 text-foreground rounded-bl-sm'
                 }`}
               >
                 {getDisplayText(msg)}
@@ -395,54 +571,52 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {isLoading && phase !== 'searching' && (
             <div className="flex justify-start gap-2 animate-fade-in">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-secondary/10 to-primary/8 flex items-center justify-center shrink-0 mt-1 border border-secondary/[0.08]">
-                <Sparkles className="h-3 w-3 text-secondary" />
+              <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                <Sparkles className="h-3 w-3 text-secondary/70" />
               </div>
-              <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-5 py-3.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Quick-reply suggestions */}
-        {showSuggestions && (
-          <div className="px-4 md:px-5 pb-3">
-            <div className="flex flex-wrap gap-1.5">
-              {lastAssistantMsg!.suggestions!.map((s) => (
+        {/* Quick-reply suggestions + Search now button */}
+        {(showSuggestions || (phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user'))) && (
+          <div className="px-4 md:px-6 pb-3">
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5 items-stretch md:items-center">
+              {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-foreground/80 transition-all duration-150 shadow-sm"
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border text-foreground/80 transition-all duration-150 text-left active:scale-[0.98]"
                 >
                   {s}
                 </button>
               ))}
-              <button
-                onClick={() => inputRef.current?.focus()}
-                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-secondary/30 bg-transparent hover:bg-secondary/5 text-secondary/70 hover:text-secondary transition-all duration-150 flex items-center gap-1"
-              >
-                <PenLine className="h-3 w-3" />
-                {WRITE_OWN[language] || WRITE_OWN.sv}
-              </button>
+              {showSuggestions && (
+                <button
+                  onClick={() => inputRef.current?.focus()}
+                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-dashed border-border/40 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
+                >
+                  <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+                  {WRITE_OWN[language] || WRITE_OWN.sv}
+                </button>
+              )}
+              {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
+                <button
+                  onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
+                  className="w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
+                >
+                  <Search className="h-3 w-3" />
+                  {SEARCH_NOW[language] || SEARCH_NOW.sv}
+                </button>
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Search now button — always visible during chatting when user has sent at least one message */}
-        {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
-          <div className="px-4 md:px-5 pb-3 flex justify-end">
-            <button
-              onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
-              className="text-[11px] px-3 py-1.5 rounded-lg border border-secondary/[0.15] bg-secondary/[0.04] hover:bg-secondary/[0.1] hover:border-secondary/[0.25] text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
-            >
-              <Search className="h-3 w-3" />
-              {SEARCH_NOW[language] || SEARCH_NOW.sv}
-            </button>
           </div>
         )}
 
@@ -468,34 +642,61 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div className="px-4 md:px-5 pb-4 pt-2 border-t border-border/30">
+        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
-                inputFocused
-                  ? 'border-secondary/40 shadow-[0_0_0_2px_hsl(var(--secondary)/0.06)]'
-                  : 'border-border/40'
-              } bg-background/80`}
+                isListening
+                  ? 'border-primary/40 ring-2 ring-primary/20'
+                  : inputFocused
+                    ? 'border-secondary/30 ring-1 ring-secondary/10'
+                    : 'border-border/30'
+              } bg-background/60`}
             >
               <textarea
                 ref={inputRef}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = '0px';
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
-                placeholder={PLACEHOLDERS[language] || PLACEHOLDERS.sv}
+                placeholder={isListening
+                  ? (language === 'en' ? 'Listening...' : 'Lyssnar...')
+                  : (PLACEHOLDERS[language] || PLACEHOLDERS.sv)}
                 disabled={isLoading}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[100px]"
-                style={{ minHeight: '40px' }}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                name="clutch-chat-input"
+                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
+                style={{ minHeight: '42px' }}
               />
             </div>
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={() => { navigator.vibrate?.(10); toggleListening(); }}
+                disabled={isLoading}
+                className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                  isListening
+                    ? 'bg-primary/10 border-primary/40 text-primary mic-listening'
+                    : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
+                } disabled:opacity-50`}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
             <Button
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-10 w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>

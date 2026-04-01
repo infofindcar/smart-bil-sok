@@ -5,87 +5,120 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ExternalLink, Fuel, Calendar, Gauge, MapPin, Car, Palette, Settings2, Sparkles } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import {
+  ArrowLeft, Fuel, Calendar, Gauge, MapPin, Car, Palette,
+  Settings2, Sparkles, Zap, Shield, Weight, Package,
+  Timer, Droplets, Leaf, ShieldCheck, BatteryCharging, Send, CheckCircle,
+} from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
-import { calcAnnualTax, calcMonthlyFuelCost, type CarModel } from '@/lib/carData';
+import {
+  calcAnnualTax, getWarranty, formatWarranty, formatNcapStars,
+  formatZeroHundred, formatBootSpace,
+} from '@/lib/carData';
 
-// Insurance age multipliers (index into age brackets)
-function insuranceAgeMultiplier(age: number | null): number {
-  if (!age) return 1.0;
-  if (age < 22) return 2.0;
-  if (age < 25) return 1.7;
-  if (age < 30) return 1.3;
-  if (age < 40) return 1.1;
-  if (age < 60) return 1.0;
-  return 1.05;
+/* ── Types ── */
+interface CarModelData {
+  body_type: string | null;
+  fuel_consumption_l100km: number | null;
+  electric_range_km: number | null;
+  co2_g_per_km: number | null;
+  euro_ncap_stars: number | null;
+  euro_ncap_year: number | null;
+  ncap_source: string | null;
+  drivetrain_default: string | null;
+  typical_hp_min: number | null;
+  typical_hp_max: number | null;
+  zero_to_hundred_sec: number | null;
+  boot_space_liters: number | null;
+  max_towing_kg: number | null;
+  seats: number | null;
+  reliability_notes: string | null;
+  estimated_monthly_insurance_low: number | null;
+  estimated_monthly_insurance_high: number | null;
+  estimated_annual_service_sek: number | null;
+  annual_tax_sek: number | null;
 }
 
-// Insurance city multipliers
-const CITY_MULTIPLIERS: Record<string, number> = {
-  stockholm: 1.3, göteborg: 1.2, gothenburg: 1.2, malmö: 1.15, malmo: 1.15,
-  uppsala: 1.1, västerås: 1.05, örebro: 1.05, linköping: 1.05, helsingborg: 1.1,
-};
-
-function insuranceCityMultiplier(city: string | null): number {
-  if (!city) return 1.0;
-  return CITY_MULTIPLIERS[city.toLowerCase()] ?? 1.0;
+interface CarMakeData {
+  warranty_years: number;
+  warranty_km: number;
+  roadside_assistance_years: number;
+  country_of_origin: string | null;
+  notes: string | null;
 }
 
-function loadUserProfile(): { age: number | null; city: string | null } {
-  try {
-    const raw = sessionStorage.getItem('findcar-user-profile');
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return { age: null, city: null };
-}
+/* ── Helpers ── */
+const fmt = (n: number | null | undefined) =>
+  n ? new Intl.NumberFormat('sv-SE').format(n) : null;
 
 const formatPrice = (price: number | null) => {
   if (!price) return 'Kontakta säljare';
-  return new Intl.NumberFormat('sv-SE').format(price) + ' kr';
+  return fmt(price) + ' kr';
 };
 
-const generateDescription = (car: CarType): string => {
-  const parts: string[] = [];
-
-  const displayModel = car.model_raw || `${car.make} ${car.model}`;
-  parts.push(`${car.make} ${displayModel}`);
-
-  if (car.year) {
-    parts[0] += ` från ${car.year}`;
-  }
-
-  const features: string[] = [];
-  if (car.fuel_type) features.push(car.fuel_type.toLowerCase());
-  if (car.drivetrain) features.push(car.drivetrain);
-  if (car.body_type) features.push(car.body_type.toLowerCase());
-
-  if (features.length > 0) {
-    parts.push(`Det är en ${features.join(', ')}`);
-  }
-
-  if (car.mileage) {
-    const miltal = new Intl.NumberFormat('sv-SE').format(car.mileage);
-    if (car.mileage < 5000) {
-      parts.push(`med mycket lågt miltal på bara ${miltal} mil`);
-    } else if (car.mileage < 10000) {
-      parts.push(`med lågt miltal på ${miltal} mil`);
-    } else {
-      parts.push(`med ${miltal} mil på mätaren`);
-    }
-  }
-
-  if (car.color) {
-    parts.push(`Färgen är ${car.color.toLowerCase()}`);
-  }
-
-  if (car.price) {
-    const pris = new Intl.NumberFormat('sv-SE').format(car.price);
-    parts.push(`Priset ligger på ${pris} kr`);
-  }
-
-  return parts.join('. ') + '.';
+const drivetrainLabel = (dt: string | null | undefined): string | null => {
+  if (!dt) return null;
+  const map: Record<string, string> = {
+    AWD: 'Fyrhjulsdrift', awd: 'Fyrhjulsdrift',
+    FWD: 'Framhjulsdrift', fwd: 'Framhjulsdrift',
+    RWD: 'Bakhjulsdrift', rwd: 'Bakhjulsdrift',
+    '"AWD"': 'Fyrhjulsdrift', '"FWD"': 'Framhjulsdrift', '"RWD"': 'Bakhjulsdrift',
+  };
+  return map[dt] || dt;
 };
 
+const fuelPricePerLiter: Record<string, number> = {
+  bensin: 17.5,
+  diesel: 19.5,
+  e85: 14,
+};
+
+function estimateMonthlyFuel(
+  fuelType: string | null,
+  consumptionL100km: number | null,
+  electricRangeKm: number | null
+): { amount: number; label: string; detail: string } {
+  const fuel = (fuelType ?? '').toLowerCase();
+  const kmPerMonth = 1250; // 15 000 km/år
+
+  if (fuel.includes('el') || fuel.includes('electric')) {
+    const kwh = 0.20; // kWh/km
+    const priceKwh = 2; // kr/kWh
+    const amount = Math.round(kmPerMonth * kwh * priceKwh);
+    return { amount, label: 'Drivmedel', detail: `Laddning: ~${kwh * 100} kWh/100km × ${priceKwh} kr/kWh` };
+  }
+
+  if (fuel.includes('hybrid') && electricRangeKm && electricRangeKm > 30) {
+    const elCost = (kmPerMonth * 0.5) * 0.20 * 2;
+    const fuelCost = consumptionL100km
+      ? (kmPerMonth * 0.5 / 100) * consumptionL100km * 17.5
+      : 800;
+    const amount = Math.round(elCost + fuelCost);
+    return { amount, label: 'Drivmedel', detail: `Laddhybrid: ~50% el + 50% bensin` };
+  }
+
+  if (consumptionL100km && consumptionL100km > 0) {
+    const pricePerL = fuel.includes('diesel')
+      ? fuelPricePerLiter.diesel
+      : fuel.includes('e85')
+        ? fuelPricePerLiter.e85
+        : fuelPricePerLiter.bensin;
+    const fuelName = fuel.includes('diesel') ? 'Diesel' : fuel.includes('e85') ? 'E85' : 'Bensin';
+    const amount = Math.round((kmPerMonth / 100) * consumptionL100km * pricePerL);
+    return { amount, label: 'Drivmedel', detail: `${fuelName}: ${String(consumptionL100km).replace('.', ',')} l/100km × ${pricePerL} kr/l` };
+  }
+
+  // Fallback
+  if (fuel.includes('diesel')) return { amount: 2000, label: 'Drivmedel', detail: 'Diesel, uppskattat genomsnitt' };
+  if (fuel.includes('hybrid')) return { amount: 1500, label: 'Drivmedel', detail: 'Hybrid, uppskattat genomsnitt' };
+  return { amount: 2500, label: 'Drivmedel', detail: 'Bensin, uppskattat genomsnitt' };
+}
+
+/* ── Component ── */
 const CarDetail = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -93,54 +126,43 @@ const CarDetail = () => {
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
   const [carModel, setCarModel] = useState<CarModel | null>(null);
   const [isLoading, setIsLoading] = useState(!car);
-  const [livePrices, setLivePrices] = useState<{ petrol: number; diesel: number } | undefined>(undefined);
+  const [modelData, setModelData] = useState<CarModelData | null>(null);
+  const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
 
-  // Scroll to top on mount
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
+  // Contact form state
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
+  useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
+  // Fetch car if not passed via state
   useEffect(() => {
     if (!car && id) {
-      const fetchCar = async () => {
+      (async () => {
         const { data } = await supabase.from('Lovable').select('*').eq('id', Number(id)).single();
         if (data) setCar(data as CarType);
         setIsLoading(false);
-      };
-      fetchCar();
+      })();
     }
   }, [id, car]);
 
+  // Fetch enriched model + make data
   useEffect(() => {
-    if (car?.make && car?.model) {
-      supabase
-        .from('car_models')
-        .select('*')
-        .eq('make', car.make)
-        .eq('model', car.model)
-        .maybeSingle()
-        .then(({ data }) => { if (data) setCarModel(data as CarModel); });
-    }
+    if (!car?.make || !car?.model) return;
+    const fetchEnriched = async () => {
+      const [modelRes, makeRes] = await Promise.all([
+        supabase.from('car_models').select('*').eq('make', car.make!).eq('model', car.model!).maybeSingle(),
+        supabase.from('car_makes').select('*').eq('make', car.make!).maybeSingle(),
+      ]);
+      if (modelRes.data) setModelData(modelRes.data as unknown as CarModelData);
+      if (makeRes.data) setMakeData(makeRes.data as unknown as CarMakeData);
+    };
+    fetchEnriched();
   }, [car?.make, car?.model]);
-
-  // Fetch live fuel prices from app_config
-  useEffect(() => {
-    supabase
-      .from('app_config' as any)
-      .select('key,value')
-      .in('key', ['petrol_price_sek_per_liter', 'diesel_price_sek_per_liter'])
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const map: Record<string, number> = {};
-          for (const row of data as { key: string; value: string }[]) {
-            map[row.key] = parseFloat(row.value);
-          }
-          const petrol = map['petrol_price_sek_per_liter'];
-          const diesel = map['diesel_price_sek_per_liter'];
-          if (petrol && diesel) setLivePrices({ petrol, diesel });
-        }
-      });
-  }, []);
 
   if (isLoading) {
     return (
@@ -168,27 +190,81 @@ const CarDetail = () => {
     );
   }
 
-  const displayTitle = car.model_raw || `${car.model}`;
+  // Use model (cleaned) instead of model_raw which can contain junk data
+  const displayTitle = car.model || '';
+  const warranty = getWarranty(car.make);
 
-  const userProfile = loadUserProfile();
-  const fuelCost = calcMonthlyFuelCost(carModel?.fuel_consumption_l100km ?? null, car.fuel_type ?? null, livePrices);
-  const annualTax = calcAnnualTax(carModel?.co2_g_per_km ?? null, car.fuel_type ?? null);
+  // Costs
+  const co2 = modelData?.co2_g_per_km ?? null;
+  const annualTax = modelData?.annual_tax_sek ?? calcAnnualTax(co2, car.fuel_type);
   const monthlyTax = Math.round(annualTax / 12);
 
-  // Apply age+city multipliers to insurance if we have user profile from Clutch
-  const ageMulti = insuranceAgeMultiplier(userProfile.age);
-  const cityMulti = insuranceCityMultiplier(userProfile.city ?? car.city);
-  const insuranceMult = ageMulti * cityMulti;
-  const hasPersonalInsurance = insuranceMult !== 1.0;
-  const insuranceLow  = carModel?.estimated_monthly_insurance_low
-    ? Math.round(carModel.estimated_monthly_insurance_low * insuranceMult)
-    : null;
-  const insuranceHigh = carModel?.estimated_monthly_insurance_high
-    ? Math.round(carModel.estimated_monthly_insurance_high * insuranceMult)
-    : null;
-  const annualService = carModel?.estimated_annual_service_sek ?? null;
+  const fuelEst = estimateMonthlyFuel(
+    car.fuel_type,
+    modelData?.fuel_consumption_l100km ?? null,
+    modelData?.electric_range_km ?? null
+  );
 
-  const description = generateDescription(car);
+  // Age-based insurance adjustment
+  const driverAge = (() => {
+    try {
+      const raw = sessionStorage.getItem('findcar-driver-age');
+      if (raw) return JSON.parse(raw) as number | null;
+    } catch {}
+    return null;
+  })();
+
+  const insuranceLow = modelData?.estimated_monthly_insurance_low ?? null;
+  const insuranceHigh = modelData?.estimated_monthly_insurance_high ?? null;
+
+  // Adjust insurance based on age: under 25 = +40%, over 50 = -15%
+  const ageMultiplier = driverAge
+    ? driverAge < 25 ? 1.4 : driverAge > 50 ? 0.85 : 1.0
+    : 1.0;
+
+  const adjInsLow = insuranceLow ? Math.round(insuranceLow * ageMultiplier) : null;
+  const adjInsHigh = insuranceHigh ? Math.round(insuranceHigh * ageMultiplier) : null;
+
+  const insuranceLabel = adjInsLow && adjInsHigh
+    ? `${fmt(adjInsLow)}–${fmt(adjInsHigh)} kr/mån`
+    : adjInsLow
+      ? `~${fmt(adjInsLow)} kr/mån`
+      : '~800 kr/mån';
+
+  const insuranceExplain = (() => {
+    const base = adjInsLow && adjInsHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning';
+    if (driverAge && driverAge < 25) return `${base}. Justerat uppåt för förare under 25 år`;
+    if (driverAge && driverAge > 50) return `${base}. Justerat nedåt för erfaren förare (50+)`;
+    if (driverAge) return `${base}. Baserat på din ålder (${driverAge} år)`;
+    return `${base} — din ålder, ort och körsträcka påverkar priset`;
+  })();
+
+  const annualService = modelData?.estimated_annual_service_sek ?? null;
+  const monthlyService = annualService ? Math.round(annualService / 12) : null;
+
+  const avgInsurance = adjInsLow && adjInsHigh ? Math.round((adjInsLow + adjInsHigh) / 2) : 800;
+  const totalMonthly = fuelEst.amount + monthlyTax + avgInsurance + (monthlyService ?? 400);
+
+  /* ── Spec cards ── */
+  const specs = [
+    { icon: Calendar, label: 'Årsmodell', value: car.year ? String(car.year) : null },
+    { icon: Gauge, label: 'Mätarställning', value: car.mileage ? `${fmt(car.mileage)} mil` : null },
+    { icon: Fuel, label: 'Drivmedel', value: car.fuel_type },
+    { icon: MapPin, label: 'Plats', value: car.city },
+    { icon: Palette, label: 'Färg', value: car.color && car.color !== 'Okänd' ? car.color : null },
+    { icon: Settings2, label: 'Drivlina', value: drivetrainLabel(car.drivetrain || modelData?.drivetrain_default) },
+    { icon: Zap, label: 'Hästkrafter', value: car.horsepower ? `${car.horsepower} hk` : modelData?.typical_hp_min ? `${modelData.typical_hp_min}–${modelData.typical_hp_max ?? modelData.typical_hp_min} hk` : null },
+    { icon: Settings2, label: 'Växellåda', value: car.transmission },
+    { icon: Timer, label: '0–100 km/h', value: formatZeroHundred(modelData?.zero_to_hundred_sec ?? null) },
+    { icon: Package, label: 'Bagageutrymme', value: formatBootSpace(modelData?.boot_space_liters ?? null) },
+    { icon: Weight, label: 'Max dragvikt', value: modelData?.max_towing_kg ? `${fmt(modelData.max_towing_kg)} kg` : null },
+    { icon: Car, label: 'Antal säten', value: modelData?.seats ? String(modelData.seats) : null },
+    { icon: Droplets, label: 'Förbrukning', value: modelData?.fuel_consumption_l100km ? `${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : null },
+    { icon: BatteryCharging, label: 'Elräckvidd', value: modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
+    { icon: Leaf, label: 'CO₂-utsläpp', value: co2 ? `${co2} g/km` : null },
+  ].filter(s => s.value);
+
+  const ncapStars = modelData?.euro_ncap_stars ?? null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -200,13 +276,10 @@ const CarDetail = () => {
             Tillbaka
           </Button>
 
+          {/* Hero image */}
           <div className="rounded-2xl overflow-hidden bg-card shadow-warm mb-6">
             {car.image_thumb_url ? (
-              <img
-                src={car.image_thumb_url}
-                alt={`${car.make} ${displayTitle}`}
-                className="w-full h-64 md:h-96 object-cover"
-              />
+              <img src={car.image_thumb_url} alt={`${car.make} ${displayTitle}`} className="w-full h-64 md:h-96 object-cover" />
             ) : (
               <div className="w-full h-64 md:h-96 bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
                 <Car className="h-24 w-24 text-primary-foreground/40" />
@@ -214,103 +287,221 @@ const CarDetail = () => {
             )}
           </div>
 
+          {/* Title + price */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-bold">
-                {car.make} {displayTitle}
-              </h1>
+              <h1 className="text-3xl font-bold">{car.make} {displayTitle}</h1>
               <div className="flex flex-wrap gap-2 mt-2">
                 {car.fuel_type && <Badge variant="secondary">{car.fuel_type}</Badge>}
                 {car.body_type && <Badge variant="outline">{car.body_type}</Badge>}
-                {car.drivetrain && <Badge variant="outline">{car.drivetrain}</Badge>}
-                {car.color && <Badge variant="outline">{car.color}</Badge>}
+                {car.drivetrain && <Badge variant="outline">{drivetrainLabel(car.drivetrain)}</Badge>}
+                {car.transmission && <Badge variant="outline">{car.transmission}</Badge>}
               </div>
+              {car.regnr && (
+                <div className="mt-3 inline-flex items-center rounded overflow-hidden border border-border shadow-sm">
+                  <div className="bg-[#003399] px-1.5 py-1.5 flex flex-col items-center justify-center self-stretch">
+                    <span className="text-[8px] text-yellow-400 font-bold leading-none">★★★</span>
+                    <span className="text-[7px] text-white font-bold leading-none mt-0.5">S</span>
+                  </div>
+                  <div className="bg-white px-3 py-1">
+                    <span className="text-base font-bold font-mono tracking-[0.25em] uppercase text-gray-900">{car.regnr}</span>
+                  </div>
+                </div>
+              )}
             </div>
             <p className="text-3xl font-bold text-primary">{formatPrice(car.price)}</p>
           </div>
 
-          {/* Description */}
-          <div className="bg-card rounded-2xl border border-border p-6 mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <h2 className="text-lg font-semibold">Om bilen</h2>
+          {/* NCAP + Warranty badges */}
+          {(ncapStars || warranty) && (
+            <div className="flex flex-wrap gap-3 mb-6">
+              {ncapStars && (
+                <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Euro NCAP</p>
+                    <p className="font-semibold text-sm">
+                      {formatNcapStars(ncapStars)}
+                      {modelData?.euro_ncap_year ? ` (${modelData.euro_ncap_year})` : ''}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {warranty && (
+                <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nybilsgaranti</p>
+                    <p className="font-semibold text-sm">{formatWarranty(warranty)}</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-muted-foreground leading-relaxed text-sm">
-              {description}
-            </p>
-          </div>
+          )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {[
-              { icon: Calendar, label: 'Årsmodell', value: car.year || '–' },
-              {
-                icon: Gauge,
-                label: 'Mätarställning',
-                value: car.mileage ? `${new Intl.NumberFormat('sv-SE').format(car.mileage)} mil` : '–',
-              },
-              { icon: Fuel, label: 'Drivmedel', value: car.fuel_type || '–' },
-              { icon: MapPin, label: 'Plats', value: car.city || '–' },
-              ...(car.color ? [{ icon: Palette, label: 'Färg', value: car.color }] : []),
-              ...(car.drivetrain ? [{ icon: Settings2, label: 'Drivlina', value: car.drivetrain }] : []),
-            ].map((spec) => (
+          {/* Reliability notes */}
+          {modelData?.reliability_notes && (
+            <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="text-lg font-semibold">Tillförlitlighet</h2>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">{modelData.reliability_notes}</p>
+            </div>
+          )}
+
+          {/* All specs grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {specs.map((spec) => (
               <div key={spec.label} className="bg-card rounded-xl p-4 border border-border text-center">
                 <spec.icon className="h-5 w-5 mx-auto text-primary mb-1" />
                 <p className="text-xs text-muted-foreground">{spec.label}</p>
-                <p className="font-semibold text-sm">{String(spec.value)}</p>
+                <p className="font-semibold text-sm">{spec.value}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-card rounded-2xl border border-border p-6 mb-8">
-            <h2 className="text-xl font-bold mb-1">Driftskostnader</h2>
-            <p className="text-xs text-muted-foreground mb-4">Baserat på ca 1 500 km/mån</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div>
-                <p className="text-xs text-muted-foreground">{fuelCost.label}</p>
-                <p className="font-semibold">
-                  {new Intl.NumberFormat('sv-SE').format(fuelCost.cost)} kr/mån
-                </p>
-                {!fuelCost.isExact && <p className="text-[10px] text-muted-foreground/60">uppskattad</p>}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Försäkring</p>
-                <p className="font-semibold">
-                  {insuranceLow && insuranceHigh
-                    ? `${new Intl.NumberFormat('sv-SE').format(insuranceLow)}–${new Intl.NumberFormat('sv-SE').format(insuranceHigh)} kr/mån`
-                    : '700–1 400 kr/mån'}
-                </p>
-                <p className="text-[10px] text-muted-foreground/60">
-                  {hasPersonalInsurance ? 'personlig uppskattning' : 'uppskattad'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Fordonsskatt</p>
-                <p className="font-semibold">{new Intl.NumberFormat('sv-SE').format(monthlyTax)} kr/mån</p>
-                {carModel?.co2_g_per_km
-                  ? <p className="text-[10px] text-muted-foreground/60">{carModel.co2_g_per_km} g CO₂/km</p>
-                  : <p className="text-[10px] text-muted-foreground/60">uppskattad</p>}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Service/år</p>
-                <p className="font-semibold">
-                  {annualService
-                    ? `${new Intl.NumberFormat('sv-SE').format(annualService)} kr/år`
-                    : '4 000–6 000 kr/år'}
-                </p>
-                <p className="text-[10px] text-muted-foreground/60">uppskattad</p>
-              </div>
+          {/* Running costs */}
+          <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+            <h2 className="text-xl font-bold mb-1">Uppskattad månadskostnad</h2>
+            <p className="text-xs text-muted-foreground mb-4">Baserat på 15 000 km/år</p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+              {[
+                { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
+                { label: 'Fordonsskatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Svensk fordonsskatt baserad på ${co2} g CO₂/km (${fmt(annualTax)} kr/år)` : `Uppskattad svensk fordonsskatt (${fmt(annualTax)} kr/år)` },
+                { label: 'Försäkring', value: insuranceLabel, explain: insuranceExplain },
+                { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
+                { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },
+              ].map((cost) => (
+                <div key={cost.label} className="group relative">
+                  <p className="text-xs text-muted-foreground">{cost.label}</p>
+                  <p className={`font-semibold ${(cost as any).bold ? 'text-primary text-lg' : ''}`}>{cost.value}</p>
+                  {(cost as any).explain && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{(cost as any).explain}</p>
+                  )}
+                </div>
+              ))}
             </div>
             <p className="text-[11px] text-muted-foreground/60 italic">
-              * Försäkring och service är uppskattningar för denna bilmodell{hasPersonalInsurance ? ', justerad efter din ålder/stad' : ''}. Bränsle beräknat på {fuelCost.isExact ? 'verklig WLTP-förbrukning' : 'typisk förbrukning'} och {fuelCost.label === 'Laddning' ? '2,50 kr/kWh' : `${livePrices ? (fuelCost.label === 'Diesel' ? livePrices.diesel : livePrices.petrol) : 22} kr/l (live-pris)`}. Fordonsskatt {carModel?.co2_g_per_km ? 'beräknad på faktiskt CO₂-värde' : 'uppskattad'}.
+              * Uppskattade siffror. Faktisk kostnad varierar beroende på din ålder, körvanor, försäkringsbolag och region.
             </p>
           </div>
 
-          {car.listing_url && (
-            <Button className="w-full h-14 text-lg" onClick={() => window.open(car.listing_url!, '_blank')}>
-              <ExternalLink className="h-5 w-5 mr-2" />
-              Kontakta återförsäljare
-            </Button>
+          {/* Dealer info */}
+          {car.dealer_name && (
+            <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-2">Säljare</h2>
+              <p className="text-sm text-muted-foreground">{car.dealer_name}</p>
+              {car.city && <p className="text-sm text-muted-foreground">{car.city}</p>}
+            </div>
           )}
+
+          {/* Contact form */}
+          <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+            {formSubmitted ? (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <CheckCircle className="h-14 w-14 text-primary" />
+                <h2 className="text-xl font-bold">Tack för din förfrågan!</h2>
+                <p className="text-muted-foreground text-sm max-w-xs">
+                  Återförsäljaren har mottagit din förfrågan angående <span className="font-semibold text-foreground">{car.make} {displayTitle}</span> och kontaktar dig så snart som möjligt.
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Håll utkik i din inkorg och telefon!
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <Send className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-bold">Kontakta säljare</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">
+                  Fyll i dina uppgifter så hör vi av oss angående denna {car.make} {displayTitle}.
+                </p>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!formName.trim() || !formEmail.trim() || !formPhone.trim()) {
+                      toast.error('Vänligen fyll i alla obligatoriska fält.');
+                      return;
+                    }
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(formEmail.trim())) {
+                      toast.error('Vänligen ange en giltig e-postadress.');
+                      return;
+                    }
+                    setFormSubmitting(true);
+                    const { error } = await supabase.from('leads').insert([{
+                      car_id: car.id,
+                      customer_name: formName.trim(),
+                      customer_email: formEmail.trim(),
+                      customer_phone: formPhone.trim(),
+                      message: formMessage.trim() || null,
+                      dealer_name: car.dealer_name || null,
+                    }]);
+                    setFormSubmitting(false);
+                    if (error) {
+                      toast.error('Något gick fel. Försök igen.');
+                    } else {
+                      setFormSubmitted(true);
+                      toast.success('Din förfrågan har skickats!');
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <Label htmlFor="lead-name">Namn *</Label>
+                    <Input
+                      id="lead-name"
+                      placeholder="Ditt namn"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      required
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lead-email">E-post *</Label>
+                    <Input
+                      id="lead-email"
+                      type="email"
+                      placeholder="din@email.se"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      required
+                      maxLength={255}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lead-phone">Telefonnummer *</Label>
+                    <Input
+                      id="lead-phone"
+                      type="tel"
+                      placeholder="07X XXX XX XX"
+                      value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      required
+                      maxLength={20}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lead-message">Övrig fråga (valfritt)</Label>
+                    <Textarea
+                      id="lead-message"
+                      placeholder="Har du någon specifik fråga om bilen?"
+                      value={formMessage}
+                      onChange={(e) => setFormMessage(e.target.value)}
+                      maxLength={1000}
+                      rows={3}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full h-12 text-base" disabled={formSubmitting}>
+                    {formSubmitting ? 'Skickar...' : 'Skicka förfrågan'}
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       </main>
       <Footer />
