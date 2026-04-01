@@ -687,6 +687,48 @@ serve(async (req) => {
       
       console.log(`Search: budget=${minPrice}-${maxPrice}, relaxLevel=${relaxLevel}, found=${cars.length}, prices=${cars.map((c:any)=>c.price).join(",")}`);
 
+      // ── Lazy färgdetektering (bara vid färgfilter) ──
+      if (sanitizedColor && LOVABLE_API_KEY && cars.length > 0) {
+        const VALID_COLORS_LAZY = new Set(["Svart","Vit","Silver","Grå","Blå","Röd","Grön","Brun","Beige","Orange","Gul","Lila","Mörkblå","Ljusblå","Mörkgrå","Ljusgrå","Mörkgrön","Vinröd","Koppar","Guld"]);
+        const carsNeedingColor = cars.filter(
+          (c: any) => c.image_thumb_url && (!c.color || c.color === "Okänd" || c.color === "Unknown")
+        ).slice(0, 10);
+
+        if (carsNeedingColor.length > 0) {
+          try {
+            const imageContents = carsNeedingColor.flatMap((car: any, idx: number) => [
+              { type: "text", text: `Bil ${idx + 1} (${car.make} ${car.model}):` },
+              { type: "image_url", image_url: { url: car.image_thumb_url } },
+            ]);
+            const colorRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: `Färgexpert för bilar. ${carsNeedingColor.length} bilar numrerade 1-${carsNeedingColor.length}. Svara EXAKT: 1:Svart\n2:Vit\nosv. Giltiga färger: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Dålig/ingen exteriörbild: Okänd.` },
+                  { role: "user", content: [{ type: "text", text: `Ange färg:` }, ...imageContents] },
+                ],
+              }),
+              signal: AbortSignal.timeout(30000),
+            });
+            if (colorRes.ok) {
+              const colorData = await colorRes.json();
+              const lines = (colorData.choices?.[0]?.message?.content?.trim() ?? "").split("\n");
+              carsNeedingColor.forEach((car: any, idx: number) => {
+                const line = lines.find((l: string) => l.startsWith(`${idx + 1}:`));
+                const val = line ? line.split(":").slice(1).join(":").trim() : "Okänd";
+                const color = VALID_COLORS_LAZY.has(val) ? val : "Okänd";
+                car.color = color;
+                supabase.from("Lovable").update({ color }).eq("id", car.id).then(() => {});
+              });
+            }
+          } catch (e) {
+            console.warn("Lazy color detection failed:", e);
+          }
+        }
+      }
+
       // ── Hämta berikad data från car_models och car_makes ──
       const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
       const uniqueModels = [...new Set(cars.map((c: any) => c.model).filter(Boolean))];
