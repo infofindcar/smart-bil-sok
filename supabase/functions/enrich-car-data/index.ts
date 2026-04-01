@@ -414,36 +414,20 @@ serve(async (req) => {
           .in("make", uniqueMakes).in("model", uniqueModels);
         for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
 
-    const modelCache: Record<string, Record<string, unknown>> = {};
-    for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
-
-    // ── Ladda car_makes (garanti) per märke ──
-    const { data: makesData } = await supabase
-      .from("car_makes").select("*").in("make", uniqueMakes);
-    const makesCache: Record<string, Record<string, unknown>> = {};
-    for (const mk of makesData ?? []) makesCache[mk.make] = mk;
-
-    console.log(`Bilar: ${cars.length}, modell-cache: ${Object.keys(modelCache).length}/${uniqueModels.length}`);
-
-    const results = {
-      colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0,
-      horsepowerUpdated: 0, modelsCached: 0, errors: 0,
-    };
-
-    for (let i = 0; i < cars.length; i += BATCH_SIZE) {
-      const batch = cars.slice(i, i + BATCH_SIZE);
-
-      await Promise.all(batch.map(async (car) => {
-        try {
-          const cacheKey = `${car.make}|||${car.model}`;
-          let carModel = modelCache[cacheKey];
-
-          // Berika modellen om den inte finns i cache (AI + NCAP)
-          if (!carModel && car.make && car.model) {
-            carModel = await enrichModel(supabase as any, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
-            modelCache[cacheKey] = carModel;
-            results.modelsCached++;
-          }
+        // ── Steg 1: Berika modeller som saknas i cache ──
+        for (let j = 0; j < cars.length; j += BATCH_SIZE) {
+          const batch = cars.slice(j, j + BATCH_SIZE);
+          await Promise.all(batch.map(async (car) => {
+            try {
+              const cacheKey = `${car.make}|||${car.model}`;
+              let carModel = modelCache[cacheKey];
+              if (!carModel && car.make && car.model) {
+                carModel = await enrichModel(supabase as any, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
+                modelCache[cacheKey] = carModel;
+                totals.modelsCached++;
+              }
+            } catch (e) { console.error(`Modell-berikningsfel:`, e); }
+          }));
         }
 
         // ── Steg 2: Uppdatera bilar parallellt (färg + metadata från cache) ──
@@ -467,14 +451,12 @@ serve(async (req) => {
                 const detectedColor = car.image_thumb_url
                   ? await detectColor(LOVABLE_API_KEY, car.image_thumb_url, car.make ?? "", car.model ?? "")
                   : "__DELETE__";
-
                 if (detectedColor === "__DELETE__") {
                   await supabase.from("Lovable").delete().eq("id", car.id);
                   console.log(`Raderade bil ${car.id} (${car.make} ${car.model}) – ogiltig bild`);
                   totals.errors++;
                   return;
                 }
-
                 updates.color = detectedColor;
                 totals.colorUpdated++;
               }
