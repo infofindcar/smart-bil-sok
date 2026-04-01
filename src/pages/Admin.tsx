@@ -243,12 +243,13 @@ const Admin = () => {
               Uppdatera
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             {statCards.map((s) => (
               <div key={s.label} className="bg-card rounded-xl p-4 border border-border text-center">
                 <s.icon className="h-6 w-6 mx-auto text-primary mb-2" />
                 <p className="text-2xl font-bold">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
+                {(s as any).subtitle && <p className="text-[10px] text-muted-foreground mt-1">{(s as any).subtitle}</p>}
               </div>
             ))}
           </div>
