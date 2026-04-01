@@ -203,6 +203,7 @@ const Admin = () => {
 
   const statCards = [
     { icon: Car, value: stats.total, label: 'Totala bilar' },
+    { icon: Clock, value: stats.newFromLastImport, label: `Nya (senaste import)`, subtitle: stats.lastImportTime || undefined },
     { icon: Image, value: stats.withImages, label: 'Med bilder' },
     { icon: BarChart3, value: stats.makes, label: 'Märken' },
     { icon: MapPin, value: stats.cities, label: 'Städer' },
