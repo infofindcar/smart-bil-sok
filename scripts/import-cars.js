@@ -1,43 +1,74 @@
 // scripts/import-cars.js
 //
-// Hämtar billistings från blocket-api.se (alla sidor) och skickar dem
-// till Supabase Edge Function (sync-cars) som hanterar import + rensning.
+// Hämtar billistings från blocket-api.se och skickar dem till Supabase Edge Function (sync-cars).
+// Berikelse (färg, modelldata) sker separat via enrich-batch.
 //
 // HUR DU ANVÄNDER DET:
-//   Sätt miljövariabler och kör:
-//     SUPABASE_SYNC_URL=... SYNC_SECRET=... node scripts/import-cars.js
+//   SUPABASE_SYNC_URL=... SYNC_SECRET=... node scripts/import-cars.js
 //
 //   KRAV: Node.js version 18 eller nyare (ingen npm install behövs)
 
 const BLOCKET_API_BASE = "https://blocket-api.se/v1/search/car";
-const TOTAL_PAGES = 20;
+const PAGES_PER_INTERVAL = 50;
+
+// 30 prisintervall som täcker hela prisskalan (SEK)
+// Varje intervall kan ge upp till 2 500 unika bilar (50 sidor × 50 bilar)
+const PRICE_INTERVALS = [
+  [0,        25000],
+  [25000,    50000],
+  [50000,    75000],
+  [75000,    100000],
+  [100000,   125000],
+  [125000,   150000],
+  [150000,   175000],
+  [175000,   200000],
+  [200000,   225000],
+  [225000,   250000],
+  [250000,   275000],
+  [275000,   300000],
+  [300000,   325000],
+  [325000,   350000],
+  [350000,   375000],
+  [375000,   400000],
+  [400000,   425000],
+  [425000,   450000],
+  [450000,   475000],
+  [475000,   500000],
+  [500000,   550000],
+  [550000,   600000],
+  [600000,   700000],
+  [700000,   800000],
+  [800000,   900000],
+  [900000,   1000000],
+  [1000000,  1250000],
+  [1250000,  1500000],
+  [1500000,  2000000],
+  [2000000,  999999999],
+];
 
 const SUPABASE_SYNC_URL = process.env.SUPABASE_SYNC_URL;
-const SYNC_SECRET = process.env.SYNC_SECRET;
+const SYNC_SECRET       = process.env.SYNC_SECRET;
 
 if (!SUPABASE_SYNC_URL || !SYNC_SECRET) {
-  console.error("FEL: Miljövariabler saknas.");
-  console.error("  Sätt SUPABASE_SYNC_URL och SYNC_SECRET innan du kör scriptet.");
+  console.error("FEL: SUPABASE_SYNC_URL och SYNC_SECRET krävs.");
   process.exit(1);
 }
 
-// Märken som är RWD som standard (utan AWD-markering)
+// ─────────────────────────────────────────────
+// Märkes-defaults för drivlina
+// ─────────────────────────────────────────────
 const DEFAULT_RWD_MAKES = new Set([
   "BMW", "Mercedes-Benz", "Jaguar", "Lexus", "Maserati",
   "Alfa Romeo", "Dodge", "Chevrolet", "Ford", "Cadillac",
   "Chrysler", "Jeep", "Porsche",
 ]);
-
-// Märken som är AWD som standard
 const DEFAULT_AWD_MAKES = new Set(["Subaru"]);
 
-function parseModelRaw(modelRaw, make, model) {
-  // Hästkrafter: "170hk", "218 hk", "130hp"
+function parseModelRaw(modelRaw, make) {
   const raw = modelRaw ?? "";
   const hpMatch = raw.match(/(\d{2,4})\s*h[pk]/i);
   const horsepower = hpMatch ? parseInt(hpMatch[1]) : null;
 
-  // Drivlina – explicit nämnt i annonsen
   let drivetrain = null;
   if (/quattro|xdrive|4matic|4motion|4x4|\bawd\b|\b4wd\b|allrad|syncro|e-awd|\b4M\b/i.test(raw)) {
     drivetrain = "AWD";
@@ -47,85 +78,154 @@ function parseModelRaw(modelRaw, make, model) {
     drivetrain = "RWD";
   }
 
-  // Fallback baserat på märke om inget hittades i texten
   if (!drivetrain && make) {
-    if (DEFAULT_AWD_MAKES.has(make)) {
-      drivetrain = "AWD";
-    } else if (DEFAULT_RWD_MAKES.has(make)) {
-      drivetrain = "RWD";
-    }
+    if (DEFAULT_AWD_MAKES.has(make)) drivetrain = "AWD";
+    else if (DEFAULT_RWD_MAKES.has(make)) drivetrain = "RWD";
   }
 
   return { horsepower, drivetrain };
 }
 
-async function fetchAllCars() {
-  const allCars = [];
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  for (let page = 1; page <= TOTAL_PAGES; page++) {
-    console.log(`Hämtar sida ${page}/${TOTAL_PAGES}...`);
+// ─────────────────────────────────────────────
+// Hämta ett prisintervall (upp till PAGES_PER_INTERVAL sidor)
+// ─────────────────────────────────────────────
+async function fetchInterval(priceMin, priceMax) {
+  const cars = [];
 
-    const res = await fetch(`${BLOCKET_API_BASE}?page=${page}`);
-    if (!res.ok) {
-      console.warn(`  Varning: sida ${page} misslyckades (${res.status}), hoppar över.`);
-      continue;
-    }
+  for (let page = 1; page <= PAGES_PER_INTERVAL; page++) {
+    // 200ms paus för att undvika Blocket rate limiting
+    if (page > 1) await sleep(200);
 
-    const data = await res.json();
+    const url = priceMax >= 999999999
+      ? `${BLOCKET_API_BASE}?page=${page}&price_from=${priceMin}`
+      : `${BLOCKET_API_BASE}?page=${page}&price_from=${priceMin}&price_to=${priceMax}`;
 
-    // Blocket-API returnerar typiskt en array direkt eller inpackad i ett objekt
-    const cars = Array.isArray(data)
-      ? data
-      : data.docs ?? data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
-
-    if (cars.length === 0) {
-      console.log(`  Sida ${page} är tom, avslutar hämtning.`);
+    let res;
+    try {
+      res = await fetch(url);
+    } catch (e) {
+      console.warn(`  Nätverksfel sida ${page} [${priceMin}-${priceMax}]:`, e.message);
       break;
     }
 
-    allCars.push(...cars);
-    console.log(`  Fick ${cars.length} bilar (totalt: ${allCars.length})`);
+    if (!res.ok) {
+      console.warn(`  Sida ${page} misslyckades (${res.status}), avslutar intervall.`);
+      break;
+    }
+
+    const data = await res.json();
+    const pageCars = Array.isArray(data)
+      ? data
+      : data.docs ?? data.cars ?? data.data ?? data.listings ?? data.results ?? data.ads ?? [];
+
+    if (pageCars.length === 0) break;
+
+    cars.push(...pageCars);
   }
 
-  return allCars;
+  return cars;
 }
 
+// ─────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────
 async function main() {
-  const cars = await fetchAllCars();
+  const seen = new Set();
+  const allMapped = [];
+  let totalFetched = 0;
+  let leasingCount = 0;
+  let privateCount = 0;
+  let noImageCount = 0;
 
-  if (cars.length === 0) {
+  for (let i = 0; i < PRICE_INTERVALS.length; i++) {
+    const [priceMin, priceMax] = PRICE_INTERVALS[i];
+    const label = priceMax >= 999999999 ? `${priceMin}+` : `${priceMin}-${priceMax}`;
+    console.log(`Intervall ${i + 1}/${PRICE_INTERVALS.length}: ${label} kr`);
+
+    const raw = await fetchInterval(priceMin, priceMax);
+    totalFetched += raw.length;
+
+    let intervalKept = 0;
+
+    for (const car of raw) {
+      if (!car.id) continue;
+
+      // Deduplicera på source_listing_id
+      const sid = String(car.id);
+      if (seen.has(sid)) continue;
+      seen.add(sid);
+
+      // Filtrera bort leasing
+      if (car.sales_form === 5 || car.ad_type === 200) {
+        leasingCount++;
+        continue;
+      }
+
+      // Heuristik-fallback: ny bil med månadsbelopp (trolig leasing)
+      if ((car.year ?? 0) >= 2025 && (car.price?.amount ?? 0) < 10000) {
+        leasingCount++;
+        continue;
+      }
+
+      // Filtrera bort privat (organisation_name saknas)
+      if (!car.organisation_name) {
+        privateCount++;
+        continue;
+      }
+
+      // Filtrera bort bilar utan bild
+      if (!car.image?.url) {
+        noImageCount++;
+        continue;
+      }
+
+      const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make);
+
+      allMapped.push({
+        source_listing_id: sid,
+        make:          car.make ?? null,
+        model:         car.model ?? null,
+        model_raw:     car.model_specification ?? null,
+        model_clean:   car.model ?? null,
+        year:          car.year ?? null,
+        price:         car.price?.amount ?? null,
+        mileage:       car.mileage ?? null,
+        city:          car.location ?? null,
+        fuel_type:     car.fuel ?? null,
+        transmission:  car.transmission ?? null,
+        drivetrain,
+        horsepower,
+        dealer_name:   car.organisation_name ?? null,
+        image_thumb_url: car.image?.url ?? null,
+        listing_url:   car.canonical_url ?? null,
+        regnr:         car.regno ?? null,
+        source:        "blocket",
+      });
+      intervalKept++;
+    }
+
+    console.log(`  Råa: ${raw.length}, Unika kvar: ${intervalKept} (totalt buffrat: ${allMapped.length})`);
+
+    // 500ms paus mellan intervall
+    if (i < PRICE_INTERVALS.length - 1) await sleep(500);
+  }
+
+  console.log(`\n=== IMPORT KLAR ===`);
+  console.log(`  Totalt hämtat:       ${totalFetched}`);
+  console.log(`  Unika bilar:         ${seen.size}`);
+  console.log(`  Leasing filtrerade:  ${leasingCount}`);
+  console.log(`  Privat filtrerade:   ${privateCount}`);
+  console.log(`  Utan bild:           ${noImageCount}`);
+  console.log(`  Skickar till sync:   ${allMapped.length}`);
+
+  if (allMapped.length === 0) {
     console.error("Inga bilar hittades. Kontrollera API:et.");
     process.exit(1);
   }
-
-  // Mappa Blockets fältnamn till databasens kolumnnamn
-  const mappedCars = cars
-    .filter((car) => car.id && car.organisation_name) // bara handlare, hoppa över privata säljare
-    .map((car) => {
-      const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make, car.model);
-      return {
-        source_listing_id: String(car.id),
-        make: car.make ?? null,
-        model: car.model ?? null,
-        model_raw: car.model_specification ?? null,
-        model_clean: car.model ?? null,
-        year: car.year ?? null,
-        price: car.price?.amount ?? null,
-        mileage: car.mileage ?? null,
-        city: car.location ?? null,
-        fuel_type: car.fuel ?? null,
-        transmission: car.transmission ?? null,
-        drivetrain: drivetrain,
-        horsepower: horsepower,
-        dealer_name: car.organisation_name ?? null,
-        image_thumb_url: car.image?.url ?? null,
-        listing_url: car.canonical_url ?? null,
-        regnr: car.regno ?? null,
-        source: "blocket",
-      };
-    });
-
-  console.log(`\nTotalt ${mappedCars.length} bilar hämtade. Skickar till Supabase...`);
 
   const syncResponse = await fetch(SUPABASE_SYNC_URL, {
     method: "POST",
@@ -133,7 +233,7 @@ async function main() {
       "Content-Type": "application/json",
       "x-sync-secret": SYNC_SECRET,
     },
-    body: JSON.stringify({ cars: mappedCars }),
+    body: JSON.stringify({ cars: allMapped }),
   });
 
   const result = await syncResponse.json();
@@ -146,8 +246,8 @@ async function main() {
   console.log("\n✓ Synkronisering klar!");
   console.log(`  Nya bilar:      ${result.added}`);
   console.log(`  Uppdaterade:    ${result.updated}`);
-  console.log(`  Inaktiverade:   ${result.deactivated} (sålda/borttagna)`);
-  console.log(`  Totalt skickat: ${result.total}`);
+  console.log(`  Borttagna:      ${result.deleted}`);
+  console.log(`  Totalt:         ${result.total}`);
   console.log(`  Tid:            ${result.durationMs}ms`);
 }
 

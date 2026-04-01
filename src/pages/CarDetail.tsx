@@ -124,6 +124,7 @@ const CarDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
+  const [carModel, setCarModel] = useState<CarModel | null>(null);
   const [isLoading, setIsLoading] = useState(!car);
   const [modelData, setModelData] = useState<CarModelData | null>(null);
   const [_makeData, setMakeData] = useState<CarMakeData | null>(null);

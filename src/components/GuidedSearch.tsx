@@ -408,6 +408,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
+        // Save user profile for personalized insurance estimates in CarDetail
+        try {
+          sessionStorage.setItem('findcar-user-profile', JSON.stringify({
+            age: data.userAge ?? null,
+            city: data.userCity ?? null,
+          }));
+        } catch {}
+
         setPhase('results');
         setIsLoading(false);
 

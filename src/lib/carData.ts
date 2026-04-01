@@ -2,6 +2,67 @@
  * Hjälpfunktioner för bildata – deterministiska beräkningar som inte kräver API-anrop.
  */
 
+// Typ för car_models-raden från Supabase
+export interface CarModel {
+  make: string;
+  model: string;
+  body_type: string | null;
+  fuel_consumption_l100km: number | null;
+  electric_range_km: number | null;
+  co2_g_per_km: number | null;
+  euro_ncap_stars: number | null;
+  euro_ncap_year: number | null;
+  ncap_source: string | null;
+  drivetrain_default: string | null;
+  typical_hp_min: number | null;
+  typical_hp_max: number | null;
+  zero_to_hundred_sec: number | null;
+  boot_space_liters: number | null;
+  max_towing_kg: number | null;
+  seats: number | null;
+  reliability_notes: string | null;
+  estimated_monthly_insurance_low: number | null;
+  estimated_monthly_insurance_high: number | null;
+  estimated_annual_service_sek: number | null;
+}
+
+// Fallback-priser om live-data saknas
+const PETROL_PRICE_FALLBACK = 22;   // kr/l
+const DIESEL_PRICE_FALLBACK = 22;   // kr/l
+const ELECTRIC_PRICE_PER_KWH = 2.5; // kr/kWh
+const MONTHLY_KM = 1500;
+
+/**
+ * Beräknar månadskostnad för bränsle/laddning.
+ * isExact=true = beräknat från verklig förbrukningsdata, false = uppskattning.
+ */
+export function calcMonthlyFuelCost(
+  consumptionL100: number | null,
+  fuelType: string | null,
+  livePrices?: { petrol?: number; diesel?: number },
+): { cost: number; label: string; isExact: boolean } {
+  const PETROL_PRICE_PER_L = livePrices?.petrol ?? PETROL_PRICE_FALLBACK;
+  const DIESEL_PRICE_PER_L = livePrices?.diesel ?? DIESEL_PRICE_FALLBACK;
+  const fuel = (fuelType ?? '').toLowerCase();
+
+  if (fuel.includes('el') || fuel.includes('electric')) {
+    // Typisk elförbrukning ~20 kWh/100 km
+    const cost = Math.round(20 * (MONTHLY_KM / 100) * ELECTRIC_PRICE_PER_KWH);
+    return { cost, label: 'Laddning', isExact: false };
+  }
+
+  if (consumptionL100 && consumptionL100 > 0) {
+    const pricePerL = fuel.includes('diesel') ? DIESEL_PRICE_PER_L : PETROL_PRICE_PER_L;
+    const cost = Math.round(consumptionL100 * (MONTHLY_KM / 100) * pricePerL);
+    return { cost, label: fuel.includes('diesel') ? 'Diesel' : 'Bensin', isExact: true };
+  }
+
+  // Fallback utan förbrukningsdata
+  if (fuel.includes('diesel')) return { cost: 2000, label: 'Diesel', isExact: false };
+  if (fuel.includes('hybrid') || fuel.includes('laddhybrid')) return { cost: 1200, label: 'Hybrid', isExact: false };
+  return { cost: 2200, label: 'Bensin', isExact: false };
+}
+
 // ─────────────────────────────────────────────────────────────
 // Fordonsskatt – svensk officiell formel
 // Källa: Lag (2006:228) §4-7, gäller bilar reg. fr.o.m. 2018-07-01
