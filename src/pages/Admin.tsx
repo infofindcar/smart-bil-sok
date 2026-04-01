@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square, CheckCircle, AlertCircle, Palette, Cog, RefreshCw } from 'lucide-react';
+import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square, CheckCircle, AlertCircle, Palette, Cog, RefreshCw, Clock } from 'lucide-react';
 
 const Admin = () => {
   const [isAuthed, setIsAuthed] = useState(false);
