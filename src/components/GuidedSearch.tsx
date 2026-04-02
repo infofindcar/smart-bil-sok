@@ -640,7 +640,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <div
                 className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
                   msg.role === 'user'
-                    ? 'bg-secondary text-secondary-foreground rounded-br-sm'
+                    ? 'bg-secondary text-secondary-foreground rounded-br-sm border border-secondary/30'
                     : 'bg-muted/60 text-foreground rounded-bl-sm border border-border/30'
                 }`}
               >
