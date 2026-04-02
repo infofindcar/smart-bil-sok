@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Heart, Fuel, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
