@@ -558,7 +558,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-2xl shadow-sm">
+      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card shadow-sm">
         {/* Header */}
         <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
