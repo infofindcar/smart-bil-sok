@@ -731,8 +731,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 onChange={(e) => {
                   setInputValue(e.target.value);
                   const el = e.currentTarget;
-                  el.style.height = '0px';
-                  el.style.height = `${el.scrollHeight}px`;
+                  requestAnimationFrame(() => {
+                    el.style.height = 'auto';
+                    el.style.height = `${el.scrollHeight}px`;
+                  });
                 }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
