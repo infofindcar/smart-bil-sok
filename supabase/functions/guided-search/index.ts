@@ -716,10 +716,10 @@ serve(async (req) => {
       };
 
       if (res0.data && res0.data.length > 0) {
-        cars = sortByBudgetProximity(res0.data);
+        cars = sortByRelevance(res0.data);
         relaxLevel = 0;
       } else if (res1.data && res1.data.length > 0) {
-        cars = sortByBudgetProximity(res1.data);
+        cars = sortByRelevance(res1.data);
         relaxLevel = 1;
       } else {
         // Try levels 2 and 3 in parallel
@@ -728,10 +728,10 @@ serve(async (req) => {
           buildQuery(3),
         ]);
         if (res2.data && res2.data.length > 0) {
-          cars = sortByBudgetProximity(res2.data);
+          cars = sortByRelevance(res2.data);
           relaxLevel = 2;
         } else if (res3.data && res3.data.length > 0) {
-          cars = sortByBudgetProximity(res3.data);
+          cars = sortByRelevance(res3.data);
           relaxLevel = 3;
         }
       }
