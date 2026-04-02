@@ -308,35 +308,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
-    el.style.height = '0px';
-    el.style.height = `${el.scrollHeight}px`;
+    requestAnimationFrame(() => {
+      const newHeight = `${el.scrollHeight}px`;
+      if (el.style.height !== newHeight) {
+        el.style.height = newHeight;
+      }
+    });
   }, [inputValue]);
 
-  // Mobile: handle virtual keyboard resize via visualViewport
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const handleResize = () => {
-      if (inputFocused || isListening) {
-        // When keyboard opens, scroll the last message + input into view
-        setTimeout(() => {
-          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-      }
-    };
-
-    vv.addEventListener('resize', handleResize);
-    return () => vv.removeEventListener('resize', handleResize);
-  }, [inputFocused, isListening]);
-
-  // When input focuses on mobile, scroll input area into view
+  // When input focuses on mobile, scroll chat to bottom
   useEffect(() => {
     if (inputFocused) {
-      setTimeout(() => {
-        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      const timer = setTimeout(() => {
         queueScrollToBottom(true);
-      }, 300);
+      }, 350);
+      return () => clearTimeout(timer);
     }
   }, [inputFocused, queueScrollToBottom]);
 
