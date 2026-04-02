@@ -725,7 +725,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <Button
                 variant="gradient"
                 size="default"
-                onClick={onScrollToResults}
+                onClick={() => { setMobileFullscreen(false); onScrollToResults?.(); }}
                 className="w-full rounded-xl text-sm font-semibold"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
