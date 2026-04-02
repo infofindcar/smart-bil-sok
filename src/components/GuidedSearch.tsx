@@ -576,7 +576,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-secondary" />
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border-[1.5px] border-card" />
@@ -633,15 +633,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               style={{ transition: 'all 0.2s ease-out' }}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-md bg-secondary/20 flex items-center justify-center shrink-0 mt-1">
                   <Sparkles className="h-3 w-3 text-secondary/70" />
                 </div>
               )}
               <div
                 className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
                   msg.role === 'user'
-                    ? 'bg-secondary text-secondary-foreground rounded-br-sm'
-                    : 'bg-muted/40 text-foreground rounded-bl-sm'
+                    ? 'bg-secondary text-secondary-foreground rounded-br-sm border border-secondary/30'
+                    : 'bg-muted/60 text-foreground rounded-bl-sm border border-border/30'
                 }`}
               >
                 {getDisplayText(msg)}
