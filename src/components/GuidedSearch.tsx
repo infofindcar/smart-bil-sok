@@ -685,7 +685,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Quick-reply suggestions + Strict filter button */}
         {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
-          <div className="px-4 md:px-6 pb-3">
+          <div className="px-4 md:px-6 pb-3 shrink-0">
             <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5 items-stretch md:items-center">
               {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
                 <button
