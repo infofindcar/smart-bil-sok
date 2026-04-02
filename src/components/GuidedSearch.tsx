@@ -723,7 +723,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   : inputFocused
                     ? 'border-secondary/30 ring-1 ring-secondary/10'
                     : 'border-border/30'
-              } bg-background/60`}
+              } bg-background`}
             >
               <textarea
                 ref={inputRef}
