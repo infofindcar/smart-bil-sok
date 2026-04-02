@@ -308,35 +308,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
-    el.style.height = '0px';
-    el.style.height = `${el.scrollHeight}px`;
+    requestAnimationFrame(() => {
+      const newHeight = `${el.scrollHeight}px`;
+      if (el.style.height !== newHeight) {
+        el.style.height = newHeight;
+      }
+    });
   }, [inputValue]);
 
-  // Mobile: handle virtual keyboard resize via visualViewport
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const handleResize = () => {
-      if (inputFocused || isListening) {
-        // When keyboard opens, scroll the last message + input into view
-        setTimeout(() => {
-          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-      }
-    };
-
-    vv.addEventListener('resize', handleResize);
-    return () => vv.removeEventListener('resize', handleResize);
-  }, [inputFocused, isListening]);
-
-  // When input focuses on mobile, scroll input area into view
+  // When input focuses on mobile, scroll chat to bottom
   useEffect(() => {
     if (inputFocused) {
-      setTimeout(() => {
-        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      const timer = setTimeout(() => {
         queueScrollToBottom(true);
-      }, 300);
+      }, 350);
+      return () => clearTimeout(timer);
     }
   }, [inputFocused, queueScrollToBottom]);
 
@@ -362,8 +348,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [isLoading, phase]);
 
+  // Debounced scroll during typewriter — only every 200ms
+  const lastTypeScrollRef = useRef(0);
   useEffect(() => {
-    queueScrollToBottom(false);
+    const now = Date.now();
+    if (now - lastTypeScrollRef.current > 200) {
+      lastTypeScrollRef.current = now;
+      queueScrollToBottom(false);
+    }
   }, [visibleText, queueScrollToBottom]);
 
   useEffect(() => {
@@ -385,22 +377,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     isAutoFollowRef.current = true;
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
-    const getCharDelay = (char: string, nextChar: string) => {
-      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 220 + Math.random() * 80;
-      if (',;:'.includes(char) && nextChar === ' ') return 100 + Math.random() * 40;
-      if (char === ' ' && i > 2) return 30 + Math.random() * 15;
-      return 22 + Math.random() * 18;
-    };
+    const BATCH_SIZE = 4;
 
     const tick = () => {
-      i += 1;
+      const end = Math.min(i + BATCH_SIZE, fullText.length);
+      i = end;
       setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
 
       if (i < fullText.length) {
-        const currentChar = fullText[i - 1] || '';
-        const nextChar = fullText[i] || '';
-        const delay = getCharDelay(currentChar, nextChar);
-        typingTimeoutRef.current = setTimeout(tick, delay);
+        typingTimeoutRef.current = setTimeout(tick, 90 + Math.random() * 30);
       } else {
         isTypingRef.current = false;
         queueScrollToBottom(true);
@@ -573,7 +558,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-2xl shadow-sm">
+      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card shadow-sm">
         {/* Header */}
         <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -738,7 +723,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   : inputFocused
                     ? 'border-secondary/30 ring-1 ring-secondary/10'
                     : 'border-border/30'
-              } bg-background/60`}
+              } bg-background`}
             >
               <textarea
                 ref={inputRef}
@@ -746,8 +731,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 onChange={(e) => {
                   setInputValue(e.target.value);
                   const el = e.currentTarget;
-                  el.style.height = '0px';
-                  el.style.height = `${el.scrollHeight}px`;
+                  requestAnimationFrame(() => {
+                    el.style.height = 'auto';
+                    el.style.height = `${el.scrollHeight}px`;
+                  });
                 }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
