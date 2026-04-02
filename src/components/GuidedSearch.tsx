@@ -573,7 +573,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-[9999] bg-card' : ''}`}>
+    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-[9999]' : ''}`} style={isMobile && mobileFullscreen ? { background: 'hsl(var(--card))' } : undefined}>
       <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
         isMobile && mobileFullscreen
           ? 'rounded-none h-full flex flex-col'
