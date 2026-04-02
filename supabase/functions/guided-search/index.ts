@@ -693,11 +693,25 @@ serve(async (req) => {
         buildQuery(1),
       ]);
 
-      // Sort results by proximity to budget midpoint, then take top 9
+      // Sort results: prioritize body_type match, then proximity to budget midpoint
       const budgetMid = (minPrice + maxPrice) / 2;
-      const sortByBudgetProximity = (arr: any[]) => {
+      const bodyTypePatternValues = validBodyTypes.map((b: string) => bodyPatterns[b]?.replace(/%/g, "").toLowerCase()).filter(Boolean);
+      const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
+
+      const sortByRelevance = (arr: any[]) => {
         return arr
-          .sort((a, b) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+          .sort((a, b) => {
+            // If we have a body type filter, prioritize matches
+            if (hasBodyTypeFilter) {
+              const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
+                || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
+              const bBodyMatch = bodyTypePatternValues.some(p => (b.body_type || "").toLowerCase().includes(p))
+                || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
+              if (aBodyMatch && !bBodyMatch) return -1;
+              if (!aBodyMatch && bBodyMatch) return 1;
+            }
+            return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
+          })
           .slice(0, 9);
       };
 
