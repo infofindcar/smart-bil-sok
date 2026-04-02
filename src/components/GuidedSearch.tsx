@@ -235,6 +235,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     }
   }, [isListening, language, inputValue]);
 
+  // Lock body scroll when mobile fullscreen is active
+  useEffect(() => {
+    if (isMobile && mobileFullscreen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [isMobile, mobileFullscreen]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
@@ -566,7 +573,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-[9999]' : ''}`} style={isMobile && mobileFullscreen ? { background: 'hsl(var(--card))' } : undefined}>
       <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
         isMobile && mobileFullscreen
           ? 'rounded-none h-full flex flex-col'
@@ -762,17 +769,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                     el.style.height = `${el.scrollHeight}px`;
                   });
                 }}
-                onFocus={() => {
-                  setInputFocused(true);
-                  if (isMobile && !mobileFullscreen) {
-                    // Delay fullscreen to avoid layout shift stealing focus
-                    setTimeout(() => {
-                      setMobileFullscreen(true);
-                      // Re-focus after layout settles
-                      setTimeout(() => inputRef.current?.focus(), 50);
-                    }, 100);
-                  }
-                }}
+                onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening
