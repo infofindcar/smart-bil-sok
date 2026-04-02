@@ -237,11 +237,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   // Lock body scroll when mobile fullscreen is active
   useEffect(() => {
-    if (isMobile && mobileFullscreen) {
+    if (isMobile && mobileExpanded) {
       document.body.style.overflow = 'hidden';
       return () => { document.body.style.overflow = ''; };
     }
-  }, [isMobile, mobileFullscreen]);
+  }, [isMobile, mobileExpanded]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
@@ -573,9 +573,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-[9999]' : ''}`} style={isMobile && mobileFullscreen ? { background: 'hsl(var(--card))' } : undefined}>
+    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileExpanded ? 'fixed inset-0 z-[9999]' : ''}`} style={isMobile && mobileExpanded ? { background: 'hsl(var(--card))' } : undefined}>
       <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
-        isMobile && mobileFullscreen
+        isMobile && mobileExpanded
           ? 'rounded-none h-full flex flex-col'
           : 'rounded-2xl'
       }`}>
@@ -611,9 +611,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             >
               <RotateCcw className="h-3 w-3" />
             </button>
-            {isMobile && mobileFullscreen && (
+            {isMobile && mobileExpanded && (
               <button
-                onClick={() => setMobileFullscreen(false)}
+                onClick={() => setMobileExpanded(false)}
                 className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
                 aria-label="Stäng fullskärm"
               >
@@ -627,7 +627,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         <div
           ref={chatContainerRef}
           className={`relative px-4 md:px-6 py-4 space-y-3 overflow-y-auto chat-scrollbar pb-6 ${
-            isMobile && mobileFullscreen
+            isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
               : 'max-h-[50dvh] md:max-h-[400px] min-h-[180px]'
           }`}
@@ -732,7 +732,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <Button
                 variant="gradient"
                 size="default"
-                onClick={() => { setMobileFullscreen(false); onScrollToResults?.(); }}
+                onClick={() => { setMobileExpanded(false); onScrollToResults?.(); }}
                 className="w-full rounded-xl text-sm font-semibold"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
