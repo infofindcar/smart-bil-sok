@@ -49,14 +49,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
       {/* Image */}
       <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden bg-muted">
         {car.image_thumb_url ? (
-          <img
-            src={car.image_thumb_url}
-            alt={displayName}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
-            style={{ opacity: 0, transition: 'opacity 0.4s ease-in' }}
-          />
+          <ImageWithFade src={car.image_thumb_url!} alt={displayName} />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
             <span className="text-3xl font-serif font-bold text-white/80">
