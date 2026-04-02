@@ -610,15 +610,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             >
               <RotateCcw className="h-3 w-3" />
             </button>
-            {isMobile && mobileExpanded && (
-              <button
-                onClick={() => setMobileExpanded(false)}
-                className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
-                aria-label="Stäng fullskärm"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
           </div>
         </div>
 
