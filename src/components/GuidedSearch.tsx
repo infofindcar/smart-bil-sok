@@ -772,12 +772,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 onFocus={() => {
                   setInputFocused(true);
                   if (isMobile && !mobileFullscreen) {
-                    // Delay fullscreen to avoid layout shift stealing focus
                     setTimeout(() => {
+                      window.scrollTo({ top: 0 });
                       setMobileFullscreen(true);
-                      // Re-focus after layout settles
-                      setTimeout(() => inputRef.current?.focus(), 50);
-                    }, 100);
+                      setTimeout(() => inputRef.current?.focus(), 80);
+                    }, 50);
                   }
                 }}
                 onBlur={() => setInputFocused(false)}
