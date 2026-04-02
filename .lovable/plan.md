@@ -1,43 +1,35 @@
 
 
-## Plan: Fix Mobile Chat Performance and Screen Jumping
+## Plan: Förbättra Clutch kommunikationsstil
 
-### Root Causes Identified
+### Sammanfattning
+Uppdatera Clutch systemprompt och resultatvisning baserat på dina preferenser:
+- **Osäkerhet**: Mix — ge förslag OCH erbjud att hoppa över
+- **Humor**: Lätt humor ibland, inte alltid saklig
+- **Resultat**: Förklaringar visas under bilkorten, inte i chatten
+- **Språk**: Enkelt, vardagligt svenska — inga biltermer
 
-1. **`backdrop-blur-2xl`** on the main chat card (line 576) — forces GPU to re-sample underlying pixels every frame. Extremely expensive on mobile, especially during typing when content changes constantly.
+### Ändringar
 
-2. **Competing scroll handlers causing screen jumps** — Three separate mechanisms fire simultaneously when typing on mobile:
-   - `visualViewport` resize listener calls `scrollIntoView` (line 323-324)
-   - `inputFocused` effect calls both `scrollIntoView` AND `queueScrollToBottom` (line 336-340)
-   - `messages.length` effect calls `queueScrollToBottom` (line 343-345)
-   - `visibleText` change effect calls `queueScrollToBottom` (line 365-367)
-   
-   These fight each other, causing the screen to jump up and down.
+#### 1. Uppdatera systemprompt (edge function)
+**Fil:** `supabase/functions/guided-search/index.ts`
 
-3. **Typewriter effect causes excessive re-renders** — `setVisibleText` is called every ~30ms per character, each triggering a full React re-render of the entire chat + a scroll update.
+Ändra `CONVERSATION_SYSTEM_PROMPT` med dessa justeringar:
 
-4. **Textarea auto-resize on every keystroke** — `el.style.height = '0px'` then `el.style.height = scrollHeight` causes layout thrashing (lines 748-750).
+- **Tonalitet**: Byta från "kunnig kompis" till "kunnig kompis med lite humor" — tillåta lättsamma kommentarer som "Bra val, klassiker!" men aldrig överdriva
+- **Osäkerhet-hantering**: Lägga till regel: "Om kunden svarar 'vet inte' eller verkar osäker — ge 2-3 konkreta förslag de kan välja mellan, OCH erbjud att hoppa över ('Eller så skippar vi den!')"
+- **Enkelt språk**: Förtydliga att Clutch aldrig ska använda termer som "miltal", "drivlina", "förmånsvärde" utan förklara med vardagliga ord
+- **Resultat i chatten**: Ta bort all resultatsammanfattning i chattmeddelandet — Clutch ska bara säga en kort mening som "Här är dina matchningar!" utan att beskriva bilarna. Bilförklaringarna ska istället komma under varje bilkort (redan hanterat via `carReasons`)
 
-### Changes
+Exempel på nya bra svar i prompten:
+- "Aha, elbil! Hur långt kör du till jobbet ungefär? Det påverkar vilken räckvidd du behöver."
+- "Ingen aning om drivmedel? De flesta som pendlar kort gillar elbil, annars funkar hybrid bra. Eller så skippar vi den frågan!"
 
-#### 1. Remove `backdrop-blur` from chat card (`GuidedSearch.tsx`)
-- Replace `backdrop-blur-2xl` on line 576 with a solid `bg-card` background
-- Replace `bg-background/60` on textarea container (line 741) with solid `bg-background`
-- This alone will dramatically improve mobile frame rate
+#### 2. Förbättra resultatmeddelandet
+**Fil:** `supabase/functions/guided-search/index.ts`
 
-#### 2. Consolidate scroll logic — stop competing handlers
-- Remove the `visualViewport` resize listener entirely (lines 316-331) — it's redundant with the `inputFocused` effect and causes double-scrolling
-- Simplify the `inputFocused` effect to only call `queueScrollToBottom(true)` with a single 350ms delay (remove the `scrollIntoView` call)
-- Debounce the `visibleText` scroll effect — only scroll every 200ms during typewriting instead of on every character
+I AI-anropet som genererar resultatmeddelandet (efter sökning) — instruera att meddelandet ska vara kort och inte beskriva bilarna. T.ex. "Kolla in dessa — jag tror de passar dig!" istället för en lång sammanfattning.
 
-#### 3. Optimize typewriter to batch updates
-- Instead of calling `setVisibleText` per character (~30ms intervals), batch updates: accumulate 3-5 characters before calling setState
-- This reduces re-renders from ~30/sec to ~8/sec during typing animation
-
-#### 4. Fix textarea resize to avoid layout thrashing
-- Use `requestAnimationFrame` wrapper around the height recalculation
-- Don't reset to `0px` first — set directly to `scrollHeight` only if it changed
-
-### Files Changed
-- `src/components/GuidedSearch.tsx` — all four fixes above
+### Filer som ändras
+- `supabase/functions/guided-search/index.ts` — systemprompt + resultatmeddelandelogik
 
