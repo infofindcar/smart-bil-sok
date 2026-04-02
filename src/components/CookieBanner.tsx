@@ -11,7 +11,12 @@ export const CookieBanner = () => {
     const accepted = localStorage.getItem(COOKIE_KEY);
     if (!accepted) {
       const timer = setTimeout(() => setShow(true), 1500);
-      return () => clearTimeout(timer);
+      // Auto-dismiss after 8 seconds so it doesn't block chat input
+      const autoDismiss = setTimeout(() => {
+        localStorage.setItem(COOKIE_KEY, 'true');
+        setShow(false);
+      }, 9500); // 1500 delay + 8000 visible
+      return () => { clearTimeout(timer); clearTimeout(autoDismiss); };
     }
   }, []);
 
