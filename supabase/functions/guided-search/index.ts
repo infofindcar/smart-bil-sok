@@ -140,10 +140,14 @@ const modelBodyTypeMap: Record<string, string[]> = {
     "Captur", "Kadjar", "Koleos", "Austral",
     "C5 Aircross", "3008", "5008",
     "Grandland", "Mokka", "Crossland",
-    "Ioniq 5", "Ioniq 6", "Ioniq 7",
+    "Ioniq 5", "Ioniq 7",
     "bZ4X", "Yaris Cross", "C-HR",
     "Scala", "Kamiq",
     "Ceed SW", "Stinger",
+    "Macan", "Cayenne",
+    "Levante", "Grecale",
+    "F-Pace", "E-Pace",
+    "Urus", "DBX",
   ],
   kombi: [
     "V60", "V90", "V70", "V50", "V40",
@@ -157,10 +161,31 @@ const modelBodyTypeMap: Record<string, string[]> = {
     "S60", "S90", "S80", "S40",
     "A4 Sedan", "A6 Sedan",
     "3 Series", "5 Series",
-    "C-Class", "E-Class",
+    "C-Class", "E-Class", "S-Class",
     "Model 3", "Model S",
     "Polestar 2",
     "Ioniq 6",
+  ],
+  coupe: [
+    "911", "Cayman", "Boxster", "718",
+    "M2", "M4", "M8", "M850i", "4 Series", "8 Series", "2 Series",
+    "RS5", "TT", "R8", "A5",
+    "AMG GT", "CLE", "C Coupe", "E Coupe",
+    "Mustang", "Camaro", "Corvette",
+    "Supra", "GR86", "BRZ",
+    "RC", "LC",
+    "Vantage", "DB11", "DB12",
+    "F-Type",
+    "Huracan", "Gallardo",
+    "Roma", "Portofino", "296", "F8",
+    "MC20",
+    "Emira", "Evora",
+  ],
+  cab: [
+    "C70", "911 Cabriolet", "Boxster", "718 Cabriolet",
+    "Z4", "SLC", "SL",
+    "Mustang Convertible", "F-Type Convertible",
+    "A5 Cabriolet", "TT Roadster",
   ],
 };
 
@@ -181,38 +206,46 @@ EXEMPEL PÅ BRA SVAR:
 EXEMPEL PÅ FÖR LÅNGT SVAR (UNDVIK):
 "Vad kul att du funderar på elbil! Det är verkligen ett bra val för pendling eftersom driftskostnaden är mycket lägre jämfört med bensin och diesel. Dessutom slipper du trängselskatt i många städer. Nu undrar jag, hur långt kör du till jobbet varje dag? Det är viktigt att veta för att kunna rekommendera en bil med tillräcklig räckvidd så att du inte behöver ladda på vägen."
 
-VIKTIGT — HUR DU STÄLLER FRÅGOR:
-- Förklara kort VARFÖR du frågar när det inte är uppenbart.
-- Ge korta förklaringar av tekniska termer. T.ex. istället för "AWD, FWD eller RWD?" skriv "Behöver du fyrhjulsdrift? Bra i snö men kostar lite mer."
-- Var personlig och referera till det kunden redan sagt.
-
 INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 1. Vad bilen ska användas till (pendling, familj, stad, långresor, blandat)
 2. Budget (ungefärligt prisintervall)
 3. Var personen bor (stad/region)
 4. Hur långt de kör per dag/vecka
 5. Drivmedel (el, hybrid, bensin, diesel)
-6. Karosstyp — fråga begripligt: "Hög bil som SUV, praktisk kombi, eller sportig sedan?"
+6. Karosstyp — fråga begripligt: "Hög bil som SUV, praktisk kombi, sportig coupé eller sedan?"
 7. Färgpreferens
 8. Växellåda (automat/manuell)
 9. Driftskostnad vs prestanda
 10. Årsmodell
-11. Ålder på föraren (påverkar försäkring)
-12. Eventuella specifika önskemål
+11. Ålder på föraren (påverkar försäkring MYCKET, speciellt under 25)
+12. Antal passagerare/barn (barnstolar, isofix, barnvagn i bagaget)
+13. Parkeringssituation (garage med laddmöjlighet, gatuparkering, uppfart) — avgör om elbil funkar och om stor bil passar
+14. Körvanor vintertid — snö/halka → fyrhjulsdrift kan vara bra
+15. Dragkroksbehov — släp, båt, husvagn? Påverkar vilka bilar som klarar vikten
+16. Önskad total månadskostnad (lån/leasing + försäkring + bränsle) — om kunden anger detta kan du uppskatta
+17. Laddmöjlighet hemma (om elbil/laddhybrid diskuteras) — avgörande för om elbil funkar i praktiken
+18. Eventuella specifika önskemål
 
-INTELLIGENTA REGLER:
-- Lång pendling → nämn att bränsleeffektivitet blir viktigt
-- Familj → fråga om storlek och barnvagnsbehov
-- Stad → nämn att mindre bil är smidigare
-- Låg driftskostnad → nämn elbil kort
-- Norrland/vinter → nämn fyrhjulsdrift
+INTELLIGENTA FÖLJDFRÅGOR (ställ dessa baserat på kontext):
+- Om budget < 150 000 → fråga om de kan tänka sig äldre årsmodell med låga mil
+- Om förare < 25 år → nämn att försäkringen blir betydligt dyrare och fråga om det påverkar bilval
+- Om förare < 25 år → undvik att föreslå dyra sportbilar om de inte specifikt vill ha det
+- Om familj med barn → fråga hur många barn och åldrar (barnvagn i bagaget? Isofix?)
+- Om elbil nämns → fråga om laddmöjlighet hemma (garage? laddstolpe?)
+- Om lång pendling → fråga om motorväg eller landsväg (påverkar förbrukning)
+- Om dragkrok nämns → fråga vad de ska dra och uppskattad vikt
+- Om norrland/vinter → rekommendera fyrhjulsdrift och nämn varför
+- Om stad → nämn att mindre bil är smidigare att parkera
+- Om låg driftskostnad prioriteras → lyft elbil/hybrid och förklara kostnadsbesparingen kort
+
+GENERELLA REGLER:
 - Ställ MAX EN fråga per meddelande
 - Var kort, varm och naturlig
 - Använd INTE emojis
 - Bekräfta KORT vad kunden sa innan nästa fråga
 - Hoppa över frågor du redan har svar på
 
-NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 12 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt.
+NÄR DU SKA SÖKA: Du ska ha samlat minst 6 av de 18 punkterna ovan OCH ha ställt minst 6 frågor. Sök INTE förrän du har tillräckligt. Om kunden pressar på, förklara kort att fler frågor ger bättre matchning.
 
 STRIKT FILTERLÄGE: Om kunden säger att de bara vill ha bilar som matchar deras exakta filter (t.ex. "bara mina filter", "only my filters", "inga extra förslag"), ska du STRIKT följa deras angivna filter utan att lägga till egna rekommendationer, bredda sökningen eller föreslå alternativ utanför deras kriterier. Returnera action "search" direkt med exakt de filter kunden har angett.
 
@@ -559,15 +592,18 @@ serve(async (req) => {
       // Progressive relaxation (5 levels):
       // Level 0: everything strict
       // Level 1: drop city, pris ±30%
-      // Level 2: drop color, pris ±50%
-      // Level 3: drop body_type, make, year, pris ±60%
-      // Level 4: drop transmission, drivetrain, fuel, pris ×0-10
-      const PRICE_MULT     = [1,    1.3,  1.5,  1.6,  10];
-      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.4,  0];
+      // Level 2: drop color, pris ±50%, KEEP body_type
+      // Level 3: drop make, year, pris ±80%, KEEP body_type
+      // Level 4: drop body_type, transmission, drivetrain, fuel, pris ×10
+      const PRICE_MULT     = [1,    1.3,  1.5,  1.8,  10];
+      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.2,  0];
       const MIN_RESULTS    = 3;
 
       let cars: any[] = [];
       let relaxLevel = 0;
+
+      // Remember original body type for sorting priority
+      const hasBodyTypeFilter = validBodyTypes.length > 0;
 
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select("*");
@@ -576,7 +612,7 @@ serve(async (req) => {
           .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
           .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
 
-        // Level 0-: city
+        // Level 0: city
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
         }
@@ -596,8 +632,8 @@ serve(async (req) => {
           if (fuelFilters) query = query.or(fuelFilters);
         }
 
-        // Level 0-2: body_type
-        if (validBodyTypes.length > 0 && level < 3) {
+        // Level 0-3: body_type (kept until level 4!)
+        if (validBodyTypes.length > 0 && level < 4) {
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
@@ -619,11 +655,10 @@ serve(async (req) => {
           if (allFilters) query = query.or(allFilters);
         }
 
-        // Level 0-1: color (strict – no Unknown/null)
-        // Level 2+: color with Unknown/null fallback (lazy color detection)
+        // Level 0-1: color strict, Level 2+: with Unknown/null fallback
         if (sanitizedColor && level < 2) {
           query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%`);
-        } else if (sanitizedColor && level >= 2) {
+        } else if (sanitizedColor && level >= 2 && level < 4) {
           query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.eq.Okänd,color.is.null`);
         }
 
@@ -658,19 +693,33 @@ serve(async (req) => {
         buildQuery(1),
       ]);
 
-      // Sort results by proximity to budget midpoint, then take top 9
+      // Sort results: prioritize body_type match, then proximity to budget midpoint
       const budgetMid = (minPrice + maxPrice) / 2;
-      const sortByBudgetProximity = (arr: any[]) => {
+      const bodyTypePatternValues = validBodyTypes.map((b: string) => bodyPatterns[b]?.replace(/%/g, "").toLowerCase()).filter(Boolean);
+      const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
+
+      const sortByRelevance = (arr: any[]) => {
         return arr
-          .sort((a, b) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+          .sort((a, b) => {
+            // If we have a body type filter, prioritize matches
+            if (hasBodyTypeFilter) {
+              const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
+                || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
+              const bBodyMatch = bodyTypePatternValues.some(p => (b.body_type || "").toLowerCase().includes(p))
+                || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
+              if (aBodyMatch && !bBodyMatch) return -1;
+              if (!aBodyMatch && bBodyMatch) return 1;
+            }
+            return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
+          })
           .slice(0, 9);
       };
 
       if (res0.data && res0.data.length > 0) {
-        cars = sortByBudgetProximity(res0.data);
+        cars = sortByRelevance(res0.data);
         relaxLevel = 0;
       } else if (res1.data && res1.data.length > 0) {
-        cars = sortByBudgetProximity(res1.data);
+        cars = sortByRelevance(res1.data);
         relaxLevel = 1;
       } else {
         // Try levels 2 and 3 in parallel
@@ -679,10 +728,10 @@ serve(async (req) => {
           buildQuery(3),
         ]);
         if (res2.data && res2.data.length > 0) {
-          cars = sortByBudgetProximity(res2.data);
+          cars = sortByRelevance(res2.data);
           relaxLevel = 2;
         } else if (res3.data && res3.data.length > 0) {
-          cars = sortByBudgetProximity(res3.data);
+          cars = sortByRelevance(res3.data);
           relaxLevel = 3;
         }
       }
