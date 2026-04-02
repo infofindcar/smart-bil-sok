@@ -1,43 +1,59 @@
 
 
-## Plan: Förbättra Clutch-chattens UX
+## Plan: Fixa bilsökning, bilder och smartare frågor
 
-### Problem att lösa
-1. **Auto-scroll fungerar inte korrekt på mobil** — chatten följer inte med nya meddelanden
-2. **"Sök direkt"-knappen ska tas bort**
-3. **Ny knapp: "Utgå endast från mina filter"** — strikt filterläge
-4. **Mikrofonen fungerar inte på mobil** — troligen iOS-relaterat
-5. **Fler UX-förbättringar för chattupplevelsen**
+### Problem identifierade
+
+**1. Bilder visas inte (måste klicka)**
+- `CarCard.tsx` sätter `style={{ opacity: 0 }}` inline på bilden
+- `onLoad` lägger till CSS-klassen `opacity-100`, men inline styles har högre prioritet än klasser
+- Resultat: bilden laddas men förblir osynlig
+
+**2. Helt fel bilar visas**
+- Användaren sökte GT-coupé för 1-1.5M SEK men fick Mazda CX-60, VW Caddy, etc.
+- Orsak: Det finns bara 28 coupéer i databasen, max pris ~700k. Inga matchar budgeten.
+- Vid relax level 2 släpps `body_type` och `null`-värden inkluderas — men majoriteten av bilar i den prisklassen har `body_type = null`, så slumpmässiga bilar returneras
+- `modelBodyTypeMap` saknar helt `coupe`-entry (inga modellnamn som "911", "Mustang", "M4" etc.)
+- Sorteringen är efter "proximity to budget midpoint" utan hänsyn till om bilen alls matchar karosstyp
+
+**3. Clutch ställer för få frågor** (godkänd plan från tidigare)
 
 ### Ändringar
 
-#### 1. Fixa auto-scroll på mobil (GuidedSearch.tsx)
-- Problemet: `scrollIntoView` och `scrollTop`-logiken funkar dåligt med mobilens virtuella tangentbord som ändrar viewport-höjden
-- Lösning: Efter varje nytt meddelande och när tangentbordet öppnas, scrolla sista meddelandet till synligt med `scrollIntoView({ block: 'end' })` på sista meddelande-elementet istället för att räkna `scrollHeight`
-- Lägg till `visualViewport`-lyssnare för att hantera tangentbordsändringar på iOS/Android
-- Vid focus på textarea: scrolla input-arean synlig med kort delay
+#### 1. Fixa bilder — `src/components/CarCard.tsx`
+- Byt från inline `style={{ opacity: 0 }}` + `classList.add('opacity-100')` till React state
+- Använd `useState(false)` för `loaded`, sätt `onLoad` → `setLoaded(true)`
+- Applicera `opacity: loaded ? 1 : 0` inline (eller className-baserat utan konflikt)
 
-#### 2. Ta bort "Sök direkt"-knappen (GuidedSearch.tsx)
-- Ta bort hela blocket på rad 610-618 som renderar `SEARCH_NOW`-knappen
-- Ta bort `SEARCH_NOW`-konstanten (rad 106-112)
+#### 2. Fixa söklogiken — `supabase/functions/guided-search/index.ts`
 
-#### 3. Ny knapp: "Utgå från mina filter" (GuidedSearch.tsx + guided-search edge function)
-- Lägg till en ny knapp bland suggestions-knappar: "Bara mina filter" / "Only my filters"
-- När användaren klickar skickas ett meddelande som "Visa bara bilar som matchar mina exakta filter, inga extra förslag"
-- Uppdatera `CONVERSATION_SYSTEM_PROMPT` i edge function: lägg till instruktion att om användaren säger att de bara vill ha sina filter ska AI:n inte lägga till egna förslag utan strikt följa filtren
-- Lokalisera knappen för alla 5 språk
+**a) Lägg till coupe-modeller i `modelBodyTypeMap`:**
+```
+coupe: ["911", "Cayman", "Boxster", "M2", "M4", "M8", "M850i", 
+        "RS5", "TT", "R8", "AMG GT", "CLE", "Mustang", "Supra", 
+        "RC", "LC", "Vantage", "DB11", "DB12", "F-Type", "Capri"]
+```
 
-#### 4. Fixa röstinmatning på mobil (GuidedSearch.tsx)
-- Problemet: `webkitSpeechRecognition` kräver HTTPS och funkar inte i alla mobila browsers
-- Förbättra felhantering: visa toast om speech recognition inte stöds eller misslyckas
-- Dölj mic-knappen helt om `speechSupported` är false (redan gjort) — men kontrollera att detekteringen fungerar korrekt på iOS Safari (som INTE stöder Web Speech API)
-- Lägg till fallback: visa tydligt meddelande "Röstinmatning stöds inte i din webbläsare"
+**b) Förbättra relaxeringslogiken:**
+- Vid relaxering: behåll alltid body_type/model-filter om det finns, men bredda prisintervallet mer aggressivt
+- Ny relaxeringsstrategi:
+  - Level 0: Alla filter strikta
+  - Level 1: Drop city, pris ±30%
+  - Level 2: Drop color, pris ±50%, behåll body_type
+  - Level 3: Drop make och year, pris ±80%, **behåll body_type**
+  - Level 4: Drop allt, pris ×10
+- Nyckeln: body_type ska vara ett av de sista filtren som tas bort, inte bland de första
 
-#### 5. Fler UX-förbättringar
-- **Scroll-to-bottom-knapp**: Visa en liten pilknapp längst ner i chatten när användaren har scrollat upp, så de snabbt kan komma tillbaka
-- **Typing indicator delay**: Lägg till kort delay innan typing-dots visas (300ms) för att undvika flicker vid snabba svar
+**c) Förbättra sortering vid relaxerad sökning:**
+- Prioritera bilar som matchar body_type/karosstyp även efter relaxering
+- Bilar med matchande body_type sorteras före bilar med `null` body_type
+
+#### 3. Utöka system-prompten med fler frågor (godkänd plan)
+- Lägg till ålder, parkering, barn, dragkrok, laddmöjlighet, månadsbudget
+- Höj minimikrav till 6 frågor / 6 informationspunkter
+- Lägg till intelligenta följdfrågor baserat på kontext
 
 ### Filer som ändras
-- `src/components/GuidedSearch.tsx` — auto-scroll fix, ta bort "Sök direkt", ny filter-knapp, mic-fix, scroll-to-bottom-knapp
-- `supabase/functions/guided-search/index.ts` — uppdatera system prompt med strikt filter-instruktion
+- `src/components/CarCard.tsx` — fixa bildvisning
+- `supabase/functions/guided-search/index.ts` — fixa söklogik, modellmappning, relaxering, utökad prompt
 
