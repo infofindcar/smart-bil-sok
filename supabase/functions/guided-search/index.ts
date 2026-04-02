@@ -533,6 +533,21 @@ serve(async (req) => {
       const sanitizedCity = sanitizeStringFilter(filters.city);
       const sanitizedMake = sanitizeStringFilter(filters.make);
       const sanitizedColor = sanitizeStringFilter(filters.color);
+
+      // Fire-and-forget: trigga detect-colors i bakgrunden vid färgfilter.
+      // Blockerar inte användaren – svar returneras direkt från befintlig DB-data.
+      if (sanitizedColor) {
+        const syncSecret = Deno.env.get("SYNC_SECRET");
+        const baseUrl = Deno.env.get("SUPABASE_URL");
+        if (syncSecret && baseUrl) {
+          fetch(`${baseUrl}/functions/v1/detect-colors`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-sync-secret": syncSecret },
+            body: JSON.stringify({ limit: 100 }),
+          }).catch(() => {});
+        }
+      }
+
       const sanitizedDrivetrain = typeof filters.drivetrain === "string" && filters.drivetrain in drivetrainPatterns
         ? filters.drivetrain : null;
       const sanitizedTransmission = sanitizeStringFilter(filters.transmission);
