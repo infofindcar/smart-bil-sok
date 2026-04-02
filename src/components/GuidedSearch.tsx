@@ -235,13 +235,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     }
   }, [isListening, language, inputValue]);
 
-  // Lock body scroll when mobile fullscreen is active
+  // On mobile, auto-expand when user starts chatting
   useEffect(() => {
-    if (isMobile && mobileExpanded) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
+    if (isMobile && hasUserMessages && !mobileExpanded) {
+      setMobileExpanded(true);
     }
-  }, [isMobile, mobileExpanded]);
+  }, [isMobile, hasUserMessages, mobileExpanded]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
