@@ -720,7 +720,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Results CTA + Reset */}
         {phase === 'results' && !isLoading && (
-          <div className="px-4 md:px-5 pb-3 space-y-2">
+          <div className="px-4 md:px-5 pb-3 space-y-2 shrink-0">
             {onScrollToResults && (
               <Button
                 variant="gradient"
