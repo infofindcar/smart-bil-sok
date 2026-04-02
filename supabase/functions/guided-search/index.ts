@@ -715,8 +715,28 @@ serve(async (req) => {
           return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
         });
 
-        // Diversify: avoid too many cars from the same make+model
-        // Pick top results but limit max 2 per make, max 1 per make+model combo
+        // Only diversify when user didn't request a specific make
+        if (sanitizedMake) {
+          // User asked for a specific brand — just return best matches, diversify by model only
+          const picked: any[] = [];
+          const modelCount: Record<string, number> = {};
+          for (const car of sorted) {
+            if (picked.length >= 9) break;
+            const model = (car.model || "unknown").toLowerCase();
+            if ((modelCount[model] || 0) >= 2) continue;
+            picked.push(car);
+            modelCount[model] = (modelCount[model] || 0) + 1;
+          }
+          if (picked.length < MIN_RESULTS) {
+            for (const car of sorted) {
+              if (picked.length >= MIN_RESULTS) break;
+              if (!picked.some(p => p.id === car.id)) picked.push(car);
+            }
+          }
+          return picked;
+        }
+
+        // No specific make — diversify across brands
         const picked: any[] = [];
         const makeCount: Record<string, number> = {};
         const makeModelCount: Record<string, number> = {};
@@ -727,11 +747,9 @@ serve(async (req) => {
           const model = (car.model || "unknown").toLowerCase();
           const makeModelKey = `${make}|||${model}`;
 
-          // For top 3 (the featured cards): strict diversity — max 1 per make
           if (picked.length < 3) {
             if ((makeCount[make] || 0) >= 1) continue;
           } else {
-            // For positions 4-9: allow max 2 per make, max 1 per exact make+model
             if ((makeCount[make] || 0) >= 2) continue;
             if ((makeModelCount[makeModelKey] || 0) >= 1) continue;
           }
@@ -741,7 +759,6 @@ serve(async (req) => {
           makeModelCount[makeModelKey] = (makeModelCount[makeModelKey] || 0) + 1;
         }
 
-        // If diversity filtering was too aggressive and we have < 3 results, backfill
         if (picked.length < MIN_RESULTS) {
           for (const car of sorted) {
             if (picked.length >= MIN_RESULTS) break;
