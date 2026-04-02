@@ -722,7 +722,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <Button
                 variant="gradient"
                 size="default"
-                onClick={() => { setMobileExpanded(false); onScrollToResults?.(); }}
+                onClick={() => { onScrollToResults?.(); }}
                 className="w-full rounded-xl text-sm font-semibold"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
