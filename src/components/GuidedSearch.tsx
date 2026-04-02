@@ -633,7 +633,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               style={{ transition: 'all 0.2s ease-out' }}
             >
               {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-md bg-secondary/20 flex items-center justify-center shrink-0 mt-1">
                   <Sparkles className="h-3 w-3 text-secondary/70" />
                 </div>
               )}
