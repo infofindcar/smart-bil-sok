@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter, X } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -160,7 +160,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETINGS.sv]);
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
-  const [mobileFullscreen, setMobileFullscreen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const isMobile = useIsMobile();
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
@@ -235,13 +235,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     }
   }, [isListening, language, inputValue]);
 
-  // Lock body scroll when mobile fullscreen is active
+  // On mobile, auto-expand when user starts chatting
   useEffect(() => {
-    if (isMobile && mobileFullscreen) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
+    if (isMobile && messages.length > 1 && !mobileExpanded) {
+      setMobileExpanded(true);
     }
-  }, [isMobile, mobileFullscreen]);
+  }, [isMobile, messages.length, mobileExpanded]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
@@ -573,12 +572,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-[9999]' : ''}`} style={isMobile && mobileFullscreen ? { background: 'hsl(var(--card))' } : undefined}>
+    <div className="w-full max-w-3xl mx-auto">
       <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
-        isMobile && mobileFullscreen
-          ? 'rounded-none h-full flex flex-col'
+        isMobile && mobileExpanded
+          ? 'rounded-xl flex flex-col'
           : 'rounded-2xl'
-      }`}>
+      }`} style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}>
         {/* Header */}
         <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
@@ -611,15 +610,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             >
               <RotateCcw className="h-3 w-3" />
             </button>
-            {isMobile && mobileFullscreen && (
-              <button
-                onClick={() => setMobileFullscreen(false)}
-                className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
-                aria-label="Stäng fullskärm"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
           </div>
         </div>
 
@@ -627,7 +617,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         <div
           ref={chatContainerRef}
           className={`relative px-4 md:px-6 py-4 space-y-3 overflow-y-auto chat-scrollbar pb-6 ${
-            isMobile && mobileFullscreen
+            isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
               : 'max-h-[50dvh] md:max-h-[400px] min-h-[180px]'
           }`}
@@ -732,7 +722,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <Button
                 variant="gradient"
                 size="default"
-                onClick={() => { setMobileFullscreen(false); onScrollToResults?.(); }}
+                onClick={() => { onScrollToResults?.(); }}
                 className="w-full rounded-xl text-sm font-semibold"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
