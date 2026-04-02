@@ -33,6 +33,19 @@ const getDisplayName = (car: Car) => {
   return `${make} ${model}`.trim() || 'Okänd bil';
 };
 
+const ImageWithFade = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      loading="lazy"
+      onLoad={() => setLoaded(true)}
+    />
+  );
+};
+
 export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: CarCardProps) => {
   const navigate = useNavigate();
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
