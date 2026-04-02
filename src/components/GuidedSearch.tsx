@@ -603,7 +603,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="relative px-4 md:px-6 py-4 space-y-3 max-h-[55vh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px] pb-6"
+          className="relative px-4 md:px-6 py-4 space-y-3 max-h-[50dvh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[180px] pb-6"
         >
           {messages.map((msg, idx) => (
             <div
