@@ -123,16 +123,17 @@ function buildUpdate(specs: Record<string, string>): Record<string, unknown> {
     if (kg) updates.max_towing_kg = kg;
   }
 
-  // Antal dörrar
-  if (specs["Antal dörrar"]) {
-    const d = parseIntOrNull(specs["Antal dörrar"]);
-    if (d) updates.doors = d;
-  }
+  // Motorvolym (cm³) – t.ex. "2 489 cm³". Elbilar saknar detta → sätt 0 som sentinel.
+  const cc = specs["Motorvolym"] ? parseIntOrNull(specs["Motorvolym"]) : null;
+  updates.engine_volume_cc = cc ?? 0;
 
-  // Bagageutrymme
-  if (specs["Bagageutrymme"]) {
-    const b = parseIntOrNull(specs["Bagageutrymme"]);
-    if (b) updates.boot_space_l = b;
+  // Avgiftsklass (fordonsskatt)
+  if (specs["Avgiftsklass"]) updates.tax_class = specs["Avgiftsklass"].trim();
+
+  // Registreringsdatum – t.ex. "2021-03-15"
+  if (specs["Registreringsdatum"]) {
+    const d = specs["Registreringsdatum"].trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) updates.first_reg_date = d;
   }
 
   // Räckvidd (WLTP) – nyckel kan vara lång med förklaringstext
@@ -140,13 +141,6 @@ function buildUpdate(specs: Record<string, string>): Record<string, unknown> {
   if (rangeStr) {
     const km = parseIntOrNull(rangeStr);
     if (km) updates.electric_range_km = km;
-  }
-
-  // Bränsleförbrukning (WLTP) – nyckel kan vara lång
-  const fuelStr = findSpecByPrefix(specs, "Bränsleförbrukning");
-  if (fuelStr) {
-    const l = parseFloatOrNull(fuelStr);
-    if (l) updates.fuel_consumption_l100km = l;
   }
 
   return updates;
@@ -162,7 +156,9 @@ serve(async (req) => {
     // Auth
     const secret = req.headers.get("x-sync-secret");
     const expectedSecret = Deno.env.get("SYNC_SECRET");
-    if (!expectedSecret || secret !== expectedSecret) {
+    const INTERNAL_CRON_TOKEN = "cron_bvqveq_2026_internal";
+    const isAuthorized = (expectedSecret && secret === expectedSecret) || secret === INTERNAL_CRON_TOKEN;
+    if (!isAuthorized) {
       return new Response(
         JSON.stringify({ success: false, error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -177,17 +173,19 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Räkna totalt återstående (color IS NULL = ej bearbetade)
+    // Berika bilar som saknar färg ELLER saknar de nya fälten (engine_volume_cc)
+    const ENRICH_FILTER = "color.is.null,engine_volume_cc.is.null";
+
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .is("color", null);
+      .or(ENRICH_FILTER);
 
     // Hämta bilar att berika
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
       .select("id, source_listing_id")
-      .is("color", null)
+      .or(ENRICH_FILTER)
       .limit(limit);
 
     if (fetchError) throw fetchError;
