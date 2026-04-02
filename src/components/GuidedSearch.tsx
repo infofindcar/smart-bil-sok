@@ -348,8 +348,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [isLoading, phase]);
 
+  // Debounced scroll during typewriter — only every 200ms
+  const lastTypeScrollRef = useRef(0);
   useEffect(() => {
-    queueScrollToBottom(false);
+    const now = Date.now();
+    if (now - lastTypeScrollRef.current > 200) {
+      lastTypeScrollRef.current = now;
+      queueScrollToBottom(false);
+    }
   }, [visibleText, queueScrollToBottom]);
 
   useEffect(() => {
