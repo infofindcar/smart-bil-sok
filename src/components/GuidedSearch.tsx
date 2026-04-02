@@ -235,6 +235,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     }
   }, [isListening, language, inputValue]);
 
+  // Lock body scroll when mobile fullscreen is active
+  useEffect(() => {
+    if (isMobile && mobileFullscreen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [isMobile, mobileFullscreen]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
