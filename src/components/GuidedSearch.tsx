@@ -740,7 +740,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
+        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20 shrink-0">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
