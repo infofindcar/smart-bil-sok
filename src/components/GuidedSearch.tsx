@@ -237,10 +237,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   // On mobile, auto-expand when user starts chatting
   useEffect(() => {
-    if (isMobile && hasUserMessages && !mobileExpanded) {
+    if (isMobile && messages.length > 1 && !mobileExpanded) {
       setMobileExpanded(true);
     }
-  }, [isMobile, hasUserMessages, mobileExpanded]);
+  }, [isMobile, messages.length, mobileExpanded]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
