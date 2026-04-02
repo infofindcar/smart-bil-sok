@@ -576,7 +576,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-secondary" />
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border-[1.5px] border-card" />
