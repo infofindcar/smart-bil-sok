@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, Search, Mic, MicOff } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter } from 'lucide-react';
+import { toast } from 'sonner';
 
 export type Car = {
   id: number;
@@ -103,14 +104,6 @@ const NEW_SEARCH: Record<string, string> = {
   fi: 'Uusi haku',
 };
 
-const SEARCH_NOW: Record<string, string> = {
-  sv: 'Sök direkt',
-  en: 'Search now',
-  no: 'Søk nå',
-  da: 'Søg nu',
-  fi: 'Hae nyt',
-};
-
 const SHOW_MATCHES: Record<string, string> = {
   sv: 'Visa mina matchningar',
   en: 'Show my matches',
@@ -127,6 +120,29 @@ const RESTART: Record<string, string> = {
   fi: 'Aloita alusta',
 };
 
+const STRICT_FILTER: Record<string, string> = {
+  sv: 'Bara mina filter',
+  en: 'Only my filters',
+  no: 'Bare mine filtre',
+  da: 'Kun mine filtre',
+  fi: 'Vain omat suodattimet',
+};
+
+const STRICT_FILTER_MSG: Record<string, string> = {
+  sv: 'Visa bara bilar som matchar mina exakta filter, inga extra förslag',
+  en: 'Show only cars matching my exact filters, no extra suggestions',
+  no: 'Vis bare biler som matcher mine eksakte filtre, ingen ekstra forslag',
+  da: 'Vis kun biler der matcher mine præcise filtre, ingen ekstra forslag',
+  fi: 'Näytä vain autot jotka vastaavat tarkkoja suodattimiani, ei ylimääräisiä ehdotuksia',
+};
+
+const MIC_NOT_SUPPORTED: Record<string, string> = {
+  sv: 'Röstinmatning stöds inte i din webbläsare',
+  en: 'Voice input is not supported in your browser',
+  no: 'Stemmeinndata støttes ikke i nettleseren din',
+  da: 'Stemmeinput understøttes ikke i din browser',
+  fi: 'Äänisyöttöä ei tueta selaimessasi',
+};
 
 const CHAT_STORAGE_KEY = 'findcar-chat-state';
 
@@ -147,16 +163,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [showTypingDots, setShowTypingDots] = useState(false);
   const recognitionRef = useRef<any>(null);
   const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const isAutoFollowRef = useRef(true);
   const isTypingRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingDotsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetScrollTopRef = useRef(0);
 
   const confirmedTextRef = useRef('');
@@ -168,34 +188,48 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       return;
     }
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionAPI) return;
-    const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = language === 'en' ? 'en-US' : 'sv-SE';
-    confirmedTextRef.current = inputValue;
-    recognition.onresult = (event: any) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
+    if (!SpeechRecognitionAPI) {
+      toast.error(MIC_NOT_SUPPORTED[language] || MIC_NOT_SUPPORTED.sv);
+      return;
+    }
+    try {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = language === 'en' ? 'en-US' : language === 'fi' ? 'fi-FI' : language === 'no' ? 'nb-NO' : language === 'da' ? 'da-DK' : 'sv-SE';
+      confirmedTextRef.current = inputValue;
+      recognition.onresult = (event: any) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
         }
-      }
-      if (finalTranscript) {
-        confirmedTextRef.current = (confirmedTextRef.current ? confirmedTextRef.current + ' ' : '') + finalTranscript.trim();
-      }
-      const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
-      setInputValue(display.trim());
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
+        if (finalTranscript) {
+          confirmedTextRef.current = (confirmedTextRef.current ? confirmedTextRef.current + ' ' : '') + finalTranscript.trim();
+        }
+        const display = confirmedTextRef.current + (interimTranscript ? ' ' + interimTranscript : '');
+        setInputValue(display.trim());
+      };
+      recognition.onerror = (e: any) => {
+        setIsListening(false);
+        if (e.error === 'not-allowed') {
+          toast.error(language === 'en' ? 'Microphone access denied' : 'Mikrofonåtkomst nekad');
+        } else if (e.error !== 'aborted') {
+          toast.error(MIC_NOT_SUPPORTED[language] || MIC_NOT_SUPPORTED.sv);
+        }
+      };
+      recognition.onend = () => setIsListening(false);
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      toast.error(MIC_NOT_SUPPORTED[language] || MIC_NOT_SUPPORTED.sv);
+    }
   }, [isListening, language, inputValue]);
 
 
@@ -230,11 +264,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         return;
       }
 
-      // Use dt-based interpolation for frame-rate independent smoothness
       const dt = lastTime ? Math.min((timestamp - lastTime) / 16.67, 2) : 1;
       lastTime = timestamp;
 
-      // Gentle easing — never jump, always glide
       const factor = Math.abs(diff) > 200 ? 0.18 : 0.12;
       container.scrollTop += diff * factor * dt;
 
@@ -257,6 +289,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     });
   }, [startScrollLoop]);
 
+  // Scroll-to-bottom detection for the arrow button
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
@@ -264,6 +297,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     const onScroll = () => {
       const distanceFromBottom = container.scrollHeight - container.clientHeight - container.scrollTop;
       isAutoFollowRef.current = distanceFromBottom < 72;
+      setShowScrollDown(distanceFromBottom > 120);
     };
 
     container.addEventListener('scroll', onScroll, { passive: true });
@@ -278,9 +312,55 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     el.style.height = `${el.scrollHeight}px`;
   }, [inputValue]);
 
+  // Mobile: handle virtual keyboard resize via visualViewport
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleResize = () => {
+      if (inputFocused || isListening) {
+        // When keyboard opens, scroll the last message + input into view
+        setTimeout(() => {
+          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
+      }
+    };
+
+    vv.addEventListener('resize', handleResize);
+    return () => vv.removeEventListener('resize', handleResize);
+  }, [inputFocused, isListening]);
+
+  // When input focuses on mobile, scroll input area into view
+  useEffect(() => {
+    if (inputFocused) {
+      setTimeout(() => {
+        inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        queueScrollToBottom(true);
+      }, 300);
+    }
+  }, [inputFocused, queueScrollToBottom]);
+
   useEffect(() => {
     queueScrollToBottom(true);
-  }, [messages.length, isLoading, queueScrollToBottom]);
+  }, [messages.length, queueScrollToBottom]);
+
+  // Delayed typing dots to prevent flicker
+  useEffect(() => {
+    if (isLoading && phase !== 'searching') {
+      typingDotsTimerRef.current = setTimeout(() => setShowTypingDots(true), 300);
+    } else {
+      setShowTypingDots(false);
+      if (typingDotsTimerRef.current) {
+        clearTimeout(typingDotsTimerRef.current);
+        typingDotsTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (typingDotsTimerRef.current) {
+        clearTimeout(typingDotsTimerRef.current);
+      }
+    };
+  }, [isLoading, phase]);
 
   useEffect(() => {
     queueScrollToBottom(false);
@@ -295,8 +375,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [stopScrollLoop]);
 
-  // Avoid page-level auto-scroll on load/mobile; keep scrolling contained to the chat panel.
-
   const typewriteMessage = (msgId: string, fullText: string, onDone?: () => void) => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -308,13 +386,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
     const getCharDelay = (char: string, nextChar: string) => {
-      // Longer pause after sentence-ending punctuation
       if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 220 + Math.random() * 80;
-      // Medium pause after clause punctuation
       if (',;:'.includes(char) && nextChar === ' ') return 100 + Math.random() * 40;
-      // Slight pause after emoji sequences
       if (char === ' ' && i > 2) return 30 + Math.random() * 15;
-      // Normal typing speed with slight human variance
       return 22 + Math.random() * 18;
     };
 
@@ -394,11 +468,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         addAssistantMessage(data.message, data.suggestions);
         setIsLoading(false);
       } else if (data?.action === 'search') {
-        // Save driver age if available for insurance calculation
         if (data.filters?.driverAge) {
           sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
         }
-        // Save search filters + customer profile for "load more"
         if (data.filters || data.customerProfile) {
           sessionStorage.setItem('findcar-last-filters', JSON.stringify({
             filters: data.filters,
@@ -408,7 +480,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
-        // Save user profile for personalized insurance estimates in CarDetail
         try {
           sessionStorage.setItem('findcar-user-profile', JSON.stringify({
             age: data.userAge ?? null,
@@ -426,7 +497,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             onScrollToResults?.();
           }, 600);
         } else {
-          // No results — show message with suggestions
           addAssistantMessage(
             data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
             data.suggestions || []
@@ -499,6 +569,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     lastAssistantMsg?.suggestions?.length &&
     !isTypingMsg(lastAssistantMsg);
 
+  const hasUserMessages = messages.some((m) => m.role === 'user');
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-2xl shadow-sm">
@@ -540,11 +612,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="px-4 md:px-6 py-4 space-y-3 max-h-[55vh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px] pb-6"
+          className="relative px-4 md:px-6 py-4 space-y-3 max-h-[55vh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[200px] pb-6"
         >
-          {messages.map((msg) => (
+          {messages.map((msg, idx) => (
             <div
               key={msg.id}
+              ref={idx === messages.length - 1 ? lastMessageRef : undefined}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
               style={{ transition: 'all 0.2s ease-out' }}
             >
@@ -569,7 +642,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           ))}
 
           {isLoading && phase === 'searching' && <SearchAnimation />}
-          {isLoading && phase !== 'searching' && (
+          {showTypingDots && (
             <div className="flex justify-start gap-2 animate-fade-in">
               <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
                 <Sparkles className="h-3 w-3 text-secondary/70" />
@@ -583,10 +656,24 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               </div>
             </div>
           )}
+
+          {/* Scroll-to-bottom button */}
+          {showScrollDown && (
+            <button
+              onClick={() => {
+                isAutoFollowRef.current = true;
+                queueScrollToBottom(true);
+              }}
+              className="sticky bottom-2 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-card border border-border/50 shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground transition-all hover:shadow-lg"
+              style={{ marginLeft: 'auto', marginRight: 'auto', display: 'block' }}
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        {/* Quick-reply suggestions + Search now button */}
-        {(showSuggestions || (phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user'))) && (
+        {/* Quick-reply suggestions + Strict filter button */}
+        {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
           <div className="px-4 md:px-6 pb-3">
             <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5 items-stretch md:items-center">
               {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
@@ -607,13 +694,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   {WRITE_OWN[language] || WRITE_OWN.sv}
                 </button>
               )}
-              {phase === 'chatting' && !isLoading && messages.some((m) => m.role === 'user') && (
+              {phase === 'chatting' && !isLoading && hasUserMessages && (
                 <button
-                  onClick={() => handleSendMessage(undefined, 'Sök nu med det du vet om mig')}
+                  onClick={() => handleSendMessage(undefined, STRICT_FILTER_MSG[language] || STRICT_FILTER_MSG.sv)}
                   className="w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
                 >
-                  <Search className="h-3 w-3" />
-                  {SEARCH_NOW[language] || SEARCH_NOW.sv}
+                  <Filter className="h-3 w-3" />
+                  {STRICT_FILTER[language] || STRICT_FILTER.sv}
                 </button>
               )}
             </div>
