@@ -762,7 +762,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                     el.style.height = `${el.scrollHeight}px`;
                   });
                 }}
-                onFocus={() => setInputFocused(true)}
+                onFocus={() => { setInputFocused(true); if (isMobile) setMobileFullscreen(true); }}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening
