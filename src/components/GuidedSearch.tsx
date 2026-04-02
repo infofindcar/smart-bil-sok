@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export type Car = {
   id: number;
@@ -159,6 +160,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETINGS.sv]);
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
+  const [mobileFullscreen, setMobileFullscreen] = useState(false);
+  const isMobile = useIsMobile();
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
   const [inputFocused, setInputFocused] = useState(false);
@@ -563,10 +566,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card shadow-sm">
+    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
+        isMobile && mobileFullscreen
+          ? 'rounded-none h-full flex flex-col'
+          : 'rounded-2xl'
+      }`}>
         {/* Header */}
-        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
+        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
@@ -597,13 +604,26 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             >
               <RotateCcw className="h-3 w-3" />
             </button>
+            {isMobile && mobileFullscreen && (
+              <button
+                onClick={() => setMobileFullscreen(false)}
+                className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
+                aria-label="Stäng fullskärm"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className="relative px-4 md:px-6 py-4 space-y-3 max-h-[50dvh] md:max-h-[400px] overflow-y-auto chat-scrollbar min-h-[180px] pb-6"
+          className={`relative px-4 md:px-6 py-4 space-y-3 overflow-y-auto chat-scrollbar pb-6 ${
+            isMobile && mobileFullscreen
+              ? 'flex-1 min-h-0'
+              : 'max-h-[50dvh] md:max-h-[400px] min-h-[180px]'
+          }`}
         >
           {messages.map((msg, idx) => (
             <div
@@ -665,7 +685,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Quick-reply suggestions + Strict filter button */}
         {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
-          <div className="px-4 md:px-6 pb-3">
+          <div className="px-4 md:px-6 pb-3 shrink-0">
             <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5 items-stretch md:items-center">
               {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
                 <button
@@ -700,12 +720,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Results CTA + Reset */}
         {phase === 'results' && !isLoading && (
-          <div className="px-4 md:px-5 pb-3 space-y-2">
+          <div className="px-4 md:px-5 pb-3 space-y-2 shrink-0">
             {onScrollToResults && (
               <Button
                 variant="gradient"
                 size="default"
-                onClick={onScrollToResults}
+                onClick={() => { setMobileFullscreen(false); onScrollToResults?.(); }}
                 className="w-full rounded-xl text-sm font-semibold"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
@@ -720,7 +740,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20">
+        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20 shrink-0">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`flex-1 relative rounded-xl border transition-all duration-200 ${
@@ -742,7 +762,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                     el.style.height = `${el.scrollHeight}px`;
                   });
                 }}
-                onFocus={() => setInputFocused(true)}
+                onFocus={() => { setInputFocused(true); if (isMobile) setMobileFullscreen(true); }}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening
