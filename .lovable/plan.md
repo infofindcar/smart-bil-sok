@@ -1,59 +1,43 @@
 
 
-## Plan: Fixa bilsökning, bilder och smartare frågor
+## Plan: Fix Mobile Chat Performance and Screen Jumping
 
-### Problem identifierade
+### Root Causes Identified
 
-**1. Bilder visas inte (måste klicka)**
-- `CarCard.tsx` sätter `style={{ opacity: 0 }}` inline på bilden
-- `onLoad` lägger till CSS-klassen `opacity-100`, men inline styles har högre prioritet än klasser
-- Resultat: bilden laddas men förblir osynlig
+1. **`backdrop-blur-2xl`** on the main chat card (line 576) — forces GPU to re-sample underlying pixels every frame. Extremely expensive on mobile, especially during typing when content changes constantly.
 
-**2. Helt fel bilar visas**
-- Användaren sökte GT-coupé för 1-1.5M SEK men fick Mazda CX-60, VW Caddy, etc.
-- Orsak: Det finns bara 28 coupéer i databasen, max pris ~700k. Inga matchar budgeten.
-- Vid relax level 2 släpps `body_type` och `null`-värden inkluderas — men majoriteten av bilar i den prisklassen har `body_type = null`, så slumpmässiga bilar returneras
-- `modelBodyTypeMap` saknar helt `coupe`-entry (inga modellnamn som "911", "Mustang", "M4" etc.)
-- Sorteringen är efter "proximity to budget midpoint" utan hänsyn till om bilen alls matchar karosstyp
+2. **Competing scroll handlers causing screen jumps** — Three separate mechanisms fire simultaneously when typing on mobile:
+   - `visualViewport` resize listener calls `scrollIntoView` (line 323-324)
+   - `inputFocused` effect calls both `scrollIntoView` AND `queueScrollToBottom` (line 336-340)
+   - `messages.length` effect calls `queueScrollToBottom` (line 343-345)
+   - `visibleText` change effect calls `queueScrollToBottom` (line 365-367)
+   
+   These fight each other, causing the screen to jump up and down.
 
-**3. Clutch ställer för få frågor** (godkänd plan från tidigare)
+3. **Typewriter effect causes excessive re-renders** — `setVisibleText` is called every ~30ms per character, each triggering a full React re-render of the entire chat + a scroll update.
 
-### Ändringar
+4. **Textarea auto-resize on every keystroke** — `el.style.height = '0px'` then `el.style.height = scrollHeight` causes layout thrashing (lines 748-750).
 
-#### 1. Fixa bilder — `src/components/CarCard.tsx`
-- Byt från inline `style={{ opacity: 0 }}` + `classList.add('opacity-100')` till React state
-- Använd `useState(false)` för `loaded`, sätt `onLoad` → `setLoaded(true)`
-- Applicera `opacity: loaded ? 1 : 0` inline (eller className-baserat utan konflikt)
+### Changes
 
-#### 2. Fixa söklogiken — `supabase/functions/guided-search/index.ts`
+#### 1. Remove `backdrop-blur` from chat card (`GuidedSearch.tsx`)
+- Replace `backdrop-blur-2xl` on line 576 with a solid `bg-card` background
+- Replace `bg-background/60` on textarea container (line 741) with solid `bg-background`
+- This alone will dramatically improve mobile frame rate
 
-**a) Lägg till coupe-modeller i `modelBodyTypeMap`:**
-```
-coupe: ["911", "Cayman", "Boxster", "M2", "M4", "M8", "M850i", 
-        "RS5", "TT", "R8", "AMG GT", "CLE", "Mustang", "Supra", 
-        "RC", "LC", "Vantage", "DB11", "DB12", "F-Type", "Capri"]
-```
+#### 2. Consolidate scroll logic — stop competing handlers
+- Remove the `visualViewport` resize listener entirely (lines 316-331) — it's redundant with the `inputFocused` effect and causes double-scrolling
+- Simplify the `inputFocused` effect to only call `queueScrollToBottom(true)` with a single 350ms delay (remove the `scrollIntoView` call)
+- Debounce the `visibleText` scroll effect — only scroll every 200ms during typewriting instead of on every character
 
-**b) Förbättra relaxeringslogiken:**
-- Vid relaxering: behåll alltid body_type/model-filter om det finns, men bredda prisintervallet mer aggressivt
-- Ny relaxeringsstrategi:
-  - Level 0: Alla filter strikta
-  - Level 1: Drop city, pris ±30%
-  - Level 2: Drop color, pris ±50%, behåll body_type
-  - Level 3: Drop make och year, pris ±80%, **behåll body_type**
-  - Level 4: Drop allt, pris ×10
-- Nyckeln: body_type ska vara ett av de sista filtren som tas bort, inte bland de första
+#### 3. Optimize typewriter to batch updates
+- Instead of calling `setVisibleText` per character (~30ms intervals), batch updates: accumulate 3-5 characters before calling setState
+- This reduces re-renders from ~30/sec to ~8/sec during typing animation
 
-**c) Förbättra sortering vid relaxerad sökning:**
-- Prioritera bilar som matchar body_type/karosstyp även efter relaxering
-- Bilar med matchande body_type sorteras före bilar med `null` body_type
+#### 4. Fix textarea resize to avoid layout thrashing
+- Use `requestAnimationFrame` wrapper around the height recalculation
+- Don't reset to `0px` first — set directly to `scrollHeight` only if it changed
 
-#### 3. Utöka system-prompten med fler frågor (godkänd plan)
-- Lägg till ålder, parkering, barn, dragkrok, laddmöjlighet, månadsbudget
-- Höj minimikrav till 6 frågor / 6 informationspunkter
-- Lägg till intelligenta följdfrågor baserat på kontext
-
-### Filer som ändras
-- `src/components/CarCard.tsx` — fixa bildvisning
-- `supabase/functions/guided-search/index.ts` — fixa söklogik, modellmappning, relaxering, utökad prompt
+### Files Changed
+- `src/components/GuidedSearch.tsx` — all four fixes above
 
