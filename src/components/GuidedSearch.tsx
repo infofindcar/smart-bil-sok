@@ -566,10 +566,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="clutch-card rounded-2xl overflow-hidden border border-border/40 bg-card shadow-sm">
+    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
+        isMobile && mobileFullscreen
+          ? 'rounded-none h-full flex flex-col'
+          : 'rounded-2xl'
+      }`}>
         {/* Header */}
-        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between">
+        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
