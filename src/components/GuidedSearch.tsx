@@ -377,22 +377,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     isAutoFollowRef.current = true;
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
-    const getCharDelay = (char: string, nextChar: string) => {
-      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 220 + Math.random() * 80;
-      if (',;:'.includes(char) && nextChar === ' ') return 100 + Math.random() * 40;
-      if (char === ' ' && i > 2) return 30 + Math.random() * 15;
-      return 22 + Math.random() * 18;
-    };
+    const BATCH_SIZE = 4;
 
     const tick = () => {
-      i += 1;
+      const end = Math.min(i + BATCH_SIZE, fullText.length);
+      i = end;
       setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
 
       if (i < fullText.length) {
-        const currentChar = fullText[i - 1] || '';
-        const nextChar = fullText[i] || '';
-        const delay = getCharDelay(currentChar, nextChar);
-        typingTimeoutRef.current = setTimeout(tick, delay);
+        typingTimeoutRef.current = setTimeout(tick, 90 + Math.random() * 30);
       } else {
         isTypingRef.current = false;
         queueScrollToBottom(true);
