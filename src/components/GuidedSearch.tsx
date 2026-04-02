@@ -378,8 +378,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
     const getCharDelay = (char: string, nextChar: string) => {
-      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 180 + Math.random() * 60;
-      if (',;:'.includes(char) && nextChar === ' ') return 80 + Math.random() * 30;
+      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 60 + Math.random() * 20;
+      if (',;:'.includes(char) && nextChar === ' ') return 30 + Math.random() * 15;
       if (char === ' ') return 25 + Math.random() * 10;
       return 20 + Math.random() * 15;
     };
