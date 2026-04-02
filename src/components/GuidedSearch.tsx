@@ -572,12 +572,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
   return (
-    <div className={`w-full max-w-3xl mx-auto ${isMobile && mobileExpanded ? 'fixed inset-0 z-[9999]' : ''}`} style={isMobile && mobileExpanded ? { background: 'hsl(var(--card))' } : undefined}>
+    <div className="w-full max-w-3xl mx-auto">
       <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
         isMobile && mobileExpanded
-          ? 'rounded-none h-full flex flex-col'
+          ? 'rounded-xl flex flex-col'
           : 'rounded-2xl'
-      }`}>
+      }`} style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}>
         {/* Header */}
         <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
