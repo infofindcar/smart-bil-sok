@@ -702,20 +702,54 @@ serve(async (req) => {
       const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
 
       const sortByRelevance = (arr: any[]) => {
-        return arr
-          .sort((a, b) => {
-            // If we have a body type filter, prioritize matches
-            if (hasBodyTypeFilter) {
-              const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
-                || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
-              const bBodyMatch = bodyTypePatternValues.some(p => (b.body_type || "").toLowerCase().includes(p))
-                || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
-              if (aBodyMatch && !bBodyMatch) return -1;
-              if (!aBodyMatch && bBodyMatch) return 1;
-            }
-            return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
-          })
-          .slice(0, 9);
+        // First sort by body type match + price proximity
+        const sorted = arr.sort((a, b) => {
+          if (hasBodyTypeFilter) {
+            const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
+              || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
+            const bBodyMatch = bodyTypePatternValues.some(p => (b.body_type || "").toLowerCase().includes(p))
+              || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
+            if (aBodyMatch && !bBodyMatch) return -1;
+            if (!aBodyMatch && bBodyMatch) return 1;
+          }
+          return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
+        });
+
+        // Diversify: avoid too many cars from the same make+model
+        // Pick top results but limit max 2 per make, max 1 per make+model combo
+        const picked: any[] = [];
+        const makeCount: Record<string, number> = {};
+        const makeModelCount: Record<string, number> = {};
+
+        for (const car of sorted) {
+          if (picked.length >= 9) break;
+          const make = (car.make || "unknown").toLowerCase();
+          const model = (car.model || "unknown").toLowerCase();
+          const makeModelKey = `${make}|||${model}`;
+
+          // For top 3 (the featured cards): strict diversity — max 1 per make
+          if (picked.length < 3) {
+            if ((makeCount[make] || 0) >= 1) continue;
+          } else {
+            // For positions 4-9: allow max 2 per make, max 1 per exact make+model
+            if ((makeCount[make] || 0) >= 2) continue;
+            if ((makeModelCount[makeModelKey] || 0) >= 1) continue;
+          }
+
+          picked.push(car);
+          makeCount[make] = (makeCount[make] || 0) + 1;
+          makeModelCount[makeModelKey] = (makeModelCount[makeModelKey] || 0) + 1;
+        }
+
+        // If diversity filtering was too aggressive and we have < 3 results, backfill
+        if (picked.length < MIN_RESULTS) {
+          for (const car of sorted) {
+            if (picked.length >= MIN_RESULTS) break;
+            if (!picked.some(p => p.id === car.id)) picked.push(car);
+          }
+        }
+
+        return picked;
       };
 
       if (res0.data && res0.data.length > 0) {
