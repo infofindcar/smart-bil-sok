@@ -670,7 +670,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
                 <button
                   key={s}
-                  onClick={() => handleSuggestionClick(s)}
+                  onClick={() => { navigator.vibrate?.(10); handleSuggestionClick(s); }}
                   className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border text-foreground/80 transition-all duration-150 text-left active:scale-[0.98]"
                 >
                   {s}
