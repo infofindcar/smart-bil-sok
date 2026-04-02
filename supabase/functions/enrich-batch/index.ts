@@ -127,6 +127,27 @@ async function enrichModel(
   };
 
   await supabase.from("car_models").upsert(modelData, { onConflict: "make,model" });
+
+  // Propagera direkt till ALLA bilar av denna modell (spara tid + AI-kostnader)
+  const bulkUpdates: Record<string, unknown> = {};
+  if (modelData.body_type) bulkUpdates.body_type = modelData.body_type;
+  if (modelData.drivetrain_default) bulkUpdates.drivetrain = modelData.drivetrain_default;
+  if (modelData.typical_hp_min) {
+    const hpMin = modelData.typical_hp_min as number;
+    const hpMax = (modelData.typical_hp_max as number) || hpMin;
+    bulkUpdates.horsepower = Math.round((hpMin + hpMax) / 2);
+  }
+  if (modelData.seats) bulkUpdates.seats = modelData.seats;
+
+  if (Object.keys(bulkUpdates).length > 0) {
+    await supabase
+      .from("Lovable")
+      .update(bulkUpdates)
+      .eq("make", make)
+      .eq("model", model)
+      .or("body_type.is.null,body_type.in.(Okänd,Unknown,Personbil,Transportbil)");
+  }
+
   return modelData;
 }
 
