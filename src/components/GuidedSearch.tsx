@@ -762,7 +762,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                     el.style.height = `${el.scrollHeight}px`;
                   });
                 }}
-                onFocus={() => { setInputFocused(true); if (isMobile) setMobileFullscreen(true); }}
+                onFocus={() => {
+                  setInputFocused(true);
+                  if (isMobile && !mobileFullscreen) {
+                    // Delay fullscreen to avoid layout shift stealing focus
+                    setTimeout(() => {
+                      setMobileFullscreen(true);
+                      // Re-focus after layout settles
+                      setTimeout(() => inputRef.current?.focus(), 50);
+                    }, 100);
+                  }
+                }}
                 onBlur={() => setInputFocused(false)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening
