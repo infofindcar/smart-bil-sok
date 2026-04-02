@@ -17,6 +17,7 @@ export type Car = {
   drivetrain: string | null;
   city: string | null;
   color: string | null;
+  color_description: string | null;
   image_thumb_url: string | null;
   listing_url: string | null;
   regnr: string | null;
@@ -24,6 +25,12 @@ export type Car = {
   transmission: string | null;
   dealer_name: string | null;
   dealer_url: string | null;
+  seats: number | null;
+  electric_range_km: number | null;
+  max_towing_kg: number | null;
+  engine_volume_cc: number | null;
+  tax_class: string | null;
+  first_reg_date: string | null;
 };
 
 export type CarReason = {

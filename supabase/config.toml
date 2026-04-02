@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.sync-cars]
 verify_jwt = false
+
+[functions.enrich-from-blocket]
+verify_jwt = false
+
+[functions.detect-colors]
+verify_jwt = false
+
+[functions.enrich-batch]
+verify_jwt = false

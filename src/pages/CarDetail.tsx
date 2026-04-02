@@ -256,11 +256,13 @@ const CarDetail = () => {
     { icon: Zap, label: 'Hästkrafter', value: car.horsepower ? `${car.horsepower} hk` : modelData?.typical_hp_min ? `${modelData.typical_hp_min}–${modelData.typical_hp_max ?? modelData.typical_hp_min} hk` : null },
     { icon: Settings2, label: 'Växellåda', value: car.transmission },
     { icon: Timer, label: '0–100 km/h', value: formatZeroHundred(modelData?.zero_to_hundred_sec ?? null) },
-    { icon: Package, label: 'Bagageutrymme', value: formatBootSpace((car as any).boot_space_l ?? modelData?.boot_space_liters ?? null) },
+    { icon: Package, label: 'Bagageutrymme', value: formatBootSpace(modelData?.boot_space_liters ?? null) },
     { icon: Weight, label: 'Max dragvikt', value: ((car as any).max_towing_kg ?? modelData?.max_towing_kg) ? `${fmt((car as any).max_towing_kg ?? modelData?.max_towing_kg)} kg` : null },
     { icon: Car, label: 'Antal säten', value: ((car as any).seats ?? modelData?.seats) ? String((car as any).seats ?? modelData?.seats) : null },
-    { icon: Droplets, label: 'Förbrukning', value: ((car as any).fuel_consumption_l100km ?? modelData?.fuel_consumption_l100km) ? `${String(((car as any).fuel_consumption_l100km ?? modelData?.fuel_consumption_l100km)).replace('.', ',')} l/100km` : null },
+    { icon: Droplets, label: 'Förbrukning', value: modelData?.fuel_consumption_l100km ? `${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : null },
     { icon: BatteryCharging, label: 'Elräckvidd', value: ((car as any).electric_range_km ?? modelData?.electric_range_km) ? `${(car as any).electric_range_km ?? modelData?.electric_range_km} km` : null },
+    { icon: Gauge, label: 'Motorvolym', value: (car as any).engine_volume_cc > 0 ? `${((car as any).engine_volume_cc / 1000).toFixed(1)} L` : null },
+    { icon: Calendar, label: 'Reg.datum', value: (car as any).first_reg_date ?? null },
     { icon: Leaf, label: 'CO₂-utsläpp', value: co2 ? `${co2} g/km` : null },
   ].filter(s => s.value);
 

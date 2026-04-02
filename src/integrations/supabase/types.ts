@@ -250,17 +250,16 @@ export type Database = {
       Lovable: {
         Row: {
           body_type: string | null
-          boot_space_l: number | null
           city: string | null
           color: string | null
           color_description: string | null
           created_at: string | null
           dealer_name: string | null
           dealer_url: string | null
-          doors: number | null
           drivetrain: string | null
           electric_range_km: number | null
-          fuel_consumption_l100km: number | null
+          engine_volume_cc: number | null
+          first_reg_date: string | null
           fuel_type: string | null
           horsepower: number | null
           id: number
@@ -274,28 +273,27 @@ export type Database = {
           model: string | null
           model_clean: string | null
           model_raw: string | null
-          orginal_url: string | null
           price: number | null
           regnr: string | null
           seats: number | null
           source: string | null
           source_listing_id: string | null
+          tax_class: string | null
           transmission: string | null
           year: number | null
         }
         Insert: {
           body_type?: string | null
-          boot_space_l?: number | null
           city?: string | null
           color?: string | null
           color_description?: string | null
           created_at?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
-          doors?: number | null
           drivetrain?: string | null
           electric_range_km?: number | null
-          fuel_consumption_l100km?: number | null
+          engine_volume_cc?: number | null
+          first_reg_date?: string | null
           fuel_type?: string | null
           horsepower?: number | null
           id?: number
@@ -309,28 +307,27 @@ export type Database = {
           model?: string | null
           model_clean?: string | null
           model_raw?: string | null
-          orginal_url?: string | null
           price?: number | null
           regnr?: string | null
           seats?: number | null
           source?: string | null
           source_listing_id?: string | null
+          tax_class?: string | null
           transmission?: string | null
           year?: number | null
         }
         Update: {
           body_type?: string | null
-          boot_space_l?: number | null
           city?: string | null
           color?: string | null
           color_description?: string | null
           created_at?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
-          doors?: number | null
           drivetrain?: string | null
           electric_range_km?: number | null
-          fuel_consumption_l100km?: number | null
+          engine_volume_cc?: number | null
+          first_reg_date?: string | null
           fuel_type?: string | null
           horsepower?: number | null
           id?: number
@@ -344,12 +341,12 @@ export type Database = {
           model?: string | null
           model_clean?: string | null
           model_raw?: string | null
-          orginal_url?: string | null
           price?: number | null
           regnr?: string | null
           seats?: number | null
           source?: string | null
           source_listing_id?: string | null
+          tax_class?: string | null
           transmission?: string | null
           year?: number | null
         }
