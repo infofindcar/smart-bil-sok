@@ -592,15 +592,18 @@ serve(async (req) => {
       // Progressive relaxation (5 levels):
       // Level 0: everything strict
       // Level 1: drop city, pris ±30%
-      // Level 2: drop color, pris ±50%
-      // Level 3: drop body_type, make, year, pris ±60%
-      // Level 4: drop transmission, drivetrain, fuel, pris ×0-10
-      const PRICE_MULT     = [1,    1.3,  1.5,  1.6,  10];
-      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.4,  0];
+      // Level 2: drop color, pris ±50%, KEEP body_type
+      // Level 3: drop make, year, pris ±80%, KEEP body_type
+      // Level 4: drop body_type, transmission, drivetrain, fuel, pris ×10
+      const PRICE_MULT     = [1,    1.3,  1.5,  1.8,  10];
+      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.2,  0];
       const MIN_RESULTS    = 3;
 
       let cars: any[] = [];
       let relaxLevel = 0;
+
+      // Remember original body type for sorting priority
+      const hasBodyTypeFilter = validBodyTypes.length > 0;
 
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select("*");
@@ -609,7 +612,7 @@ serve(async (req) => {
           .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
           .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
 
-        // Level 0-: city
+        // Level 0: city
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
         }
@@ -629,8 +632,8 @@ serve(async (req) => {
           if (fuelFilters) query = query.or(fuelFilters);
         }
 
-        // Level 0-2: body_type
-        if (validBodyTypes.length > 0 && level < 3) {
+        // Level 0-3: body_type (kept until level 4!)
+        if (validBodyTypes.length > 0 && level < 4) {
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
@@ -652,11 +655,10 @@ serve(async (req) => {
           if (allFilters) query = query.or(allFilters);
         }
 
-        // Level 0-1: color (strict – no Unknown/null)
-        // Level 2+: color with Unknown/null fallback (lazy color detection)
+        // Level 0-1: color strict, Level 2+: with Unknown/null fallback
         if (sanitizedColor && level < 2) {
           query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%`);
-        } else if (sanitizedColor && level >= 2) {
+        } else if (sanitizedColor && level >= 2 && level < 4) {
           query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.eq.Okänd,color.is.null`);
         }
 
