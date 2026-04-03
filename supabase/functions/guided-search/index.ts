@@ -284,6 +284,14 @@ Om du har tillräckligt med info för att söka:
 {"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
+
+BUDGET-FORMAT — EXTREMT VIKTIGT:
+- "budget" ska vara "MIN-MAX" i kronor.
+- Om kunden säger "cirka 500 000" eller "runt 500 000" → sätt budget till "350000-650000" (±30%).
+- Om kunden säger "max 300 000" eller "under 300 000" → sätt budget till "0-300000".
+- Om kunden säger "minst 200 000" → sätt budget till "200000-99999999".
+- Om kunden säger "2 miljoner" utan "max"/"under" → tolka som "cirka" och sätt ±30%, t.ex. "1400000-2600000".
+- ALDRIG sätt MIN till 0 om kunden angett ett ungefärligt belopp — det ger helt fel resultat.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
