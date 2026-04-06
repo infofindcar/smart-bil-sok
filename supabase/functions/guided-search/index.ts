@@ -657,9 +657,8 @@ serve(async (req) => {
         // Level 0-3: fuel
         if (validFuels.length > 0 && level < 4) {
           const fuelFilters = validFuels
-            .map((f: string) => fuelPatterns[f])
-            .filter(Boolean)
-            .map((p: string) => `fuel_type.ilike.${p}`)
+            .flatMap((f: string) => fuelPatterns[f] || [])
+            .map((v: string) => `fuel_type.eq.${v}`)
             .join(",");
           if (fuelFilters) query = query.or(fuelFilters);
         }
