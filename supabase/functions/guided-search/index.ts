@@ -362,7 +362,7 @@ serve(async (req) => {
         // Level 2: only price + fuel
         if (make && level < 2) q = q.ilike("make", `%${make}%`);
         if (fuels.length > 0 && level < 3) {
-          const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
+          const ff = fuels.flatMap((x: string) => fuelPatterns[x] || []).map((v: string) => `fuel_type.eq.${v}`).join(",");
           if (ff) q = q.or(ff);
         }
         if (bodies.length > 0 && level < 1) {
