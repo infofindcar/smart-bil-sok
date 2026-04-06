@@ -95,12 +95,15 @@ function sanitizeBudget(value: unknown): { min: number; max: number } | null {
   return { min: parts[0], max: parts[1] };
 }
 
-const fuelPatterns: Record<string, string> = {
-  el: "%El%",
-  laddhybrid: "%Laddhybrid%",
-  hybrid: "%Hybrid%",
-  bensin: "%Bensin%",
-  diesel: "%Diesel%",
+// Maps AI fuel keys to SQL ILIKE patterns matching actual DB values
+// DB values: El, Bensin, Diesel, Hybrid bensin, Hybrid diesel, Hybrid gas,
+//            Plug-in Bensin, Plug-in Diesel, Etanol (FFV, E85), Fordonsgas (CNG)
+const fuelPatterns: Record<string, string[]> = {
+  el: ["El"],                                    // exact match to avoid matching "Etanol"
+  laddhybrid: ["Plug-in Bensin", "Plug-in Diesel"], // DB uses "Plug-in" not "Laddhybrid"
+  hybrid: ["Hybrid bensin", "Hybrid diesel", "Hybrid gas"], // non-plug-in hybrids
+  bensin: ["Bensin"],
+  diesel: ["Diesel"],
 };
 
 const bodyPatterns: Record<string, string> = {
@@ -359,7 +362,7 @@ serve(async (req) => {
         // Level 2: only price + fuel
         if (make && level < 2) q = q.ilike("make", `%${make}%`);
         if (fuels.length > 0 && level < 3) {
-          const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
+          const ff = fuels.flatMap((x: string) => fuelPatterns[x] || []).map((v: string) => `fuel_type.eq.${v}`).join(",");
           if (ff) q = q.or(ff);
         }
         if (bodies.length > 0 && level < 1) {
@@ -654,9 +657,8 @@ serve(async (req) => {
         // Level 0-3: fuel
         if (validFuels.length > 0 && level < 4) {
           const fuelFilters = validFuels
-            .map((f: string) => fuelPatterns[f])
-            .filter(Boolean)
-            .map((p: string) => `fuel_type.ilike.${p}`)
+            .flatMap((f: string) => fuelPatterns[f] || [])
+            .map((v: string) => `fuel_type.eq.${v}`)
             .join(",");
           if (fuelFilters) query = query.or(fuelFilters);
         }
