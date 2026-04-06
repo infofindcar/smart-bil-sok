@@ -95,12 +95,15 @@ function sanitizeBudget(value: unknown): { min: number; max: number } | null {
   return { min: parts[0], max: parts[1] };
 }
 
-const fuelPatterns: Record<string, string> = {
-  el: "%El%",
-  laddhybrid: "%Laddhybrid%",
-  hybrid: "%Hybrid%",
-  bensin: "%Bensin%",
-  diesel: "%Diesel%",
+// Maps AI fuel keys to SQL ILIKE patterns matching actual DB values
+// DB values: El, Bensin, Diesel, Hybrid bensin, Hybrid diesel, Hybrid gas,
+//            Plug-in Bensin, Plug-in Diesel, Etanol (FFV, E85), Fordonsgas (CNG)
+const fuelPatterns: Record<string, string[]> = {
+  el: ["El"],                                    // exact match to avoid matching "Etanol"
+  laddhybrid: ["Plug-in Bensin", "Plug-in Diesel"], // DB uses "Plug-in" not "Laddhybrid"
+  hybrid: ["Hybrid bensin", "Hybrid diesel", "Hybrid gas"], // non-plug-in hybrids
+  bensin: ["Bensin"],
+  diesel: ["Diesel"],
 };
 
 const bodyPatterns: Record<string, string> = {
