@@ -147,6 +147,86 @@ export function formatWarranty(warranty: MakeWarranty): string {
   return `${warranty.warrantyYears} år${km}`;
 }
 
+// ─────────────────────────────────────────────────────────────
+// Aktiv garanti / vägassistans — räknar ut vad som faktiskt gäller
+// baserat på bilens ålder OCH miltal (mil i Sverige = 10 km)
+// ─────────────────────────────────────────────────────────────
+export interface ActiveWarranty {
+  warrantyActive: boolean;
+  warrantyYearsLeft: number;
+  warrantyKmLeft: number;       // 0 om obegränsad eller slut
+  warrantyKmUnlimited: boolean;
+  roadsideActive: boolean;
+  roadsideYearsLeft: number;
+}
+
+/**
+ * Räknar ut hur mycket av nybilsgaranti och vägassistans som finns kvar
+ * för en specifik bil. mileage anges i SVENSKA MIL (= 10 km).
+ */
+export function getActiveWarranty(
+  warranty: MakeWarranty | null,
+  carYear: number | null,
+  mileageMil: number | null,
+): ActiveWarranty | null {
+  if (!warranty || !carYear) return null;
+
+  const currentYear = new Date().getFullYear();
+  const ageYears = currentYear - carYear;
+
+  // Garanti: gäller om både ålder OCH körda km är under taket
+  const warrantyYearsLeft = Math.max(0, warranty.warrantyYears - ageYears);
+  const kmUnlimited = warranty.warrantyKm === 0;
+  const mileageKm = mileageMil != null ? mileageMil * 10 : 0;
+  const warrantyKmLeft = kmUnlimited ? 0 : Math.max(0, warranty.warrantyKm - mileageKm);
+
+  const warrantyActive =
+    warrantyYearsLeft > 0 && (kmUnlimited || warrantyKmLeft > 0);
+
+  // Vägassistans: bara år
+  const roadsideYearsLeft = Math.max(0, warranty.roadsideAssistanceYears - ageYears);
+  const roadsideActive = roadsideYearsLeft > 0;
+
+  return {
+    warrantyActive,
+    warrantyYearsLeft,
+    warrantyKmLeft,
+    warrantyKmUnlimited: kmUnlimited,
+    roadsideActive,
+    roadsideYearsLeft,
+  };
+}
+
+/**
+ * Formaterar aktiv garanti som visningstext.
+ * Returnerar null om INGET (varken garanti eller vägassistans) är aktivt
+ * — då ska komponenten dölja hela sektionen.
+ */
+export function formatActiveWarranty(
+  active: ActiveWarranty | null,
+): { title: string; text: string } | null {
+  if (!active) return null;
+  if (!active.warrantyActive && !active.roadsideActive) return null;
+
+  if (active.warrantyActive) {
+    const yrs = active.warrantyYearsLeft;
+    const km = active.warrantyKmUnlimited
+      ? "obegränsat"
+      : `${active.warrantyKmLeft.toLocaleString("sv-SE")} km`;
+    let text = `${yrs} år / ${km} kvar`;
+    if (active.roadsideActive) {
+      text += ` · vägassistans ${active.roadsideYearsLeft} år kvar`;
+    }
+    return { title: "Nybilsgaranti", text };
+  }
+
+  // Bara vägassistans kvar
+  return {
+    title: "Vägassistans",
+    text: `${active.roadsideYearsLeft} år kvar`,
+  };
+}
+
 /** Formatterar fordonsskatt för visning, t.ex. "3 600 kr/år" */
 export function formatTax(co2: number | null, fuelType: string | null): string {
   const tax = calcAnnualTax(co2, fuelType);
