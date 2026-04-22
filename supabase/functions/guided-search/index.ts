@@ -141,6 +141,13 @@ const equipmentPatterns: Record<string, string[]> = {
   adaptiv_farthallare: ["acc", "adaptiv fart", "adaptive cruise", "distronic"],
   keyless: ["keyless", "nyckellös", "comfort access"],
   premium_audio: ["b&w", "bowers", "harman", "h/k", "burmester", "bose", "meridian", "bang & olufsen"],
+  // Märkesspecifika ljudsystem — använd när kunden uttryckligen nämner ett specifikt märke.
+  bose: ["bose"],
+  bw_audio: ["b&w", "bowers"],
+  harman_audio: ["harman", "h/k", "h&k"],
+  burmester_audio: ["burmester"],
+  bang_olufsen_audio: ["bang & olufsen", "b&o"],
+  meridian_audio: ["meridian"],
   matrix_ljus: ["matrix", "led-strålk", "laserljus", "adaptive led"],
   voc: ["voc", "connected services", "remote app"],
   sport: ["m sport", "m-sport", "amg line", "amg", "r-design", "rdesign", "s-line", "sline", "polestar engineered", "st-line"],
