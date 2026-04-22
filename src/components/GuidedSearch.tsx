@@ -839,13 +839,13 @@ const SuggestionsRow = memo(function SuggestionsRow({
   writeOwnLabel,
 }: SuggestionsRowProps) {
   return (
-    <div className="px-4 md:px-6 lg:px-8 pb-3 shrink-0">
-      <div className="flex flex-col md:flex-row md:flex-wrap gap-2 items-stretch md:items-center">
+    <div className="px-3 md:px-6 lg:px-8 pb-3 pt-1 shrink-0">
+      <div className="flex flex-wrap gap-2 items-center">
         {suggestions?.map((s, i) => (
           <button
             key={s}
             onClick={() => { navigator.vibrate?.(10); onPick(s); }}
-            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-border/50 bg-background/70 hover:bg-accent hover:border-primary/40 text-foreground/85 transition-all duration-150 text-left active:scale-[0.98] hover:shadow-sm"
+            className="chip-in group relative text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-border/60 bg-gradient-to-b from-background to-muted/40 hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 text-foreground/90 hover:text-foreground transition-all duration-200 active:scale-[0.97] shadow-sm hover:shadow-md"
             style={{ animationDelay: `${i * 50}ms` }}
           >
             {s}
@@ -853,10 +853,10 @@ const SuggestionsRow = memo(function SuggestionsRow({
         ))}
         <button
           onClick={onWriteOwn}
-          className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
+          className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-dashed border-border/60 bg-transparent hover:bg-accent/60 hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-[0.97]"
           style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
         >
-          <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+          <PenLine className="h-3.5 w-3.5" />
           {writeOwnLabel}
         </button>
       </div>
