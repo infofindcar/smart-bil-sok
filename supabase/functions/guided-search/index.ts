@@ -1,3 +1,8 @@
+// Gemini-assistent + bilsök mot Lovable-tabellen.
+// Tillvals-mappen (featurePatterns) är enda stället nya tillval läggs till.
+// Fri-text fallback finns: okända nycklar saneras och ILIKE:as mot model_raw.
+// Se CLAUDE.md "Viktiga konventioner → Feature-sökning".
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

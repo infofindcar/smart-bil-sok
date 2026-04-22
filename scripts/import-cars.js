@@ -1,6 +1,8 @@
 // scripts/import-cars.js
 //
-// Hämtar billistings från blocket-api.se och skickar dem till Supabase Edge Function (sync-cars).
+// Blocket → sync-cars. Filtrerar bort leasing (3-stegs: Blocket-flaggor →
+// pris-heuristik → text-pattern) och privatannonser. Leasingfiltret speglas
+// även i guided-search. Se CLAUDE.md "Viktiga konventioner → Leasingfilter".
 // Berikelse (färg, modelldata) sker separat via enrich-batch.
 //
 // HUR DU ANVÄNDER DET:

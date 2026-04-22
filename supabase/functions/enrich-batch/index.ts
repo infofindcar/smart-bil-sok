@@ -1,3 +1,7 @@
+// Berikar car_models (1 gång per modell) och applicerar data på Lovable-rader.
+// VIKTIGT: sentinel-mönster – skriv alltid Unknown/0/Okänd om car_models saknar
+// värde, annars loopar bilen i enrichment-kön för evigt. Se CLAUDE.md.
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
