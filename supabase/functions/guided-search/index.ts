@@ -141,6 +141,13 @@ const equipmentPatterns: Record<string, string[]> = {
   adaptiv_farthallare: ["acc", "adaptiv fart", "adaptive cruise", "distronic"],
   keyless: ["keyless", "nyckellös", "comfort access"],
   premium_audio: ["b&w", "bowers", "harman", "h/k", "burmester", "bose", "meridian", "bang & olufsen"],
+  // Märkesspecifika ljudsystem — använd när kunden uttryckligen nämner ett specifikt märke.
+  bose: ["bose"],
+  bw_audio: ["b&w", "bowers"],
+  harman_audio: ["harman", "h/k", "h&k"],
+  burmester_audio: ["burmester"],
+  bang_olufsen_audio: ["bang & olufsen", "b&o"],
+  meridian_audio: ["meridian"],
   matrix_ljus: ["matrix", "led-strålk", "laserljus", "adaptive led"],
   voc: ["voc", "connected services", "remote app"],
   sport: ["m sport", "m-sport", "amg line", "amg", "r-design", "rdesign", "s-line", "sline", "polestar engineered", "st-line"],
@@ -166,6 +173,12 @@ const equipmentLabels: Record<string, string> = {
   adaptiv_farthallare: "adaptiv farthållare",
   keyless: "keyless",
   premium_audio: "premiumljud",
+  bose: "Bose-ljudsystem",
+  bw_audio: "Bowers & Wilkins-ljudsystem",
+  harman_audio: "Harman Kardon-ljudsystem",
+  burmester_audio: "Burmester-ljudsystem",
+  bang_olufsen_audio: "Bang & Olufsen-ljudsystem",
+  meridian_audio: "Meridian-ljudsystem",
   matrix_ljus: "matrix-/LED-strålkastare",
   voc: "fjärrstyrning via app",
   sport: "sportpaket",
@@ -414,7 +427,14 @@ Giltiga equipment-värden (mustHaveEquipment / niceToHaveEquipment är arrayer a
   hud (head-up display), parksensor (parkeringssensorer), blis (döda vinkeln),
   adaptiv_farthallare (adaptiv farthållare), keyless, premium_audio (Bose/B&W/Burmester m.fl.),
   matrix_ljus (matrix-/LED-ljus), voc (app-fjärrstyrning), sport (sportpaket: M Sport/AMG Line/R-Design osv.),
-  fyrhjulsstyrning, luftfjadring (luftfjädring), sju_sits (7-sits), momsbil`;
+  fyrhjulsstyrning, luftfjadring (luftfjädring), sju_sits (7-sits), momsbil,
+  bose (ENDAST Bose), bw_audio (ENDAST Bowers & Wilkins), harman_audio (ENDAST Harman Kardon / H/K),
+  burmester_audio (ENDAST Burmester), bang_olufsen_audio (ENDAST Bang & Olufsen / B&O), meridian_audio (ENDAST Meridian)
+
+EXTREMT VIKTIGT — MÄRKE OCH SPECIFIKA LJUDSYSTEM:
+- Om kunden nämner ett SPECIFIKT bilmärke (t.ex. "Porsche", "BMW", "Volvo, Audi") MÅSTE du ALLTID sätta "make" i filters till exakt det märket. Hoppa ALDRIG över make när kunden bett om ett specifikt märke. Om kunden nämner FLERA märken, välj det första eller fråga vilket de helst vill ha.
+- Om kunden nämner ett SPECIFIKT ljudsystem-märke (Bose, B&W, Bowers & Wilkins, Harman Kardon, H/K, Burmester, Bang & Olufsen, B&O, Meridian) MÅSTE du använda den SPECIFIKA equipment-nyckeln (bose, bw_audio, harman_audio, burmester_audio, bang_olufsen_audio, meridian_audio) — INTE den generiska "premium_audio". Bose-kunder vill inte få Harman Kardon-bilar och tvärtom.
+- Använd "premium_audio" ENDAST när kunden säger något generellt som "bra ljud" eller "premiumljud" utan att specificera märke.`;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
