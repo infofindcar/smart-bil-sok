@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
@@ -181,6 +181,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingDotsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetScrollTopRef = useRef(0);
+  const lastTextareaHeightRef = useRef<number>(0);
+  const animatedMsgIdsRef = useRef<Set<string>>(new Set());
 
   const confirmedTextRef = useRef('');
 
@@ -313,14 +315,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-resize textarea when inputValue changes (voice or clear)
+  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     requestAnimationFrame(() => {
-      const newHeight = `${el.scrollHeight}px`;
-      if (el.style.height !== newHeight) {
-        el.style.height = newHeight;
+      el.style.height = 'auto';
+      const next = el.scrollHeight;
+      if (next !== lastTextareaHeightRef.current) {
+        el.style.height = `${next}px`;
+        lastTextareaHeightRef.current = next;
       }
     });
   }, [inputValue]);
@@ -382,26 +386,41 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     }
 
     let i = 0;
+    let pendingFrame: number | null = null;
     isTypingRef.current = true;
     isAutoFollowRef.current = true;
+    animatedMsgIdsRef.current.add(msgId);
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
     const getCharDelay = (char: string, nextChar: string) => {
-      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 60 + Math.random() * 20;
-      if (',;:'.includes(char) && nextChar === ' ') return 30 + Math.random() * 15;
-      if (char === ' ') return 8 + Math.random() * 5;
-      return 6 + Math.random() * 6;
+      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 55 + Math.random() * 18;
+      if (',;:'.includes(char) && nextChar === ' ') return 26 + Math.random() * 12;
+      if (char === ' ') return 7 + Math.random() * 4;
+      return 5 + Math.random() * 5;
+    };
+
+    // Batch state updates inside a single rAF so React commits at most once per frame
+    const commit = () => {
+      pendingFrame = null;
+      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+    };
+    const scheduleCommit = () => {
+      if (pendingFrame !== null) return;
+      pendingFrame = requestAnimationFrame(commit);
     };
 
     const tick = () => {
       i += 1;
-      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+      scheduleCommit();
 
       if (i < fullText.length) {
         const currentChar = fullText[i - 1] || '';
         const nextChar = fullText[i] || '';
         typingTimeoutRef.current = setTimeout(tick, getCharDelay(currentChar, nextChar));
       } else {
+        // Final flush
+        if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+        setVisibleText((prev) => ({ ...prev, [msgId]: fullText }));
         isTypingRef.current = false;
         queueScrollToBottom(true);
         onDone?.();
@@ -571,31 +590,48 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
+  const subtitle: Record<string, string> = {
+    sv: 'Online — svarar direkt',
+    en: 'Online — replies instantly',
+    no: 'Online — svarer direkte',
+    da: 'Online — svarer straks',
+    fi: 'Online — vastaa heti',
+  };
+
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className={`clutch-card overflow-hidden border border-border/40 bg-card shadow-sm ${
-        isMobile && mobileExpanded
-          ? 'rounded-xl flex flex-col'
-          : 'rounded-2xl'
-      }`} style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}>
+    <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
+      <div
+        className={`clutch-shell overflow-hidden border border-border/50 ${
+          inputFocused ? 'is-focused' : ''
+        } ${
+          isMobile && mobileExpanded
+            ? 'rounded-2xl flex flex-col'
+            : 'rounded-2xl md:rounded-3xl'
+        }`}
+        style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}
+      >
         {/* Header */}
-        <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
+        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
+          <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-secondary" />
+              <div className="clutch-avatar w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center">
+                <Sparkles className="h-4 w-4 md:h-[18px] md:w-[18px] text-primary-foreground" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border-[1.5px] border-card" />
+              <span className="online-dot absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-card" />
             </div>
-            <div>
-              <h3 className="font-semibold text-sm tracking-tight text-foreground">Clutch</h3>
+            <div className="leading-tight">
+              <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
+              <p className="text-[10.5px] md:text-[11px] text-muted-foreground/80 hidden sm:block">
+                {subtitle[language] || subtitle.sv}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="text-[11px] bg-transparent border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-secondary/40 transition-colors"
+              aria-label="Language"
+              className="text-[11px] bg-background/60 border border-border/40 rounded-lg px-2 py-1.5 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-primary/40 transition-colors"
             >
               <option value="sv">🇸🇪 SV</option>
               <option value="en">🇬🇧 EN</option>
@@ -605,10 +641,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </select>
             <button
               onClick={() => handleReset()}
-              className="text-[11px] flex items-center gap-1 border border-border/30 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors hover:border-secondary/40"
+              className="h-[30px] w-[30px] flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
               title={RESTART[language] || RESTART.sv}
+              aria-label={RESTART[language] || RESTART.sv}
             >
-              <RotateCcw className="h-3 w-3" />
+              <RotateCcw className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -616,50 +653,59 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 py-4 space-y-3 overflow-y-auto chat-scrollbar pb-6 ${
+          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-6 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
-              : 'max-h-[50dvh] md:max-h-[400px] min-h-[180px]'
+              : 'max-h-[52dvh] md:max-h-[420px] min-h-[200px]'
           }`}
         >
-          {messages.map((msg, idx) => (
-            <div
-              key={msg.id}
-              ref={idx === messages.length - 1 ? lastMessageRef : undefined}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} animate-fade-in`}
-              style={{ transition: 'all 0.2s ease-out' }}
-            >
-              {msg.role === 'assistant' && (
-                <div className="w-6 h-6 rounded-md bg-secondary/20 flex items-center justify-center shrink-0 mt-1">
-                  <Sparkles className="h-3 w-3 text-secondary/70" />
-                </div>
-              )}
+          {messages.map((msg, idx) => {
+            const isLast = idx === messages.length - 1;
+            const alreadyAnimated = animatedMsgIdsRef.current.has(msg.id);
+            if (isLast && !alreadyAnimated) {
+              animatedMsgIdsRef.current.add(msg.id);
+            }
+            const animClass = !alreadyAnimated
+              ? msg.role === 'user' ? 'whoosh-in' : 'bubble-in'
+              : '';
+            return (
               <div
-                className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] md:text-sm leading-relaxed transition-[height] duration-200 ease-out overflow-hidden ${
-                  msg.role === 'user'
-                    ? 'bg-secondary text-secondary-foreground rounded-br-sm border border-secondary/30'
-                    : 'bg-muted/60 text-foreground rounded-bl-sm border border-border/30'
-                }`}
+                key={msg.id}
+                ref={isLast ? lastMessageRef : undefined}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} ${animClass}`}
               >
-                {getDisplayText(msg)}
-                {isTypingMsg(msg) && (
-                  <span className="inline-block w-0.5 h-3.5 bg-foreground/40 ml-0.5 animate-pulse align-text-bottom" />
+                {msg.role === 'assistant' && (
+                  <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                  </div>
                 )}
+                <div
+                  className={`max-w-[85%] md:max-w-[78%] rounded-2xl px-4 py-3 text-[15px] md:text-sm lg:text-[15px] leading-relaxed overflow-hidden ${
+                    msg.role === 'user'
+                      ? 'bubble-user text-secondary-foreground rounded-br-md'
+                      : 'bubble-assistant text-foreground rounded-bl-md'
+                  }`}
+                >
+                  {getDisplayText(msg)}
+                  {isTypingMsg(msg) && (
+                    <span className="inline-block w-0.5 h-3.5 bg-foreground/40 ml-0.5 animate-pulse align-text-bottom" />
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {showTypingDots && (
-            <div className="flex justify-start gap-2 animate-fade-in">
-              <div className="w-6 h-6 rounded-md bg-secondary/8 flex items-center justify-center shrink-0 mt-1">
-                <Sparkles className="h-3 w-3 text-secondary/70" />
+            <div className="flex justify-start gap-2 bubble-in">
+              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 avatar-thinking">
+                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
-              <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-5 py-3.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
-                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-[bounce_1.2s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
+              <div className="bubble-assistant rounded-2xl rounded-bl-md px-4 py-3.5">
+                <div className="flex items-end gap-1.5 h-3">
+                  <span className="wave-dot" style={{ animationDelay: '0ms' }} />
+                  <span className="wave-dot" style={{ animationDelay: '140ms' }} />
+                  <span className="wave-dot" style={{ animationDelay: '280ms' }} />
                 </div>
               </div>
             </div>
@@ -672,7 +718,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 isAutoFollowRef.current = true;
                 queueScrollToBottom(true);
               }}
-              className="sticky bottom-2 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-card border border-border/50 shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground transition-all hover:shadow-lg"
+              aria-label="Scroll to latest"
+              className="sticky bottom-2 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground border border-primary/30 shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
               style={{ marginLeft: 'auto', marginRight: 'auto', display: 'block' }}
             >
               <ArrowDown className="h-4 w-4" />
@@ -682,42 +729,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Quick-reply suggestions + Strict filter button */}
         {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
-          <div className="px-4 md:px-6 pb-3 shrink-0">
-            <div className="flex flex-col md:flex-row md:flex-wrap gap-1.5 items-stretch md:items-center">
-              {showSuggestions && lastAssistantMsg?.suggestions?.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => { navigator.vibrate?.(10); handleSuggestionClick(s); }}
-                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border text-foreground/80 transition-all duration-150 text-left active:scale-[0.98]"
-                >
-                  {s}
-                </button>
-              ))}
-              {showSuggestions && (
-                <button
-                  onClick={() => inputRef.current?.focus()}
-                  className="w-full md:w-auto text-sm md:text-xs px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-dashed border-border/40 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1"
-                >
-                  <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
-                  {WRITE_OWN[language] || WRITE_OWN.sv}
-                </button>
-              )}
-              {phase === 'chatting' && !isLoading && hasUserMessages && (
-                <button
-                  onClick={() => handleSendMessage(undefined, STRICT_FILTER_MSG[language] || STRICT_FILTER_MSG.sv)}
-                  className="w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-2.5 md:py-1.5 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1"
-                >
-                  <Filter className="h-3 w-3" />
-                  {STRICT_FILTER[language] || STRICT_FILTER.sv}
-                </button>
-              )}
-            </div>
-          </div>
+          <SuggestionsRow
+            showSuggestions={!!showSuggestions}
+            suggestions={lastAssistantMsg?.suggestions}
+            onPick={handleSuggestionClick}
+            onWriteOwn={() => inputRef.current?.focus()}
+            writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
+            showStrict={phase === 'chatting' && !isLoading && hasUserMessages}
+            strictLabel={STRICT_FILTER[language] || STRICT_FILTER.sv}
+            onStrict={() => handleSendMessage(undefined, STRICT_FILTER_MSG[language] || STRICT_FILTER_MSG.sv)}
+          />
         )}
 
         {/* Results CTA + Reset */}
         {phase === 'results' && !isLoading && (
-          <div className="px-4 md:px-5 pb-3 space-y-2 shrink-0">
+          <div className="px-4 md:px-6 lg:px-8 pb-4 space-y-2 shrink-0">
             {onScrollToResults && (
               <Button
                 variant="gradient"
@@ -737,16 +763,19 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         )}
 
         {/* Input area */}
-        <div ref={inputAreaRef} className="px-4 md:px-6 pb-4 pt-2 border-t border-border/20 shrink-0">
+        <div
+          ref={inputAreaRef}
+          className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/30 shrink-0 bg-card/60 backdrop-blur-sm safe-pb"
+        >
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
-              className={`flex-1 relative rounded-xl border transition-all duration-200 ${
+              className={`clutch-input-shell flex-1 relative rounded-2xl border ${
                 isListening
-                  ? 'border-primary/40 ring-2 ring-primary/20'
+                  ? 'border-primary/50 ring-2 ring-primary/20'
                   : inputFocused
-                    ? 'border-secondary/30 ring-1 ring-secondary/10'
-                    : 'border-border/30'
-              } bg-background`}
+                    ? 'border-primary/40 ring-1 ring-primary/15'
+                    : 'border-border/40'
+              }`}
             >
               <textarea
                 ref={inputRef}
@@ -756,7 +785,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   const el = e.currentTarget;
                   requestAnimationFrame(() => {
                     el.style.height = 'auto';
-                    el.style.height = `${el.scrollHeight}px`;
+                    const next = el.scrollHeight;
+                    if (next !== lastTextareaHeightRef.current) {
+                      el.style.height = `${next}px`;
+                      lastTextareaHeightRef.current = next;
+                    }
                   });
                 }}
                 onFocus={() => setInputFocused(true)}
@@ -771,8 +804,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 autoCorrect="off"
                 spellCheck={false}
                 name="clutch-chat-input"
-                className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
-                style={{ minHeight: '42px' }}
+                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
+                style={{ minHeight: '44px' }}
               />
             </div>
             {speechSupported && (
@@ -780,10 +813,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 type="button"
                 onClick={() => { navigator.vibrate?.(10); toggleListening(); }}
                 disabled={isLoading}
-                className={`relative h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 flex items-center justify-center transition-all border ${
+                aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                className={`relative h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center transition-all border ${
                   isListening
-                    ? 'bg-primary/10 border-primary/40 text-primary mic-listening'
-                    : 'border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60'
+                    ? 'bg-primary/15 border-primary/50 text-primary mic-listening'
+                    : 'border-border/40 bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-background'
                 } disabled:opacity-50`}
               >
                 {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -793,9 +827,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               type="submit"
               size="icon"
               disabled={!inputValue.trim() || isLoading}
-              className="h-[42px] w-[42px] md:h-10 md:w-10 rounded-xl shrink-0 bg-secondary hover:bg-secondary/90 transition-all"
+              aria-label="Send"
+              className={`h-11 w-11 rounded-2xl shrink-0 transition-all duration-200 ${
+                inputValue.trim() && !isLoading
+                  ? 'bg-gradient-to-br from-primary to-secondary text-primary-foreground hover:scale-105 active:scale-95 shadow-md hover:shadow-lg'
+                  : 'bg-muted text-muted-foreground/60'
+              }`}
             >
-              <Send className="h-3.5 w-3.5" />
+              <Send className="h-4 w-4" />
             </Button>
           </form>
         </div>
@@ -803,3 +842,63 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     </div>
   );
 };
+
+/* ---------- Memoized suggestions row (prevents re-render during typewriter) ---------- */
+
+type SuggestionsRowProps = {
+  showSuggestions: boolean;
+  suggestions?: string[];
+  onPick: (s: string) => void;
+  onWriteOwn: () => void;
+  writeOwnLabel: string;
+  showStrict: boolean;
+  strictLabel: string;
+  onStrict: () => void;
+};
+
+const SuggestionsRow = memo(function SuggestionsRow({
+  showSuggestions,
+  suggestions,
+  onPick,
+  onWriteOwn,
+  writeOwnLabel,
+  showStrict,
+  strictLabel,
+  onStrict,
+}: SuggestionsRowProps) {
+  return (
+    <div className="px-4 md:px-6 lg:px-8 pb-3 shrink-0">
+      <div className="flex flex-col md:flex-row md:flex-wrap gap-2 items-stretch md:items-center">
+        {showSuggestions && suggestions?.map((s, i) => (
+          <button
+            key={s}
+            onClick={() => { navigator.vibrate?.(10); onPick(s); }}
+            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-border/50 bg-background/70 hover:bg-accent hover:border-primary/40 text-foreground/85 transition-all duration-150 text-left active:scale-[0.98] hover:shadow-sm"
+            style={{ animationDelay: `${i * 50}ms` }}
+          >
+            {s}
+          </button>
+        ))}
+        {showSuggestions && (
+          <button
+            onClick={onWriteOwn}
+            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
+            style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
+          >
+            <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+            {writeOwnLabel}
+          </button>
+        )}
+        {showStrict && (
+          <button
+            onClick={onStrict}
+            className="chip-in w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-3 md:py-2 rounded-xl border border-border/60 bg-card hover:bg-accent hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1.5"
+          >
+            <Filter className="h-3 w-3" />
+            {strictLabel}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+});
