@@ -461,6 +461,9 @@ serve(async (req) => {
       const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
       const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
+      const mustEq = Array.isArray(f.mustHaveEquipment)
+        ? f.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
       const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
       // Progressive relaxation: try with filters, then relax
@@ -509,7 +512,12 @@ serve(async (req) => {
       for (let level = 0; level <= 2; level++) {
         const { data: moreCars } = await buildLoadMoreQuery(level);
         if (moreCars && moreCars.length > 0) {
-          cars = moreCars
+          // Filtrera strikt på must-have-tillval (postfilter, säkrare än SQL)
+          const filtered = mustEq.length > 0
+            ? moreCars.filter((c: any) => carHasAllEquipment(c, mustEq))
+            : moreCars;
+          if (filtered.length === 0) continue;
+          cars = filtered
             .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
             .slice(0, 9);
           break;
