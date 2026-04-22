@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -119,22 +119,6 @@ const RESTART: Record<string, string> = {
   no: 'Start på nytt',
   da: 'Start forfra',
   fi: 'Aloita alusta',
-};
-
-const STRICT_FILTER: Record<string, string> = {
-  sv: 'Bara mina filter',
-  en: 'Only my filters',
-  no: 'Bare mine filtre',
-  da: 'Kun mine filtre',
-  fi: 'Vain omat suodattimet',
-};
-
-const STRICT_FILTER_MSG: Record<string, string> = {
-  sv: 'Visa bara bilar som matchar mina exakta filter, inga extra förslag',
-  en: 'Show only cars matching my exact filters, no extra suggestions',
-  no: 'Vis bare biler som matcher mine eksakte filtre, ingen ekstra forslag',
-  da: 'Vis kun biler der matcher mine præcise filtre, ingen ekstra forslag',
-  fi: 'Näytä vain autot jotka vastaavat tarkkoja suodattimiani, ei ylimääräisiä ehdotuksia',
 };
 
 const MIC_NOT_SUPPORTED: Record<string, string> = {
@@ -316,6 +300,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   }, []);
 
   // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
+  // Also keep the input in view by scrolling the window when the textarea grows.
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -326,8 +311,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         el.style.height = `${next}px`;
         lastTextareaHeightRef.current = next;
       }
+      // Keep input visible in viewport as it grows
+      const area = inputAreaRef.current;
+      if (area) {
+        const rect = area.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const overflow = rect.bottom - vh + 16;
+        if (overflow > 0) {
+          window.scrollBy({ top: overflow, behavior: 'smooth' });
+        }
+      }
+      // Keep chat scrolled to bottom too
+      queueScrollToBottom(true);
     });
-  }, [inputValue]);
+  }, [inputValue, queueScrollToBottom]);
 
   // When input focuses on mobile, scroll chat to bottom
   useEffect(() => {
@@ -588,16 +585,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     lastAssistantMsg?.suggestions?.length &&
     !isTypingMsg(lastAssistantMsg);
 
-  const hasUserMessages = messages.some((m) => m.role === 'user');
-
-  const subtitle: Record<string, string> = {
-    sv: 'Online — svarar direkt',
-    en: 'Online — replies instantly',
-    no: 'Online — svarer direkte',
-    da: 'Online — svarer straks',
-    fi: 'Online — vastaa heti',
-  };
-
   return (
     <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
       <div
@@ -621,9 +608,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
             <div className="leading-tight">
               <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
-              <p className="text-[10.5px] md:text-[11px] text-muted-foreground/80 hidden sm:block">
-                {subtitle[language] || subtitle.sv}
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -727,17 +711,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           )}
         </div>
 
-        {/* Quick-reply suggestions + Strict filter button */}
-        {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
+        {/* Quick-reply suggestions */}
+        {showSuggestions && (
           <SuggestionsRow
-            showSuggestions={!!showSuggestions}
             suggestions={lastAssistantMsg?.suggestions}
             onPick={handleSuggestionClick}
             onWriteOwn={() => inputRef.current?.focus()}
             writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
-            showStrict={phase === 'chatting' && !isLoading && hasUserMessages}
-            strictLabel={STRICT_FILTER[language] || STRICT_FILTER.sv}
-            onStrict={() => handleSendMessage(undefined, STRICT_FILTER_MSG[language] || STRICT_FILTER_MSG.sv)}
           />
         )}
 
@@ -846,30 +826,22 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 /* ---------- Memoized suggestions row (prevents re-render during typewriter) ---------- */
 
 type SuggestionsRowProps = {
-  showSuggestions: boolean;
   suggestions?: string[];
   onPick: (s: string) => void;
   onWriteOwn: () => void;
   writeOwnLabel: string;
-  showStrict: boolean;
-  strictLabel: string;
-  onStrict: () => void;
 };
 
 const SuggestionsRow = memo(function SuggestionsRow({
-  showSuggestions,
   suggestions,
   onPick,
   onWriteOwn,
   writeOwnLabel,
-  showStrict,
-  strictLabel,
-  onStrict,
 }: SuggestionsRowProps) {
   return (
     <div className="px-4 md:px-6 lg:px-8 pb-3 shrink-0">
       <div className="flex flex-col md:flex-row md:flex-wrap gap-2 items-stretch md:items-center">
-        {showSuggestions && suggestions?.map((s, i) => (
+        {suggestions?.map((s, i) => (
           <button
             key={s}
             onClick={() => { navigator.vibrate?.(10); onPick(s); }}
@@ -879,25 +851,14 @@ const SuggestionsRow = memo(function SuggestionsRow({
             {s}
           </button>
         ))}
-        {showSuggestions && (
-          <button
-            onClick={onWriteOwn}
-            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
-            style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
-          >
-            <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
-            {writeOwnLabel}
-          </button>
-        )}
-        {showStrict && (
-          <button
-            onClick={onStrict}
-            className="chip-in w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-3 md:py-2 rounded-xl border border-border/60 bg-card hover:bg-accent hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1.5"
-          >
-            <Filter className="h-3 w-3" />
-            {strictLabel}
-          </button>
-        )}
+        <button
+          onClick={onWriteOwn}
+          className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
+          style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
+        >
+          <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+          {writeOwnLabel}
+        </button>
       </div>
     </div>
   );
