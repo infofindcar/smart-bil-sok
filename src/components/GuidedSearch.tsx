@@ -315,14 +315,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-resize textarea when inputValue changes (voice or clear)
+  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     requestAnimationFrame(() => {
-      const newHeight = `${el.scrollHeight}px`;
-      if (el.style.height !== newHeight) {
-        el.style.height = newHeight;
+      el.style.height = 'auto';
+      const next = el.scrollHeight;
+      if (next !== lastTextareaHeightRef.current) {
+        el.style.height = `${next}px`;
+        lastTextareaHeightRef.current = next;
       }
     });
   }, [inputValue]);
@@ -384,26 +386,41 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     }
 
     let i = 0;
+    let pendingFrame: number | null = null;
     isTypingRef.current = true;
     isAutoFollowRef.current = true;
+    animatedMsgIdsRef.current.add(msgId);
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
     const getCharDelay = (char: string, nextChar: string) => {
-      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 60 + Math.random() * 20;
-      if (',;:'.includes(char) && nextChar === ' ') return 30 + Math.random() * 15;
-      if (char === ' ') return 8 + Math.random() * 5;
-      return 6 + Math.random() * 6;
+      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 55 + Math.random() * 18;
+      if (',;:'.includes(char) && nextChar === ' ') return 26 + Math.random() * 12;
+      if (char === ' ') return 7 + Math.random() * 4;
+      return 5 + Math.random() * 5;
+    };
+
+    // Batch state updates inside a single rAF so React commits at most once per frame
+    const commit = () => {
+      pendingFrame = null;
+      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+    };
+    const scheduleCommit = () => {
+      if (pendingFrame !== null) return;
+      pendingFrame = requestAnimationFrame(commit);
     };
 
     const tick = () => {
       i += 1;
-      setVisibleText((prev) => ({ ...prev, [msgId]: fullText.slice(0, i) }));
+      scheduleCommit();
 
       if (i < fullText.length) {
         const currentChar = fullText[i - 1] || '';
         const nextChar = fullText[i] || '';
         typingTimeoutRef.current = setTimeout(tick, getCharDelay(currentChar, nextChar));
       } else {
+        // Final flush
+        if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+        setVisibleText((prev) => ({ ...prev, [msgId]: fullText }));
         isTypingRef.current = false;
         queueScrollToBottom(true);
         onDone?.();
