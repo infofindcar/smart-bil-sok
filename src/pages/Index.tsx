@@ -20,7 +20,6 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroVideo from '@/assets/hero-video.mp4.asset.json';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
@@ -131,18 +130,23 @@ const Index = () => {
       {/* Hero with video background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Cinematic 360° orbit around a generic concept car — true motion video.
-            Poster image keeps LCP fast and prevents flash before metadata loads. */}
-        <video
-          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster="/images/hero_findcar.webp"
-          aria-hidden="true"
-          src={heroVideo.url}
+        {/* Responsive hero backgrounds — WebP with parallax on mobile */}
+        <img
+          src="/images/hero_mobile.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center block md:hidden will-change-transform"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          style={{ transform: `translateY(${parallaxY}px)` }}
+        />
+        <img
+          src="/images/hero_findcar.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block will-change-transform"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
           style={{ transform: `translateY(${parallaxY}px)` }}
         />
         {/* Overlay for readability */}

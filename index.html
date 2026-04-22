@@ -64,8 +64,9 @@
 
     <link rel="icon" type="image/png" href="/favicon.png" />
 
-    <!-- Preload hero poster image for instant LCP before the video loads -->
-    <link rel="preload" as="image" type="image/webp" href="/images/hero_findcar.webp" />
+    <!-- Preload hero images for instant rendering -->
+    <link rel="preload" as="image" type="image/webp" href="/images/hero_mobile.webp" media="(max-width: 767px)" />
+    <link rel="preload" as="image" type="image/webp" href="/images/hero_findcar.webp" media="(min-width: 768px)" />
   </head>
 
   <body>
