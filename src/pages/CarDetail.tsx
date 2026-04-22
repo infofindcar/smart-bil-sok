@@ -19,6 +19,7 @@ import {
   calcAnnualTax, getWarranty, formatWarranty, formatNcapStars,
   formatZeroHundred, formatBootSpace,
 } from '@/lib/carData';
+import { parseEquipment } from '@/lib/equipment';
 
 /* ── Types ── */
 interface CarModelData {
