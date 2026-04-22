@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroVideoAsset from '@/assets/hero-video.mp4.asset.json';
+import heroVideoLoopUrl from '@/assets/hero-video-loop.mp4?url';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
@@ -133,7 +133,7 @@ const Index = () => {
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
         {/* Cinematic background video with parallax */}
         <video
-          src={`${heroVideoAsset.url}?v=7`}
+          src={`${heroVideoLoopUrl}?v=8`}
           poster="/images/hero_findcar.webp"
           autoPlay
           muted
