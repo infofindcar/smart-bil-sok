@@ -1066,12 +1066,15 @@ FÖR VARJE BIL ("carReasons"):
 - Säkerhet: nämn säkerhetsbetyg om relevant
 - Praktiskt: bagageutrymme, hur tungt den kan dra, antal säten
 - Ekonomi: hur mycket den drar, elräckvidd, garanti
+- TILLVAL: Om bilen har "tillval: ..." i datan, NÄMN EXPLICIT minst ett tillval kunden bryr sig om (t.ex. "har dragkrok som du behövde" eller "kommer med både panoramatak och premiumljud").
 - Säg "fyrhjulsdrift" istället för AWD
 - Om kundens ålder är känd: nämn att försäkringen påverkas av ålder
 - Var specifik — nämn siffror när de är relevanta. Använd INTE emojis.${langInstruction}
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
+${mustHaveEquipment.length > 0 ? `Kunden KRÄVER dessa tillval: ${mustHaveEquipment.map(k => equipmentLabels[k] || k).join(", ")}.` : ""}
+${niceToHaveEquipment.length > 0 ? `Kunden vill GÄRNA ha (men inte krav): ${niceToHaveEquipment.map(k => equipmentLabels[k] || k).join(", ")}.` : ""}
 
 Svara ENBART med JSON (ingen markdown, inga code fences):
 {"message":"Kort intro (1 mening, beskriv INTE bilarna)","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
