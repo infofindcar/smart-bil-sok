@@ -124,6 +124,87 @@ const drivetrainPatterns: Record<string, string[]> = {
   rwd: ["RWD", '"RWD"'],
 };
 
+// Equipment / tillval — mappar AI:s nyckel → SQL ILIKE-mönster mot model_raw
+// Värdena är ALLA möjliga sätt tillvalet kan stavas i annonser (svenska + engelska + förkortningar).
+const equipmentPatterns: Record<string, string[]> = {
+  drag: ["drag", "dragkrok", "tow bar", "towbar", "tow-hitch"],
+  varmare: ["värm", "motorvärm", "kupévärm", "webasto", "standheizung"],
+  taklucka: ["pano", "panorama", "panoramic", "sunroof", "glasstak", "öppningsbart tak", "taklucka", "takluck"],
+  skinn: ["skinn", "läder", "leather", "nappa", "alcantara"],
+  rattvarme: ["rattvärm", "heated steering"],
+  stolvarme: ["stolvärm", "sätesvärm", "heated seat"],
+  kamera: ["kamera", "camera", "backkamera", "360", "surround view", "reverse cam"],
+  navi: ["navi", "navigation", "gps", "carplay", "android auto"],
+  hud: ["hud", "head-up", "head up"],
+  parksensor: ["park assist", "p-sensor", "parkeringssens", "pdc", "park pilot"],
+  blis: ["blis", "blind spot", "dödvink"],
+  adaptiv_farthallare: ["acc", "adaptiv fart", "adaptive cruise", "distronic"],
+  keyless: ["keyless", "nyckellös", "comfort access"],
+  premium_audio: ["b&w", "bowers", "harman", "h/k", "burmester", "bose", "meridian", "bang & olufsen"],
+  matrix_ljus: ["matrix", "led-strålk", "laserljus", "adaptive led"],
+  voc: ["voc", "connected services", "remote app"],
+  sport: ["m sport", "m-sport", "amg line", "amg", "r-design", "rdesign", "s-line", "sline", "polestar engineered", "st-line"],
+  fyrhjulsstyrning: ["4ws", "fyrhjulsst", "rear-wheel steer", "all-wheel steer"],
+  luftfjadring: ["luftfjädr", "air suspension", "airmatic"],
+  sju_sits: ["7-sits", "7 sits", "seven seat", "7-seater", "7 seater", "tredje sätesrad"],
+  momsbil: ["moms", "vat-qualifying"],
+};
+
+// Visningsetiketter på svenska för AI-promtpen och felmeddelanden
+const equipmentLabels: Record<string, string> = {
+  drag: "dragkrok",
+  varmare: "motorvärmare",
+  taklucka: "panoramatak",
+  skinn: "skinnklädsel",
+  rattvarme: "rattvärme",
+  stolvarme: "stolvärme",
+  kamera: "backkamera",
+  navi: "navigation",
+  hud: "head-up display",
+  parksensor: "parkeringssensorer",
+  blis: "döda vinkeln-varnare",
+  adaptiv_farthallare: "adaptiv farthållare",
+  keyless: "keyless",
+  premium_audio: "premiumljud",
+  matrix_ljus: "matrix-/LED-strålkastare",
+  voc: "fjärrstyrning via app",
+  sport: "sportpaket",
+  fyrhjulsstyrning: "4-hjulsstyrning",
+  luftfjadring: "luftfjädring",
+  sju_sits: "7-sits",
+  momsbil: "momsbil",
+};
+
+// Bygg ett OR-filter mot model_raw för flera tillval (alla mönster för alla nycklar OR:as ihop)
+function buildEquipmentOrFilter(keys: string[]): string {
+  const parts: string[] = [];
+  for (const key of keys) {
+    const patterns = equipmentPatterns[key];
+    if (!patterns) continue;
+    for (const p of patterns) {
+      // Escapa specialtecken som %, _, , och ()
+      const safe = p.replace(/[%_,()]/g, " ").trim();
+      if (!safe) continue;
+      parts.push(`model_raw.ilike.%${safe}%`);
+    }
+  }
+  return parts.join(",");
+}
+
+// Postfilter i JS — säkrare matchning mot regex. Returnerar true om bilen matchar ALLA must-have-tillval.
+function carHasAllEquipment(car: { model_raw: string | null }, mustHaveKeys: string[]): boolean {
+  if (mustHaveKeys.length === 0) return true;
+  const raw = (car.model_raw || "").toLowerCase();
+  if (!raw) return false;
+  for (const key of mustHaveKeys) {
+    const patterns = equipmentPatterns[key];
+    if (!patterns) continue;
+    const found = patterns.some(p => raw.includes(p.toLowerCase()));
+    if (!found) return false;
+  }
+  return true;
+}
+
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
   suv: [
