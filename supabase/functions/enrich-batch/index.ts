@@ -193,9 +193,9 @@ serve(async (req) => {
     for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
 
     // ── Steg 2: Berika max MAX_NEW_MODELS nya modeller SEKVENTIELLT ──
-    const uniqueCombos = [...new Set(
+    const uniqueCombos: string[] = [...new Set<string>(
       cars
-        .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
+        .filter((c): c is typeof c & { make: string; model: string } => !!c.make && !!c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
         .map((c) => `${c.make}|||${c.model}`)
     )];
 

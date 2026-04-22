@@ -163,6 +163,14 @@ async function enrichModel(
       "Car expert. Reply ONLY an integer 1-5 (Euro NCAP stars). Unknown: 0.",
       `Euro NCAP stars of ${prompt}?`
     ),
+    askAI(apiKey,
+      "Swedish insurance expert. Reply ONLY two integers like '700-1300' (monthly SEK, helförsäkring used car).",
+      `Monthly insurance SEK for used ${prompt} in Sweden?`
+    ),
+    askAI(apiKey,
+      "Swedish service expert. Reply ONLY an integer (annual service SEK, used car). Unknown: 5000.",
+      `Annual service cost SEK for used ${prompt} in Sweden?`
+    ),
   ]);
 
   const BODY_TYPES = ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"];
@@ -276,9 +284,9 @@ async function processChunk(
     if (c.make && c.model) modelRawMap[`${c.make}|||${c.model}`] = c.model_raw ?? null;
   }
 
-  const uniqueCombos = [...new Set(
+  const uniqueCombos: string[] = [...new Set<string>(
     cars
-      .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
+      .filter((c): c is typeof c & { make: string; model: string } => !!c.make && !!c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
       .map((c) => `${c.make}|||${c.model}`)
   )];
 
@@ -369,9 +377,9 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { password, ids } = body as { password?: string; ids?: number[] };
+    const { password } = body as { password?: string };
 
-    // Auth
+    // Auth – admin-lösenord eller intern sync-secret
     const adminPassword = Deno.env.get("ADMIN_PASSWORD");
     const syncSecret = Deno.env.get("SYNC_SECRET");
     const authHeader = req.headers.get("x-sync-secret");
@@ -393,108 +401,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Om specifika IDs skickades (från sync-cars) – berika bara dessa
-    if (ids && ids.length > 0) {
-      const modelCache: Record<string, Record<string, unknown>> = {};
-      const totals = { processed: 0, modelsCached: 0, colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, errors: 0 };
-
-      for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
-        const chunk = ids.slice(i, i + CHUNK_SIZE);
-        const { data: cars } = await supabase
-          .from("Lovable")
-          .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, year, fuel_type")
-          .in("id", chunk);
-
-        if (!cars || cars.length === 0) continue;
-
-        const uniqueMakes  = [...new Set(cars.map((c) => c.make).filter(Boolean))];
-        const uniqueModels = [...new Set(cars.map((c) => c.model).filter(Boolean))];
-        const { data: cachedModels } = await supabase
-          .from("car_models").select("*")
-          .in("make", uniqueMakes).in("model", uniqueModels);
-        for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
-
-    const modelCache: Record<string, Record<string, unknown>> = {};
-    for (const cm of cachedModels ?? []) modelCache[`${cm.make}|||${cm.model}`] = cm;
-
-    // ── Ladda car_makes (garanti) per märke ──
-    const { data: makesData } = await supabase
-      .from("car_makes").select("*").in("make", uniqueMakes);
-    const makesCache: Record<string, Record<string, unknown>> = {};
-    for (const mk of makesData ?? []) makesCache[mk.make] = mk;
-
-    console.log(`Bilar: ${cars.length}, modell-cache: ${Object.keys(modelCache).length}/${uniqueModels.length}`);
-
-    const results = {
-      colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0,
-      horsepowerUpdated: 0, modelsCached: 0, errors: 0,
-    };
-
-    for (let i = 0; i < cars.length; i += BATCH_SIZE) {
-      const batch = cars.slice(i, i + BATCH_SIZE);
-
-      await Promise.all(batch.map(async (car) => {
-        try {
-          const cacheKey = `${car.make}|||${car.model}`;
-          let carModel = modelCache[cacheKey];
-
-          // Berika modellen om den inte finns i cache (AI + NCAP)
-          if (!carModel && car.make && car.model) {
-            carModel = await enrichModel(supabase as any, LOVABLE_API_KEY, car.make, car.model, car.fuel_type);
-            modelCache[cacheKey] = carModel;
-            results.modelsCached++;
-          }
-        }
-
-        // ── Steg 2: Uppdatera bilar parallellt (färg + metadata från cache) ──
-        for (let j = 0; j < cars.length; j += BATCH_SIZE) {
-          await Promise.all(cars.slice(j, j + BATCH_SIZE).map(async (car) => {
-            const cacheKey = `${car.make}|||${car.model}`;
-            const carModel = modelCache[cacheKey];
-            const updates: Record<string, unknown> = {};
-            try {
-              if (carModel) {
-                const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
-                if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) { updates.body_type = carModel.body_type ?? "Okänd"; totals.bodyTypeUpdated++; }
-                if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) { updates.drivetrain = carModel.drivetrain_default; totals.drivetrainUpdated++; }
-                if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
-                  const hp_min = carModel.typical_hp_min as number;
-                  updates.horsepower = Math.round((hp_min + ((carModel.typical_hp_max as number) || hp_min)) / 2);
-                  totals.horsepowerUpdated++;
-                }
-              }
-              if (!car.color || car.color === "Unknown") {
-                const detectedColor = car.image_thumb_url
-                  ? await detectColor(LOVABLE_API_KEY, car.image_thumb_url, car.make ?? "", car.model ?? "")
-                  : "__DELETE__";
-
-                if (detectedColor === "__DELETE__") {
-                  await supabase.from("Lovable").delete().eq("id", car.id);
-                  console.log(`Raderade bil ${car.id} (${car.make} ${car.model}) – ogiltig bild`);
-                  totals.errors++;
-                  return;
-                }
-
-                updates.color = detectedColor;
-                totals.colorUpdated++;
-              }
-              if (!updates.body_type) {
-                const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown"];
-                if (car.body_type && BLOCKET_GENERIC.includes(car.body_type)) { updates.body_type = "Okänd"; totals.bodyTypeUpdated++; }
-              }
-              if (Object.keys(updates).length > 0) await supabase.from("Lovable").update(updates).eq("id", car.id);
-              totals.processed++;
-            } catch (e) { console.error(`Fel för bil ${car.id}:`, e); totals.errors++; }
-          }));
-        }
-      }
-
-      return new Response(JSON.stringify({ success: true, ...totals, message: `Berikade ${totals.processed} nya bilar (${totals.modelsCached} nya modeller cachade).` }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Manuellt anrop (admin) – loopa tills alla bilar är klara
+    // Loopa processChunk tills alla bilar är klara eller MAX_ITERATIONS
     const modelCache: Record<string, Record<string, unknown>> = {};
     const totals = { processed: 0, modelsCached: 0, colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, errors: 0 };
     let iterations = 0;
