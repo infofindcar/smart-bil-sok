@@ -215,14 +215,14 @@ const Index = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-24 space-y-4"
+            className="mt-8 space-y-3"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-5xl lg:text-6xl font-bold text-white leading-tight font-serif"
+              className="text-4xl lg:text-5xl font-bold text-white leading-tight font-serif"
             >
               Din objektiva<br />bilrådgivare
             </motion.p>
@@ -230,7 +230,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-lg leading-relaxed max-w-md mx-auto"
+              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
@@ -241,7 +241,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-20"
+            className="flex flex-col items-center gap-4 mb-12"
           >
             <Button
               onClick={scrollToSearch}
