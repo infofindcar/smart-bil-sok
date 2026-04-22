@@ -131,27 +131,34 @@ const Index = () => {
       {/* Hero with video background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Responsive hero backgrounds — WebP with parallax on mobile */}
-        <img
-          src="/images/hero_mobile.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center block md:hidden will-change-transform"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          style={{ transform: `translateY(${parallaxY}px)` }}
+        {/* Cinematic background video with parallax */}
+        <video
+          src={heroVideoAsset.url}
+          poster="/images/hero_findcar.webp"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
+          style={{ transform: `translateY(${parallaxY}px) scale(1.05)` }}
         />
-        <img
-          src="/images/hero_findcar.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block will-change-transform"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          style={{ transform: `translateY(${parallaxY}px)` }}
+        {/* Cinematic overlays for readability + depth */}
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(10,15,25,0.55) 0%, rgba(10,15,25,0.35) 35%, rgba(10,15,25,0.55) 75%, rgba(10,15,25,0.85) 100%)',
+          }}
         />
-        {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.45) 100%)',
+          }}
+        />
 
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
