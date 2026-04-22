@@ -603,14 +603,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
-  const subtitle: Record<string, string> = {
-    sv: 'Online — svarar direkt',
-    en: 'Online — replies instantly',
-    no: 'Online — svarer direkte',
-    da: 'Online — svarer straks',
-    fi: 'Online — vastaa heti',
-  };
-
   return (
     <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
       <div
@@ -634,9 +626,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
             <div className="leading-tight">
               <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
-              <p className="text-[10.5px] md:text-[11px] text-muted-foreground/80 hidden sm:block">
-                {subtitle[language] || subtitle.sv}
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
