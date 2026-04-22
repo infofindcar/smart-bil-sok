@@ -133,7 +133,7 @@ const Index = () => {
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
         {/* Cinematic background video with parallax */}
         <video
-          src={`${heroVideoUrl}?v=4`}
+          src={`${heroVideoUrl}?v=5`}
           poster="/images/hero_findcar.webp"
           autoPlay
           muted
