@@ -158,8 +158,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Filter: bilar som saknar modelldata (obearbetade)
-    const MODEL_FILTER = "body_type.is.null,body_type.eq.Okänd,body_type.eq.Unknown";
+    // Filter: bilar som saknar modell-data, drivlina eller HP.
+    // 'Unknown' (drivetrain) och 0 (horsepower) används som sentinel för
+    // "har försökts berika men car_models saknade värdet" – de re-fetchas inte.
+    const MODEL_FILTER = "body_type.is.null,body_type.eq.Okänd,body_type.eq.Unknown,drivetrain.is.null,horsepower.is.null";
 
     // Räkna totalt återstående
     const { count: totalRemaining } = await supabase
@@ -224,13 +226,19 @@ serve(async (req) => {
       if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
         updates.body_type = cm.body_type ?? "Okänd";
       }
-      if ((!car.drivetrain || car.drivetrain === "Unknown") && cm.drivetrain_default) {
-        updates.drivetrain = cm.drivetrain_default;
+      // Drivlina: skriv alltid något så bilen lämnar kön (sentinel 'Unknown' om okänt).
+      if (car.drivetrain === null || car.drivetrain === undefined) {
+        updates.drivetrain = (cm.drivetrain_default as string | null) ?? "Unknown";
       }
-      if ((!car.horsepower || car.horsepower === 0) && cm.typical_hp_min) {
-        const hp_min = cm.typical_hp_min as number;
-        const hp_max = (cm.typical_hp_max as number) || hp_min;
-        updates.horsepower = Math.round((hp_min + hp_max) / 2);
+      // HP: skriv alltid något (sentinel 0 om okänt).
+      if (car.horsepower === null || car.horsepower === undefined) {
+        if (cm.typical_hp_min) {
+          const hp_min = cm.typical_hp_min as number;
+          const hp_max = (cm.typical_hp_max as number) || hp_min;
+          updates.horsepower = Math.round((hp_min + hp_max) / 2);
+        } else {
+          updates.horsepower = 0;
+        }
       }
       if (Object.keys(updates).length > 0) {
         await supabase.from("Lovable").update(updates).eq("id", car.id);

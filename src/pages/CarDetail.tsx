@@ -61,7 +61,7 @@ const formatPrice = (price: number | null) => {
 };
 
 const drivetrainLabel = (dt: string | null | undefined): string | null => {
-  if (!dt) return null;
+  if (!dt || dt === 'Unknown' || dt === 'Okänd') return null;
   const map: Record<string, string> = {
     AWD: 'Fyrhjulsdrift', awd: 'Fyrhjulsdrift',
     FWD: 'Framhjulsdrift', fwd: 'Framhjulsdrift',
@@ -70,6 +70,9 @@ const drivetrainLabel = (dt: string | null | undefined): string | null => {
   };
   return map[dt] || dt;
 };
+
+const realDrivetrain = (dt: string | null | undefined): string | null =>
+  !dt || dt === 'Unknown' || dt === 'Okänd' ? null : dt;
 
 const fuelPricePerLiter: Record<string, number> = {
   bensin: 17.5,
@@ -252,8 +255,8 @@ const CarDetail = () => {
     { icon: Fuel, label: 'Drivmedel', value: car.fuel_type },
     { icon: MapPin, label: 'Plats', value: car.city },
     { icon: Palette, label: 'Färg', value: car.color && car.color !== 'Okänd' ? car.color : null },
-    { icon: Settings2, label: 'Drivlina', value: drivetrainLabel(car.drivetrain || modelData?.drivetrain_default) },
-    { icon: Zap, label: 'Hästkrafter', value: car.horsepower ? `${car.horsepower} hk` : modelData?.typical_hp_min ? `${modelData.typical_hp_min}–${modelData.typical_hp_max ?? modelData.typical_hp_min} hk` : null },
+    { icon: Settings2, label: 'Drivlina', value: drivetrainLabel(realDrivetrain(car.drivetrain) || modelData?.drivetrain_default) },
+    { icon: Zap, label: 'Hästkrafter', value: car.horsepower && car.horsepower > 0 ? `${car.horsepower} hk` : modelData?.typical_hp_min ? `${modelData.typical_hp_min}–${modelData.typical_hp_max ?? modelData.typical_hp_min} hk` : null },
     { icon: Settings2, label: 'Växellåda', value: car.transmission },
     { icon: Timer, label: '0–100 km/h', value: formatZeroHundred(modelData?.zero_to_hundred_sec ?? null) },
     { icon: Package, label: 'Bagageutrymme', value: formatBootSpace(modelData?.boot_space_liters ?? null) },
@@ -294,7 +297,7 @@ const CarDetail = () => {
               <div className="flex flex-wrap gap-2 mt-2">
                 {car.fuel_type && <Badge variant="secondary">{car.fuel_type}</Badge>}
                 {car.body_type && <Badge variant="outline">{car.body_type}</Badge>}
-                {car.drivetrain && <Badge variant="outline">{drivetrainLabel(car.drivetrain)}</Badge>}
+                {realDrivetrain(car.drivetrain) && <Badge variant="outline">{drivetrainLabel(car.drivetrain)}</Badge>}
                 {car.transmission && <Badge variant="outline">{car.transmission}</Badge>}
               </div>
               {car.regnr && (

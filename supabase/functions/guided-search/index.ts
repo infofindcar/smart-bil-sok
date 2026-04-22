@@ -767,7 +767,7 @@ serve(async (req) => {
                 `${c.mileage?.toLocaleString("sv-SE")} mil`,
                 c.fuel_type, c.body_type, c.city,
                 `färg: ${c.color || "okänd"}`,
-                c.drivetrain ? `drivlina: ${c.drivetrain}` : null,
+                c.drivetrain && c.drivetrain !== "Unknown" && c.drivetrain !== "Okänd" ? `drivlina: ${c.drivetrain}` : null,
                 c.horsepower && c.horsepower > 0 ? `${c.horsepower} hk` : null,
                 c.transmission ? `växellåda: ${c.transmission}` : null,
               ];
