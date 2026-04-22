@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
-  calcAnnualTax, getWarranty, formatWarranty, formatNcapStars,
+  calcAnnualTax, getWarranty, getActiveWarranty, formatActiveWarranty, formatNcapStars,
   formatZeroHundred, formatBootSpace,
 } from '@/lib/carData';
 import { parseEquipment } from '@/lib/equipment';
@@ -194,6 +194,8 @@ const CarDetail = () => {
   // Use model (cleaned) instead of model_raw which can contain junk data
   const displayTitle = car.model || '';
   const warranty = getWarranty(car.make);
+  const activeWarranty = getActiveWarranty(warranty, car.year ?? null, car.mileage ?? null);
+  const warrantyDisplay = formatActiveWarranty(activeWarranty);
 
   // Costs
   const co2 = modelData?.co2_g_per_km ?? null;
@@ -314,7 +316,7 @@ const CarDetail = () => {
           </div>
 
           {/* NCAP + Warranty badges */}
-          {(ncapStars || warranty) && (
+          {(ncapStars || warrantyDisplay) && (
             <div className="flex flex-wrap gap-3 mb-6">
               {ncapStars && (
                 <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
@@ -328,12 +330,12 @@ const CarDetail = () => {
                   </div>
                 </div>
               )}
-              {warranty && (
+              {warrantyDisplay && (
                 <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
                   <Shield className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Nybilsgaranti</p>
-                    <p className="font-semibold text-sm">{formatWarranty(warranty)}</p>
+                    <p className="text-xs text-muted-foreground">{warrantyDisplay.title}</p>
+                    <p className="font-semibold text-sm">{warrantyDisplay.text}</p>
                   </div>
                 </div>
               )}
