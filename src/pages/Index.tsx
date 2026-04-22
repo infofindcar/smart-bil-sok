@@ -133,7 +133,7 @@ const Index = () => {
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
         {/* Cinematic background video with parallax */}
         <video
-          src={`${heroVideoUrl}?v=5`}
+          src={`${heroVideoUrl}?v=6`}
           poster="/images/hero_findcar.webp"
           autoPlay
           muted
@@ -162,19 +162,19 @@ const Index = () => {
 
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
-        <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[30svh]">
+        <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[14svh]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-3"
+            className="space-y-2"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-3xl font-bold text-white leading-tight font-serif"
+              className="text-2xl font-bold text-white leading-tight font-serif"
             >
               Din objektiva<br />bilrådgivare
             </motion.p>
@@ -182,21 +182,21 @@ const Index = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
+              className="text-white/70 text-sm leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
           </motion.div>
 
           {/* Spacer between headline and CTA */}
-          <div className="h-[10svh]" />
+          <div className="flex-1 min-h-[20svh]" />
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-16 w-full"
+            className="flex flex-col items-center gap-4 mb-10 w-full"
           >
             <Button
               onClick={scrollToSearch}
