@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Filter } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -119,22 +119,6 @@ const RESTART: Record<string, string> = {
   no: 'Start på nytt',
   da: 'Start forfra',
   fi: 'Aloita alusta',
-};
-
-const STRICT_FILTER: Record<string, string> = {
-  sv: 'Bara mina filter',
-  en: 'Only my filters',
-  no: 'Bare mine filtre',
-  da: 'Kun mine filtre',
-  fi: 'Vain omat suodattimet',
-};
-
-const STRICT_FILTER_MSG: Record<string, string> = {
-  sv: 'Visa bara bilar som matchar mina exakta filter, inga extra förslag',
-  en: 'Show only cars matching my exact filters, no extra suggestions',
-  no: 'Vis bare biler som matcher mine eksakte filtre, ingen ekstra forslag',
-  da: 'Vis kun biler der matcher mine præcise filtre, ingen ekstra forslag',
-  fi: 'Näytä vain autot jotka vastaavat tarkkoja suodattimiani, ei ylimääräisiä ehdotuksia',
 };
 
 const MIC_NOT_SUPPORTED: Record<string, string> = {
@@ -601,8 +585,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     lastAssistantMsg?.suggestions?.length &&
     !isTypingMsg(lastAssistantMsg);
 
-  const hasUserMessages = messages.some((m) => m.role === 'user');
-
   return (
     <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
       <div
@@ -844,30 +826,22 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 /* ---------- Memoized suggestions row (prevents re-render during typewriter) ---------- */
 
 type SuggestionsRowProps = {
-  showSuggestions: boolean;
   suggestions?: string[];
   onPick: (s: string) => void;
   onWriteOwn: () => void;
   writeOwnLabel: string;
-  showStrict: boolean;
-  strictLabel: string;
-  onStrict: () => void;
 };
 
 const SuggestionsRow = memo(function SuggestionsRow({
-  showSuggestions,
   suggestions,
   onPick,
   onWriteOwn,
   writeOwnLabel,
-  showStrict,
-  strictLabel,
-  onStrict,
 }: SuggestionsRowProps) {
   return (
     <div className="px-4 md:px-6 lg:px-8 pb-3 shrink-0">
       <div className="flex flex-col md:flex-row md:flex-wrap gap-2 items-stretch md:items-center">
-        {showSuggestions && suggestions?.map((s, i) => (
+        {suggestions?.map((s, i) => (
           <button
             key={s}
             onClick={() => { navigator.vibrate?.(10); onPick(s); }}
@@ -877,25 +851,14 @@ const SuggestionsRow = memo(function SuggestionsRow({
             {s}
           </button>
         ))}
-        {showSuggestions && (
-          <button
-            onClick={onWriteOwn}
-            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
-            style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
-          >
-            <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
-            {writeOwnLabel}
-          </button>
-        )}
-        {showStrict && (
-          <button
-            onClick={onStrict}
-            className="chip-in w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-3 md:py-2 rounded-xl border border-border/60 bg-card hover:bg-accent hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1.5"
-          >
-            <Filter className="h-3 w-3" />
-            {strictLabel}
-          </button>
-        )}
+        <button
+          onClick={onWriteOwn}
+          className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
+          style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
+        >
+          <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+          {writeOwnLabel}
+        </button>
       </div>
     </div>
   );
