@@ -729,17 +729,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           )}
         </div>
 
-        {/* Quick-reply suggestions + Strict filter button */}
-        {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
+        {/* Quick-reply suggestions */}
+        {showSuggestions && (
           <SuggestionsRow
-            showSuggestions={!!showSuggestions}
             suggestions={lastAssistantMsg?.suggestions}
             onPick={handleSuggestionClick}
             onWriteOwn={() => inputRef.current?.focus()}
             writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
-            showStrict={phase === 'chatting' && !isLoading && hasUserMessages}
-            strictLabel={STRICT_FILTER[language] || STRICT_FILTER.sv}
-            onStrict={() => handleSendMessage(undefined, STRICT_FILTER_MSG[language] || STRICT_FILTER_MSG.sv)}
           />
         )}
 
