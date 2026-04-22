@@ -130,25 +130,22 @@ const Index = () => {
       {/* Hero with video background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Responsive hero backgrounds — WebP with parallax on mobile */}
-        <img
-          src="/images/hero_mobile.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center block md:hidden will-change-transform"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
+        {/* Cinematic looping background video — WebM primary, MP4 fallback.
+            Poster image keeps LCP fast and prevents flash before metadata loads. */}
+        <video
+          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster="/images/hero_findcar.webp"
+          aria-hidden="true"
           style={{ transform: `translateY(${parallaxY}px)` }}
-        />
-        <img
-          src="/images/hero_findcar.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block will-change-transform"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          style={{ transform: `translateY(${parallaxY}px)` }}
-        />
+        >
+          <source src="/hero-video.webm" type="video/webm" />
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
