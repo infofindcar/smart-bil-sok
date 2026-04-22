@@ -1,22 +1,35 @@
 
 
-## Plan: Realtids-rösttranskription och visuell mikrofon-indikator
+## Plan: Förbättra Clutch kommunikationsstil
 
-### Vad som ändras
+### Sammanfattning
+Uppdatera Clutch systemprompt och resultatvisning baserat på dina preferenser:
+- **Osäkerhet**: Mix — ge förslag OCH erbjud att hoppa över
+- **Humor**: Lätt humor ibland, inte alltid saklig
+- **Resultat**: Förklaringar visas under bilkorten, inte i chatten
+- **Språk**: Enkelt, vardagligt svenska — inga biltermer
 
-1. **Realtids-text medan man pratar**: Ändra `interimResults` till `true` i SpeechRecognition-konfigurationen. Uppdatera `onresult`-hanteraren så att interim-resultat visas löpande i textfältet och ersätts med slutgiltiga resultat när de kommer.
+### Ändringar
 
-2. **Visuell lyssnings-indikator**: Ersätt den enkla `animate-pulse` med en mer tydlig "lyssnar"-animation — pulsande ringar runt mikrofon-knappen som indikerar att ljud fångas.
+#### 1. Uppdatera systemprompt (edge function)
+**Fil:** `supabase/functions/guided-search/index.ts`
 
-### Tekniska detaljer
+Ändra `CONVERSATION_SYSTEM_PROMPT` med dessa justeringar:
 
-**Fil: `src/components/GuidedSearch.tsx`**
+- **Tonalitet**: Byta från "kunnig kompis" till "kunnig kompis med lite humor" — tillåta lättsamma kommentarer som "Bra val, klassiker!" men aldrig överdriva
+- **Osäkerhet-hantering**: Lägga till regel: "Om kunden svarar 'vet inte' eller verkar osäker — ge 2-3 konkreta förslag de kan välja mellan, OCH erbjud att hoppa över ('Eller så skippar vi den!')"
+- **Enkelt språk**: Förtydliga att Clutch aldrig ska använda termer som "miltal", "drivlina", "förmånsvärde" utan förklara med vardagliga ord
+- **Resultat i chatten**: Ta bort all resultatsammanfattning i chattmeddelandet — Clutch ska bara säga en kort mening som "Här är dina matchningar!" utan att beskriva bilarna. Bilförklaringarna ska istället komma under varje bilkort (redan hanterat via `carReasons`)
 
-- Sätt `recognition.interimResults = true`
-- Lägg till en `interimTranscriptRef` som håller koll på den senaste interim-texten
-- I `onresult`: samla ihop alla `isFinal`-resultat plus senaste interim, sätt `inputValue` till `confirmedText + interimText`
-- Uppdatera mikrofon-knappens styling: lägg till animerade ringar (pseudo-element via extra `<span>`-lager) som pulserar ut när `isListening` är true
+Exempel på nya bra svar i prompten:
+- "Aha, elbil! Hur långt kör du till jobbet ungefär? Det påverkar vilken räckvidd du behöver."
+- "Ingen aning om drivmedel? De flesta som pendlar kort gillar elbil, annars funkar hybrid bra. Eller så skippar vi den frågan!"
 
-**Fil: `src/index.css`**
-- Lägg till en `@keyframes mic-ripple` animation för de pulsande ringarna
+#### 2. Förbättra resultatmeddelandet
+**Fil:** `supabase/functions/guided-search/index.ts`
+
+I AI-anropet som genererar resultatmeddelandet (efter sökning) — instruera att meddelandet ska vara kort och inte beskriva bilarna. T.ex. "Kolla in dessa — jag tror de passar dig!" istället för en lång sammanfattning.
+
+### Filer som ändras
+- `supabase/functions/guided-search/index.ts` — systemprompt + resultatmeddelandelogik
 

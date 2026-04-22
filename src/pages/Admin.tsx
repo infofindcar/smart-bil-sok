@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square, CheckCircle, AlertCircle, Palette, Cog, RefreshCw } from 'lucide-react';
+import { Lock, BarChart3, Car, Image, MapPin, Sparkles, Loader2, Square, CheckCircle, AlertCircle, Palette, Cog, RefreshCw, Clock } from 'lucide-react';
 
 const Admin = () => {
   const [isAuthed, setIsAuthed] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0, drivetrainEnriched: 0, colorEnriched: 0, bodyTypeEnriched: 0, horsepowerEnriched: 0, needsEnrichment: 0 });
+  const [stats, setStats] = useState({ total: 0, withImages: 0, cities: 0, makes: 0, drivetrainEnriched: 0, colorEnriched: 0, bodyTypeEnriched: 0, horsepowerEnriched: 0, needsEnrichment: 0, newFromLastImport: 0, lastImportTime: '' });
   const [storedPassword, setStoredPassword] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -45,31 +45,59 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('Lovable').select('id, image_thumb_url, city, make, drivetrain, color, body_type, horsepower');
-    if (data) {
-      const total = data.length;
-      const drivetrainEnriched = data.filter((c) => c.drivetrain && c.drivetrain !== 'Unknown' && c.drivetrain !== 'Okänd').length;
-      const colorEnriched = data.filter((c) => c.color && c.color !== 'Unknown' && c.color !== 'Okänd').length;
-      const bodyTypeEnriched = data.filter((c) => c.body_type && c.body_type !== 'Unknown' && c.body_type !== 'Okänd').length;
-      const horsepowerEnriched = data.filter((c) => c.horsepower && c.horsepower > 0).length;
-      const needsEnrichment = data.filter((c) =>
-        !c.drivetrain || c.drivetrain === 'Unknown' ||
-        !c.color || c.color === 'Unknown' ||
-        !c.body_type || c.body_type === 'Unknown' ||
-        !c.horsepower || c.horsepower === 0
-      ).length;
-      setStats({
-        total,
-        withImages: data.filter((c) => c.image_thumb_url).length,
-        cities: new Set(data.map((c) => c.city)).size,
-        makes: new Set(data.map((c) => c.make)).size,
-        drivetrainEnriched,
-        colorEnriched,
-        bodyTypeEnriched,
-        horsepowerEnriched,
-        needsEnrichment,
-      });
+    const [
+      totalRes,
+      withImagesRes,
+      drivetrainRes,
+      colorRes,
+      bodyTypeRes,
+      horsepowerRes,
+      needsEnrichmentRes,
+      citiesData,
+      makesData,
+      latestCarRes,
+    ] = await Promise.all([
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('image_thumb_url', 'is', null),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('drivetrain', 'is', null).not('drivetrain', 'eq', 'Unknown').not('drivetrain', 'eq', 'Okänd'),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('color', 'is', null).not('color', 'eq', 'Unknown').not('color', 'eq', 'Okänd'),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('body_type', 'is', null).not('body_type', 'eq', 'Unknown').not('body_type', 'eq', 'Okänd'),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).not('horsepower', 'is', null).gt('horsepower', 0),
+      supabase.from('Lovable').select('*', { count: 'exact', head: true }).or('drivetrain.is.null,drivetrain.eq.Unknown,color.is.null,color.eq.Unknown,body_type.is.null,body_type.eq.Unknown,horsepower.is.null,horsepower.eq.0'),
+      supabase.from('Lovable').select('city'),
+      supabase.from('Lovable').select('make'),
+      supabase.from('Lovable').select('created_at').order('created_at', { ascending: false }).limit(1),
+    ]);
+
+    const total = totalRes.count ?? 0;
+    const cities = new Set((citiesData.data ?? []).map((c: any) => c.city)).size;
+    const makes = new Set((makesData.data ?? []).map((c: any) => c.make)).size;
+
+    // Find cars added in the latest import batch (same created_at minute)
+    let newFromLastImport = 0;
+    let lastImportTime = '';
+    if (latestCarRes.data && latestCarRes.data.length > 0) {
+      const latestTime = new Date(latestCarRes.data[0].created_at!);
+      // Consider cars within 2 hours of the latest as same import batch
+      const cutoff = new Date(latestTime.getTime() - 2 * 60 * 60 * 1000).toISOString();
+      const newCarsRes = await supabase.from('Lovable').select('*', { count: 'exact', head: true }).gte('created_at', cutoff);
+      newFromLastImport = newCarsRes.count ?? 0;
+      lastImportTime = latestTime.toLocaleString('sv-SE');
     }
+
+    setStats({
+      total,
+      withImages: withImagesRes.count ?? 0,
+      cities,
+      makes,
+      drivetrainEnriched: drivetrainRes.count ?? 0,
+      colorEnriched: colorRes.count ?? 0,
+      bodyTypeEnriched: bodyTypeRes.count ?? 0,
+      horsepowerEnriched: horsepowerRes.count ?? 0,
+      needsEnrichment: needsEnrichmentRes.count ?? 0,
+      newFromLastImport,
+      lastImportTime,
+    });
   };
 
   const addLog = useCallback((msg: string) => {
@@ -175,6 +203,7 @@ const Admin = () => {
 
   const statCards = [
     { icon: Car, value: stats.total, label: 'Totala bilar' },
+    { icon: Clock, value: stats.newFromLastImport, label: `Nya (senaste import)`, subtitle: stats.lastImportTime || undefined },
     { icon: Image, value: stats.withImages, label: 'Med bilder' },
     { icon: BarChart3, value: stats.makes, label: 'Märken' },
     { icon: MapPin, value: stats.cities, label: 'Städer' },
@@ -214,12 +243,13 @@ const Admin = () => {
               Uppdatera
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             {statCards.map((s) => (
               <div key={s.label} className="bg-card rounded-xl p-4 border border-border text-center">
                 <s.icon className="h-6 w-6 mx-auto text-primary mb-2" />
                 <p className="text-2xl font-bold">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
+                {(s as any).subtitle && <p className="text-[10px] text-muted-foreground mt-1">{(s as any).subtitle}</p>}
               </div>
             ))}
           </div>

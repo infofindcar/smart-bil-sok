@@ -100,12 +100,15 @@ function sanitizeBudget(value: unknown): { min: number; max: number } | null {
   return { min: parts[0], max: parts[1] };
 }
 
-const fuelPatterns: Record<string, string> = {
-  el: "%El%",
-  laddhybrid: "%Laddhybrid%",
-  hybrid: "%Hybrid%",
-  bensin: "%Bensin%",
-  diesel: "%Diesel%",
+// Maps AI fuel keys to SQL ILIKE patterns matching actual DB values
+// DB values: El, Bensin, Diesel, Hybrid bensin, Hybrid diesel, Hybrid gas,
+//            Plug-in Bensin, Plug-in Diesel, Etanol (FFV, E85), Fordonsgas (CNG)
+const fuelPatterns: Record<string, string[]> = {
+  el: ["El"],                                    // exact match to avoid matching "Etanol"
+  laddhybrid: ["Plug-in Bensin", "Plug-in Diesel"], // DB uses "Plug-in" not "Laddhybrid"
+  hybrid: ["Hybrid bensin", "Hybrid diesel", "Hybrid gas"], // non-plug-in hybrids
+  bensin: ["Bensin"],
+  diesel: ["Diesel"],
 };
 
 const bodyPatterns: Record<string, string> = {
@@ -194,10 +197,14 @@ const modelBodyTypeMap: Record<string, string[]> = {
     "Captur", "Kadjar", "Koleos", "Austral",
     "C5 Aircross", "3008", "5008",
     "Grandland", "Mokka", "Crossland",
-    "Ioniq 5", "Ioniq 6", "Ioniq 7",
+    "Ioniq 5", "Ioniq 7",
     "bZ4X", "Yaris Cross", "C-HR",
     "Scala", "Kamiq",
     "Ceed SW", "Stinger",
+    "Macan", "Cayenne",
+    "Levante", "Grecale",
+    "F-Pace", "E-Pace",
+    "Urus", "DBX",
   ],
   kombi: [
     "V60", "V90", "V70", "V50", "V40",
@@ -211,34 +218,71 @@ const modelBodyTypeMap: Record<string, string[]> = {
     "S60", "S90", "S80", "S40",
     "A4 Sedan", "A6 Sedan",
     "3 Series", "5 Series",
-    "C-Class", "E-Class",
+    "C-Class", "E-Class", "S-Class",
     "Model 3", "Model S",
     "Polestar 2",
     "Ioniq 6",
   ],
+  coupe: [
+    "911", "Cayman", "Boxster", "718",
+    "M2", "M4", "M8", "M850i", "4 Series", "8 Series", "2 Series",
+    "RS5", "TT", "R8", "A5",
+    "AMG GT", "CLE", "C Coupe", "E Coupe",
+    "Mustang", "Camaro", "Corvette",
+    "Supra", "GR86", "BRZ",
+    "RC", "LC",
+    "Vantage", "DB11", "DB12",
+    "F-Type",
+    "Huracan", "Gallardo",
+    "Roma", "Portofino", "296", "F8",
+    "MC20",
+    "Emira", "Evora",
+  ],
+  cab: [
+    "C70", "911 Cabriolet", "Boxster", "718 Cabriolet",
+    "Z4", "SLC", "SL",
+    "Mustang Convertible", "F-Type Convertible",
+    "A5 Cabriolet", "TT Roadster",
+  ],
 };
 
-const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du pratar med vanliga människor — inte bilmekaniker. Förklara saker enkelt och tydligt så att vem som helst förstår. Du ska kännas som en riktigt kunnig kompis som hjälper till.
+const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en kunnig och lite humoristisk svensk bilrådgivare. Du pratar med vanliga människor — aldrig biltermer. Förklara allt enkelt så att vem som helst förstår. Du ska kännas som en smart kompis som gillar bilar och gärna slänger in en lättsam kommentar ibland.
 
 DITT MÅL: Ställ genomtänkta frågor för att verkligen förstå kundens livssituation och hitta EXAKT rätt bil. Ju mer du vet, desto bättre matchning. Ställ minst 5 frågor innan du söker.
 
-EXTREMT VIKTIGT — HÅLL DIG KORT:
-- Varje meddelande ska vara MAX 2-3 korta meningar.
-- Bekräfta kort (en halv mening), ställ sedan EN fråga.
-- Förklara bara VARFÖR du frågar om det inte är uppenbart, och gör det på max en mening.
-- Undvik att upprepa vad kunden redan sagt i detalj.
-- Skriv som i ett sms — inte som ett mejl.
+EXTREMT VIKTIGT — KORT MEN INFORMATIVT:
+- MAX 2-3 korta meningar per meddelande.
+- Mönstret: kort bekräftelse + relevant info (om det behövs) + EN fråga.
+- Om en fråga kräver kontext, förklara det på MAX en mening.
+- Upprepa ALDRIG vad kunden redan sagt.
+- Skriv som ett kort sms — inte ett mejl.
+- Inga onödiga inledningar som "Vad kul!" eller "Perfekt!" — gå rakt på sak men var gärna lite personlig.
+
+TONALITET OCH HUMOR:
+- Du FÅR slänga in lättsamma kommentarer som "Klassiker!" eller "Smart val!" men överdrivs aldrig.
+- Var varm och personlig, inte robotaktig.
+- Aldrig emojis.
+
+ENKELT SPRÅK — VIKTIGT:
+- Säg "hur långt bilen har gått" istället för "miltal"
+- Säg "fyrhjulsdrift" istället för "AWD" eller "drivlina"
+- Säg "vad det kostar per månad" istället för "förmånsvärde" eller "driftskostnad"
+- Säg "bensinförbrukning" istället för "l/100km"
+- Förklara alltid så att någon som aldrig köpt bil förstår.
+
+OSÄKERHET — NÄR KUNDEN INTE VET:
+- Om kunden svarar "vet inte", "ingen aning" eller verkar osäker: ge 2-3 konkreta förslag OCH erbjud att hoppa över.
+- Exempel: "Ingen aning om drivmedel? De flesta som pendlar kort gillar elbil, annars funkar hybrid bra. Eller så skippar vi den frågan!"
+- Tvinga aldrig kunden att svara på något de inte vet.
 
 EXEMPEL PÅ BRA SVAR:
-"Smart med elbil för pendling! Hur långt kör du till jobbet ungefär? Det avgör vilken räckvidd du behöver."
+"Aha, elbil! Hur långt kör du till jobbet ungefär? Det påverkar vilken räckvidd du behöver."
+"Under 25 — det gör försäkringen en hel del dyrare tyvärr. Har du en budget i åtanke?"
+"Kombi, klassiker! Automat eller vill du växla själv?"
+"Ingen aning om drivmedel? De flesta som pendlar kort gillar elbil, annars funkar hybrid bra. Eller så skippar vi den frågan!"
 
 EXEMPEL PÅ FÖR LÅNGT SVAR (UNDVIK):
-"Vad kul att du funderar på elbil! Det är verkligen ett bra val för pendling eftersom driftskostnaden är mycket lägre jämfört med bensin och diesel. Dessutom slipper du trängselskatt i många städer. Nu undrar jag, hur långt kör du till jobbet varje dag? Det är viktigt att veta för att kunna rekommendera en bil med tillräcklig räckvidd så att du inte behöver ladda på vägen."
-
-VIKTIGT — HUR DU STÄLLER FRÅGOR:
-- Förklara kort VARFÖR du frågar när det inte är uppenbart.
-- Ge korta förklaringar av tekniska termer. T.ex. istället för "AWD, FWD eller RWD?" skriv "Behöver du fyrhjulsdrift? Bra i snö men kostar lite mer."
-- Var personlig och referera till det kunden redan sagt.
+"Vad kul att du funderar på elbil! Det är verkligen ett bra val för pendling eftersom driftskostnaden är mycket lägre jämfört med bensin och diesel. Dessutom slipper du trängselskatt i många städer. Nu undrar jag, hur långt kör du till jobbet varje dag?"
 
 INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 1. Vad bilen ska användas till (pendling, familj, stad, långresor, blandat)
@@ -246,27 +290,42 @@ INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 3. Var personen bor (stad/region)
 4. Hur långt de kör per dag/vecka
 5. Drivmedel (el, hybrid, bensin, diesel)
-6. Karosstyp — fråga begripligt: "Hög bil som SUV, praktisk kombi, eller sportig sedan?"
+6. Karosstyp — fråga begripligt: "Hög bil som SUV, praktisk kombi, sportig coupé eller vanlig sedan?"
 7. Färgpreferens
-8. Växellåda (automat/manuell)
-9. Driftskostnad vs prestanda
+8. Växellåda (automat eller växla själv)
+9. Vad som är viktigast — låg kostnad per månad eller prestanda
 10. Årsmodell
-11. Ålder på föraren (påverkar försäkring)
-12. Eventuella specifika önskemål
+11. Ålder på föraren (påverkar försäkring MYCKET, speciellt under 25)
+12. Antal passagerare/barn (barnstolar, barnvagn i bagaget)
+13. Parkeringssituation (garage med laddning, gatuparkering, uppfart) — avgör om elbil funkar och om stor bil passar
+14. Körvanor vintertid — snö/halka → fyrhjulsdrift kan vara bra
+15. Dragkroksbehov — släp, båt, husvagn?
+16. Vad man vill betala totalt per månad (lån + försäkring + bränsle)
+17. Laddmöjlighet hemma (om elbil diskuteras) — avgörande för om elbil funkar
+18. Eventuella specifika önskemål
 
-INTELLIGENTA REGLER:
-- Lång pendling → nämn att bränsleeffektivitet blir viktigt
-- Familj → fråga om storlek och barnvagnsbehov
-- Stad → nämn att mindre bil är smidigare
-- Låg driftskostnad → nämn elbil kort
-- Norrland/vinter → nämn fyrhjulsdrift
+INTELLIGENTA FÖLJDFRÅGOR (ställ dessa baserat på kontext):
+- Om budget < 150 000 → fråga om de kan tänka sig äldre bil med få mil
+- Om förare < 25 år → nämn att försäkringen blir en hel del dyrare och fråga om det påverkar bilval
+- Om förare < 25 år → undvik att föreslå dyra sportbilar om de inte specifikt vill ha det
+- Om familj med barn → fråga hur många barn och åldrar (barnvagn i bagaget?)
+- Om elbil nämns → fråga om de kan ladda hemma (garage? laddstolpe?)
+- Om lång pendling → fråga om motorväg eller landsväg (påverkar hur mycket bilen drar)
+- Om dragkrok nämns → fråga vad de ska dra och hur tungt det är
+- Om norrland/vinter → rekommendera fyrhjulsdrift och nämn varför
+- Om stad → nämn att mindre bil är smidigare att parkera
+- Om låg kostnad prioriteras → lyft elbil/hybrid och förklara besparingen kort
+
+GENERELLA REGLER:
 - Ställ MAX EN fråga per meddelande
 - Var kort, varm och naturlig
 - Använd INTE emojis
 - Bekräfta KORT vad kunden sa innan nästa fråga
 - Hoppa över frågor du redan har svar på
 
-NÄR DU SKA SÖKA: Du ska ha samlat minst 5 av de 12 punkterna ovan ELLER ha ställt minst 5 frågor. Sök INTE förrän du har tillräckligt.
+NÄR DU SKA SÖKA: Du ska ha samlat minst 6 av de 18 punkterna ovan OCH ha ställt minst 6 frågor. Sök INTE förrän du har tillräckligt. Om kunden pressar på, förklara kort att fler frågor ger bättre matchning.
+
+STRIKT FILTERLÄGE: Om kunden säger att de bara vill ha bilar som matchar deras exakta filter (t.ex. "bara mina filter", "only my filters", "inga extra förslag"), ska du STRIKT följa deras angivna filter utan att lägga till egna rekommendationer, bredda sökningen eller föreslå alternativ utanför deras kriterier. Returnera action "search" direkt med exakt de filter kunden har angett.
 
 VIKTIG REGEL — ALLTID BEKRÄFTA INNAN SÖKNING:
 Innan du söker (action: "search") MÅSTE du ställa en sista bekräftelsefråga. Ge förslag som "Nej, sök nu!", "Jag vill lägga till något". Först EFTER bekräftelse ska du returnera action: "search".
@@ -282,6 +341,14 @@ Om du har tillräckligt med info för att söka:
 {"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30,"features":["bose","drag"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
+
+BUDGET-FORMAT — EXTREMT VIKTIGT:
+- "budget" ska vara "MIN-MAX" i kronor.
+- Om kunden säger "cirka 500 000" eller "runt 500 000" → sätt budget till "350000-650000" (±30%).
+- Om kunden säger "max 300 000" eller "under 300 000" → sätt budget till "0-300000".
+- Om kunden säger "minst 200 000" → sätt budget till "200000-99999999".
+- Om kunden säger "2 miljoner" utan "max"/"under" → tolka som "cirka" och sätt ±30%, t.ex. "1400000-2600000".
+- ALDRIG sätt MIN till 0 om kunden angett ett ungefärligt belopp — det ger helt fel resultat.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
@@ -376,7 +443,7 @@ serve(async (req) => {
         // Level 2: only price + fuel
         if (make && level < 2) q = q.ilike("make", `%${make}%`);
         if (fuels.length > 0 && level < 3) {
-          const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
+          const ff = fuels.flatMap((x: string) => fuelPatterns[x] || []).map((v: string) => `fuel_type.eq.${v}`).join(",");
           if (ff) q = q.or(ff);
         }
         if (bodies.length > 0 && level < 1) {
@@ -651,15 +718,18 @@ serve(async (req) => {
       // Progressive relaxation (5 levels):
       // Level 0: everything strict
       // Level 1: drop city, pris ±30%
-      // Level 2: drop color, pris ±50%
-      // Level 3: drop body_type, make, year, pris ±60%
-      // Level 4: drop transmission, drivetrain, fuel, pris ×0-10
-      const PRICE_MULT     = [1,    1.3,  1.5,  1.6,  10];
-      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.4,  0];
+      // Level 2: drop color, pris ±50%, KEEP body_type
+      // Level 3: drop make, year, pris ±80%, KEEP body_type
+      // Level 4: drop body_type, transmission, drivetrain, fuel, pris ×10
+      const PRICE_MULT     = [1,    1.3,  1.5,  1.8,  10];
+      const PRICE_MIN_MULT = [1,    0.7,  0.5,  0.2,  0];
       const MIN_RESULTS    = 3;
 
       let cars: any[] = [];
       let relaxLevel = 0;
+
+      // Remember original body type for sorting priority
+      const hasBodyTypeFilter = validBodyTypes.length > 0;
 
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select("*");
@@ -674,7 +744,7 @@ serve(async (req) => {
           .gte("price", minPriceLevel)
           .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
 
-        // Level 0-: city
+        // Level 0: city
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
         }
@@ -687,15 +757,14 @@ serve(async (req) => {
         // Level 0-3: fuel
         if (validFuels.length > 0 && level < 4) {
           const fuelFilters = validFuels
-            .map((f: string) => fuelPatterns[f])
-            .filter(Boolean)
-            .map((p: string) => `fuel_type.ilike.${p}`)
+            .flatMap((f: string) => fuelPatterns[f] || [])
+            .map((v: string) => `fuel_type.eq.${v}`)
             .join(",");
           if (fuelFilters) query = query.or(fuelFilters);
         }
 
-        // Level 0-2: body_type
-        if (validBodyTypes.length > 0 && level < 3) {
+        // Level 0-3: body_type (kept until level 4!)
+        if (validBodyTypes.length > 0 && level < 4) {
           const bodyFilters = validBodyTypes
             .map((b: string) => bodyPatterns[b])
             .filter(Boolean)
@@ -717,11 +786,10 @@ serve(async (req) => {
           if (allFilters) query = query.or(allFilters);
         }
 
-        // Level 0-1: color (strict – no Unknown/null)
-        // Level 2+: color with Unknown/null fallback (lazy color detection)
+        // Level 0-1: color strict, Level 2+: with Unknown/null fallback
         if (sanitizedColor && level < 2) {
           query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%`);
-        } else if (sanitizedColor && level >= 2) {
+        } else if (sanitizedColor && level >= 2 && level < 4) {
           query = query.or(`color.ilike.%${sanitizedColor}%,color.ilike.%"${sanitizedColor}"%,color.eq.Unknown,color.eq.Okänd,color.is.null`);
         }
 
@@ -769,19 +837,84 @@ serve(async (req) => {
         buildQuery(1),
       ]);
 
-      // Sort results by proximity to budget midpoint, then take top 9
+      // Sort results: prioritize body_type match, then proximity to budget midpoint
       const budgetMid = (minPrice + maxPrice) / 2;
-      const sortByBudgetProximity = (arr: any[]) => {
-        return arr
-          .sort((a, b) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
-          .slice(0, 9);
+      const bodyTypePatternValues = validBodyTypes.map((b: string) => bodyPatterns[b]?.replace(/%/g, "").toLowerCase()).filter(Boolean);
+      const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
+
+      const sortByRelevance = (arr: any[]) => {
+        // First sort by body type match + price proximity
+        const sorted = arr.sort((a, b) => {
+          if (hasBodyTypeFilter) {
+            const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
+              || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
+            const bBodyMatch = bodyTypePatternValues.some(p => (b.body_type || "").toLowerCase().includes(p))
+              || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
+            if (aBodyMatch && !bBodyMatch) return -1;
+            if (!aBodyMatch && bBodyMatch) return 1;
+          }
+          return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
+        });
+
+        // Only diversify when user didn't request a specific make
+        if (sanitizedMake) {
+          // User asked for a specific brand — just return best matches, diversify by model only
+          const picked: any[] = [];
+          const modelCount: Record<string, number> = {};
+          for (const car of sorted) {
+            if (picked.length >= 9) break;
+            const model = (car.model || "unknown").toLowerCase();
+            if ((modelCount[model] || 0) >= 2) continue;
+            picked.push(car);
+            modelCount[model] = (modelCount[model] || 0) + 1;
+          }
+          if (picked.length < MIN_RESULTS) {
+            for (const car of sorted) {
+              if (picked.length >= MIN_RESULTS) break;
+              if (!picked.some(p => p.id === car.id)) picked.push(car);
+            }
+          }
+          return picked;
+        }
+
+        // No specific make — diversify across brands
+        const picked: any[] = [];
+        const makeCount: Record<string, number> = {};
+        const makeModelCount: Record<string, number> = {};
+
+        for (const car of sorted) {
+          if (picked.length >= 9) break;
+          const make = (car.make || "unknown").toLowerCase();
+          const model = (car.model || "unknown").toLowerCase();
+          const makeModelKey = `${make}|||${model}`;
+
+          if (picked.length < 3) {
+            if ((makeCount[make] || 0) >= 1) continue;
+          } else {
+            if ((makeCount[make] || 0) >= 2) continue;
+            if ((makeModelCount[makeModelKey] || 0) >= 1) continue;
+          }
+
+          picked.push(car);
+          makeCount[make] = (makeCount[make] || 0) + 1;
+          makeModelCount[makeModelKey] = (makeModelCount[makeModelKey] || 0) + 1;
+        }
+
+        if (picked.length < MIN_RESULTS) {
+          for (const car of sorted) {
+            if (picked.length >= MIN_RESULTS) break;
+            if (!picked.some(p => p.id === car.id)) picked.push(car);
+          }
+        }
+
+        return picked;
       };
 
       if (res0.data && res0.data.length > 0) {
-        cars = sortByBudgetProximity(res0.data);
+        cars = sortByRelevance(res0.data);
         relaxLevel = 0;
       } else if (res1.data && res1.data.length > 0) {
-        cars = sortByBudgetProximity(res1.data);
+        cars = sortByRelevance(res1.data);
         relaxLevel = 1;
       } else {
         // Try levels 2 and 3 in parallel
@@ -790,10 +923,10 @@ serve(async (req) => {
           buildQuery(3),
         ]);
         if (res2.data && res2.data.length > 0) {
-          cars = sortByBudgetProximity(res2.data);
+          cars = sortByRelevance(res2.data);
           relaxLevel = 2;
         } else if (res3.data && res3.data.length > 0) {
-          cars = sortByBudgetProximity(res3.data);
+          cars = sortByRelevance(res3.data);
           relaxLevel = 3;
         }
       }
@@ -917,30 +1050,29 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare som pratar med vanliga människor. Du har tillgång till detaljerad data om varje bil. Du ska göra två saker:
+                    content: `Du är Clutch, en kunnig och lite humoristisk svensk bilrådgivare som pratar med vanliga människor.
 
-1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar kundens situation.
-2. För VARJE bil, ge en kort personlig motivering (1 mening) om varför just den bilen passar kunden baserat på deras specifika behov.
+VIKTIGT — RESULTATMEDDELANDET ("message"):
+- Skriv EN kort, personlig mening som intro. T.ex. "Kolla in dessa — jag tror de passar dig!" eller "Här kommer dina matchningar!"
+- Beskriv INTE bilarna i meddelandet. Bilförklaringarna visas under varje bilkort separat.
+- Var gärna lite lättsam och varm.
 
-Använd den berikade datan aktivt i dina motiveringar men förklara enkelt:
-- Säkerhet: Euro NCAP-stjärnor (förklara kort vad det innebär om relevant)
-- Prestanda: hästkrafter, 0-100
-- Praktiskt: bagageutrymme, dragvikt, antal säten
-- Ekonomi: bränsleförbrukning, CO2, elräckvidd, garanti, uppskattade driftskostnader
-- Tillförlitlighet: kända problem eller styrkor
-- Komfort: drivlina (skriv "fyrhjulsdrift" istället för AWD), växellåda
-- Om kundens ålder är känd: nämn att försäkringskostnaden påverkas av ålder
-
-Var specifik — nämn siffror när de är relevanta (t.ex. "5 NCAP-stjärnor vilket är högsta betyget", "450L bagageutrymme, plats för barnvagn och väskor"). Använd INTE emojis.${langInstruction}
+FÖR VARJE BIL ("carReasons"):
+- Ge en kort personlig motivering (1-2 meningar) om varför just den bilen passar kunden baserat på deras specifika behov.
+- Använd den berikade datan aktivt men förklara enkelt — inga biltermer.
+- Säkerhet: nämn säkerhetsbetyg om relevant
+- Praktiskt: bagageutrymme, hur tungt den kan dra, antal säten
+- Ekonomi: hur mycket den drar, elräckvidd, garanti
+- Säg "fyrhjulsdrift" istället för AWD
+- Om kundens ålder är känd: nämn att försäkringen påverkas av ålder
+- Var specifik — nämn siffror när de är relevanta. Använd INTE emojis.${langInstruction}
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
 ${validFeatures.length > 0 ? `Kunden efterfrågade dessa tillval (matchade via annonstitel): ${validFeatures.join(", ")}. Om ett tillval syns i bilens model_raw, nämn det kort i motiveringen.` : ""}
 
-Var varm, professionell och objektiv.
-
 Svara ENBART med JSON (ingen markdown, inga code fences):
-{"message":"Din sammanfattning här","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
+{"message":"Kort intro (1 mening, beskriv INTE bilarna)","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
                   },
                   {
                     role: "user",

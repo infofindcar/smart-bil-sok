@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Heart, Fuel, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +33,19 @@ const getDisplayName = (car: Car) => {
   return `${make} ${model}`.trim() || 'Okänd bil';
 };
 
+const ImageWithFade = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      loading="lazy"
+      onLoad={() => setLoaded(true)}
+    />
+  );
+};
+
 export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: CarCardProps) => {
   const navigate = useNavigate();
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
@@ -48,14 +62,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
       {/* Image */}
       <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden bg-muted">
         {car.image_thumb_url ? (
-          <img
-            src={car.image_thumb_url}
-            alt={displayName}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
-            style={{ opacity: 0, transition: 'opacity 0.4s ease-in' }}
-          />
+          <ImageWithFade src={car.image_thumb_url!} alt={displayName} />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
             <span className="text-3xl font-serif font-bold text-white/80">
