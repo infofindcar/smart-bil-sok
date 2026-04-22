@@ -121,6 +121,27 @@ const drivetrainPatterns: Record<string, string[]> = {
   rwd: ["RWD", '"RWD"'],
 };
 
+// Tillval/utrustning — AI normaliserar kundens ord till dessa nycklar,
+// backend kör ILIKE mot model_raw. Flera patterns per nyckel = OR-sökning
+// (synonymer), så "skinn" träffar även "läder".
+const featurePatterns: Record<string, string[]> = {
+  bose:         ["%bose%"],
+  harman:       ["%harman%"],
+  burmester:    ["%burmester%"],
+  "bang & olufsen": ["%bang%olufsen%", "%b&o%"],
+  drag:         ["%drag%"],
+  värmare:      ["%värmare%", "%motorvärm%", "%kupévärm%"],
+  panorama:     ["%panorama%", "%glastak%", "%pano %"],
+  kamera:       ["%backkamera%", "%360-kam%", "%360 kam%", "%kamera%"],
+  skinn:        ["%skinn%", "%läder%"],
+  navigation:   ["%navigat%", "% gps%", "%gps %"],
+  "head-up":    ["%head-up%", "%heads-up%", "%head up%"],
+  adaptive:     ["%adaptiv%", "%adaptive%"],
+  amg:          ["%amg%"],
+  "m sport":    ["%m sport%", "%m-sport%", "%msport%"],
+  "gt-line":    ["%gt-line%", "%gt line%"],
+};
+
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
   suv: [
@@ -225,7 +246,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30,"features":["bose","drag"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
@@ -233,7 +254,27 @@ Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
 Giltiga drivetrain-värden: awd, fwd, rwd
 Giltiga transmission-värden: manuell, automat
-Giltiga useCase-värden: pendling, familj, langresa, stad, blandat`;
+Giltiga useCase-värden: pendling, familj, langresa, stad, blandat
+
+TILLVAL / UTRUSTNING (features):
+Om kunden nämner specifika tillval, lägg motsvarande nycklar i "features"-arrayen.
+Giltiga features-värden: bose, harman, burmester, bang & olufsen, drag, värmare, panorama, kamera, skinn, navigation, head-up, adaptive, amg, m sport, gt-line
+Exempel:
+- "Bose-ljud" / "bose högtalare" → ["bose"]
+- "Burmester-system" → ["burmester"]
+- "B&O" / "Bang & Olufsen" → ["bang & olufsen"]
+- "dragkrok" / "släpvagnskoppling" / "med drag" → ["drag"]
+- "motorvärmare" / "kupévärmare" → ["värmare"]
+- "panoramatak" / "glastak" / "pano" → ["panorama"]
+- "backkamera" / "360-kamera" → ["kamera"]
+- "skinnsäten" / "läderklädsel" → ["skinn"]
+- "navigation" / "GPS" → ["navigation"]
+- "head-up display" → ["head-up"]
+- "adaptiv farthållare" → ["adaptive"]
+- "AMG-paket" → ["amg"]
+- "M Sport-paket" → ["m sport"]
+- "GT-Line" → ["gt-line"]
+Om kunden säger "Porsche med Bose" → make: "Porsche", features: ["bose"].`;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -551,6 +592,14 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
+      // Validera features mot vita listan – AI kan råka hitta på nycklar
+      const validFeatures: string[] = Array.isArray(filters.features)
+        ? filters.features
+            .filter((f: unknown): f is string => typeof f === "string")
+            .map((f: string) => f.toLowerCase().trim())
+            .filter((f: string) => f in featurePatterns)
+        : [];
+
       // Track which filters were dropped at each level for transparent messaging
       const droppedAtLevel: string[][] = [[], [], [], [], []];
 
@@ -652,6 +701,19 @@ serve(async (req) => {
         // Level 0-2: year range
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
+
+        // Level 0-3: features (tillval i model_raw). Varje feature AND:as
+        // mellan varandra; synonymer OR:as inom en feature. Släpps vid level 4
+        // eftersom tillvalen är kundens explicita önskemål – vi vill hellre
+        // ha noll träffar än visa bil utan önskat tillval förrän sista utväg.
+        if (validFeatures.length > 0 && level < 4) {
+          for (const feat of validFeatures) {
+            const patterns = featurePatterns[feat];
+            if (!patterns || patterns.length === 0) continue;
+            const orClause = patterns.map((p) => `model_raw.ilike.${p}`).join(",");
+            query = query.or(orClause);
+          }
+        }
 
         return query.order("price", { ascending: true }).limit(18);
       };
@@ -828,6 +890,7 @@ Var specifik — nämn siffror när de är relevanta (t.ex. "5 NCAP-stjärnor vi
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
+${validFeatures.length > 0 ? `Kunden efterfrågade dessa tillval (matchade via annonstitel): ${validFeatures.join(", ")}. Om ett tillval syns i bilens model_raw, nämn det kort i motiveringen.` : ""}
 
 Var varm, professionell och objektiv.
 
@@ -939,7 +1002,7 @@ Använd INTE emojis.${langInstruction}`,
           cars,
           carReasons,
           suggestions,
-          filters: { ...filters, driverAge: typeof filters.driverAge === "number" ? filters.driverAge : null },
+          filters: { ...filters, driverAge: typeof filters.driverAge === "number" ? filters.driverAge : null, features: validFeatures },
           customerProfile,
           matchCount: cars.length,
           relaxed: relaxLevel > 0,
