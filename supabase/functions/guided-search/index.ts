@@ -412,9 +412,15 @@ BUDGET-FORMAT — EXTREMT VIKTIGT:
 - "budget" ska vara "MIN-MAX" i kronor.
 - Om kunden säger "cirka 500 000" eller "runt 500 000" → sätt budget till "350000-650000" (±30%).
 - Om kunden säger "max 300 000" eller "under 300 000" → sätt budget till "0-300000".
-- Om kunden säger "minst 200 000" → sätt budget till "200000-99999999".
+- Om kunden säger "minst 200 000", "över 400 000" eller "från X" UTAN att ange ett tak → fråga ALLTID FÖLJDFRÅGA om maxbudget. Exempel: "Över 400k — ska vi säga upp till 600, 800 eller över en miljon?". Sätt INTE search förrän du har ett rimligt tak (max 50% över min, t.ex. över 400k → tolka som 400000-600000 om kunden bekräftar "runt där").
 - Om kunden säger "2 miljoner" utan "max"/"under" → tolka som "cirka" och sätt ±30%, t.ex. "1400000-2600000".
 - ALDRIG sätt MIN till 0 om kunden angett ett ungefärligt belopp — det ger helt fel resultat.
+- ALDRIG sätt MAX till 99999999 — det ger bara de billigaste bilarna i sökningen. Be alltid om ett tak.
+
+MÄRKE — VIKTIG FRÅGA:
+- Fråga ALLTID om kunden har ett bilmärke i åtanke ELLER om de vill att du ska rekommendera. Exempel: "Har du tänkt på något särskilt märke, eller vill du att jag föreslår baserat på dina krav?"
+- Om kunden säger "rekommendera du" → välj inte ett märke i filters, utan låt sökningen vara öppen och nämn kort i customerProfile vilka märken som passar.
+- Om kunden nämner ett märke → sätt make i filters direkt.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
@@ -865,6 +871,13 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
+        // Smart sortering: om budgeten är väldigt öppen (max är default 99999999 eller > 5x min)
+        // sortera efter ÅR (nyast först) så vi inte bara får de billigaste längst ner i spannet.
+        // Annars sortera efter pris stigande.
+        const isOpenBudget = maxPrice >= 99999999 || (minPrice > 0 && maxPrice > minPrice * 5);
+        if (isOpenBudget) {
+          return query.order("year", { ascending: false, nullsFirst: false }).limit(40);
+        }
         return query.order("price", { ascending: true }).limit(18);
       };
 
