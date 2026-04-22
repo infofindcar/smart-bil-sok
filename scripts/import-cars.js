@@ -165,8 +165,16 @@ async function main() {
         continue;
       }
 
-      // Heuristik-fallback: ny bil med månadsbelopp (trolig leasing)
-      if ((car.year ?? 0) >= 2025 && (car.price?.amount ?? 0) < 10000) {
+      // Heuristik-fallback 1: orimligt lågt pris = trolig leasing-månadskostnad
+      const priceAmount = car.price?.amount ?? 0;
+      if (priceAmount > 0 && priceAmount < 20000) {
+        leasingCount++;
+        continue;
+      }
+
+      // Heuristik-fallback 2: text-baserade leasingmarkörer i model_specification
+      const spec = String(car.model_specification ?? "");
+      if (/(leasbar|leasebar|leas\.bar|privatleas|business\s*lease|lease\s+fr[åa]n|leasing\s+fr[åa]n|lease\s+fr\.|leasing\s+fr\.)/i.test(spec)) {
         leasingCount++;
         continue;
       }
