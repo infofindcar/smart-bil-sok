@@ -20,6 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
+import heroVideoAsset from '@/assets/hero-video.mp4.asset.json';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
