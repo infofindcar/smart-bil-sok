@@ -124,6 +124,87 @@ const drivetrainPatterns: Record<string, string[]> = {
   rwd: ["RWD", '"RWD"'],
 };
 
+// Equipment / tillval — mappar AI:s nyckel → SQL ILIKE-mönster mot model_raw
+// Värdena är ALLA möjliga sätt tillvalet kan stavas i annonser (svenska + engelska + förkortningar).
+const equipmentPatterns: Record<string, string[]> = {
+  drag: ["drag", "dragkrok", "tow bar", "towbar", "tow-hitch"],
+  varmare: ["värm", "motorvärm", "kupévärm", "webasto", "standheizung"],
+  taklucka: ["pano", "panorama", "panoramic", "sunroof", "glasstak", "öppningsbart tak", "taklucka", "takluck"],
+  skinn: ["skinn", "läder", "leather", "nappa", "alcantara"],
+  rattvarme: ["rattvärm", "heated steering"],
+  stolvarme: ["stolvärm", "sätesvärm", "heated seat"],
+  kamera: ["kamera", "camera", "backkamera", "360", "surround view", "reverse cam"],
+  navi: ["navi", "navigation", "gps", "carplay", "android auto"],
+  hud: ["hud", "head-up", "head up"],
+  parksensor: ["park assist", "p-sensor", "parkeringssens", "pdc", "park pilot"],
+  blis: ["blis", "blind spot", "dödvink"],
+  adaptiv_farthallare: ["acc", "adaptiv fart", "adaptive cruise", "distronic"],
+  keyless: ["keyless", "nyckellös", "comfort access"],
+  premium_audio: ["b&w", "bowers", "harman", "h/k", "burmester", "bose", "meridian", "bang & olufsen"],
+  matrix_ljus: ["matrix", "led-strålk", "laserljus", "adaptive led"],
+  voc: ["voc", "connected services", "remote app"],
+  sport: ["m sport", "m-sport", "amg line", "amg", "r-design", "rdesign", "s-line", "sline", "polestar engineered", "st-line"],
+  fyrhjulsstyrning: ["4ws", "fyrhjulsst", "rear-wheel steer", "all-wheel steer"],
+  luftfjadring: ["luftfjädr", "air suspension", "airmatic"],
+  sju_sits: ["7-sits", "7 sits", "seven seat", "7-seater", "7 seater", "tredje sätesrad"],
+  momsbil: ["moms", "vat-qualifying"],
+};
+
+// Visningsetiketter på svenska för AI-promtpen och felmeddelanden
+const equipmentLabels: Record<string, string> = {
+  drag: "dragkrok",
+  varmare: "motorvärmare",
+  taklucka: "panoramatak",
+  skinn: "skinnklädsel",
+  rattvarme: "rattvärme",
+  stolvarme: "stolvärme",
+  kamera: "backkamera",
+  navi: "navigation",
+  hud: "head-up display",
+  parksensor: "parkeringssensorer",
+  blis: "döda vinkeln-varnare",
+  adaptiv_farthallare: "adaptiv farthållare",
+  keyless: "keyless",
+  premium_audio: "premiumljud",
+  matrix_ljus: "matrix-/LED-strålkastare",
+  voc: "fjärrstyrning via app",
+  sport: "sportpaket",
+  fyrhjulsstyrning: "4-hjulsstyrning",
+  luftfjadring: "luftfjädring",
+  sju_sits: "7-sits",
+  momsbil: "momsbil",
+};
+
+// Bygg ett OR-filter mot model_raw för flera tillval (alla mönster för alla nycklar OR:as ihop)
+function buildEquipmentOrFilter(keys: string[]): string {
+  const parts: string[] = [];
+  for (const key of keys) {
+    const patterns = equipmentPatterns[key];
+    if (!patterns) continue;
+    for (const p of patterns) {
+      // Escapa specialtecken som %, _, , och ()
+      const safe = p.replace(/[%_,()]/g, " ").trim();
+      if (!safe) continue;
+      parts.push(`model_raw.ilike.%${safe}%`);
+    }
+  }
+  return parts.join(",");
+}
+
+// Postfilter i JS — säkrare matchning mot regex. Returnerar true om bilen matchar ALLA must-have-tillval.
+function carHasAllEquipment(car: { model_raw: string | null }, mustHaveKeys: string[]): boolean {
+  if (mustHaveKeys.length === 0) return true;
+  const raw = (car.model_raw || "").toLowerCase();
+  if (!raw) return false;
+  for (const key of mustHaveKeys) {
+    const patterns = equipmentPatterns[key];
+    if (!patterns) continue;
+    const found = patterns.some(p => raw.includes(p.toLowerCase()));
+    if (!found) return false;
+  }
+  return true;
+}
+
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
   suv: [
@@ -262,6 +343,32 @@ INTELLIGENTA FÖLJDFRÅGOR (ställ dessa baserat på kontext):
 - Om stad → nämn att mindre bil är smidigare att parkera
 - Om låg kostnad prioriteras → lyft elbil/hybrid och förklara besparingen kort
 
+PROAKTIV RÅDGIVNING — DU ÄR EN SMART RÅDGIVARE, INTE EN ORDERFRÅGARE:
+Du ska AKTIVT föreslå utrustning och tillval som kunden kanske inte tänkt på, baserat på deras livssituation.
+Du ska ge OBJEKTIVA råd — säg "jag skulle faktiskt rekommendera X över Y eftersom..." när det är relevant.
+
+TILLVAL ATT FÖRESLÅ BASERAT PÅ BEHOV (fråga om det när det är relevant):
+- Husvagn / släp / båt → "dragkrok" (drag)
+- Pendlar / kallt klimat / norrland → "motorvärmare" (varmare) + "rattvärme" / "stolvärme"
+- Småbarn / barnvagn → "backkamera" (kamera) + "parkeringssensorer" (parksensor) — lättare att backa
+- Stor familj eller många kompisar → "7-sits" (sju_sits)
+- Mycket motorvägskörning → "adaptiv farthållare" (adaptiv_farthallare) — gör långresor mycket bekvämare
+- Vill ha "wow"-känsla / lyx → "panoramatak" (taklucka), "premiumljud" (premium_audio), "skinn" (skinn)
+- Ofta i mörker / lantliga vägar → "matrix-strålkastare" (matrix_ljus)
+- Företag / kan dra moms → "momsbil" (momsbil)
+- Sportig körning önskas → "sportpaket" (sport)
+
+RÅDGIVAR-EXEMPEL (gör så här när relevant):
+- "Du nämnde husvagn — då är dragkrok ett MÅSTE. Ska jag bara visa bilar med drag?"
+- "Småbarn? Då skulle jag rekommendera backkamera och parkeringssensorer — sparar mycket nerver vid förskolan."
+- "Pendlar du i Norrland? Motorvärmare gör bilen direkt 10 grader varmare på morgonen — värt att ha."
+- "Med din budget skulle jag faktiskt välja en hybrid över bensin — du sparar typ 1500 kr/mån i bränsle."
+
+TOLKA STYRKAN AV ÖNSKEMÅL ("must" vs "nice-to-have"):
+- "måste ha", "krav", "absolut", "nödvändigt", "behöver" → MUST-HAVE → lägg i mustHaveEquipment
+- "gärna", "helst", "skulle vara kul med", "om det går", "nice att ha" → NICE-TO-HAVE → lägg i niceToHaveEquipment
+- Om kunden ber om något (t.ex. "jag vill ha drag") utan att specificera styrka → fråga: "Är drag ett måste eller bara önskvärt?"
+
 GENERELLA REGLER:
 - Ställ MAX EN fråga per meddelande
 - Var kort, varm och naturlig
@@ -284,7 +391,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 
@@ -300,7 +407,14 @@ Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
 Giltiga drivetrain-värden: awd, fwd, rwd
 Giltiga transmission-värden: manuell, automat
-Giltiga useCase-värden: pendling, familj, langresa, stad, blandat`;
+Giltiga useCase-värden: pendling, familj, langresa, stad, blandat
+Giltiga equipment-värden (mustHaveEquipment / niceToHaveEquipment är arrayer av dessa nycklar):
+  drag (dragkrok), varmare (motorvärmare), taklucka (panoramatak), skinn (skinnklädsel),
+  rattvarme (rattvärme), stolvarme (stolvärme), kamera (backkamera), navi (navigation),
+  hud (head-up display), parksensor (parkeringssensorer), blis (döda vinkeln),
+  adaptiv_farthallare (adaptiv farthållare), keyless, premium_audio (Bose/B&W/Burmester m.fl.),
+  matrix_ljus (matrix-/LED-ljus), voc (app-fjärrstyrning), sport (sportpaket: M Sport/AMG Line/R-Design osv.),
+  fyrhjulsstyrning, luftfjadring (luftfjädring), sju_sits (7-sits), momsbil`;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -347,6 +461,9 @@ serve(async (req) => {
       const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
       const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
+      const mustEq = Array.isArray(f.mustHaveEquipment)
+        ? f.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
       const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
       // Progressive relaxation: try with filters, then relax
@@ -395,7 +512,12 @@ serve(async (req) => {
       for (let level = 0; level <= 2; level++) {
         const { data: moreCars } = await buildLoadMoreQuery(level);
         if (moreCars && moreCars.length > 0) {
-          cars = moreCars
+          // Filtrera strikt på must-have-tillval (postfilter, säkrare än SQL)
+          const filtered = mustEq.length > 0
+            ? moreCars.filter((c: any) => carHasAllEquipment(c, mustEq))
+            : moreCars;
+          if (filtered.length === 0) continue;
+          cars = filtered
             .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
             .slice(0, 9);
           break;
@@ -618,6 +740,14 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
+      // Validera equipment-filter
+      const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
+        ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
+      const niceToHaveEquipment: string[] = Array.isArray(filters.niceToHaveEquipment)
+        ? filters.niceToHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
+
       // Track which filters were dropped at each level for transparent messaging
       const droppedAtLevel: string[][] = [[], [], [], [], []];
 
@@ -730,8 +860,19 @@ serve(async (req) => {
       const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
 
       const sortByRelevance = (arr: any[]) => {
-        // First sort by body type match + price proximity
-        const sorted = arr.sort((a, b) => {
+        // 1. STRIKT: Om must-have-tillval finns, filtrera först (kunden sa "måste ha")
+        let pool = mustHaveEquipment.length > 0
+          ? arr.filter((c: any) => carHasAllEquipment(c, mustHaveEquipment))
+          : arr;
+
+        // Säkerhetsventil: om strikt filter ger 0 träffar, fall tillbaka till hela poolen
+        // så vi inte returnerar tomt — men markera så meddelandet kan förklara
+        if (pool.length === 0 && mustHaveEquipment.length > 0) {
+          pool = arr;
+        }
+
+        // 2. Sortera: body type match + nice-to-have boost + pris-närhet
+        const sorted = pool.sort((a, b) => {
           if (hasBodyTypeFilter) {
             const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
               || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
@@ -739,6 +880,14 @@ serve(async (req) => {
               || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
             if (aBodyMatch && !bBodyMatch) return -1;
             if (!aBodyMatch && bBodyMatch) return 1;
+          }
+          // Nice-to-have boost: bilar med fler matchade önskvärda tillval rankas högre
+          if (niceToHaveEquipment.length > 0) {
+            const aRaw = (a.model_raw || "").toLowerCase();
+            const bRaw = (b.model_raw || "").toLowerCase();
+            const aNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => aRaw.includes(p.toLowerCase()))).length;
+            const bNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => bRaw.includes(p.toLowerCase()))).length;
+            if (aNice !== bNice) return bNice - aNice;
           }
           return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
         });
@@ -862,6 +1011,15 @@ serve(async (req) => {
                 c.horsepower && c.horsepower > 0 ? `${c.horsepower} hk` : null,
                 c.transmission ? `växellåda: ${c.transmission}` : null,
               ];
+              // Matchade tillval (must-have + nice-to-have) — så AI kan namnge dem i motiveringen
+              const allEqKeys = [...mustHaveEquipment, ...niceToHaveEquipment];
+              if (allEqKeys.length > 0) {
+                const raw = (c.model_raw || "").toLowerCase();
+                const matched = allEqKeys.filter(k => (equipmentPatterns[k] || []).some(p => raw.includes(p.toLowerCase())));
+                if (matched.length > 0) {
+                  parts.push(`tillval: ${matched.map(k => equipmentLabels[k] || k).join(", ")}`);
+                }
+              }
               // Berikad modelldata
               if (cm) {
                 if (cm.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
@@ -908,12 +1066,15 @@ FÖR VARJE BIL ("carReasons"):
 - Säkerhet: nämn säkerhetsbetyg om relevant
 - Praktiskt: bagageutrymme, hur tungt den kan dra, antal säten
 - Ekonomi: hur mycket den drar, elräckvidd, garanti
+- TILLVAL: Om bilen har "tillval: ..." i datan, NÄMN EXPLICIT minst ett tillval kunden bryr sig om (t.ex. "har dragkrok som du behövde" eller "kommer med både panoramatak och premiumljud").
 - Säg "fyrhjulsdrift" istället för AWD
 - Om kundens ålder är känd: nämn att försäkringen påverkas av ålder
 - Var specifik — nämn siffror när de är relevanta. Använd INTE emojis.${langInstruction}
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
+${mustHaveEquipment.length > 0 ? `Kunden KRÄVER dessa tillval: ${mustHaveEquipment.map(k => equipmentLabels[k] || k).join(", ")}.` : ""}
+${niceToHaveEquipment.length > 0 ? `Kunden vill GÄRNA ha (men inte krav): ${niceToHaveEquipment.map(k => equipmentLabels[k] || k).join(", ")}.` : ""}
 
 Svara ENBART med JSON (ingen markdown, inga code fences):
 {"message":"Kort intro (1 mening, beskriv INTE bilarna)","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
