@@ -181,6 +181,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingDotsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetScrollTopRef = useRef(0);
+  const lastTextareaHeightRef = useRef<number>(0);
+  const animatedMsgIdsRef = useRef<Set<string>>(new Set());
 
   const confirmedTextRef = useRef('');
 
