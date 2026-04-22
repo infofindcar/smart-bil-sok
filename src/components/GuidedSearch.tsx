@@ -590,3 +590,315 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   const hasUserMessages = messages.some((m) => m.role === 'user');
 
+  const subtitle: Record<string, string> = {
+    sv: 'Online — svarar direkt',
+    en: 'Online — replies instantly',
+    no: 'Online — svarer direkte',
+    da: 'Online — svarer straks',
+    fi: 'Online — vastaa heti',
+  };
+
+  return (
+    <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
+      <div
+        className={`clutch-shell overflow-hidden border border-border/50 ${
+          inputFocused ? 'is-focused' : ''
+        } ${
+          isMobile && mobileExpanded
+            ? 'rounded-2xl flex flex-col'
+            : 'rounded-2xl md:rounded-3xl'
+        }`}
+        style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}
+      >
+        {/* Header */}
+        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="clutch-avatar w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center">
+                <Sparkles className="h-4 w-4 md:h-[18px] md:w-[18px] text-primary-foreground" />
+              </div>
+              <span className="online-dot absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-card" />
+            </div>
+            <div className="leading-tight">
+              <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
+              <p className="text-[10.5px] md:text-[11px] text-muted-foreground/80 hidden sm:block">
+                {subtitle[language] || subtitle.sv}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              aria-label="Language"
+              className="text-[11px] bg-background/60 border border-border/40 rounded-lg px-2 py-1.5 text-muted-foreground hover:text-foreground cursor-pointer outline-none focus:border-primary/40 transition-colors"
+            >
+              <option value="sv">🇸🇪 SV</option>
+              <option value="en">🇬🇧 EN</option>
+              <option value="no">🇳🇴 NO</option>
+              <option value="da">🇩🇰 DA</option>
+              <option value="fi">🇫🇮 FI</option>
+            </select>
+            <button
+              onClick={() => handleReset()}
+              className="h-[30px] w-[30px] flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              title={RESTART[language] || RESTART.sv}
+              aria-label={RESTART[language] || RESTART.sv}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Chat area — scroll is contained here */}
+        <div
+          ref={chatContainerRef}
+          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-6 ${
+            isMobile && mobileExpanded
+              ? 'flex-1 min-h-0'
+              : 'max-h-[52dvh] md:max-h-[420px] min-h-[200px]'
+          }`}
+        >
+          {messages.map((msg, idx) => {
+            const isLast = idx === messages.length - 1;
+            const alreadyAnimated = animatedMsgIdsRef.current.has(msg.id);
+            if (isLast && !alreadyAnimated) {
+              animatedMsgIdsRef.current.add(msg.id);
+            }
+            const animClass = !alreadyAnimated
+              ? msg.role === 'user' ? 'whoosh-in' : 'bubble-in'
+              : '';
+            return (
+              <div
+                key={msg.id}
+                ref={isLast ? lastMessageRef : undefined}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} ${animClass}`}
+              >
+                {msg.role === 'assistant' && (
+                  <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                  </div>
+                )}
+                <div
+                  className={`max-w-[85%] md:max-w-[78%] rounded-2xl px-4 py-3 text-[15px] md:text-sm lg:text-[15px] leading-relaxed overflow-hidden ${
+                    msg.role === 'user'
+                      ? 'bubble-user text-secondary-foreground rounded-br-md'
+                      : 'bubble-assistant text-foreground rounded-bl-md'
+                  }`}
+                >
+                  {getDisplayText(msg)}
+                  {isTypingMsg(msg) && (
+                    <span className="inline-block w-0.5 h-3.5 bg-foreground/40 ml-0.5 animate-pulse align-text-bottom" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {isLoading && phase === 'searching' && <SearchAnimation />}
+          {showTypingDots && (
+            <div className="flex justify-start gap-2 bubble-in">
+              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 avatar-thinking">
+                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+              </div>
+              <div className="bubble-assistant rounded-2xl rounded-bl-md px-4 py-3.5">
+                <div className="flex items-end gap-1.5 h-3">
+                  <span className="wave-dot" style={{ animationDelay: '0ms' }} />
+                  <span className="wave-dot" style={{ animationDelay: '140ms' }} />
+                  <span className="wave-dot" style={{ animationDelay: '280ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scroll-to-bottom button */}
+          {showScrollDown && (
+            <button
+              onClick={() => {
+                isAutoFollowRef.current = true;
+                queueScrollToBottom(true);
+              }}
+              aria-label="Scroll to latest"
+              className="sticky bottom-2 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground border border-primary/30 shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              style={{ marginLeft: 'auto', marginRight: 'auto', display: 'block' }}
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Quick-reply suggestions + Strict filter button */}
+        {(showSuggestions || (phase === 'chatting' && !isLoading && hasUserMessages)) && (
+          <SuggestionsRow
+            showSuggestions={!!showSuggestions}
+            suggestions={lastAssistantMsg?.suggestions}
+            onPick={handleSuggestionClick}
+            onWriteOwn={() => inputRef.current?.focus()}
+            writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
+            showStrict={phase === 'chatting' && !isLoading && hasUserMessages}
+            strictLabel={STRICT_FILTER[language] || STRICT_FILTER.sv}
+            onStrict={() => handleSendMessage(undefined, STRICT_FILTER_MSG[language] || STRICT_FILTER_MSG.sv)}
+          />
+        )}
+
+        {/* Results CTA + Reset */}
+        {phase === 'results' && !isLoading && (
+          <div className="px-4 md:px-6 lg:px-8 pb-4 space-y-2 shrink-0">
+            {onScrollToResults && (
+              <Button
+                variant="gradient"
+                size="default"
+                onClick={() => { onScrollToResults?.(); }}
+                className="w-full rounded-xl text-sm font-semibold"
+              >
+                <ChevronDown className="h-4 w-4 mr-2" />
+                {SHOW_MATCHES[language] || SHOW_MATCHES.sv}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => handleReset()} className="w-full rounded-xl text-xs">
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+              {NEW_SEARCH[language] || NEW_SEARCH.sv}
+            </Button>
+          </div>
+        )}
+
+        {/* Input area */}
+        <div
+          ref={inputAreaRef}
+          className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/30 shrink-0 bg-card/60 backdrop-blur-sm safe-pb"
+        >
+          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+            <div
+              className={`clutch-input-shell flex-1 relative rounded-2xl border ${
+                isListening
+                  ? 'border-primary/50 ring-2 ring-primary/20'
+                  : inputFocused
+                    ? 'border-primary/40 ring-1 ring-primary/15'
+                    : 'border-border/40'
+              }`}
+            >
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  const el = e.currentTarget;
+                  requestAnimationFrame(() => {
+                    el.style.height = 'auto';
+                    const next = el.scrollHeight;
+                    if (next !== lastTextareaHeightRef.current) {
+                      el.style.height = `${next}px`;
+                      lastTextareaHeightRef.current = next;
+                    }
+                  });
+                }}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                onKeyDown={handleKeyDown}
+                placeholder={isListening
+                  ? (language === 'en' ? 'Listening...' : 'Lyssnar...')
+                  : (PLACEHOLDERS[language] || PLACEHOLDERS.sv)}
+                disabled={isLoading}
+                rows={1}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                name="clutch-chat-input"
+                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
+                style={{ minHeight: '44px' }}
+              />
+            </div>
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={() => { navigator.vibrate?.(10); toggleListening(); }}
+                disabled={isLoading}
+                aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                className={`relative h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center transition-all border ${
+                  isListening
+                    ? 'bg-primary/15 border-primary/50 text-primary mic-listening'
+                    : 'border-border/40 bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-background'
+                } disabled:opacity-50`}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!inputValue.trim() || isLoading}
+              aria-label="Send"
+              className={`h-11 w-11 rounded-2xl shrink-0 transition-all duration-200 ${
+                inputValue.trim() && !isLoading
+                  ? 'bg-gradient-to-br from-primary to-secondary text-primary-foreground hover:scale-105 active:scale-95 shadow-md hover:shadow-lg'
+                  : 'bg-muted text-muted-foreground/60'
+              }`}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ---------- Memoized suggestions row (prevents re-render during typewriter) ---------- */
+
+type SuggestionsRowProps = {
+  showSuggestions: boolean;
+  suggestions?: string[];
+  onPick: (s: string) => void;
+  onWriteOwn: () => void;
+  writeOwnLabel: string;
+  showStrict: boolean;
+  strictLabel: string;
+  onStrict: () => void;
+};
+
+const SuggestionsRow = memo(function SuggestionsRow({
+  showSuggestions,
+  suggestions,
+  onPick,
+  onWriteOwn,
+  writeOwnLabel,
+  showStrict,
+  strictLabel,
+  onStrict,
+}: SuggestionsRowProps) {
+  return (
+    <div className="px-4 md:px-6 lg:px-8 pb-3 shrink-0">
+      <div className="flex flex-col md:flex-row md:flex-wrap gap-2 items-stretch md:items-center">
+        {showSuggestions && suggestions?.map((s, i) => (
+          <button
+            key={s}
+            onClick={() => { navigator.vibrate?.(10); onPick(s); }}
+            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-border/50 bg-background/70 hover:bg-accent hover:border-primary/40 text-foreground/85 transition-all duration-150 text-left active:scale-[0.98] hover:shadow-sm"
+            style={{ animationDelay: `${i * 50}ms` }}
+          >
+            {s}
+          </button>
+        ))}
+        {showSuggestions && (
+          <button
+            onClick={onWriteOwn}
+            className="chip-in w-full md:w-auto text-sm md:text-xs px-4 md:px-3.5 py-3 md:py-2 rounded-xl border border-dashed border-border/50 bg-transparent hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-2 md:gap-1.5"
+            style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
+          >
+            <PenLine className="h-3.5 w-3.5 md:h-3 md:w-3" />
+            {writeOwnLabel}
+          </button>
+        )}
+        {showStrict && (
+          <button
+            onClick={onStrict}
+            className="chip-in w-full md:w-auto md:ml-auto text-sm md:text-[11px] px-4 md:px-3 py-3 md:py-2 rounded-xl border border-border/60 bg-card hover:bg-accent hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-150 flex items-center gap-1.5"
+          >
+            <Filter className="h-3 w-3" />
+            {strictLabel}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+});
