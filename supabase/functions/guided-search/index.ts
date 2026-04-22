@@ -860,8 +860,19 @@ serve(async (req) => {
       const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
 
       const sortByRelevance = (arr: any[]) => {
-        // First sort by body type match + price proximity
-        const sorted = arr.sort((a, b) => {
+        // 1. STRIKT: Om must-have-tillval finns, filtrera först (kunden sa "måste ha")
+        let pool = mustHaveEquipment.length > 0
+          ? arr.filter((c: any) => carHasAllEquipment(c, mustHaveEquipment))
+          : arr;
+
+        // Säkerhetsventil: om strikt filter ger 0 träffar, fall tillbaka till hela poolen
+        // så vi inte returnerar tomt — men markera så meddelandet kan förklara
+        if (pool.length === 0 && mustHaveEquipment.length > 0) {
+          pool = arr;
+        }
+
+        // 2. Sortera: body type match + nice-to-have boost + pris-närhet
+        const sorted = pool.sort((a, b) => {
           if (hasBodyTypeFilter) {
             const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
               || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
@@ -869,6 +880,14 @@ serve(async (req) => {
               || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
             if (aBodyMatch && !bBodyMatch) return -1;
             if (!aBodyMatch && bBodyMatch) return 1;
+          }
+          // Nice-to-have boost: bilar med fler matchade önskvärda tillval rankas högre
+          if (niceToHaveEquipment.length > 0) {
+            const aRaw = (a.model_raw || "").toLowerCase();
+            const bRaw = (b.model_raw || "").toLowerCase();
+            const aNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => aRaw.includes(p.toLowerCase()))).length;
+            const bNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => bRaw.includes(p.toLowerCase()))).length;
+            if (aNice !== bNice) return bNice - aNice;
           }
           return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
         });
