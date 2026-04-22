@@ -163,6 +163,14 @@ async function enrichModel(
       "Car expert. Reply ONLY an integer 1-5 (Euro NCAP stars). Unknown: 0.",
       `Euro NCAP stars of ${prompt}?`
     ),
+    askAI(apiKey,
+      "Swedish insurance expert. Reply ONLY two integers like '700-1300' (monthly SEK, helförsäkring used car).",
+      `Monthly insurance SEK for used ${prompt} in Sweden?`
+    ),
+    askAI(apiKey,
+      "Swedish service expert. Reply ONLY an integer (annual service SEK, used car). Unknown: 5000.",
+      `Annual service cost SEK for used ${prompt} in Sweden?`
+    ),
   ]);
 
   const BODY_TYPES = ["SUV","Sedan","Kombi","Halvkombi","Coupé","Cab","Pickup","Minibuss","Småbil"];
@@ -276,9 +284,9 @@ async function processChunk(
     if (c.make && c.model) modelRawMap[`${c.make}|||${c.model}`] = c.model_raw ?? null;
   }
 
-  const uniqueCombos = [...new Set(
+  const uniqueCombos: string[] = [...new Set<string>(
     cars
-      .filter((c) => c.make && c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
+      .filter((c): c is typeof c & { make: string; model: string } => !!c.make && !!c.model && modelCache[`${c.make}|||${c.model}`] === undefined)
       .map((c) => `${c.make}|||${c.model}`)
   )];
 

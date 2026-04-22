@@ -25,6 +25,12 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          supabase functions deploy sync-cars \
-            --project-ref bvqveqoschdpenvbxygj \
-            --no-verify-jwt
+          for fn in sync-cars guided-search enrich-batch enrich-car-data \
+                    track-analytics verify-admin-password verify-password \
+                    add-to-waitlist; do
+            echo "::group::Deploya $fn"
+            supabase functions deploy "$fn" \
+              --project-ref bvqveqoschdpenvbxygj \
+              --no-verify-jwt
+            echo "::endgroup::"
+          done
