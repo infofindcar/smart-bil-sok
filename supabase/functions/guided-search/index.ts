@@ -570,8 +570,14 @@ serve(async (req) => {
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select("*");
 
+        // Defensivt skydd mot leasingannonser (importfiltret sköter det
+        // normalt, men ett extra ord-baserat skydd kostar inget).
+        query = query.not("model_raw", "ilike", "%privatleasing%");
+
+        // Pris-golv 1500 kr filtrerar bort månadsbelopp som råkat smyga in.
+        const minPriceLevel = Math.max(1500, Math.floor(minPrice * PRICE_MIN_MULT[level]));
         query = query
-          .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
+          .gte("price", minPriceLevel)
           .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
 
         // Level 0-: city

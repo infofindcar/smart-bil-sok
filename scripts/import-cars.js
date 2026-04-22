@@ -159,7 +159,7 @@ async function main() {
       if (seen.has(sid)) continue;
       seen.add(sid);
 
-      // Filtrera bort leasing
+      // Filtrera bort leasing – officiella Blocket-flaggor
       if (car.sales_form === 5 || car.ad_type === 200) {
         leasingCount++;
         continue;
@@ -167,6 +167,20 @@ async function main() {
 
       // Heuristik-fallback: ny bil med månadsbelopp (trolig leasing)
       if ((car.year ?? 0) >= 2025 && (car.price?.amount ?? 0) < 10000) {
+        leasingCount++;
+        continue;
+      }
+
+      // Heuristik 2: pris < 12 000 kr + leasing/månads-text i titeln betyder
+      // att 'priset' faktiskt är månadsbeloppet, inte köp-pris. Återförsäljaren
+      // har då glömt sätta sales_form=5/ad_type=200. Reella köpannonser med
+      // hög prisetikett som råkar nämna "kr/mån"-finansiering filtreras inte.
+      const rawSpec = (car.model_specification ?? "").toString();
+      const priceAmount = car.price?.amount ?? Number.MAX_SAFE_INTEGER;
+      if (
+        priceAmount < 12000 &&
+        /leasing|kr\s*\/\s*m[åa]n|:-?\s*\/\s*m[åa]n|\/\s*m[åa]n/i.test(rawSpec)
+      ) {
         leasingCount++;
         continue;
       }
