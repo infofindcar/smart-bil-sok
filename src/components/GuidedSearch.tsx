@@ -316,6 +316,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   }, []);
 
   // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
+  // Also keep the input in view by scrolling the window when the textarea grows.
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -326,8 +327,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         el.style.height = `${next}px`;
         lastTextareaHeightRef.current = next;
       }
+      // Keep input visible in viewport as it grows
+      const area = inputAreaRef.current;
+      if (area) {
+        const rect = area.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const overflow = rect.bottom - vh + 16;
+        if (overflow > 0) {
+          window.scrollBy({ top: overflow, behavior: 'smooth' });
+        }
+      }
+      // Keep chat scrolled to bottom too
+      queueScrollToBottom(true);
     });
-  }, [inputValue]);
+  }, [inputValue, queueScrollToBottom]);
 
   // When input focuses on mobile, scroll chat to bottom
   useEffect(() => {
