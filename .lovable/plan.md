@@ -1,88 +1,112 @@
 
 
-## Plan: Topp 5-frågor + korrekt garanti-/assistansvisning baserad på faktisk ålder
+## Plan: Snyggare och smidigare Clutch-chat (desktop, tablet, mobil)
 
-### Sammanfattning
-1. Lägg till **topp 5 nya frågor** till Clutch (utan leasing)
-2. **Dölj utgångna garantier och vägassistans** baserat på bilens verkliga ålder + miltal — inte bara 2014, utan ALLA bilar där garantin gått ut (en 2017 BMW har också gått ur 3-årsgarantin)
-3. Lägg till **4 extra smarta frågor** + bonus-trigger för äldre bilar
+Nuvarande chat fungerar men känns "spretig" — bubblorna är platta, headern är liten, animationerna kan kännas hackiga vid typewriter, och layouten skalar inte optimalt mellan device-storlekar. Jag gör en designöverhaul + prestandafix utan att röra själva chat-logiken.
 
 ---
 
-### Del 1: Topp 5-frågor till Clutch
+### Del 1: Visuella förbättringar (snyggare känsla)
 
-**Fil:** `supabase/functions/guided-search/index.ts` (`CONVERSATION_SYSTEM_PROMPT`)
+**A) Premium chat-container**
+- Mjukare, större border-radius (rounded-2xl → rounded-3xl på desktop)
+- Subtil gradient-bakgrund i kortet (från `bg-card` till en lätt tonad nyans)
+- Tydligare skugga med två lager (`shadow-2xl` + inre highlight) för djup
+- Subtil glow-effekt runt kortet när användaren skriver (fokus-state)
 
-1. **Ägartid** — kort (1–3 år) → låg värdeminskning / lång (5+ år) → pålitlighet
-2. **Finansiering** — kontant ELLER billån. **Aldrig leasing.**
-3. **Husdjur** — triggar kombi/SUV, stor lucka, tåligt klädsel
-4. **Märken att undvika** — strikt filter
-5. **Verkstad nära** — glesbygd → bias mot vanliga märken (VW, Volvo, Toyota, Skoda)
+**B) Snyggare header**
+- Större avatar (8x8 → 10x10) med gradient-bakgrund (primary → secondary) istället för platt
+- Ny "online"-indikator: pulserande grön prick med ring
+- Lägg till undertext "Din bilrådgivare" / "Online — svarar direkt" under "Clutch"
+- Språkväljare och reset blir snyggare ikon-knappar med tooltip istället för text-pills
 
-Explicit regel:
-> "FindCar säljer INGA leasingbilar. Nämn ALDRIG privatleasing eller leasing. Finansieringsfrågan = kontant vs billån."
+**C) Bubblor med karaktär**
+- Assistent-bubblor: mjuk gradient (muted → muted/40), tydligare avatar med sparkles-ikon i gradient-cirkel
+- Användar-bubblor: gradient (secondary → secondary/85), subtil shine-effekt
+- Större padding (py-3 px-4) och bättre line-height
+- Mjuk fade-in + slide-up animation (translateY 8px → 0) istället för bara fade
+- Tail/stub på bubblan (rounded-bl-md / rounded-br-md) för chat-känsla
 
-Höj minimum från 6 → 7 datapunkter innan sökning.
+**D) Snyggare typing-indikator**
+- Ersätter de tre prickarna med en mjukare våg-animation
+- Avatar bredvid med en subtil pulse-ring för att signalera "tänker"
 
----
+**E) Quick-reply chips**
+- Pill-form med subtil gradient-border vid hover
+- Ikoner till vänster i varje förslag (typ 💼 för pendel, 👨‍👩‍👧 för familj)
+- Stagger-animation när de dyker upp (50ms delay mellan varje)
 
-### Del 2: Visa bara aktiv garanti & assistans (korrekt för ALLA åldrar)
-
-**Problem:** En 2014 BMW (11 år gammal) OCH en 2017 BMW (8 år gammal) visas båda med "3 års nybilsgaranti" — båda har gått ut. Måste räknas mot **dagens datum**.
-
-**Logik:**
-- Bilens ålder = `nuvarande år - car.year`
-- Garanti aktiv om: `ålder < warrantyYears` **OCH** `mileage < warrantyKm`
-- Vägassistans aktiv om: `ålder < roadsideAssistanceYears`
-- Räkna ut **återstående tid/km** för att visa "1 år / 30 000 km kvar"
-
-**Filer som ändras:**
-
-**A) `src/lib/carData.ts`**
-- Ny funktion `getActiveWarranty(warranty, carYear, mileage)` som returnerar:
-  ```
-  {
-    warrantyActive: boolean,
-    warrantyYearsLeft: number,
-    warrantyKmLeft: number,
-    roadsideActive: boolean,
-    roadsideYearsLeft: number
-  }
-  ```
-- Ny funktion `formatActiveWarranty(active)` som:
-  - Returnerar `null` om inget är aktivt → komponenten döljer hela sektionen
-  - Returnerar t.ex. "Nybilsgaranti: 1 år / 30 000 km kvar"
-  - Returnerar t.ex. "Vägassistans gäller 2 år till"
-  - Kombinerar båda om båda aktiva
-
-**B) `src/pages/CarDetail.tsx`**
-- Ersätt `formatWarranty(getWarranty(car.make))` med ny logik som tar in `car.year` + `car.mileage`
-- Om `null` → dölj hela garanti-sektionen/badgen
-- Visa bara den aktiva delen med tydlig "kvar"-text
-
-**C) `src/components/CarCard.tsx`**
-- Samma logik om garanti-chip visas där (dölj om utgången)
+**F) Inputfält**
+- Större, mjukare (rounded-2xl), inre skugga
+- Animerad placeholder som fade:ar in/ut vid språkbyte
+- Send-knappen får gradient + scale-animation vid hover
+- Mic-knappen får tydligare aktivt läge med animerad ring
 
 ---
 
-### Del 3: 4 extra smarta frågor + bonus-trigger
+### Del 2: Responsiv finess (desktop / tablet / mobil)
 
-Läggs in i samma systemprompt:
+**Desktop (≥1024px)**
+- Bredare kort (max-w-3xl → max-w-4xl)
+- Större typsnitt i bubblor (text-[15px])
+- Mer luft (px-8 py-5 i header)
+- Side-by-side suggestions (3 kolumner)
 
-1. **Färgpreferenser & tabu** — "Finns färger du vill ha eller absolut inte vill ha?"
-2. **Importerad bil OK?** — filtreras via `model_raw` (söker "import", "EU-bil")
-3. **Antal tidigare ägare** — påverkar val mellan demobil vs äldre bil
-4. **Laddmöjlighet hemma** (vid elbil) — explicit fråga: "Kan du ladda hemma eller publika stolpar?"
+**Tablet (768–1023px)**
+- max-w-2xl, kompakt header
+- Suggestions i 2 kolumner
+- Touch-targets minst 44px
 
-**Bonus-trigger:** Om bilen är **äldre än 8 år** ska Clutch proaktivt nämna högre servicekostnader och föreslå kontroll av servicehistorik.
+**Mobil (<768px)**
+- Behåll expand-in-place-logiken (calc(100dvh - 120px))
+- **Förbättring:** Fixera input-fältet i botten med safe-area-inset-bottom (för iPhone notch)
+- Header krymper till sticky 56px med backdrop-blur OCH visar bara avatar + "Clutch"
+- Suggestions blir fullbredd-pills med större touch-yta (py-3)
+- Subtil "swipe down to close" gesture på expanded chat (visuell hint)
+
+---
+
+### Del 3: Prestanda (mindre lagg)
+
+Nuvarande lagg-källor jag identifierat:
+
+**1. Typewriter scroll-loop kör för aggressivt**
+- Just nu: setVisibleText vid varje karaktär + scroll-rAF varje 200ms
+- Fix: Batcha typewriter-uppdateringar med `requestAnimationFrame` istället för `setTimeout` per char → mycket smoothare på mobil
+
+**2. Textarea auto-resize triggar layout-thrashing**
+- Just nu: två separata `requestAnimationFrame` + `style.height = 'auto'` per keystroke
+- Fix: använd `field-sizing: content` (modern CSS) som fallback till nuvarande logik, OCH cachea senaste höjd för att skippa onödiga writes
+
+**3. Animate-fade-in körs på ALLA meddelanden vid varje render**
+- Fix: lägg `key`-baserad animation bara på nya meddelanden (track via ref), så gamla meddelanden inte re-animeras vid scroll
+
+**4. Suggestions re-renderar vid varje typewriter-tick**
+- Fix: Memoize suggestions-blocket med `React.memo` så det inte rerenderas medan visibleText uppdateras
+
+**5. Scroll-loop kan fortsätta köra onödigt**
+- Fix: Stoppa rAF-loopen helt när användaren scrollat upp manuellt (inte bara pausa auto-follow)
+
+**6. Bubble-höjd transition (`transition-[height]`) triggar reflow**
+- Fix: Ta bort transition-[height] (browser kan inte animera height: auto effektivt) → använd CSS `interpolate-size: allow-keywords` eller bara skippa height-transition
+
+---
+
+### Del 4: Mikrointeraktioner som höjer känslan
+
+- Subtil "whoosh"-ljud-känsla via animation när meddelande skickas (scale + fade)
+- Avatar pulserar mjukt när Clutch "tänker"
+- Send-knapp blir disabled med subtil färgändring istället för bara opacity
+- Reset-knapp får confirmation-tooltip vid hover (förhindra oavsiktlig reset)
+- Smooth scroll-to-bottom-knapp får gradient-bg + bounce-animation
 
 ---
 
 ### Filer som ändras
-- `supabase/functions/guided-search/index.ts` — systemprompt
-- `src/lib/carData.ts` — `getActiveWarranty()` + `formatActiveWarranty()`
-- `src/pages/CarDetail.tsx` — använd ny logik, dölj utgångna delar
-- `src/components/CarCard.tsx` — samma vid behov
 
-Inga DB-ändringar.
+- `src/components/GuidedSearch.tsx` — All chat-UI: header, bubblor, suggestions, input, prestandafix
+- `src/index.css` — Nya keyframes: `bubble-in`, `wave-typing`, `avatar-pulse`, `chip-stagger`. Plus `interpolate-size` regel för smooth height
+- `src/components/SearchAnimation.tsx` — Lätt polering så den matchar nya designspråket
+
+Inga ändringar i logik, edge functions, sessionStorage, eller chat-flow. Allt nuvarande beteende (voice, språkval, persist, reset, strict filter) bevaras exakt.
 
