@@ -351,6 +351,36 @@ const CarDetail = () => {
             </div>
           )}
 
+          {/* Utrustning & tillval (parsad från model_raw) */}
+          {(() => {
+            const equipment = parseEquipment(car.model_raw);
+            if (equipment.length === 0) return null;
+            return (
+              <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Package className="h-4 w-4 text-primary" />
+                  <h2 className="text-lg font-semibold">Utrustning & tillval</h2>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {equipment.map((tag) => (
+                    <Badge
+                      key={tag.key}
+                      variant="outline"
+                      className="bg-primary/5 border-primary/20 text-foreground/90 font-normal"
+                    >
+                      {tag.label}
+                    </Badge>
+                  ))}
+                </div>
+                {car.model_raw && (
+                  <p className="text-xs text-muted-foreground/70 italic leading-relaxed">
+                    Säljarens beskrivning: "{car.model_raw}"
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+
           {/* All specs grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {specs.map((spec) => (
