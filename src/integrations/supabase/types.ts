@@ -263,6 +263,7 @@ export type Database = {
           created_at: string | null
           dealer_name: string | null
           dealer_url: string | null
+          description: string | null
           drivetrain: string | null
           electric_range_km: number | null
           engine_volume_cc: number | null
@@ -297,6 +298,7 @@ export type Database = {
           created_at?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
+          description?: string | null
           drivetrain?: string | null
           electric_range_km?: number | null
           engine_volume_cc?: number | null
@@ -331,6 +333,7 @@ export type Database = {
           created_at?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
+          description?: string | null
           drivetrain?: string | null
           electric_range_km?: number | null
           engine_volume_cc?: number | null
@@ -460,19 +463,28 @@ export type Database = {
       }
       waitlist: {
         Row: {
+          approved: boolean | null
+          approved_at: string | null
           created_at: string
           email: string
           id: string
+          password: string | null
         }
         Insert: {
+          approved?: boolean | null
+          approved_at?: string | null
           created_at?: string
           email: string
           id?: string
+          password?: string | null
         }
         Update: {
+          approved?: boolean | null
+          approved_at?: string | null
           created_at?: string
           email?: string
           id?: string
+          password?: string | null
         }
         Relationships: []
       }
@@ -525,7 +537,8 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
