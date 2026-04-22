@@ -1,35 +1,88 @@
 
 
-## Plan: Förbättra Clutch kommunikationsstil
+## Plan: Topp 5-frågor + korrekt garanti-/assistansvisning baserad på faktisk ålder
 
 ### Sammanfattning
-Uppdatera Clutch systemprompt och resultatvisning baserat på dina preferenser:
-- **Osäkerhet**: Mix — ge förslag OCH erbjud att hoppa över
-- **Humor**: Lätt humor ibland, inte alltid saklig
-- **Resultat**: Förklaringar visas under bilkorten, inte i chatten
-- **Språk**: Enkelt, vardagligt svenska — inga biltermer
+1. Lägg till **topp 5 nya frågor** till Clutch (utan leasing)
+2. **Dölj utgångna garantier och vägassistans** baserat på bilens verkliga ålder + miltal — inte bara 2014, utan ALLA bilar där garantin gått ut (en 2017 BMW har också gått ur 3-årsgarantin)
+3. Lägg till **4 extra smarta frågor** + bonus-trigger för äldre bilar
 
-### Ändringar
+---
 
-#### 1. Uppdatera systemprompt (edge function)
-**Fil:** `supabase/functions/guided-search/index.ts`
+### Del 1: Topp 5-frågor till Clutch
 
-Ändra `CONVERSATION_SYSTEM_PROMPT` med dessa justeringar:
+**Fil:** `supabase/functions/guided-search/index.ts` (`CONVERSATION_SYSTEM_PROMPT`)
 
-- **Tonalitet**: Byta från "kunnig kompis" till "kunnig kompis med lite humor" — tillåta lättsamma kommentarer som "Bra val, klassiker!" men aldrig överdriva
-- **Osäkerhet-hantering**: Lägga till regel: "Om kunden svarar 'vet inte' eller verkar osäker — ge 2-3 konkreta förslag de kan välja mellan, OCH erbjud att hoppa över ('Eller så skippar vi den!')"
-- **Enkelt språk**: Förtydliga att Clutch aldrig ska använda termer som "miltal", "drivlina", "förmånsvärde" utan förklara med vardagliga ord
-- **Resultat i chatten**: Ta bort all resultatsammanfattning i chattmeddelandet — Clutch ska bara säga en kort mening som "Här är dina matchningar!" utan att beskriva bilarna. Bilförklaringarna ska istället komma under varje bilkort (redan hanterat via `carReasons`)
+1. **Ägartid** — kort (1–3 år) → låg värdeminskning / lång (5+ år) → pålitlighet
+2. **Finansiering** — kontant ELLER billån. **Aldrig leasing.**
+3. **Husdjur** — triggar kombi/SUV, stor lucka, tåligt klädsel
+4. **Märken att undvika** — strikt filter
+5. **Verkstad nära** — glesbygd → bias mot vanliga märken (VW, Volvo, Toyota, Skoda)
 
-Exempel på nya bra svar i prompten:
-- "Aha, elbil! Hur långt kör du till jobbet ungefär? Det påverkar vilken räckvidd du behöver."
-- "Ingen aning om drivmedel? De flesta som pendlar kort gillar elbil, annars funkar hybrid bra. Eller så skippar vi den frågan!"
+Explicit regel:
+> "FindCar säljer INGA leasingbilar. Nämn ALDRIG privatleasing eller leasing. Finansieringsfrågan = kontant vs billån."
 
-#### 2. Förbättra resultatmeddelandet
-**Fil:** `supabase/functions/guided-search/index.ts`
+Höj minimum från 6 → 7 datapunkter innan sökning.
 
-I AI-anropet som genererar resultatmeddelandet (efter sökning) — instruera att meddelandet ska vara kort och inte beskriva bilarna. T.ex. "Kolla in dessa — jag tror de passar dig!" istället för en lång sammanfattning.
+---
+
+### Del 2: Visa bara aktiv garanti & assistans (korrekt för ALLA åldrar)
+
+**Problem:** En 2014 BMW (11 år gammal) OCH en 2017 BMW (8 år gammal) visas båda med "3 års nybilsgaranti" — båda har gått ut. Måste räknas mot **dagens datum**.
+
+**Logik:**
+- Bilens ålder = `nuvarande år - car.year`
+- Garanti aktiv om: `ålder < warrantyYears` **OCH** `mileage < warrantyKm`
+- Vägassistans aktiv om: `ålder < roadsideAssistanceYears`
+- Räkna ut **återstående tid/km** för att visa "1 år / 30 000 km kvar"
+
+**Filer som ändras:**
+
+**A) `src/lib/carData.ts`**
+- Ny funktion `getActiveWarranty(warranty, carYear, mileage)` som returnerar:
+  ```
+  {
+    warrantyActive: boolean,
+    warrantyYearsLeft: number,
+    warrantyKmLeft: number,
+    roadsideActive: boolean,
+    roadsideYearsLeft: number
+  }
+  ```
+- Ny funktion `formatActiveWarranty(active)` som:
+  - Returnerar `null` om inget är aktivt → komponenten döljer hela sektionen
+  - Returnerar t.ex. "Nybilsgaranti: 1 år / 30 000 km kvar"
+  - Returnerar t.ex. "Vägassistans gäller 2 år till"
+  - Kombinerar båda om båda aktiva
+
+**B) `src/pages/CarDetail.tsx`**
+- Ersätt `formatWarranty(getWarranty(car.make))` med ny logik som tar in `car.year` + `car.mileage`
+- Om `null` → dölj hela garanti-sektionen/badgen
+- Visa bara den aktiva delen med tydlig "kvar"-text
+
+**C) `src/components/CarCard.tsx`**
+- Samma logik om garanti-chip visas där (dölj om utgången)
+
+---
+
+### Del 3: 4 extra smarta frågor + bonus-trigger
+
+Läggs in i samma systemprompt:
+
+1. **Färgpreferenser & tabu** — "Finns färger du vill ha eller absolut inte vill ha?"
+2. **Importerad bil OK?** — filtreras via `model_raw` (söker "import", "EU-bil")
+3. **Antal tidigare ägare** — påverkar val mellan demobil vs äldre bil
+4. **Laddmöjlighet hemma** (vid elbil) — explicit fråga: "Kan du ladda hemma eller publika stolpar?"
+
+**Bonus-trigger:** Om bilen är **äldre än 8 år** ska Clutch proaktivt nämna högre servicekostnader och föreslå kontroll av servicehistorik.
+
+---
 
 ### Filer som ändras
-- `supabase/functions/guided-search/index.ts` — systemprompt + resultatmeddelandelogik
+- `supabase/functions/guided-search/index.ts` — systemprompt
+- `src/lib/carData.ts` — `getActiveWarranty()` + `formatActiveWarranty()`
+- `src/pages/CarDetail.tsx` — använd ny logik, dölj utgångna delar
+- `src/components/CarCard.tsx` — samma vid behov
+
+Inga DB-ändringar.
 
