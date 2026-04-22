@@ -287,10 +287,6 @@ const Index = () => {
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/[0.08] border border-secondary/[0.12] mb-5">
-                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                <p className="text-xs font-medium uppercase tracking-widest text-secondary/80">Personlig bilrådgivning</p>
-              </div>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                 Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
