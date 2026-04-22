@@ -14,8 +14,12 @@ export default {
     },
     extend: {
       fontFamily: {
+        // Premium stack: Plus Jakarta Sans som display/heading (geometrisk,
+        // konfident), Inter som body (läsbart), Instrument Serif som
+        // elegant italic-accent när vi vill åt Porsche-serif-känslan.
         sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Lora", "Georgia", "serif"],
+        display: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
+        serif: ["Instrument Serif", "Georgia", "serif"],
         mono: ["Space Mono", "monospace"],
       },
       colors: {
@@ -81,9 +85,12 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        warm: "0 4px 14px -2px hsl(45 25% 50% / 0.15)",
-        "warm-lg": "0 10px 30px -5px hsl(45 25% 50% / 0.2)",
-        "primary-glow": "0 4px 20px -2px hsl(190 70% 38% / 0.25)",
+        // Premium skuggor för mörkt tema – använd varmglöd från guldprimary
+        // istället för svarta skuggor som försvinner mot mörk bakgrund.
+        warm: "0 4px 14px -2px hsl(240 10% 2% / 0.6)",
+        "warm-lg": "0 10px 30px -5px hsl(240 10% 2% / 0.75)",
+        "primary-glow": "0 4px 24px -4px hsl(35 90% 62% / 0.35)",
+        elevated: "0 1px 0 hsl(40 15% 95% / 0.04) inset, 0 12px 40px -8px hsl(240 10% 0% / 0.6)",
       },
       keyframes: {
         "accordion-down": {
