@@ -871,6 +871,13 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
+        // Smart sortering: om budgeten är väldigt öppen (max är default 99999999 eller > 5x min)
+        // sortera efter ÅR (nyast först) så vi inte bara får de billigaste längst ner i spannet.
+        // Annars sortera efter pris stigande.
+        const isOpenBudget = maxPrice >= 99999999 || (minPrice > 0 && maxPrice > minPrice * 5);
+        if (isOpenBudget) {
+          return query.order("year", { ascending: false, nullsFirst: false }).limit(40);
+        }
         return query.order("price", { ascending: true }).limit(18);
       };
 
