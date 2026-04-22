@@ -204,15 +204,23 @@ function buildEquipmentOrFilter(keys: string[]): string {
   return parts.join(",");
 }
 
+// Plockar all text där tillval kan nämnas (titel + säljar-beskrivning).
+// Description är Blockets fulltext och täcker tillval som säljaren skriver
+// men som inte ryms i den korta titeln. Använd alltid denna istället för
+// bara car.model_raw när du letar efter utrustning.
+function equipmentSearchText(car: { model_raw: string | null; description: string | null }): string {
+  return `${car.model_raw || ""}\n${car.description || ""}`.toLowerCase();
+}
+
 // Postfilter i JS — säkrare matchning mot regex. Returnerar true om bilen matchar ALLA must-have-tillval.
-function carHasAllEquipment(car: { model_raw: string | null }, mustHaveKeys: string[]): boolean {
+function carHasAllEquipment(car: { model_raw: string | null; description: string | null }, mustHaveKeys: string[]): boolean {
   if (mustHaveKeys.length === 0) return true;
-  const raw = (car.model_raw || "").toLowerCase();
-  if (!raw) return false;
+  const haystack = equipmentSearchText(car);
+  if (!haystack.trim()) return false;
   for (const key of mustHaveKeys) {
     const patterns = equipmentPatterns[key];
     if (!patterns) continue;
-    const found = patterns.some(p => raw.includes(p.toLowerCase()));
+    const found = patterns.some(p => haystack.includes(p.toLowerCase()));
     if (!found) return false;
   }
   return true;
@@ -962,10 +970,10 @@ serve(async (req) => {
           }
           // Nice-to-have boost: bilar med fler matchade önskvärda tillval rankas högre
           if (niceToHaveEquipment.length > 0) {
-            const aRaw = (a.model_raw || "").toLowerCase();
-            const bRaw = (b.model_raw || "").toLowerCase();
-            const aNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => aRaw.includes(p.toLowerCase()))).length;
-            const bNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => bRaw.includes(p.toLowerCase()))).length;
+            const aText = equipmentSearchText(a);
+            const bText = equipmentSearchText(b);
+            const aNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => aText.includes(p.toLowerCase()))).length;
+            const bNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => bText.includes(p.toLowerCase()))).length;
             if (aNice !== bNice) return bNice - aNice;
           }
           return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
@@ -1093,8 +1101,8 @@ serve(async (req) => {
               // Matchade tillval (must-have + nice-to-have) — så AI kan namnge dem i motiveringen
               const allEqKeys = [...mustHaveEquipment, ...niceToHaveEquipment];
               if (allEqKeys.length > 0) {
-                const raw = (c.model_raw || "").toLowerCase();
-                const matched = allEqKeys.filter(k => (equipmentPatterns[k] || []).some(p => raw.includes(p.toLowerCase())));
+                const text = equipmentSearchText(c);
+                const matched = allEqKeys.filter(k => (equipmentPatterns[k] || []).some(p => text.includes(p.toLowerCase())));
                 if (matched.length > 0) {
                   parts.push(`tillval: ${matched.map(k => equipmentLabels[k] || k).join(", ")}`);
                 }
