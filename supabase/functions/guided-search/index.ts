@@ -740,6 +740,14 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
+      // Validera equipment-filter
+      const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
+        ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
+      const niceToHaveEquipment: string[] = Array.isArray(filters.niceToHaveEquipment)
+        ? filters.niceToHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
+
       // Track which filters were dropped at each level for transparent messaging
       const droppedAtLevel: string[][] = [[], [], [], [], []];
 
