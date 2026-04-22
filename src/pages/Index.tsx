@@ -20,6 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
+import heroVideo from '@/assets/hero-video.mp4.asset.json';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
@@ -130,7 +131,7 @@ const Index = () => {
       {/* Hero with video background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Cinematic looping background video — WebM primary, MP4 fallback.
+        {/* Cinematic 360° orbit around a generic concept car — true motion video.
             Poster image keeps LCP fast and prevents flash before metadata loads. */}
         <video
           className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
@@ -141,11 +142,9 @@ const Index = () => {
           preload="auto"
           poster="/images/hero_findcar.webp"
           aria-hidden="true"
+          src={heroVideo.url}
           style={{ transform: `translateY(${parallaxY}px)` }}
-        >
-          <source src="/hero-video.webm" type="video/webm" />
-          <source src="/hero-video.mp4" type="video/mp4" />
-        </video>
+        />
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
 
