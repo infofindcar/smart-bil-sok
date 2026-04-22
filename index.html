@@ -64,9 +64,9 @@
 
     <link rel="icon" type="image/png" href="/favicon.png" />
 
-    <!-- Preload hero images for instant rendering -->
-    <link rel="preload" as="image" type="image/webp" href="/images/hero_mobile.webp" media="(max-width: 767px)" />
-    <link rel="preload" as="image" type="image/webp" href="/images/hero_findcar.webp" media="(min-width: 768px)" />
+    <!-- Preload hero poster image (LCP) and start fetching the looping video -->
+    <link rel="preload" as="image" type="image/webp" href="/images/hero_findcar.webp" />
+    <link rel="preload" as="video" type="video/webm" href="/hero-video.webm" />
   </head>
 
   <body>
