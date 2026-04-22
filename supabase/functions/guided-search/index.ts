@@ -1011,6 +1011,15 @@ serve(async (req) => {
                 c.horsepower && c.horsepower > 0 ? `${c.horsepower} hk` : null,
                 c.transmission ? `växellåda: ${c.transmission}` : null,
               ];
+              // Matchade tillval (must-have + nice-to-have) — så AI kan namnge dem i motiveringen
+              const allEqKeys = [...mustHaveEquipment, ...niceToHaveEquipment];
+              if (allEqKeys.length > 0) {
+                const raw = (c.model_raw || "").toLowerCase();
+                const matched = allEqKeys.filter(k => (equipmentPatterns[k] || []).some(p => raw.includes(p.toLowerCase())));
+                if (matched.length > 0) {
+                  parts.push(`tillval: ${matched.map(k => equipmentLabels[k] || k).join(", ")}`);
+                }
+              }
               // Berikad modelldata
               if (cm) {
                 if (cm.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
