@@ -263,6 +263,7 @@ export type Database = {
           created_at: string | null
           dealer_name: string | null
           dealer_url: string | null
+          description: string | null
           drivetrain: string | null
           electric_range_km: number | null
           engine_volume_cc: number | null
@@ -297,6 +298,7 @@ export type Database = {
           created_at?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
+          description?: string | null
           drivetrain?: string | null
           electric_range_km?: number | null
           engine_volume_cc?: number | null
@@ -331,6 +333,7 @@ export type Database = {
           created_at?: string | null
           dealer_name?: string | null
           dealer_url?: string | null
+          description?: string | null
           drivetrain?: string | null
           electric_range_km?: number | null
           engine_volume_cc?: number | null

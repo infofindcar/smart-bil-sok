@@ -374,11 +374,18 @@ const CarDetail = () => {
                     </Badge>
                   ))}
                 </div>
-                {car.model_raw && (
+                {car.description ? (
+                  <div className="mt-4 bg-muted/30 rounded-xl p-4 border border-border">
+                    <h3 className="text-sm font-semibold mb-2">Säljarens beskrivning</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                      {car.description}
+                    </p>
+                  </div>
+                ) : car.model_raw ? (
                   <p className="text-xs text-muted-foreground/70 italic leading-relaxed">
-                    Säljarens beskrivning: "{car.model_raw}"
+                    Säljarens underrubrik: "{car.model_raw}"
                   </p>
-                )}
+                ) : null}
               </div>
             );
           })()}

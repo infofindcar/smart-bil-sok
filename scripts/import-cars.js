@@ -211,6 +211,10 @@ async function main() {
         image_thumb_url: car.image?.url ?? null,
         listing_url:   car.canonical_url ?? null,
         regnr:         car.regno ?? null,
+        // Säljarens fulltextbeskrivning från Blocket. Blocket-API:et kallar
+        // fältet 'body' (legacy) eller 'description' beroende på endpoint –
+        // ta det första som finns, null om inget.
+        description:   (car.body ?? car.description ?? car.text ?? null),
         source:        "blocket",
       });
       intervalKept++;
