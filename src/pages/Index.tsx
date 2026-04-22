@@ -241,7 +241,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-12"
+            className="flex flex-col items-center gap-4 mb-20"
           >
             <Button
               onClick={scrollToSearch}
@@ -250,22 +250,6 @@ const Index = () => {
             >
               Hitta din bil
             </Button>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
-              className="flex flex-col items-center gap-2"
-            >
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-white/70 text-xs">
-                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
-                </p>
-              </div>
-              <p className="text-white/50 text-sm">
-                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
-              </p>
-            </motion.div>
           </motion.div>
         </div>
 
