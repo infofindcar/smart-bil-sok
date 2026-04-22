@@ -3,6 +3,7 @@ import { Heart, Fuel, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import type { Car } from './GuidedSearch';
+import { topEquipment } from '@/lib/equipment';
 
 interface CarCardProps {
   car: Car;
@@ -50,6 +51,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
   const navigate = useNavigate();
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
   const displayName = getDisplayName(car);
+  const equipment = topEquipment(car.model_raw, 5);
 
   return (
     <div
@@ -127,6 +129,21 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
             </Badge>
           )}
         </div>
+
+        {/* Tillval / utrustning från model_raw */}
+        {equipment.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {equipment.map((tag) => (
+              <Badge
+                key={tag.key}
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5 bg-primary/5 border-primary/20 text-foreground/80 font-normal"
+              >
+                {tag.label}
+              </Badge>
+            ))}
+          </div>
+        )}
 
         {/* Personlig motivering från Clutch */}
         {matchReason && (
