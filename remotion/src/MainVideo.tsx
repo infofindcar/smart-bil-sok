@@ -22,10 +22,14 @@ const FadeWrap: React.FC<{
   children: React.ReactNode;
 }> = ({ duration, fadeIn, fadeOut, children }) => {
   const frame = useCurrentFrame();
+  // Ensure strictly monotonic input range even when fadeIn=0 or fadeOut=0
+  const inEnd = Math.max(fadeIn, 1);
+  const outStart = Math.min(duration - Math.max(fadeOut, 1), duration - 1);
+  const safeOutStart = Math.max(outStart, inEnd + 1);
   const opacity = interpolate(
     frame,
-    [0, fadeIn, duration - fadeOut, duration],
-    [0, 1, 1, 0],
+    [0, inEnd, safeOutStart, duration],
+    [fadeIn === 0 ? 1 : 0, 1, 1, fadeOut === 0 ? 1 : 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   return <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;
