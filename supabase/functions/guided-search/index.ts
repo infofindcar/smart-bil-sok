@@ -123,23 +123,51 @@ const drivetrainPatterns: Record<string, string[]> = {
 
 // Tillval/utrustning — AI normaliserar kundens ord till dessa nycklar,
 // backend kör ILIKE mot model_raw. Flera patterns per nyckel = OR-sökning
-// (synonymer), så "skinn" träffar även "läder".
+// (synonymer), så "skinn" träffar även "läder", "drivlina" → quattro/xDrive/...
+// Nyckel som AI skickar utanför listan accepteras som fri-text-ILIKE (saneras).
 const featurePatterns: Record<string, string[]> = {
-  bose:         ["%bose%"],
-  harman:       ["%harman%"],
-  burmester:    ["%burmester%"],
+  // — Ljud —
+  bose:             ["%bose%"],
+  harman:           ["%harman%"],
+  burmester:        ["%burmester%"],
   "bang & olufsen": ["%bang%olufsen%", "%b&o%"],
-  drag:         ["%drag%"],
-  värmare:      ["%värmare%", "%motorvärm%", "%kupévärm%"],
-  panorama:     ["%panorama%", "%glastak%", "%pano %"],
-  kamera:       ["%backkamera%", "%360-kam%", "%360 kam%", "%kamera%"],
-  skinn:        ["%skinn%", "%läder%"],
-  navigation:   ["%navigat%", "% gps%", "%gps %"],
-  "head-up":    ["%head-up%", "%heads-up%", "%head up%"],
-  adaptive:     ["%adaptiv%", "%adaptive%"],
-  amg:          ["%amg%"],
-  "m sport":    ["%m sport%", "%m-sport%", "%msport%"],
-  "gt-line":    ["%gt-line%", "%gt line%"],
+  // — Praktiskt —
+  drag:             ["%drag%"],
+  värmare:          ["%värmare%", "%motorvärm%", "%kupévärm%"],
+  stolvärme:        ["%stolvärm%", "%uppvärmda säten%", "%sätesvärm%", "%säte värm%"],
+  ventilerade:      ["%ventilerad%"],
+  massage:          ["%massage%"],
+  panorama:         ["%panorama%", "%glastak%", "%pano %"],
+  kamera:           ["%backkamera%", "%360-kam%", "%360 kam%", "%kamera%"],
+  elbaklucka:       ["%elbaklucka%", "%el-baklucka%", "%elektrisk baklucka%"],
+  takräcke:         ["%takräck%", "%takbox%"],
+  // — Inredning —
+  skinn:            ["%skinn%", "%läder%"],
+  sportstol:        ["%sportstol%", "%sportsäte%"],
+  // — Tech —
+  navigation:       ["%navigat%", "% gps%", "%gps %"],
+  "head-up":        ["%head-up%", "%heads-up%", "%head up%"],
+  adaptive:         ["%adaptiv%", "%adaptive%"],
+  "pilot assist":   ["%pilot assist%", "%pilot-assist%"],
+  distronic:        ["%distronic%"],
+  // — Drivlinor (märkesspecifika AWD-namn) —
+  quattro:          ["%quattro%"],
+  xdrive:           ["%xdrive%", "%x-drive%"],
+  "4matic":         ["%4matic%", "%4-matic%"],
+  "4motion":        ["%4motion%", "%4-motion%"],
+  // — Trim-paket —
+  amg:              ["%amg%"],
+  "m sport":        ["%m sport%", "%m-sport%", "%msport%"],
+  "s-line":         ["%s-line%", "%s line%"],
+  "r-design":       ["%r-design%", "%r design%"],
+  inscription:      ["%inscription%"],
+  momentum:         ["%momentum%"],
+  "gt-line":        ["%gt-line%", "%gt line%"],
+  // — Skick/historik (viktigt för svenska köpare) —
+  svensksåld:       ["%svensksåld%", "%svensk såld%", "%svensksålld%"],
+  "1 ägare":        ["%1 ägare%", "%en ägare%", "%1-ägare%"],
+  nyservad:         ["%nyservad%", "%nyservice%", "%ny service%"],
+  nybesiktigad:     ["%nybesikt%", "%ny bes %", "%ny bes.%", "%nybes%"],
 };
 
 // Model names that imply a body type (used when body_type is Unknown/null)
@@ -257,24 +285,31 @@ Giltiga transmission-värden: manuell, automat
 Giltiga useCase-värden: pendling, familj, langresa, stad, blandat
 
 TILLVAL / UTRUSTNING (features):
-Om kunden nämner specifika tillval, lägg motsvarande nycklar i "features"-arrayen.
-Giltiga features-värden: bose, harman, burmester, bang & olufsen, drag, värmare, panorama, kamera, skinn, navigation, head-up, adaptive, amg, m sport, gt-line
+Om kunden nämner specifika tillval, utrustning, trim-paket eller historik,
+lägg motsvarande nycklar i "features"-arrayen (max 8).
+
+Kända nycklar (med synonymer som automatiskt matchas i backend):
+  Ljud:       bose, harman, burmester, bang & olufsen
+  Praktiskt:  drag, värmare, stolvärme, ventilerade, massage, panorama,
+              kamera, elbaklucka, takräcke
+  Inredning:  skinn, sportstol
+  Tech:       navigation, head-up, adaptive, pilot assist, distronic
+  Drivlinor:  quattro, xdrive, 4matic, 4motion
+  Trim:       amg, m sport, s-line, r-design, inscription, momentum, gt-line
+  Historik:   svensksåld, 1 ägare, nyservad, nybesiktigad
+
 Exempel:
-- "Bose-ljud" / "bose högtalare" → ["bose"]
-- "Burmester-system" → ["burmester"]
-- "B&O" / "Bang & Olufsen" → ["bang & olufsen"]
-- "dragkrok" / "släpvagnskoppling" / "med drag" → ["drag"]
-- "motorvärmare" / "kupévärmare" → ["värmare"]
-- "panoramatak" / "glastak" / "pano" → ["panorama"]
-- "backkamera" / "360-kamera" → ["kamera"]
-- "skinnsäten" / "läderklädsel" → ["skinn"]
-- "navigation" / "GPS" → ["navigation"]
-- "head-up display" → ["head-up"]
-- "adaptiv farthållare" → ["adaptive"]
-- "AMG-paket" → ["amg"]
-- "M Sport-paket" → ["m sport"]
-- "GT-Line" → ["gt-line"]
-Om kunden säger "Porsche med Bose" → make: "Porsche", features: ["bose"].`;
+- "Porsche med Bose" → make:"Porsche", features:["bose"]
+- "Mercedes med dragkrok och skinnsäten" → make:"Mercedes", features:["drag","skinn"]
+- "Audi quattro med S-Line" → make:"Audi", features:["quattro","s-line"]
+- "Volvo Inscription med Pilot Assist" → make:"Volvo", features:["inscription","pilot assist"]
+- "Svensksåld BMW xDrive, 1 ägare" → make:"BMW", features:["xdrive","svensksåld","1 ägare"]
+
+FRI-TEXT: Om kunden nämner ett ovanligt tillval som inte finns i listan
+ovan, lägg ändå en normaliserad lowercase-nyckel (2-30 tecken, endast
+bokstäver/siffror/mellanslag/bindestreck) — den matchas som ILIKE mot
+annonstiteln. Exempel: "TDI motor" → ["tdi"], "keyless" → ["keyless"],
+"BlueTEC" → ["bluetec"].`;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -592,12 +627,17 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
-      // Validera features mot vita listan – AI kan råka hitta på nycklar
+      // Validera features: whitelist först, annars fri-text efter sanering.
+      // Tillåt a-z0-9åäö mellanslag bindestreck & /, 2-30 tecken – stoppar
+      // SQL-injection och rappakalja, men låter AI matcha ovanliga tillval
+      // som inte finns i featurePatterns (t.ex. "tdi", "bluetec", "keyless").
+      const featureFreeTextRe = /^[a-z0-9åäö &\-\/]{2,30}$/;
       const validFeatures: string[] = Array.isArray(filters.features)
         ? filters.features
             .filter((f: unknown): f is string => typeof f === "string")
             .map((f: string) => f.toLowerCase().trim())
-            .filter((f: string) => f in featurePatterns)
+            .filter((f: string) => f in featurePatterns || featureFreeTextRe.test(f))
+            .slice(0, 8) // max 8 features för att undvika tungt query
         : [];
 
       // Track which filters were dropped at each level for transparent messaging
@@ -708,8 +748,8 @@ serve(async (req) => {
         // ha noll träffar än visa bil utan önskat tillval förrän sista utväg.
         if (validFeatures.length > 0 && level < 4) {
           for (const feat of validFeatures) {
-            const patterns = featurePatterns[feat];
-            if (!patterns || patterns.length === 0) continue;
+            // Whitelistad nyckel → använd synonymer; okänd → fri-text ILIKE.
+            const patterns = featurePatterns[feat] ?? [`%${feat}%`];
             const orClause = patterns.map((p) => `model_raw.ilike.${p}`).join(",");
             query = query.or(orClause);
           }
