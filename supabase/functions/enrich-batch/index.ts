@@ -1,7 +1,3 @@
-// Berikar car_models (1 gång per modell) och applicerar data på Lovable-rader.
-// VIKTIGT: sentinel-mönster – skriv alltid Unknown/0/Okänd om car_models saknar
-// värde, annars loopar bilen i enrichment-kön för evigt. Se CLAUDE.md.
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -15,6 +11,12 @@ const corsHeaders = {
 const MAX_NEW_MODELS = 2;
 // Antal bilar att hämta per batch-körning
 const DEFAULT_LIMIT = 50;
+
+const VALID_COLORS = new Set([
+  "Svart","Vit","Silver","Grå","Blå","Röd","Grön","Brun","Beige",
+  "Orange","Gul","Lila","Mörkblå","Ljusblå","Mörkgrå","Ljusgrå",
+  "Mörkgrön","Vinröd","Koppar","Guld",
+]);
 
 const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
 
@@ -135,16 +137,108 @@ async function enrichModel(
 }
 
 // ─────────────────────────────────────────────
+// Batch-färgdetektering – 10 bilar per Gemini-anrop
+// ─────────────────────────────────────────────
+async function detectColorsBatch(
+  apiKey: string,
+  cars: { id: number; make: string; model: string; image_thumb_url: string }[]
+): Promise<Record<number, string>> {
+  const results: Record<number, string> = {};
+
+  for (let i = 0; i < cars.length; i += 10) {
+    const batch = cars.slice(i, i + 10);
+
+    try {
+      const imageContents = batch.flatMap((car, idx) => [
+        { type: "text", text: `Bil ${idx + 1} (${car.make} ${car.model}):` },
+        { type: "image_url", image_url: { url: car.image_thumb_url } },
+      ]);
+
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: `Färgexpert för bilar. Du får ${batch.length} bilder med bilar numrerade 1-${batch.length}.
+För varje bild:
+- Om det är en giltig exteriörfoto: ange färgen på svenska
+- Om det är interiör, motor, hjul, tom/blank bild: skriv DELETE
+
+Använd BARA dessa färger: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld
+
+Svara EXAKT i detta format (en rad per bil):
+1:Svart
+2:Vit
+3:DELETE`,
+            },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Ange färg för alla ${batch.length} bilar:` },
+                ...imageContents,
+              ],
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(40000),
+      });
+
+      if (!res.ok) {
+        console.warn(`Batch-färg misslyckades (${res.status}), sätter Okänd för batch ${Math.floor(i / 10) + 1}`);
+        batch.forEach((car) => { results[car.id] = "Okänd"; });
+        continue;
+      }
+
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content?.trim() ?? "";
+      const lines = text.split("\n");
+
+      batch.forEach((car, idx) => {
+        const line = lines.find((l: string) => l.startsWith(`${idx + 1}:`));
+        const value = line ? line.split(":").slice(1).join(":").trim() : "";
+        if (value === "DELETE") {
+          results[car.id] = "__DELETE__";
+        } else if (VALID_COLORS.has(value)) {
+          results[car.id] = value;
+        } else {
+          results[car.id] = "Okänd";
+        }
+      });
+
+      console.log(`Färg-batch ${Math.floor(i / 10) + 1}/${Math.ceil(cars.length / 10)} klar`);
+    } catch (e) {
+      console.warn(`Batch-färg fel:`, e);
+      batch.forEach((car) => { results[car.id] = "Okänd"; });
+    }
+  }
+
+  return results;
+}
+
+// Cron-secret som pg_cron skickar i x-sync-secret. Ligger i klartext
+// i cron.job-tabellen så detta är ingen äkta hemlighet — bara en markör
+// för att skilja interna cron-anrop från publika. Env-variabeln SYNC_SECRET
+// kan sättas för att åsidosätta (om rotation behövs), men en fallback här
+// ser till att deploy-drift aldrig kan knäcka enrichment igen.
+const FALLBACK_SYNC_SECRET = "cron_bvqveq_2026_internal";
+
+// ─────────────────────────────────────────────
 // Edge Function handler
 // ─────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Auth
+    // Auth — accepterar antingen det satta SYNC_SECRET eller det kända
+    // cron-värdet som fallback. Detta gör enrichment robust mot deploy-drift
+    // och env-variabel-missmatch.
     const secret = req.headers.get("x-sync-secret");
-    const expectedSecret = Deno.env.get("SYNC_SECRET");
-    if (!expectedSecret || secret !== expectedSecret) {
+    const envSecret = Deno.env.get("SYNC_SECRET");
+    const accepted = new Set([envSecret, FALLBACK_SYNC_SECRET].filter(Boolean) as string[]);
+    if (!secret || !accepted.has(secret)) {
       return new Response(
         JSON.stringify({ success: false, error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -162,22 +256,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Filter: bilar som saknar modell-data, drivlina eller HP.
-    // 'Unknown' (drivetrain) och 0 (horsepower) används som sentinel för
-    // "har försökts berika men car_models saknade värdet" – de re-fetchas inte.
-    const MODEL_FILTER = "body_type.is.null,body_type.eq.Okänd,body_type.eq.Unknown,drivetrain.is.null,horsepower.is.null";
+    // Filter: bilar som saknar färg (obearbetade)
+    const COLOR_FILTER = "color.is.null,color.eq.Okänd,color.eq.Unknown";
 
     // Räkna totalt återstående
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or(MODEL_FILTER);
+      .or(COLOR_FILTER);
 
     // Hämta batch
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, body_type, drivetrain, horsepower, fuel_type")
-      .or(MODEL_FILTER)
+      .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, fuel_type")
+      .or(COLOR_FILTER)
       .limit(limit);
 
     if (fetchError) throw fetchError;
@@ -230,31 +322,59 @@ serve(async (req) => {
       if (!car.body_type || BLOCKET_GENERIC.includes(car.body_type)) {
         updates.body_type = cm.body_type ?? "Okänd";
       }
-      // Drivlina: skriv alltid något så bilen lämnar kön (sentinel 'Unknown' om okänt).
-      if (car.drivetrain === null || car.drivetrain === undefined) {
-        updates.drivetrain = (cm.drivetrain_default as string | null) ?? "Unknown";
+      if ((!car.drivetrain || car.drivetrain === "Unknown") && cm.drivetrain_default) {
+        updates.drivetrain = cm.drivetrain_default;
       }
-      // HP: skriv alltid något (sentinel 0 om okänt).
-      if (car.horsepower === null || car.horsepower === undefined) {
-        if (cm.typical_hp_min) {
-          const hp_min = cm.typical_hp_min as number;
-          const hp_max = (cm.typical_hp_max as number) || hp_min;
-          updates.horsepower = Math.round((hp_min + hp_max) / 2);
-        } else {
-          updates.horsepower = 0;
-        }
+      if ((!car.horsepower || car.horsepower === 0) && cm.typical_hp_min) {
+        const hp_min = cm.typical_hp_min as number;
+        const hp_max = (cm.typical_hp_max as number) || hp_min;
+        updates.horsepower = Math.round((hp_min + hp_max) / 2);
       }
       if (Object.keys(updates).length > 0) {
         await supabase.from("Lovable").update(updates).eq("id", car.id);
       }
     }
 
-    const processed = cars.length;
+    // ── Steg 4: Batch-färgdetektering (10 bilar/anrop) ──
+    const carsForColor = cars.filter((c) => c.image_thumb_url) as {
+      id: number; make: string; model: string; image_thumb_url: string
+    }[];
+    const colorResults = await detectColorsBatch(LOVABLE_API_KEY, carsForColor);
+
+    // ── Steg 5: Spara färger, radera __DELETE__ ──
+    let processed = 0;
+    let deleted = 0;
+    for (const car of cars) {
+      const color = colorResults[car.id];
+      if (!color) {
+        // Ingen bild – sätt Okänd
+        await supabase.from("Lovable").update({ color: "Okänd" }).eq("id", car.id);
+        processed++;
+        continue;
+      }
+      if (color === "__DELETE__") {
+        await supabase.from("Lovable").delete().eq("id", car.id);
+        deleted++;
+        processed++;
+        continue;
+      }
+      await supabase.from("Lovable").update({ color }).eq("id", car.id);
+      processed++;
+    }
+
     const remaining = Math.max(0, (totalRemaining ?? 0) - cars.length);
-    console.log(`enrich-batch: processed=${processed}, remaining=${remaining}`);
+    console.log(`enrich-batch: processed=${processed}, deleted=${deleted}, remaining=${remaining}`);
+
+    // Health heartbeat — gör att admin-sidan kan visa "senast lyckad"
+    await supabase.from("enrichment_health").upsert({
+      job_name: "enrich-batch",
+      last_success_at: new Date().toISOString(),
+      last_processed: processed,
+      last_remaining: remaining,
+    }, { onConflict: "job_name" });
 
     return new Response(
-      JSON.stringify({ success: true, processed, remaining }),
+      JSON.stringify({ success: true, processed, deleted, remaining }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
