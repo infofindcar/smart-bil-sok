@@ -15,14 +15,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["'Plus Jakarta Sans'", "Inter", "system-ui", "sans-serif"],
-        serif: ["'Instrument Serif'", "Georgia", "serif"],
-        mono: ["'Space Mono'", "ui-monospace", "monospace"],
-      },
-      fontSize: {
-        "display-xl": ["clamp(3.5rem, 7vw, 6rem)", { lineHeight: "0.98", letterSpacing: "-0.03em" }],
-        "display-lg": ["clamp(2.75rem, 5.5vw, 4.5rem)", { lineHeight: "1.02", letterSpacing: "-0.028em" }],
-        "display-md": ["clamp(2rem, 4vw, 3rem)", { lineHeight: "1.05", letterSpacing: "-0.022em" }],
+        serif: ["Lora", "Georgia", "serif"],
+        mono: ["Space Mono", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -70,10 +64,6 @@ export default {
         section: {
           alt: "hsl(var(--section-alt))",
         },
-        // Extended premium palette — glows available as bg/text utilities
-        gold: { glow: "hsl(var(--gold-glow))" },
-        violet: { glow: "hsl(var(--violet-glow))" },
-        coral: { glow: "hsl(var(--coral-glow))" },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -87,25 +77,13 @@ export default {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 4px)",
-        sm: "calc(var(--radius) - 8px)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        // Legacy names retained for backwards compat; values re-tuned for dark theme
-        warm: "0 8px 24px -8px hsl(0 0% 0% / 0.45)",
-        "warm-lg": "0 20px 48px -12px hsl(0 0% 0% / 0.6)",
-        "primary-glow": "0 8px 32px -6px hsl(var(--primary) / 0.45)",
-        // Premium depth stack
-        "premium-sm": "0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 2px 8px hsl(0 0% 0% / 0.4)",
-        "premium-md": "0 1px 0 hsl(0 0% 100% / 0.05) inset, 0 4px 12px hsl(0 0% 0% / 0.4), 0 16px 40px -12px hsl(0 0% 0% / 0.5)",
-        "premium-lg": "0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 8px 24px -8px hsl(0 0% 0% / 0.5), 0 32px 72px -16px hsl(0 0% 0% / 0.7)",
-        "ring-primary": "0 0 0 1px hsl(var(--primary) / 0.28), 0 20px 48px -12px hsl(var(--primary) / 0.28)",
-      },
-      backgroundImage: {
-        "mesh-hero":
-          "radial-gradient(ellipse 60% 80% at 20% 20%, hsl(var(--gold-glow) / 0.22), transparent 55%), radial-gradient(ellipse 50% 70% at 85% 30%, hsl(var(--violet-glow) / 0.18), transparent 60%), radial-gradient(ellipse 70% 60% at 60% 95%, hsl(var(--coral-glow) / 0.14), transparent 60%), linear-gradient(180deg, hsl(235 18% 6%) 0%, hsl(235 20% 4%) 100%)",
-        "gradient-warm":
-          "linear-gradient(110deg, hsl(var(--gold-glow)) 0%, hsl(var(--coral-glow)) 55%, hsl(var(--violet-glow)) 100%)",
+        warm: "0 4px 14px -2px hsl(45 25% 50% / 0.15)",
+        "warm-lg": "0 10px 30px -5px hsl(45 25% 50% / 0.2)",
+        "primary-glow": "0 4px 20px -2px hsl(190 70% 38% / 0.25)",
       },
       keyframes: {
         "accordion-down": {
@@ -140,18 +118,6 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
-        "orb-drift-a": {
-          "0%, 100%": { transform: "translate3d(0, 0, 0) scale(1)" },
-          "50%": { transform: "translate3d(40px, -30px, 0) scale(1.08)" },
-        },
-        "orb-drift-b": {
-          "0%, 100%": { transform: "translate3d(0, 0, 0) scale(1)" },
-          "50%": { transform: "translate3d(-50px, 40px, 0) scale(1.12)" },
-        },
-        "orb-drift-c": {
-          "0%, 100%": { transform: "translate3d(0, 0, 0) scale(1)" },
-          "50%": { transform: "translate3d(30px, 50px, 0) scale(0.94)" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -162,9 +128,6 @@ export default {
         "float-subtle": "float-subtle 3s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
-        "orb-drift-a": "orb-drift-a 22s ease-in-out infinite",
-        "orb-drift-b": "orb-drift-b 28s ease-in-out infinite",
-        "orb-drift-c": "orb-drift-c 26s ease-in-out infinite",
       },
     },
   },
