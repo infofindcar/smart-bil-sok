@@ -256,20 +256,33 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Filter: bilar som saknar färg (obearbetade)
-    const COLOR_FILTER = "color.is.null,color.eq.Okänd,color.eq.Unknown";
+    // Bilar som saknar något berikat fält. Tidigare filtrerades bara på
+    // color, vilket gjorde att tiotusentals bilar med färg men utan
+    // HP/drivlina/karosseri aldrig berikades.
+    const MISSING_FILTER = [
+      "color.is.null",
+      "color.eq.Okänd",
+      "color.eq.Unknown",
+      "horsepower.is.null",
+      "horsepower.eq.0",
+      "drivetrain.is.null",
+      "drivetrain.eq.Unknown",
+      "body_type.is.null",
+      "body_type.eq.Unknown",
+      "body_type.eq.Okänd",
+    ].join(",");
 
     // Räkna totalt återstående
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or(COLOR_FILTER);
+      .or(MISSING_FILTER);
 
     // Hämta batch
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
       .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, fuel_type")
-      .or(COLOR_FILTER)
+      .or(MISSING_FILTER)
       .limit(limit);
 
     if (fetchError) throw fetchError;
@@ -336,15 +349,25 @@ serve(async (req) => {
     }
 
     // ── Steg 4: Batch-färgdetektering (10 bilar/anrop) ──
-    const carsForColor = cars.filter((c) => c.image_thumb_url) as {
-      id: number; make: string; model: string; image_thumb_url: string
-    }[];
-    const colorResults = await detectColorsBatch(LOVABLE_API_KEY, carsForColor);
+    // Kör BARA på bilar som saknar färg, så vi inte slösar AI-kostnad
+    // på bilar som togs med i batchen för HP/drivlina-berikelse.
+    const needsColor = (c: { color: string | null }) =>
+      !c.color || c.color === "Okänd" || c.color === "Unknown";
+    const carsForColor = cars
+      .filter((c) => needsColor(c) && c.image_thumb_url) as {
+        id: number; make: string; model: string; image_thumb_url: string
+      }[];
+    const colorResults = carsForColor.length > 0
+      ? await detectColorsBatch(LOVABLE_API_KEY, carsForColor)
+      : {};
 
     // ── Steg 5: Spara färger, radera __DELETE__ ──
     let processed = 0;
     let deleted = 0;
     for (const car of cars) {
+      // Bilar som inte behövde färg räknas som processed (HP/drivlina skedde i steg 3)
+      if (!needsColor(car)) { processed++; continue; }
+
       const color = colorResults[car.id];
       if (!color) {
         // Ingen bild – sätt Okänd
