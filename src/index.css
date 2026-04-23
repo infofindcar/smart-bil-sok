@@ -1,77 +1,122 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   FOUNDATION — Cinematic premium dark theme
+   Deep obsidian base · warm amber accent · violet + coral glow
+   Grain overlay · drifting gradient orbs · editorial serif
+   ============================================================ */
+
 @layer base {
   :root {
-    --background: 45 25% 95%;
-    --foreground: 205 55% 20%;
-    --card: 45 20% 98%;
-    --card-foreground: 205 55% 20%;
-    --popover: 45 20% 98%;
-    --popover-foreground: 205 55% 20%;
-    --primary: 190 70% 38%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 205 60% 25%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 200 15% 85%;
-    --muted-foreground: 205 40% 35%;
-    --accent: 190 40% 92%;
-    --accent-foreground: 205 55% 20%;
-    --destructive: 0 72% 50%;
+    /* Core surface — obsidian with subtle blue bias */
+    --background: 235 18% 5%;
+    --foreground: 36 30% 96%;
+
+    /* Elevated surfaces — layered depth */
+    --card: 235 14% 8%;
+    --card-foreground: 36 30% 96%;
+    --popover: 235 14% 9%;
+    --popover-foreground: 36 30% 96%;
+
+    /* Primary — warm amber/gold (Porsche × editorial) */
+    --primary: 36 92% 62%;
+    --primary-foreground: 235 20% 6%;
+
+    /* Secondary — deep bronze for hover states & buttons */
+    --secondary: 235 12% 14%;
+    --secondary-foreground: 36 30% 96%;
+
+    /* Muted surface for chips, disabled, placeholders */
+    --muted: 235 10% 12%;
+    --muted-foreground: 36 10% 64%;
+
+    /* Accent — cooler amber variant for icons & badges */
+    --accent: 28 88% 58%;
+    --accent-foreground: 235 20% 6%;
+
+    --destructive: 0 76% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 200 15% 85%;
-    --input: 200 15% 85%;
-    --ring: 190 70% 38%;
-    --radius: 0.75rem;
-    --chat-bubble: 45 20% 94%;
-    --step-icon: 205 60% 25%;
-    --testimonial-bg: 45 20% 94%;
-    --section-alt: 45 20% 92%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Borders and inputs — hairline on dark */
+    --border: 235 12% 16%;
+    --input: 235 12% 14%;
+    --ring: 36 92% 62%;
+
+    --radius: 1.25rem;
+
+    /* Component-specific tokens */
+    --chat-bubble: 235 12% 11%;
+    --step-icon: 36 92% 62%;
+    --testimonial-bg: 235 14% 9%;
+    --section-alt: 235 16% 7%;
+
+    /* Sidebar */
+    --sidebar-background: 235 18% 5%;
+    --sidebar-foreground: 36 30% 96%;
+    --sidebar-primary: 36 92% 62%;
+    --sidebar-primary-foreground: 235 20% 6%;
+    --sidebar-accent: 235 14% 10%;
+    --sidebar-accent-foreground: 36 30% 96%;
+    --sidebar-border: 235 12% 16%;
+    --sidebar-ring: 36 92% 62%;
+
+    /* Premium extended palette (not shadcn) */
+    --violet-glow: 268 72% 62%;
+    --coral-glow: 14 88% 62%;
+    --gold-glow: 40 95% 60%;
+
+    /* Noise/grain overlay controls */
+    --grain-opacity: 0.045;
   }
 
+  /* .dark mirrors :root for backwards compat with useTheme checks */
   .dark {
-    --background: 205 55% 12%;
-    --foreground: 45 20% 95%;
-    --card: 205 50% 15%;
-    --card-foreground: 45 20% 95%;
-    --popover: 205 50% 15%;
-    --popover-foreground: 45 20% 95%;
-    --primary: 190 75% 50%;
-    --primary-foreground: 205 55% 10%;
-    --secondary: 190 60% 40%;
-    --secondary-foreground: 45 20% 90%;
-    --muted: 205 40% 20%;
-    --muted-foreground: 200 20% 65%;
-    --accent: 190 40% 20%;
-    --accent-foreground: 45 20% 95%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 235 18% 5%;
+    --foreground: 36 30% 96%;
+    --card: 235 14% 8%;
+    --card-foreground: 36 30% 96%;
+    --popover: 235 14% 9%;
+    --popover-foreground: 36 30% 96%;
+    --primary: 36 92% 62%;
+    --primary-foreground: 235 20% 6%;
+    --secondary: 235 12% 14%;
+    --secondary-foreground: 36 30% 96%;
+    --muted: 235 10% 12%;
+    --muted-foreground: 36 10% 64%;
+    --accent: 28 88% 58%;
+    --accent-foreground: 235 20% 6%;
+    --destructive: 0 76% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 205 40% 20%;
-    --input: 205 40% 20%;
-    --ring: 190 75% 50%;
-    --chat-bubble: 205 40% 18%;
-    --step-icon: 190 75% 50%;
-    --testimonial-bg: 205 40% 18%;
-    --section-alt: 205 50% 14%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 235 12% 16%;
+    --input: 235 12% 14%;
+    --ring: 36 92% 62%;
+    --chat-bubble: 235 12% 11%;
+    --step-icon: 36 92% 62%;
+    --testimonial-bg: 235 14% 9%;
+    --section-alt: 235 16% 7%;
+    --sidebar-background: 235 18% 5%;
+    --sidebar-foreground: 36 30% 96%;
+    --sidebar-primary: 36 92% 62%;
+    --sidebar-primary-foreground: 235 20% 6%;
+    --sidebar-accent: 235 14% 10%;
+    --sidebar-accent-foreground: 36 30% 96%;
+    --sidebar-border: 235 12% 16%;
+    --sidebar-ring: 36 92% 62%;
+  }
+
+  /* Optional future light override — not wired up in PR 1 */
+  .light {
+    --background: 40 30% 97%;
+    --foreground: 235 30% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 235 30% 10%;
+    --primary: 36 90% 48%;
+    --primary-foreground: 0 0% 100%;
+    --border: 235 10% 88%;
   }
 }
 
@@ -80,26 +125,111 @@
     @apply border-border;
   }
   html {
-    background-color: #1a2332;
+    background-color: hsl(235 18% 5%);
+    color-scheme: dark;
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "cv11" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+    position: relative;
+    min-height: 100vh;
   }
-  h1, h2, h3 {
+
+  /* Editorial display headings — Instrument Serif for h1/h2, Jakarta for h3/h4 */
+  h1, h2 {
     @apply font-serif;
+    letter-spacing: -0.022em;
+    font-weight: 400;
+  }
+  h3, h4 {
+    @apply font-display;
+    letter-spacing: -0.018em;
+    font-weight: 700;
+  }
+
+  /* Numerals align cleanly in prices, specs, km — global by default */
+  .tabular, [data-tabular] {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Custom animations */
+/* ============================================================
+   AMBIENT LAYER — grain + drifting gradient orbs
+   Rendered via body pseudo-elements, pointer-events: none.
+   ============================================================ */
+
+body::before {
+  /* Grain — SVG fractal noise encoded inline */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 240px 240px;
+}
+
+body::after {
+  /* Subtle horizon light — long vignette from top */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, hsl(var(--gold-glow) / 0.06), transparent 55%),
+    radial-gradient(ellipse 80% 40% at 50% 120%, hsl(var(--violet-glow) / 0.05), transparent 60%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Gradient orbs — utility element used in hero/backgrounds.
+   Three variants drift at different speeds for parallax feel. */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(90px);
+  will-change: transform, opacity;
+  mix-blend-mode: screen;
+}
+.orb-gold    { background: radial-gradient(circle, hsl(var(--gold-glow) / 0.55), transparent 70%); animation: orb-drift-a 22s ease-in-out infinite; }
+.orb-violet  { background: radial-gradient(circle, hsl(var(--violet-glow) / 0.42), transparent 70%); animation: orb-drift-b 28s ease-in-out infinite; }
+.orb-coral   { background: radial-gradient(circle, hsl(var(--coral-glow) / 0.38), transparent 70%); animation: orb-drift-c 26s ease-in-out infinite; }
+
+@keyframes orb-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(40px, -30px, 0) scale(1.08); }
+}
+@keyframes orb-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(-50px, 40px, 0) scale(1.12); }
+}
+@keyframes orb-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(30px, 50px, 0) scale(0.94); }
+}
+
+/* ============================================================
+   ANIMATIONS (retained from previous styles)
+   ============================================================ */
+
 @keyframes gentle-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
 }
 
 @keyframes logo-glow {
-  0%, 100% { filter: drop-shadow(0 0 8px hsl(190 70% 38% / 0.3)); }
-  50% { filter: drop-shadow(0 0 20px hsl(190 70% 38% / 0.6)); }
+  0%, 100% { filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.35)); }
+  50% { filter: drop-shadow(0 0 22px hsl(var(--primary) / 0.7)); }
 }
 
 @keyframes reveal-up {
@@ -116,230 +246,206 @@
 .animate-glow { animation: logo-glow 3s ease-in-out infinite; }
 .animate-reveal-up { animation: reveal-up 0.6s ease-out forwards; }
 
+/* ============================================================
+   SCROLLBARS — slim, amber-tinted on hover
+   ============================================================ */
+
 .chat-scrollbar::-webkit-scrollbar { width: 3px; }
 .chat-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .chat-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 2px; }
-.chat-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.3); }
+.chat-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.4); }
 
-/* Slim global scrollbar */
 html {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.18) transparent;
 }
-html::-webkit-scrollbar { width: 6px; }
+html::-webkit-scrollbar { width: 8px; }
 html::-webkit-scrollbar-track { background: transparent; }
 html::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.15);
-  border-radius: 3px;
+  background: hsl(var(--muted-foreground) / 0.14);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 html::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--primary) / 0.38);
+  background-clip: padding-box;
 }
 
 .touch-target { min-height: 44px; min-width: 44px; }
 
+/* ============================================================
+   UTILITY — hover lift, card shadow, gradient text
+   ============================================================ */
+
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px -5px hsl(var(--secondary) / 0.1);
+  transform: translateY(-3px);
+  box-shadow:
+    0 14px 40px -12px hsl(0 0% 0% / 0.55),
+    0 2px 8px -2px hsl(var(--primary) / 0.12);
 }
 
 .clutch-card {
   box-shadow:
-    0 1px 3px hsl(var(--secondary) / 0.04),
-    0 8px 40px -12px hsl(var(--secondary) / 0.08);
+    0 1px 0 hsl(0 0% 100% / 0.04) inset,
+    0 1px 3px hsl(0 0% 0% / 0.4),
+    0 12px 48px -16px hsl(0 0% 0% / 0.55);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.hero-gradient {
-  background: linear-gradient(135deg, hsl(205 55% 18%) 0%, hsl(205 60% 14%) 40%, hsl(190 70% 25%) 100%);
+.text-gradient-warm {
+  background: linear-gradient(110deg,
+    hsl(var(--gold-glow)) 0%,
+    hsl(var(--coral-glow)) 55%,
+    hsl(var(--violet-glow)) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-sweep 12s ease-in-out infinite;
+}
+@keyframes gradient-sweep {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
 }
 
-/* Section divider gradient transitions */
+/* Hero mesh gradient — replaces flat linear-gradient */
+.hero-gradient {
+  background:
+    radial-gradient(ellipse 60% 80% at 20% 20%, hsl(var(--gold-glow) / 0.22), transparent 55%),
+    radial-gradient(ellipse 50% 70% at 85% 30%, hsl(var(--violet-glow) / 0.18), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 60% 95%, hsl(var(--coral-glow) / 0.14), transparent 60%),
+    linear-gradient(180deg, hsl(235 18% 6%) 0%, hsl(235 20% 4%) 100%);
+}
+
+/* ============================================================
+   SECTION DIVIDERS
+   ============================================================ */
+
 .section-divider {
   height: 2.5rem;
   background: linear-gradient(to bottom, var(--div-from), var(--div-to));
   pointer-events: none;
 }
-
 .section-divider-bg-to-alt {
   --div-from: hsl(var(--background));
   --div-to: hsl(var(--section-alt));
 }
-
 .section-divider-alt-to-bg {
   --div-from: hsl(var(--section-alt));
   --div-to: hsl(var(--background));
 }
 
-/* Decorative glow effect */
+/* Decorative glow (legacy alias — points at primary now) */
 .bg-glow {
   position: absolute;
   border-radius: 9999px;
   pointer-events: none;
   filter: blur(80px);
-  opacity: 0.25;
-  background: radial-gradient(circle, hsl(var(--primary) / 0.5), transparent 70%);
+  opacity: 0.32;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 70%);
 }
 
-/* Results section enter animation */
+/* ============================================================
+   ENTER ANIMATIONS (car results, sparkle, scroll arrow)
+   ============================================================ */
+
 @keyframes results-enter {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+.results-section-enter { animation: results-enter 0.6s ease-out both; }
 
-.results-section-enter {
-  animation: results-enter 0.6s ease-out both;
-}
-
-/* Staggered fade-in for car cards */
 @keyframes stagger-card {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
 .stagger-fade-in {
   opacity: 0;
   animation: stagger-card 0.5s ease-out both;
 }
 
-/* Premium card pop-in animation */
 @keyframes card-pop-in {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(0.8);
-    filter: blur(8px);
-  }
-  50% {
-    opacity: 0.7;
-    transform: translateY(-8px) scale(1.02);
-    filter: blur(0px);
-  }
-  70% {
-    transform: translateY(4px) scale(0.99);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0px);
-  }
+  0%   { opacity: 0; transform: translateY(40px) scale(0.8); filter: blur(8px); }
+  50%  { opacity: 0.7; transform: translateY(-8px) scale(1.02); filter: blur(0px); }
+  70%  { transform: translateY(4px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
 }
+.card-pop-wrapper { will-change: transform, opacity, filter; }
+.card-pop-hidden { opacity: 0; transform: translateY(40px) scale(0.8); filter: blur(8px); }
+.card-pop-visible { animation: card-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.card-pop-instant { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
 
-.card-pop-wrapper {
-  will-change: transform, opacity, filter;
-}
-
-.card-pop-hidden {
-  opacity: 0;
-  transform: translateY(40px) scale(0.8);
-  filter: blur(8px);
-}
-
-.card-pop-visible {
-  animation: card-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.card-pop-instant {
-  animation: none !important;
-  opacity: 1 !important;
-  transform: none !important;
-  filter: none !important;
-}
-
-/* Sparkle animation for results header */
 @keyframes sparkle-rotate {
   0%, 100% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(15deg) scale(1.2); }
-  75% { transform: rotate(-15deg) scale(1.1); }
+  25%      { transform: rotate(15deg) scale(1.2); }
+  75%      { transform: rotate(-15deg) scale(1.1); }
 }
+.card-pop-sparkle { animation: sparkle-rotate 2s ease-in-out infinite; }
 
-.card-pop-sparkle {
-  animation: sparkle-rotate 2s ease-in-out infinite;
-}
-
-/* Scroll arrow bounce */
 @keyframes scroll-bounce {
   0%, 100% { transform: translateY(0); }
-  30% { transform: translateY(8px); }
-  50% { transform: translateY(-2px); }
-  70% { transform: translateY(5px); }
+  30%      { transform: translateY(8px); }
+  50%      { transform: translateY(-2px); }
+  70%      { transform: translateY(5px); }
 }
+.scroll-arrow-bounce { animation: scroll-bounce 2s ease-in-out infinite; }
 
-.scroll-arrow-bounce {
-  animation: scroll-bounce 2s ease-in-out infinite;
-}
-
-/* Subtle float animation */
-.animate-float-subtle {
-  animation: gentle-float 5s ease-in-out infinite;
-}
+.animate-float-subtle { animation: gentle-float 5s ease-in-out infinite; }
 
 /* Horizontal scroll for similar cars */
 .similar-cars-scroll {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.18) transparent;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
 }
-.similar-cars-scroll > * {
-  scroll-snap-align: start;
-}
+.similar-cars-scroll > * { scroll-snap-align: start; }
 .similar-cars-scroll::-webkit-scrollbar { height: 4px; }
 .similar-cars-scroll::-webkit-scrollbar-track { background: transparent; }
 .similar-cars-scroll::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.15);
+  background: hsl(var(--muted-foreground) / 0.18);
   border-radius: 2px;
 }
 .similar-cars-scroll::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--primary) / 0.45);
 }
 
-/* Hero CTA glow effect */
+/* ============================================================
+   CTA — premium glow pulse
+   ============================================================ */
+
 @keyframes cta-glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px hsl(var(--secondary) / 0.3), 0 0 40px hsl(var(--secondary) / 0.1); }
-  50% { box-shadow: 0 0 30px hsl(var(--secondary) / 0.5), 0 0 60px hsl(var(--secondary) / 0.2); }
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4), 0 10px 30px -8px hsl(var(--primary) / 0.35); }
+  50%      { box-shadow: 0 0 0 8px hsl(var(--primary) / 0), 0 14px 40px -6px hsl(var(--primary) / 0.5); }
 }
-.hero-cta-glow {
-  animation: cta-glow-pulse 3s ease-in-out infinite;
-}
+.hero-cta-glow { animation: cta-glow-pulse 3s ease-in-out infinite; }
 
-/* Accessibility: visible focus rings */
+/* ============================================================
+   ACCESSIBILITY — focus rings + reduced motion
+   ============================================================ */
+
 *:focus-visible {
   outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
-/* Mic listening glow */
 @keyframes mic-glow {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
-  50% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45); }
+  50%      { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
 }
-.mic-listening {
-  animation: mic-glow 1.5s ease-in-out infinite;
-}
+.mic-listening { animation: mic-glow 1.5s ease-in-out infinite; }
 
-/* Reduced motion: respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -347,68 +453,61 @@ html::-webkit-scrollbar-thumb:hover {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .animate-pulse, .animate-bounce {
-    animation: none !important;
-  }
+  .orb { animation: none !important; }
+  .animate-pulse, .animate-bounce { animation: none !important; }
 }
 
-/* ========== Clutch chat polish ========== */
+/* ============================================================
+   CLUTCH CHAT POLISH (retained, tokens re-pointed)
+   ============================================================ */
 
-/* Allow smooth height animation on auto values where supported */
 @supports (interpolate-size: allow-keywords) {
   :root { interpolate-size: allow-keywords; }
 }
 
-/* Premium chat container */
 .clutch-shell {
   background:
     linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.92) 100%);
   box-shadow:
-    0 1px 0 hsl(var(--background) / 0.6) inset,
-    0 1px 2px hsl(var(--secondary) / 0.05),
-    0 24px 60px -24px hsl(var(--secondary) / 0.18),
-    0 8px 24px -12px hsl(var(--secondary) / 0.08);
-  transition: box-shadow 280ms ease, border-color 280ms ease;
+    0 1px 0 hsl(0 0% 100% / 0.04) inset,
+    0 1px 2px hsl(0 0% 0% / 0.35),
+    0 32px 70px -28px hsl(0 0% 0% / 0.7),
+    0 10px 28px -12px hsl(var(--primary) / 0.08);
+  transition: box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1), border-color 320ms ease;
 }
 .clutch-shell.is-focused {
   box-shadow:
-    0 1px 0 hsl(var(--background) / 0.6) inset,
-    0 0 0 1px hsl(var(--primary) / 0.18),
-    0 28px 70px -22px hsl(var(--primary) / 0.22),
-    0 10px 28px -12px hsl(var(--secondary) / 0.12);
+    0 1px 0 hsl(0 0% 100% / 0.06) inset,
+    0 0 0 1px hsl(var(--primary) / 0.28),
+    0 36px 80px -24px hsl(var(--primary) / 0.28),
+    0 12px 30px -10px hsl(0 0% 0% / 0.55);
 }
 
-/* Avatar gradient + soft glow */
 .clutch-avatar {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
   box-shadow:
-    0 4px 14px -4px hsl(var(--primary) / 0.45),
-    inset 0 1px 0 hsl(0 0% 100% / 0.18);
+    0 6px 18px -4px hsl(var(--primary) / 0.55),
+    inset 0 1px 0 hsl(0 0% 100% / 0.22);
 }
 
-/* Online dot */
 @keyframes online-pulse {
   0%, 100% { box-shadow: 0 0 0 0 hsl(142 76% 45% / 0.55); }
-  50% { box-shadow: 0 0 0 5px hsl(142 76% 45% / 0); }
+  50%      { box-shadow: 0 0 0 5px hsl(142 76% 45% / 0); }
 }
 .online-dot {
   background: hsl(142 76% 45%);
   animation: online-pulse 2s ease-in-out infinite;
 }
 
-/* Bubble entry: fade + slide */
 @keyframes bubble-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.bubble-in {
-  animation: bubble-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
+.bubble-in { animation: bubble-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* Wave typing indicator */
 @keyframes wave-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
-  30% { transform: translateY(-4px); opacity: 1; }
+  30%           { transform: translateY(-4px); opacity: 1; }
 }
 .wave-dot {
   width: 6px;
@@ -418,52 +517,43 @@ html::-webkit-scrollbar-thumb:hover {
   animation: wave-bounce 1.1s ease-in-out infinite;
 }
 
-/* Avatar thinking pulse ring */
 @keyframes avatar-thinking {
   0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
-  50% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+  50%      { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
 }
 .avatar-thinking { animation: avatar-thinking 1.6s ease-in-out infinite; }
 
-/* Suggestion chip stagger */
 @keyframes chip-in {
   from { opacity: 0; transform: translateY(6px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.chip-in {
-  opacity: 0;
-  animation: chip-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
+.chip-in { opacity: 0; animation: chip-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* Send whoosh on user message */
 @keyframes whoosh-out {
   from { opacity: 0; transform: translateY(10px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .whoosh-in { animation: whoosh-out 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* Chat bubbles */
 .bubble-assistant {
   background: linear-gradient(180deg, hsl(var(--muted) / 0.85) 0%, hsl(var(--muted) / 0.55) 100%);
-  border: 1px solid hsl(var(--border) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.6);
 }
 .bubble-user {
-  background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary) / 0.88) 100%);
-  border: 1px solid hsl(var(--secondary) / 0.4);
-  box-shadow: 0 6px 18px -10px hsl(var(--secondary) / 0.55);
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  border: 1px solid hsl(var(--primary) / 0.4);
+  box-shadow: 0 8px 22px -10px hsl(var(--primary) / 0.55);
+  color: hsl(var(--primary-foreground));
 }
 
-/* Input field shell */
 .clutch-input-shell {
   background: hsl(var(--background));
-  box-shadow: inset 0 1px 2px hsl(var(--secondary) / 0.04);
-  transition: box-shadow 200ms ease, border-color 200ms ease;
+  box-shadow: inset 0 1px 2px hsl(0 0% 0% / 0.4);
+  transition: box-shadow 220ms ease, border-color 220ms ease;
 }
 
-/* Modern textareas auto-grow */
 @supports (field-sizing: content) {
   .field-sizing-content { field-sizing: content; }
 }
 
-/* Safe area for mobile fixed input */
 .safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
