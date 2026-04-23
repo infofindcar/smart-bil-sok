@@ -22,9 +22,6 @@ import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 import heroVideoLoopUrl from '@/assets/hero-video-loop.mp4?url';
 import { SuvFrame } from '@/components/SuvFrame';
-import HeroOrbs from '@/components/HeroOrbs';
-import HeroHeadline from '@/components/HeroHeadline';
-import MagneticCTA from '@/components/MagneticCTA';
 
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
@@ -134,7 +131,7 @@ const Index = () => {
 
       {/* Hero with video background */}
       <section
-      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-background hero-gradient">
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
         {/* Cinematic background video with parallax */}
         <video
           src={`${heroVideoLoopUrl}?v=13`}
@@ -145,44 +142,61 @@ const Index = () => {
           playsInline
           preload="auto"
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform opacity-90"
+          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
           style={{ transform: `translateY(${parallaxY}px) scale(1.05)` }}
         />
-
-        {/* Drifting color orbs — sit above video, below text */}
-        <HeroOrbs />
-
-        {/* Warm-tinted cinematic overlays for readability + editorial depth */}
+        {/* Cinematic overlays for readability + depth */}
         <div
-          className="absolute inset-0 z-[2] pointer-events-none"
+          className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background:
-              'linear-gradient(180deg, hsl(235 22% 4% / 0.55) 0%, hsl(235 20% 5% / 0.30) 35%, hsl(235 22% 4% / 0.55) 75%, hsl(235 22% 4% / 0.92) 100%)',
+              'linear-gradient(180deg, rgba(10,15,25,0.55) 0%, rgba(10,15,25,0.35) 35%, rgba(10,15,25,0.55) 75%, rgba(10,15,25,0.85) 100%)',
           }}
         />
         <div
-          className="absolute inset-0 z-[2] pointer-events-none"
+          className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background:
-              'radial-gradient(ellipse at center, transparent 38%, hsl(235 22% 3% / 0.55) 100%)',
+              'radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.45) 100%)',
           }}
         />
 
+        {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[14svh]">
-          <HeroHeadline
-            lines={['Din objektiva', 'bilrådgivare']}
-            subtitle="Vi matchar dig med bilar baserat på din livsstil, budget och behov"
-            sizeClass="text-[2.25rem] leading-[1.02]"
-            subtitleClass="text-sm"
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-2"
+          >
+            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="text-2xl font-bold text-white leading-tight font-serif"
+            >
+              Din objektiva<br />bilrådgivare
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+              className="text-white/70 text-sm leading-relaxed max-w-md mx-auto"
+            >
+              Vi matchar dig med bilar baserat på din livsstil, budget och behov
+            </motion.p>
+          </motion.div>
 
+          {/* Spacer between headline and CTA */}
           <div className="flex-1 min-h-[20svh]" />
 
+          {/* Bottom: CTA + social proof below the car */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
             className="flex flex-col items-center gap-4 mb-10 w-full"
           >
             <Button
@@ -197,42 +211,58 @@ const Index = () => {
 
         {/* Desktop hero content — spread vertically */}
         <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
-          <div className="mt-8">
-            <HeroHeadline
-              lines={['Din objektiva', 'bilrådgivare']}
-              subtitle="Vi matchar dig med bilar baserat på din livsstil, budget och behov"
-              sizeClass="text-5xl lg:text-6xl xl:text-7xl"
-              subtitleClass="text-base lg:text-lg"
-            />
-          </div>
+          {/* Top: headline + subtitle together */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-8 space-y-3"
+          >
+            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="text-4xl lg:text-5xl font-bold text-white leading-tight font-serif"
+            >
+              Din objektiva<br />bilrådgivare
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
+              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
+            >
+              Vi matchar dig med bilar baserat på din livsstil, budget och behov
+            </motion.p>
+          </motion.div>
 
+          {/* Bottom: CTA + social proof below the car */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
             className="flex flex-col items-center gap-4 mb-12"
           >
-            <MagneticCTA>
-              <Button
-                onClick={scrollToSearch}
-                variant="gradient"
-                className="h-12 rounded-full text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform px-10 hero-cta-glow"
-              >
-                Hitta din bil
-              </Button>
-            </MagneticCTA>
+            <Button
+              onClick={scrollToSearch}
+              variant="gradient"
+              className="h-12 rounded-full text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform px-10 hero-cta-glow"
+            >
+              Hitta din bil
+            </Button>
           </motion.div>
         </div>
 
         {/* Bounce arrow — desktop only */}
-        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-primary/80 hover:text-primary transition-colors" style={{
+        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
         opacity: 1 - scrollProgress * 3
       }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
         </button>
 
         {/* Bottom fade — inside hero, no seam possible */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 z-[3] pointer-events-none" style={{
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 z-[2] pointer-events-none" style={{
           background: `linear-gradient(to bottom,
             transparent 0%,
             hsl(var(--background) / 0.08) 15%,
