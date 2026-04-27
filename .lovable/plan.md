@@ -1,35 +1,44 @@
 
 
-## Plan: Förbättra Clutch kommunikationsstil
+## Plan: Mer realistisk hero-video + rensa proof-text
 
-### Sammanfattning
-Uppdatera Clutch systemprompt och resultatvisning baserat på dina preferenser:
-- **Osäkerhet**: Mix — ge förslag OCH erbjud att hoppa över
-- **Humor**: Lätt humor ibland, inte alltid saklig
-- **Resultat**: Förklaringar visas under bilkorten, inte i chatten
-- **Språk**: Enkelt, vardagligt svenska — inga biltermer
+### Vad som ändras
 
-### Ändringar
+**1. Ny realistisk hero-video (sömlös loop)**
 
-#### 1. Uppdatera systemprompt (edge function)
-**Fil:** `supabase/functions/guided-search/index.ts`
+Ersätter nuvarande genererade video med en **äkta cinematic bilbild** som loopar sömlöst. Två alternativ — jag bygger båda och du behåller den du gillar:
 
-Ändra `CONVERSATION_SYSTEM_PROMPT` med dessa justeringar:
+- **Alternativ A — Riktigt filmmaterial:** Hämtar en högkvalitativ, royalty-fri bilvideo (t.ex. från Pexels/Coverr — bil som kör genom landskap eller stadsmiljö i skymning). Trimma till ~8s, applicera *crossfade-loop* (sista 0.5s blendar in i första 0.5s) via ffmpeg så loopen blir helt osynlig.
+- **Alternativ B — Generera ny cinematic clip:** Använda AI-video med tydlig prompt: "cinematic slow tracking shot of luxury car driving through Scandinavian forest road, golden hour, shallow depth of field, 8 seconds, seamless loop". Sedan samma ffmpeg crossfade-behandling.
 
-- **Tonalitet**: Byta från "kunnig kompis" till "kunnig kompis med lite humor" — tillåta lättsamma kommentarer som "Bra val, klassiker!" men aldrig överdriva
-- **Osäkerhet-hantering**: Lägga till regel: "Om kunden svarar 'vet inte' eller verkar osäker — ge 2-3 konkreta förslag de kan välja mellan, OCH erbjud att hoppa över ('Eller så skippar vi den!')"
-- **Enkelt språk**: Förtydliga att Clutch aldrig ska använda termer som "miltal", "drivlina", "förmånsvärde" utan förklara med vardagliga ord
-- **Resultat i chatten**: Ta bort all resultatsammanfattning i chattmeddelandet — Clutch ska bara säga en kort mening som "Här är dina matchningar!" utan att beskriva bilarna. Bilförklaringarna ska istället komma under varje bilkort (redan hanterat via `carReasons`)
+Jag kör **Alternativ A först** (mer realistiskt = vad du efterfrågar), och om resultatet inte sitter byter vi till B.
 
-Exempel på nya bra svar i prompten:
-- "Aha, elbil! Hur långt kör du till jobbet ungefär? Det påverkar vilken räckvidd du behöver."
-- "Ingen aning om drivmedel? De flesta som pendlar kort gillar elbil, annars funkar hybrid bra. Eller så skippar vi den frågan!"
+**Loop-tekniken (viktigast):**
+```
+ffmpeg crossfade-loop:
+- Tar sista 15 frames och blendar med första 15 frames
+- Lägger till `loop` attribut + lite negative `marginTop` på video element
+- Ingen synlig "snap" när videon startar om
+```
 
-#### 2. Förbättra resultatmeddelandet
-**Fil:** `supabase/functions/guided-search/index.ts`
+**2. Rensa hero-content (mobil + desktop)**
 
-I AI-anropet som genererar resultatmeddelandet (efter sökning) — instruera att meddelandet ska vara kort och inte beskriva bilarna. T.ex. "Kolla in dessa — jag tror de passar dig!" istället för en lång sammanfattning.
+Tar bort dessa två element från både mobil- och desktop-vyn:
+- `1 200+ sökningar gjorda` pillen (med gröna pricken)
+- `✔ Tar 30 sek · Gratis · Objektiv rådgivning` raden
+
+Resultat: renare hero med bara **rubrik + undertext + CTA-knapp**. Mer premium, mindre "landningssida-feeling".
+
+**3. Mindre layoutjustering**
+
+Eftersom proof-blocken försvinner får CTA-knappen lite mer luft under sig. Justerar `mb-10`/`mb-12` så centreringen fortfarande känns balanserad.
+
+---
 
 ### Filer som ändras
-- `supabase/functions/guided-search/index.ts` — systemprompt + resultatmeddelandelogik
+
+- `src/assets/hero-video.mp4` — ersätts med ny realistisk loop-video
+- `src/pages/Index.tsx` — tar bort proof-pillen + tagline-raden i båda hero-vyerna
+
+Inga andra ändringar. Allt nuvarande beteende (parallax, video-overlay, CTA-funktion, scroll-arrow) bevaras.
 

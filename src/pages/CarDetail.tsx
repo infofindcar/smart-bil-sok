@@ -16,9 +16,10 @@ import {
 } from 'lucide-react';
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
-  calcAnnualTax, getWarranty, formatWarranty, formatNcapStars,
+  calcAnnualTax, getWarranty, getActiveWarranty, formatActiveWarranty, formatNcapStars,
   formatZeroHundred, formatBootSpace,
 } from '@/lib/carData';
+import { parseEquipment } from '@/lib/equipment';
 
 /* ── Types ── */
 interface CarModelData {
@@ -196,6 +197,8 @@ const CarDetail = () => {
   // Use model (cleaned) instead of model_raw which can contain junk data
   const displayTitle = car.model || '';
   const warranty = getWarranty(car.make);
+  const activeWarranty = getActiveWarranty(warranty, car.year ?? null, car.mileage ?? null);
+  const warrantyDisplay = formatActiveWarranty(activeWarranty);
 
   // Costs
   const co2 = modelData?.co2_g_per_km ?? null;
@@ -316,7 +319,7 @@ const CarDetail = () => {
           </div>
 
           {/* NCAP + Warranty badges */}
-          {(ncapStars || warranty) && (
+          {(ncapStars || warrantyDisplay) && (
             <div className="flex flex-wrap gap-3 mb-6">
               {ncapStars && (
                 <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
@@ -330,12 +333,12 @@ const CarDetail = () => {
                   </div>
                 </div>
               )}
-              {warranty && (
+              {warrantyDisplay && (
                 <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
                   <Shield className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Nybilsgaranti</p>
-                    <p className="font-semibold text-sm">{formatWarranty(warranty)}</p>
+                    <p className="text-xs text-muted-foreground">{warrantyDisplay.title}</p>
+                    <p className="font-semibold text-sm">{warrantyDisplay.text}</p>
                   </div>
                 </div>
               )}
@@ -352,6 +355,36 @@ const CarDetail = () => {
               <p className="text-muted-foreground leading-relaxed text-sm">{modelData.reliability_notes}</p>
             </div>
           )}
+
+          {/* Utrustning & tillval (parsad från model_raw) */}
+          {(() => {
+            const equipment = parseEquipment(car.model_raw);
+            if (equipment.length === 0) return null;
+            return (
+              <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Package className="h-4 w-4 text-primary" />
+                  <h2 className="text-lg font-semibold">Utrustning & tillval</h2>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {equipment.map((tag) => (
+                    <Badge
+                      key={tag.key}
+                      variant="outline"
+                      className="bg-primary/5 border-primary/20 text-foreground/90 font-normal"
+                    >
+                      {tag.label}
+                    </Badge>
+                  ))}
+                </div>
+                {car.model_raw && (
+                  <p className="text-xs text-muted-foreground/70 italic leading-relaxed">
+                    Säljarens beskrivning: "{car.model_raw}"
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {/* All specs grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

@@ -40,10 +40,23 @@ serve(async (req) => {
     // Filtrera bort bilar utan bild direkt vid mottagning
     const carsWithImage = cars.filter((car) => car.image_thumb_url);
     const skippedNoImage = cars.length - carsWithImage.length;
-    if (skippedNoImage > 0) {
-      console.log(`sync-cars: hoppade över ${skippedNoImage} bilar utan bild`);
-    }
-    console.log(`sync-cars: received ${carsWithImage.length} bilar med bild (${skippedNoImage} utan bild), syncStartedAt=${syncStartedAt}`);
+
+    // Säkerhetsnät: blockera leasingbilar och orimligt låga priser (felaktiga månadspriser)
+    const LEASE_PATTERN = /(leasbar|leasebar|leas\.bar|privatleas|business\s*lease|lease\s+fr[åa]n|leasing\s+fr[åa]n|lease\s+fr\.|leasing\s+fr\.)/i;
+    const isLeaseOrBadPrice = (car: Record<string, unknown>) => {
+      const raw = String(car.model_raw ?? "");
+      const clean = String(car.model_clean ?? "");
+      const price = typeof car.price === "number" ? car.price : Number(car.price);
+      if (LEASE_PATTERN.test(raw) || LEASE_PATTERN.test(clean)) return true;
+      if (Number.isFinite(price) && price > 0 && price < 20000) return true;
+      return false;
+    };
+    const carsClean = carsWithImage.filter((c) => !isLeaseOrBadPrice(c));
+    const skippedLease = carsWithImage.length - carsClean.length;
+
+    if (skippedNoImage > 0) console.log(`sync-cars: hoppade över ${skippedNoImage} bilar utan bild`);
+    if (skippedLease > 0) console.log(`sync-cars: blockerade ${skippedLease} leasing/lågprisbilar`);
+    console.log(`sync-cars: received ${carsClean.length} giltiga bilar (${skippedNoImage} utan bild, ${skippedLease} leasing), syncStartedAt=${syncStartedAt}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -57,8 +70,8 @@ serve(async (req) => {
 
     // Upsert in batches of 200
     let upsertErrors = 0;
-    for (let i = 0; i < carsWithImage.length; i += BATCH_SIZE) {
-      const batch = carsWithImage.slice(i, i + BATCH_SIZE).map((car) => {
+    for (let i = 0; i < carsClean.length; i += BATCH_SIZE) {
+      const batch = carsClean.slice(i, i + BATCH_SIZE).map((car) => {
         // Remove 'id' to avoid overwriting Supabase's auto-increment primary key
         // with Blocket's own ID (which is stored in source_listing_id instead)
         const { id: _blocketId, ...carFields } = car as Record<string, unknown>;
@@ -94,7 +107,7 @@ serve(async (req) => {
       .select("id", { count: "exact", head: true });
 
     const added = Math.max(0, (countAfter ?? 0) - (countBefore ?? 0) + (deleted ?? 0));
-    const updated = carsWithImage.length - added;
+    const updated = carsClean.length - added;
     const durationMs = Date.now() - new Date(syncStartedAt).getTime();
 
     console.log(
@@ -107,8 +120,9 @@ serve(async (req) => {
         added,
         updated,
         deleted: deleted ?? 0,
-        total: carsWithImage.length,
+        total: carsClean.length,
         skippedNoImage,
+        skippedLease,
         upsertErrors,
         durationMs,
         enrichTriggered: false,

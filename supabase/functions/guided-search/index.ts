@@ -1,8 +1,3 @@
-// Gemini-assistent + bilsök mot Lovable-tabellen.
-// Tillvals-mappen (featurePatterns) är enda stället nya tillval läggs till.
-// Fri-text fallback finns: okända nycklar saneras och ILIKE:as mot model_raw.
-// Se CLAUDE.md "Viktiga konventioner → Feature-sökning".
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -129,54 +124,99 @@ const drivetrainPatterns: Record<string, string[]> = {
   rwd: ["RWD", '"RWD"'],
 };
 
-// Tillval/utrustning — AI normaliserar kundens ord till dessa nycklar,
-// backend kör ILIKE mot model_raw. Flera patterns per nyckel = OR-sökning
-// (synonymer), så "skinn" träffar även "läder", "drivlina" → quattro/xDrive/...
-// Nyckel som AI skickar utanför listan accepteras som fri-text-ILIKE (saneras).
-const featurePatterns: Record<string, string[]> = {
-  // — Ljud —
-  bose:             ["%bose%"],
-  harman:           ["%harman%"],
-  burmester:        ["%burmester%"],
-  "bang & olufsen": ["%bang%olufsen%", "%b&o%"],
-  // — Praktiskt —
-  drag:             ["%drag%"],
-  värmare:          ["%värmare%", "%motorvärm%", "%kupévärm%"],
-  stolvärme:        ["%stolvärm%", "%uppvärmda säten%", "%sätesvärm%", "%säte värm%"],
-  ventilerade:      ["%ventilerad%"],
-  massage:          ["%massage%"],
-  panorama:         ["%panorama%", "%glastak%", "%pano %"],
-  kamera:           ["%backkamera%", "%360-kam%", "%360 kam%", "%kamera%"],
-  elbaklucka:       ["%elbaklucka%", "%el-baklucka%", "%elektrisk baklucka%"],
-  takräcke:         ["%takräck%", "%takbox%"],
-  // — Inredning —
-  skinn:            ["%skinn%", "%läder%"],
-  sportstol:        ["%sportstol%", "%sportsäte%"],
-  // — Tech —
-  navigation:       ["%navigat%", "% gps%", "%gps %"],
-  "head-up":        ["%head-up%", "%heads-up%", "%head up%"],
-  adaptive:         ["%adaptiv%", "%adaptive%"],
-  "pilot assist":   ["%pilot assist%", "%pilot-assist%"],
-  distronic:        ["%distronic%"],
-  // — Drivlinor (märkesspecifika AWD-namn) —
-  quattro:          ["%quattro%"],
-  xdrive:           ["%xdrive%", "%x-drive%"],
-  "4matic":         ["%4matic%", "%4-matic%"],
-  "4motion":        ["%4motion%", "%4-motion%"],
-  // — Trim-paket —
-  amg:              ["%amg%"],
-  "m sport":        ["%m sport%", "%m-sport%", "%msport%"],
-  "s-line":         ["%s-line%", "%s line%"],
-  "r-design":       ["%r-design%", "%r design%"],
-  inscription:      ["%inscription%"],
-  momentum:         ["%momentum%"],
-  "gt-line":        ["%gt-line%", "%gt line%"],
-  // — Skick/historik (viktigt för svenska köpare) —
-  svensksåld:       ["%svensksåld%", "%svensk såld%", "%svensksålld%"],
-  "1 ägare":        ["%1 ägare%", "%en ägare%", "%1-ägare%"],
-  nyservad:         ["%nyservad%", "%nyservice%", "%ny service%"],
-  nybesiktigad:     ["%nybesikt%", "%ny bes %", "%ny bes.%", "%nybes%"],
+// Equipment / tillval — mappar AI:s nyckel → SQL ILIKE-mönster mot model_raw
+// Värdena är ALLA möjliga sätt tillvalet kan stavas i annonser (svenska + engelska + förkortningar).
+const equipmentPatterns: Record<string, string[]> = {
+  drag: ["drag", "dragkrok", "tow bar", "towbar", "tow-hitch"],
+  varmare: ["värm", "motorvärm", "kupévärm", "webasto", "standheizung"],
+  taklucka: ["pano", "panorama", "panoramic", "sunroof", "glasstak", "öppningsbart tak", "taklucka", "takluck"],
+  skinn: ["skinn", "läder", "leather", "nappa", "alcantara"],
+  rattvarme: ["rattvärm", "heated steering"],
+  stolvarme: ["stolvärm", "sätesvärm", "heated seat"],
+  kamera: ["kamera", "camera", "backkamera", "360", "surround view", "reverse cam"],
+  navi: ["navi", "navigation", "gps", "carplay", "android auto"],
+  hud: ["hud", "head-up", "head up"],
+  parksensor: ["park assist", "p-sensor", "parkeringssens", "pdc", "park pilot"],
+  blis: ["blis", "blind spot", "dödvink"],
+  adaptiv_farthallare: ["acc", "adaptiv fart", "adaptive cruise", "distronic"],
+  keyless: ["keyless", "nyckellös", "comfort access"],
+  premium_audio: ["b&w", "bowers", "harman", "h/k", "burmester", "bose", "meridian", "bang & olufsen"],
+  // Märkesspecifika ljudsystem — använd när kunden uttryckligen nämner ett specifikt märke.
+  bose: ["bose"],
+  bw_audio: ["b&w", "bowers"],
+  harman_audio: ["harman", "h/k", "h&k"],
+  burmester_audio: ["burmester"],
+  bang_olufsen_audio: ["bang & olufsen", "b&o"],
+  meridian_audio: ["meridian"],
+  matrix_ljus: ["matrix", "led-strålk", "laserljus", "adaptive led"],
+  voc: ["voc", "connected services", "remote app"],
+  sport: ["m sport", "m-sport", "amg line", "amg", "r-design", "rdesign", "s-line", "sline", "polestar engineered", "st-line"],
+  fyrhjulsstyrning: ["4ws", "fyrhjulsst", "rear-wheel steer", "all-wheel steer"],
+  luftfjadring: ["luftfjädr", "air suspension", "airmatic"],
+  sju_sits: ["7-sits", "7 sits", "seven seat", "7-seater", "7 seater", "tredje sätesrad"],
+  momsbil: ["moms", "vat-qualifying"],
 };
+
+// Visningsetiketter på svenska för AI-promtpen och felmeddelanden
+const equipmentLabels: Record<string, string> = {
+  drag: "dragkrok",
+  varmare: "motorvärmare",
+  taklucka: "panoramatak",
+  skinn: "skinnklädsel",
+  rattvarme: "rattvärme",
+  stolvarme: "stolvärme",
+  kamera: "backkamera",
+  navi: "navigation",
+  hud: "head-up display",
+  parksensor: "parkeringssensorer",
+  blis: "döda vinkeln-varnare",
+  adaptiv_farthallare: "adaptiv farthållare",
+  keyless: "keyless",
+  premium_audio: "premiumljud",
+  bose: "Bose-ljudsystem",
+  bw_audio: "Bowers & Wilkins-ljudsystem",
+  harman_audio: "Harman Kardon-ljudsystem",
+  burmester_audio: "Burmester-ljudsystem",
+  bang_olufsen_audio: "Bang & Olufsen-ljudsystem",
+  meridian_audio: "Meridian-ljudsystem",
+  matrix_ljus: "matrix-/LED-strålkastare",
+  voc: "fjärrstyrning via app",
+  sport: "sportpaket",
+  fyrhjulsstyrning: "4-hjulsstyrning",
+  luftfjadring: "luftfjädring",
+  sju_sits: "7-sits",
+  momsbil: "momsbil",
+};
+
+// Bygg ett OR-filter mot model_raw för flera tillval (alla mönster för alla nycklar OR:as ihop)
+function buildEquipmentOrFilter(keys: string[]): string {
+  const parts: string[] = [];
+  for (const key of keys) {
+    const patterns = equipmentPatterns[key];
+    if (!patterns) continue;
+    for (const p of patterns) {
+      // Escapa specialtecken som %, _, , och ()
+      const safe = p.replace(/[%_,()]/g, " ").trim();
+      if (!safe) continue;
+      parts.push(`model_raw.ilike.%${safe}%`);
+    }
+  }
+  return parts.join(",");
+}
+
+// Postfilter i JS — säkrare matchning mot regex. Returnerar true om bilen matchar ALLA must-have-tillval.
+function carHasAllEquipment(car: { model_raw: string | null }, mustHaveKeys: string[]): boolean {
+  if (mustHaveKeys.length === 0) return true;
+  const raw = (car.model_raw || "").toLowerCase();
+  if (!raw) return false;
+  for (const key of mustHaveKeys) {
+    const patterns = equipmentPatterns[key];
+    if (!patterns) continue;
+    const found = patterns.some(p => raw.includes(p.toLowerCase()));
+    if (!found) return false;
+  }
+  return true;
+}
 
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
@@ -287,7 +327,7 @@ EXEMPEL PÅ FÖR LÅNGT SVAR (UNDVIK):
 INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 1. Vad bilen ska användas till (pendling, familj, stad, långresor, blandat)
 2. Budget (ungefärligt prisintervall)
-3. Var personen bor (stad/region)
+3. VAR PERSONEN BOR (stad/region) — HÖGT PRIORITERAD. Avgör utbud, vinterkrav (4WD i norr), parkering (stad vs uppfart), och om elbil funkar (laddinfra). MÅSTE frågas tidigt.
 4. Hur långt de kör per dag/vecka
 5. Drivmedel (el, hybrid, bensin, diesel)
 6. Karosstyp — fråga begripligt: "Hög bil som SUV, praktisk kombi, sportig coupé eller vanlig sedan?"
@@ -303,6 +343,52 @@ INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 16. Vad man vill betala totalt per månad (lån + försäkring + bränsle)
 17. Laddmöjlighet hemma (om elbil diskuteras) — avgörande för om elbil funkar
 18. Eventuella specifika önskemål
+19. NUVARANDE BIL — vilken bil kör de idag? (märke, modell, ungefärlig årsmodell)
+20. VAD GILLAR DE med nuvarande bilen? (rymd, prestanda, komfort, ekonomi, känsla)
+21. VAD SAKNAR DE eller stör sig på med nuvarande bilen? (för liten, drar för mycket, tråkig, opålitlig)
+22. Vill de ha något LIKNANDE eller något HELT ANNAT? (uppgradering inom samma stil vs byta riktning)
+23. Personlighet/känsla — vill de att bilen ska kännas sportig, elegant, robust, smart, lyxig, praktisk?
+24. ÄGARTID — hur länge tänker de behålla bilen? Kort (1–3 år) → låg värdeminskning viktig (Toyota, Lexus, Volvo). Lång (5+ år) → pålitlighet, garanti, servicekostnad viktigare.
+25. HUSDJUR — har de hund eller djur som ofta åker med? Triggar kombi/SUV med stor lucka och tåligt klädsel.
+26. MÄRKEN ATT UNDVIKA — finns det märken de absolut INTE vill ha? Lika viktigt som vad de gillar. Sätts som strikt filter.
+27. VERKSTAD NÄRA — viktigt att det finns verkstad nära dem? Glesbygd → premiera vanliga märken (VW, Volvo, Toyota, Skoda). Storstad → exotiska märken är OK.
+28. FÄRGPREFERENS & TABU — finns färger de vill ha eller absolut inte vill ha? (t.ex. "ingen vit", "helst svart/grå")
+29. IMPORTERAD BIL OK? — vissa undviker importbilar pga. servicehistorik/garanti. Fråga om kunden bryr sig.
+30. ANTAL TIDIGARE ÄGARE — spelar antal ägare roll? Påverkar val mellan demobil (1 ägare) vs äldre bil (3+ ägare).
+31. LADDNING HEMMA (vid elbil) — kan de ladda hemma eller är de beroende av publika stolpar? Avgör om elbil överhuvudtaget är ett bra val.
+
+EXTREMT VIKTIG REGEL — INGA FINANSIERINGSFRÅGOR:
+Fråga ALDRIG om finansiering, lån, kredit, kontantköp, leasing eller hur kunden tänker betala. Det är inte din roll. Hoppa över ALLT som rör pengar/finansiering — fokusera på bilen och kundens behov.
+- Nämn ALDRIG "privatleasing", "leasing", "billån", "kontant", "kredit" eller "finansiering".
+- Om kunden själv tar upp finansiering: säg vänligt att det inte är något du hjälper till med, och fortsätt med nästa relevanta fråga.
+
+TOLKNINGSREGLER FÖR DE NYA FRÅGORNA:
+- "kort ägartid" → premiera bilar med god andrahandsvärde (japanska/koreanska/Volvo).
+- "lång ägartid (5+ år)" → premiera Toyota/Lexus/Volvo + nyare bilar med garanti kvar.
+- "hund / husdjur" → bonus för kombi/SUV i ranking, undvik små halvkombis.
+- "undvik märken X, Y" → strikt filter, dessa märken filtreras BORT (sätt i customerProfile).
+- "verkstad nära viktigt + glesbygd/landsbygd" → bias mot vanliga märken (Volvo, VW, Toyota, Skoda, Volkswagen).
+- "vill inte ha färg X" → filtrera bort den färgen.
+- "ingen importbil" → undvik bilar med "import"/"EU-bil" i model_raw.
+- "endast få ägare" → premiera nyare bilar med låg ägarhistorik.
+
+BONUS-TRIGGER FÖR ÄLDRE BILAR:
+Om bilarna du föreslår är ÄLDRE ÄN 8 ÅR — nämn proaktivt i customerProfile/reasoning att kunden bör räkna med högre servicekostnader och rekommendera kontroll av servicehistorik innan köp.
+
+VIKTIGT — STÄLL DE PERSONLIGA FRÅGORNA TIDIGT:
+Innan du dyker ner i tekniska filter (drivmedel, kaross, färg) ska du förstå PERSONEN. Bra ordning de första meddelandena:
+1. Vad ska bilen användas till? (livssituation)
+2. VAR BOR DU? (stad/region) — fråga ALLTID detta tidigt, senast i meddelande 2-3.
+3. Vad kör du för bil idag, och är du nöjd med den? — "Vad gillar du mest? Vad stör dig?"
+4. Vill du ha något liknande eller något helt annat den här gången?
+5. Vilken känsla vill du ha — sportig, lyxig, praktisk, robust?
+6. DÄREFTER de tekniska filtren (budget, drivmedel, kaross osv.)
+
+VARFÖR — det här ger riktiga insikter:
+- "Jag har en gammal Volvo V70 som drar mycket men är jätterymlig" → rymd är viktigt + vill sänka bränslekostnad → föreslå hybrid/el-kombi.
+- "Jag har en BMW 3-serie men barnen får inte plats" → uppgradera till X3/X5 eller Q5 — behåller känslan men får plats.
+- "Jag har en Tesla Model 3 men vill ha mer lyx" → föreslå Polestar, Mercedes EQE, BMW i5.
+- "Jag är trött på min tråkiga Passat" → föreslå något mer karaktärsfullt i samma prisklass.
 
 INTELLIGENTA FÖLJDFRÅGOR (ställ dessa baserat på kontext):
 - Om budget < 150 000 → fråga om de kan tänka sig äldre bil med få mil
@@ -316,6 +402,32 @@ INTELLIGENTA FÖLJDFRÅGOR (ställ dessa baserat på kontext):
 - Om stad → nämn att mindre bil är smidigare att parkera
 - Om låg kostnad prioriteras → lyft elbil/hybrid och förklara besparingen kort
 
+PROAKTIV RÅDGIVNING — DU ÄR EN SMART RÅDGIVARE, INTE EN ORDERFRÅGARE:
+Du ska AKTIVT föreslå utrustning och tillval som kunden kanske inte tänkt på, baserat på deras livssituation.
+Du ska ge OBJEKTIVA råd — säg "jag skulle faktiskt rekommendera X över Y eftersom..." när det är relevant.
+
+TILLVAL ATT FÖRESLÅ BASERAT PÅ BEHOV (fråga om det när det är relevant):
+- Husvagn / släp / båt → "dragkrok" (drag)
+- Pendlar / kallt klimat / norrland → "motorvärmare" (varmare) + "rattvärme" / "stolvärme"
+- Småbarn / barnvagn → "backkamera" (kamera) + "parkeringssensorer" (parksensor) — lättare att backa
+- Stor familj eller många kompisar → "7-sits" (sju_sits)
+- Mycket motorvägskörning → "adaptiv farthållare" (adaptiv_farthallare) — gör långresor mycket bekvämare
+- Vill ha "wow"-känsla / lyx → "panoramatak" (taklucka), "premiumljud" (premium_audio), "skinn" (skinn)
+- Ofta i mörker / lantliga vägar → "matrix-strålkastare" (matrix_ljus)
+- Företag / kan dra moms → "momsbil" (momsbil)
+- Sportig körning önskas → "sportpaket" (sport)
+
+RÅDGIVAR-EXEMPEL (gör så här när relevant):
+- "Du nämnde husvagn — då är dragkrok ett MÅSTE. Ska jag bara visa bilar med drag?"
+- "Småbarn? Då skulle jag rekommendera backkamera och parkeringssensorer — sparar mycket nerver vid förskolan."
+- "Pendlar du i Norrland? Motorvärmare gör bilen direkt 10 grader varmare på morgonen — värt att ha."
+- "Med din budget skulle jag faktiskt välja en hybrid över bensin — du sparar typ 1500 kr/mån i bränsle."
+
+TOLKA STYRKAN AV ÖNSKEMÅL ("must" vs "nice-to-have"):
+- "måste ha", "krav", "absolut", "nödvändigt", "behöver" → MUST-HAVE → lägg i mustHaveEquipment
+- "gärna", "helst", "skulle vara kul med", "om det går", "nice att ha" → NICE-TO-HAVE → lägg i niceToHaveEquipment
+- Om kunden ber om något (t.ex. "jag vill ha drag") utan att specificera styrka → fråga: "Är drag ett måste eller bara önskvärt?"
+
 GENERELLA REGLER:
 - Ställ MAX EN fråga per meddelande
 - Var kort, varm och naturlig
@@ -323,7 +435,7 @@ GENERELLA REGLER:
 - Bekräfta KORT vad kunden sa innan nästa fråga
 - Hoppa över frågor du redan har svar på
 
-NÄR DU SKA SÖKA: Du ska ha samlat minst 6 av de 18 punkterna ovan OCH ha ställt minst 6 frågor. Sök INTE förrän du har tillräckligt. Om kunden pressar på, förklara kort att fler frågor ger bättre matchning.
+NÄR DU SKA SÖKA: Du ska ha samlat minst 7 datapunkter ovan OCH ha ställt minst 7 frågor. Punkterna 3 (var personen bor), 24 (ägartid) och 26 (märken att undvika) är HÖGT prioriterade — DESSA MÅSTE alltid frågas. Sök INTE förrän du har tillräckligt. Om kunden pressar på, förklara kort att fler frågor ger bättre matchning.
 
 STRIKT FILTERLÄGE: Om kunden säger att de bara vill ha bilar som matchar deras exakta filter (t.ex. "bara mina filter", "only my filters", "inga extra förslag"), ska du STRIKT följa deras angivna filter utan att lägga till egna rekommendationer, bredda sökningen eller föreslå alternativ utanför deras kriterier. Returnera action "search" direkt med exakt de filter kunden har angett.
 
@@ -338,50 +450,43 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30,"features":["bose","drag"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 
 BUDGET-FORMAT — EXTREMT VIKTIGT:
 - "budget" ska vara "MIN-MAX" i kronor.
 - Om kunden säger "cirka 500 000" eller "runt 500 000" → sätt budget till "350000-650000" (±30%).
-- Om kunden säger "max 300 000" eller "under 300 000" → sätt budget till "0-300000".
-- Om kunden säger "minst 200 000" → sätt budget till "200000-99999999".
+- Om kunden säger "max 500 000", "under 500 000" eller bara anger ett TAK → fråga ALLTID följdfråga om de har en MIN-budget också, t.ex. "Har du en lägstanivå också? T.ex. minst 300k för att slippa de äldsta bilarna?". Sätt INTE MIN till 0 — det ger bara 40-50k-bilar i resultatet. Om kunden säger "spelar ingen roll" eller "bara billigast" → sätt MIN till ca 60% av MAX (t.ex. "300000-500000" för max 500k).
+- Om kunden säger "minst 200 000", "över 400 000" eller "från X" UTAN att ange ett tak → fråga ALLTID FÖLJDFRÅGA om maxbudget. Exempel: "Över 400k — ska vi säga upp till 600, 800 eller över en miljon?". Sätt INTE search förrän du har ett rimligt tak (max 50% över min, t.ex. över 400k → tolka som 400000-600000 om kunden bekräftar "runt där").
 - Om kunden säger "2 miljoner" utan "max"/"under" → tolka som "cirka" och sätt ±30%, t.ex. "1400000-2600000".
 - ALDRIG sätt MIN till 0 om kunden angett ett ungefärligt belopp — det ger helt fel resultat.
+- ALDRIG sätt MAX till 99999999 — det ger bara de billigaste bilarna i sökningen. Be alltid om ett tak.
+
+MÄRKE — VIKTIG FRÅGA:
+- Fråga ALLTID om kunden har ett bilmärke i åtanke ELLER om de vill att du ska rekommendera. Exempel: "Har du tänkt på något särskilt märke, eller vill du att jag föreslår baserat på dina krav?"
+- Om kunden säger "rekommendera du" → välj inte ett märke i filters, utan låt sökningen vara öppen och nämn kort i customerProfile vilka märken som passar.
+- Om kunden nämner ett märke → sätt make i filters direkt.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab, pickup, minibuss, smabil
 Giltiga drivetrain-värden: awd, fwd, rwd
 Giltiga transmission-värden: manuell, automat
 Giltiga useCase-värden: pendling, familj, langresa, stad, blandat
+Giltiga equipment-värden (mustHaveEquipment / niceToHaveEquipment är arrayer av dessa nycklar):
+  drag (dragkrok), varmare (motorvärmare), taklucka (panoramatak), skinn (skinnklädsel),
+  rattvarme (rattvärme), stolvarme (stolvärme), kamera (backkamera), navi (navigation),
+  hud (head-up display), parksensor (parkeringssensorer), blis (döda vinkeln),
+  adaptiv_farthallare (adaptiv farthållare), keyless, premium_audio (Bose/B&W/Burmester m.fl.),
+  matrix_ljus (matrix-/LED-ljus), voc (app-fjärrstyrning), sport (sportpaket: M Sport/AMG Line/R-Design osv.),
+  fyrhjulsstyrning, luftfjadring (luftfjädring), sju_sits (7-sits), momsbil,
+  bose (ENDAST Bose), bw_audio (ENDAST Bowers & Wilkins), harman_audio (ENDAST Harman Kardon / H/K),
+  burmester_audio (ENDAST Burmester), bang_olufsen_audio (ENDAST Bang & Olufsen / B&O), meridian_audio (ENDAST Meridian)
 
-TILLVAL / UTRUSTNING (features):
-Om kunden nämner specifika tillval, utrustning, trim-paket eller historik,
-lägg motsvarande nycklar i "features"-arrayen (max 8).
-
-Kända nycklar (med synonymer som automatiskt matchas i backend):
-  Ljud:       bose, harman, burmester, bang & olufsen
-  Praktiskt:  drag, värmare, stolvärme, ventilerade, massage, panorama,
-              kamera, elbaklucka, takräcke
-  Inredning:  skinn, sportstol
-  Tech:       navigation, head-up, adaptive, pilot assist, distronic
-  Drivlinor:  quattro, xdrive, 4matic, 4motion
-  Trim:       amg, m sport, s-line, r-design, inscription, momentum, gt-line
-  Historik:   svensksåld, 1 ägare, nyservad, nybesiktigad
-
-Exempel:
-- "Porsche med Bose" → make:"Porsche", features:["bose"]
-- "Mercedes med dragkrok och skinnsäten" → make:"Mercedes", features:["drag","skinn"]
-- "Audi quattro med S-Line" → make:"Audi", features:["quattro","s-line"]
-- "Volvo Inscription med Pilot Assist" → make:"Volvo", features:["inscription","pilot assist"]
-- "Svensksåld BMW xDrive, 1 ägare" → make:"BMW", features:["xdrive","svensksåld","1 ägare"]
-
-FRI-TEXT: Om kunden nämner ett ovanligt tillval som inte finns i listan
-ovan, lägg ändå en normaliserad lowercase-nyckel (2-30 tecken, endast
-bokstäver/siffror/mellanslag/bindestreck) — den matchas som ILIKE mot
-annonstiteln. Exempel: "TDI motor" → ["tdi"], "keyless" → ["keyless"],
-"BlueTEC" → ["bluetec"].`;
+EXTREMT VIKTIGT — MÄRKE OCH SPECIFIKA LJUDSYSTEM:
+- Om kunden nämner ett SPECIFIKT bilmärke (t.ex. "Porsche", "BMW", "Volvo, Audi") MÅSTE du ALLTID sätta "make" i filters till exakt det märket. Hoppa ALDRIG över make när kunden bett om ett specifikt märke. Om kunden nämner FLERA märken, välj det första eller fråga vilket de helst vill ha.
+- Om kunden nämner ett SPECIFIKT ljudsystem-märke (Bose, B&W, Bowers & Wilkins, Harman Kardon, H/K, Burmester, Bang & Olufsen, B&O, Meridian) MÅSTE du använda den SPECIFIKA equipment-nyckeln (bose, bw_audio, harman_audio, burmester_audio, bang_olufsen_audio, meridian_audio) — INTE den generiska "premium_audio". Bose-kunder vill inte få Harman Kardon-bilar och tvärtom.
+- Använd "premium_audio" ENDAST när kunden säger något generellt som "bra ljud" eller "premiumljud" utan att specificera märke.`;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -428,6 +533,9 @@ serve(async (req) => {
       const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
       const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
+      const mustEq = Array.isArray(f.mustHaveEquipment)
+        ? f.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
       const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
       // Progressive relaxation: try with filters, then relax
@@ -476,7 +584,12 @@ serve(async (req) => {
       for (let level = 0; level <= 2; level++) {
         const { data: moreCars } = await buildLoadMoreQuery(level);
         if (moreCars && moreCars.length > 0) {
-          cars = moreCars
+          // Filtrera strikt på must-have-tillval (postfilter, säkrare än SQL)
+          const filtered = mustEq.length > 0
+            ? moreCars.filter((c: any) => carHasAllEquipment(c, mustEq))
+            : moreCars;
+          if (filtered.length === 0) continue;
+          cars = filtered
             .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
             .slice(0, 9);
           break;
@@ -632,14 +745,25 @@ serve(async (req) => {
     try {
       decision = JSON.parse(cleaned);
     } catch (parseErr) {
-      console.warn("Failed to parse AI decision, returning as message");
-      return new Response(
-        JSON.stringify({
-          action: "ask",
-          message: rawContent,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Försök extrahera ett JSON-objekt ur blandad text (AI:n råkade prata + skicka JSON)
+      const match = cleaned.match(/\{[\s\S]*"action"\s*:\s*"(ask|search)"[\s\S]*\}/);
+      if (match) {
+        try {
+          decision = JSON.parse(match[0]);
+        } catch {}
+      }
+      if (!decision) {
+        // Sista utvägen: ta bort eventuell JSON-svans och visa bara prosatexten
+        const prose = cleaned.replace(/\{[\s\S]*\}\s*$/, "").trim() || rawContent;
+        console.warn("Failed to parse AI decision, returning as message");
+        return new Response(
+          JSON.stringify({
+            action: "ask",
+            message: prose,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // If AI wants to ask a question, return it
@@ -699,17 +823,12 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
-      // Validera features: whitelist först, annars fri-text efter sanering.
-      // Tillåt a-z0-9åäö mellanslag bindestreck & /, 2-30 tecken – stoppar
-      // SQL-injection och rappakalja, men låter AI matcha ovanliga tillval
-      // som inte finns i featurePatterns (t.ex. "tdi", "bluetec", "keyless").
-      const featureFreeTextRe = /^[a-z0-9åäö &\-\/]{2,30}$/;
-      const validFeatures: string[] = Array.isArray(filters.features)
-        ? filters.features
-            .filter((f: unknown): f is string => typeof f === "string")
-            .map((f: string) => f.toLowerCase().trim())
-            .filter((f: string) => f in featurePatterns || featureFreeTextRe.test(f))
-            .slice(0, 8) // max 8 features för att undvika tungt query
+      // Validera equipment-filter
+      const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
+        ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
+        : [];
+      const niceToHaveEquipment: string[] = Array.isArray(filters.niceToHaveEquipment)
+        ? filters.niceToHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
         : [];
 
       // Track which filters were dropped at each level for transparent messaging
@@ -734,14 +853,8 @@ serve(async (req) => {
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select("*");
 
-        // Defensivt skydd mot leasingannonser (importfiltret sköter det
-        // normalt, men ett extra ord-baserat skydd kostar inget).
-        query = query.not("model_raw", "ilike", "%privatleasing%");
-
-        // Pris-golv 1500 kr filtrerar bort månadsbelopp som råkat smyga in.
-        const minPriceLevel = Math.max(1500, Math.floor(minPrice * PRICE_MIN_MULT[level]));
         query = query
-          .gte("price", minPriceLevel)
+          .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
           .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
 
         // Level 0: city
@@ -815,19 +928,19 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
-        // Level 0-3: features (tillval i model_raw). Varje feature AND:as
-        // mellan varandra; synonymer OR:as inom en feature. Släpps vid level 4
-        // eftersom tillvalen är kundens explicita önskemål – vi vill hellre
-        // ha noll träffar än visa bil utan önskat tillval förrän sista utväg.
-        if (validFeatures.length > 0 && level < 4) {
-          for (const feat of validFeatures) {
-            // Whitelistad nyckel → använd synonymer; okänd → fri-text ILIKE.
-            const patterns = featurePatterns[feat] ?? [`%${feat}%`];
-            const orClause = patterns.map((p) => `model_raw.ilike.${p}`).join(",");
-            query = query.or(orClause);
-          }
+        // Smart sortering: om kunden bara angett ett tak (eller spannet är brett),
+        // sortera så vi inte bara visar de billigaste skrällena längst ner i spannet.
+        // Vi prioriterar bilar nära MAX (de bästa kunden har råd med) men begränsar till spannet.
+        const isOpenMax = maxPrice >= 99999999;
+        const isOnlyMax = minPrice <= Math.max(50000, maxPrice * 0.1) && maxPrice < 99999999;
+        const isWideRange = minPrice > 0 && maxPrice > minPrice * 3;
+        if (isOpenMax) {
+          return query.order("year", { ascending: false, nullsFirst: false }).limit(40);
         }
-
+        if (isOnlyMax || isWideRange) {
+          // Sortera efter pris fallande inom spannet → bästa bilen för pengarna först
+          return query.order("price", { ascending: false, nullsFirst: false }).limit(40);
+        }
         return query.order("price", { ascending: true }).limit(18);
       };
 
@@ -843,8 +956,19 @@ serve(async (req) => {
       const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
 
       const sortByRelevance = (arr: any[]) => {
-        // First sort by body type match + price proximity
-        const sorted = arr.sort((a, b) => {
+        // 1. STRIKT: Om must-have-tillval finns, filtrera först (kunden sa "måste ha")
+        let pool = mustHaveEquipment.length > 0
+          ? arr.filter((c: any) => carHasAllEquipment(c, mustHaveEquipment))
+          : arr;
+
+        // Säkerhetsventil: om strikt filter ger 0 träffar, fall tillbaka till hela poolen
+        // så vi inte returnerar tomt — men markera så meddelandet kan förklara
+        if (pool.length === 0 && mustHaveEquipment.length > 0) {
+          pool = arr;
+        }
+
+        // 2. Sortera: body type match + nice-to-have boost + pris-närhet
+        const sorted = pool.sort((a, b) => {
           if (hasBodyTypeFilter) {
             const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
               || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
@@ -852,6 +976,14 @@ serve(async (req) => {
               || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
             if (aBodyMatch && !bBodyMatch) return -1;
             if (!aBodyMatch && bBodyMatch) return 1;
+          }
+          // Nice-to-have boost: bilar med fler matchade önskvärda tillval rankas högre
+          if (niceToHaveEquipment.length > 0) {
+            const aRaw = (a.model_raw || "").toLowerCase();
+            const bRaw = (b.model_raw || "").toLowerCase();
+            const aNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => aRaw.includes(p.toLowerCase()))).length;
+            const bNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => bRaw.includes(p.toLowerCase()))).length;
+            if (aNice !== bNice) return bNice - aNice;
           }
           return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
         });
@@ -933,48 +1065,6 @@ serve(async (req) => {
       
       console.log(`Search: budget=${minPrice}-${maxPrice}, relaxLevel=${relaxLevel}, found=${cars.length}, prices=${cars.map((c:any)=>c.price).join(",")}`);
 
-      // ── Lazy färgdetektering (bara vid färgfilter) ──
-      if (sanitizedColor && LOVABLE_API_KEY && cars.length > 0) {
-        const VALID_COLORS_LAZY = new Set(["Svart","Vit","Silver","Grå","Blå","Röd","Grön","Brun","Beige","Orange","Gul","Lila","Mörkblå","Ljusblå","Mörkgrå","Ljusgrå","Mörkgrön","Vinröd","Koppar","Guld"]);
-        const carsNeedingColor = cars.filter(
-          (c: any) => c.image_thumb_url && (!c.color || c.color === "Okänd" || c.color === "Unknown")
-        ).slice(0, 10);
-
-        if (carsNeedingColor.length > 0) {
-          try {
-            const imageContents = carsNeedingColor.flatMap((car: any, idx: number) => [
-              { type: "text", text: `Bil ${idx + 1} (${car.make} ${car.model}):` },
-              { type: "image_url", image_url: { url: car.image_thumb_url } },
-            ]);
-            const colorRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-              method: "POST",
-              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: `Färgexpert för bilar. ${carsNeedingColor.length} bilar numrerade 1-${carsNeedingColor.length}. Svara EXAKT: 1:Svart\n2:Vit\nosv. Giltiga färger: Svart, Vit, Silver, Grå, Blå, Röd, Grön, Brun, Beige, Orange, Gul, Lila, Mörkblå, Ljusblå, Mörkgrå, Ljusgrå, Mörkgrön, Vinröd, Koppar, Guld. Dålig/ingen exteriörbild: Okänd.` },
-                  { role: "user", content: [{ type: "text", text: `Ange färg:` }, ...imageContents] },
-                ],
-              }),
-              signal: AbortSignal.timeout(30000),
-            });
-            if (colorRes.ok) {
-              const colorData = await colorRes.json();
-              const lines = (colorData.choices?.[0]?.message?.content?.trim() ?? "").split("\n");
-              carsNeedingColor.forEach((car: any, idx: number) => {
-                const line = lines.find((l: string) => l.startsWith(`${idx + 1}:`));
-                const val = line ? line.split(":").slice(1).join(":").trim() : "Okänd";
-                const color = VALID_COLORS_LAZY.has(val) ? val : "Okänd";
-                car.color = color;
-                supabase.from("Lovable").update({ color }).eq("id", car.id).then(() => {});
-              });
-            }
-          } catch (e) {
-            console.warn("Lazy color detection failed:", e);
-          }
-        }
-      }
-
       // ── Hämta berikad data från car_models och car_makes ──
       const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
       const uniqueModels = [...new Set(cars.map((c: any) => c.model).filter(Boolean))];
@@ -1013,10 +1103,19 @@ serve(async (req) => {
                 `${c.mileage?.toLocaleString("sv-SE")} mil`,
                 c.fuel_type, c.body_type, c.city,
                 `färg: ${c.color || "okänd"}`,
-                c.drivetrain && c.drivetrain !== "Unknown" && c.drivetrain !== "Okänd" ? `drivlina: ${c.drivetrain}` : null,
+                c.drivetrain ? `drivlina: ${c.drivetrain}` : null,
                 c.horsepower && c.horsepower > 0 ? `${c.horsepower} hk` : null,
                 c.transmission ? `växellåda: ${c.transmission}` : null,
               ];
+              // Matchade tillval (must-have + nice-to-have) — så AI kan namnge dem i motiveringen
+              const allEqKeys = [...mustHaveEquipment, ...niceToHaveEquipment];
+              if (allEqKeys.length > 0) {
+                const raw = (c.model_raw || "").toLowerCase();
+                const matched = allEqKeys.filter(k => (equipmentPatterns[k] || []).some(p => raw.includes(p.toLowerCase())));
+                if (matched.length > 0) {
+                  parts.push(`tillval: ${matched.map(k => equipmentLabels[k] || k).join(", ")}`);
+                }
+              }
               // Berikad modelldata
               if (cm) {
                 if (cm.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
@@ -1063,13 +1162,15 @@ FÖR VARJE BIL ("carReasons"):
 - Säkerhet: nämn säkerhetsbetyg om relevant
 - Praktiskt: bagageutrymme, hur tungt den kan dra, antal säten
 - Ekonomi: hur mycket den drar, elräckvidd, garanti
+- TILLVAL: Om bilen har "tillval: ..." i datan, NÄMN EXPLICIT minst ett tillval kunden bryr sig om (t.ex. "har dragkrok som du behövde" eller "kommer med både panoramatak och premiumljud").
 - Säg "fyrhjulsdrift" istället för AWD
 - Om kundens ålder är känd: nämn att försäkringen påverkas av ålder
 - Var specifik — nämn siffror när de är relevanta. Använd INTE emojis.${langInstruction}
 
 ${reasoning ? `Din resonering: ${reasoning}` : ""}
 ${customerProfile ? `Kundprofil: ${customerProfile}` : ""}
-${validFeatures.length > 0 ? `Kunden efterfrågade dessa tillval (matchade via annonstitel): ${validFeatures.join(", ")}. Om ett tillval syns i bilens model_raw, nämn det kort i motiveringen.` : ""}
+${mustHaveEquipment.length > 0 ? `Kunden KRÄVER dessa tillval: ${mustHaveEquipment.map(k => equipmentLabels[k] || k).join(", ")}.` : ""}
+${niceToHaveEquipment.length > 0 ? `Kunden vill GÄRNA ha (men inte krav): ${niceToHaveEquipment.map(k => equipmentLabels[k] || k).join(", ")}.` : ""}
 
 Svara ENBART med JSON (ingen markdown, inga code fences):
 {"message":"Kort intro (1 mening, beskriv INTE bilarna)","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
@@ -1179,7 +1280,7 @@ Använd INTE emojis.${langInstruction}`,
           cars,
           carReasons,
           suggestions,
-          filters: { ...filters, driverAge: typeof filters.driverAge === "number" ? filters.driverAge : null, features: validFeatures },
+          filters: { ...filters, driverAge: typeof filters.driverAge === "number" ? filters.driverAge : null },
           customerProfile,
           matchCount: cars.length,
           relaxed: relaxLevel > 0,

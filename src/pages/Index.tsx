@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-
+import heroVideoLoopUrl from '@/assets/hero-video-loop.mp4?url';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -62,7 +62,7 @@ const Index = () => {
   const [showResults, setShowResults] = useState(saved?.showResults || false);
   const [language, setLanguage] = useState('sv');
   const searchRef = useRef<HTMLDivElement>(null);
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
   // Persist search state to sessionStorage
@@ -130,43 +130,50 @@ const Index = () => {
       {/* Hero with video background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Responsive hero backgrounds — WebP with parallax on mobile */}
-        <img
-          src="/images/hero_mobile.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center block md:hidden will-change-transform"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          style={{ transform: `translateY(${parallaxY}px)` }}
+        {/* Cinematic background video with parallax */}
+        <video
+          src={`${heroVideoLoopUrl}?v=13`}
+          poster="/images/hero_findcar.webp"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
+          style={{ transform: `translateY(${parallaxY}px) scale(1.05)` }}
         />
-        <img
-          src="/images/hero_findcar.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-bottom hidden md:block will-change-transform"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          style={{ transform: `translateY(${parallaxY}px)` }}
+        {/* Cinematic overlays for readability + depth */}
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(10,15,25,0.55) 0%, rgba(10,15,25,0.35) 35%, rgba(10,15,25,0.55) 75%, rgba(10,15,25,0.85) 100%)',
+          }}
         />
-        {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-black/50 md:bg-black/40 z-[1]" />
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.45) 100%)',
+          }}
+        />
 
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
-        <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[30svh]">
+        <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[14svh]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-3"
+            className="space-y-2"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-3xl font-bold text-white leading-tight font-serif"
+              className="text-2xl font-bold text-white leading-tight font-serif"
             >
               Din objektiva<br />bilrådgivare
             </motion.p>
@@ -174,14 +181,14 @@ const Index = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
+              className="text-white/70 text-sm leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
           </motion.div>
 
           {/* Spacer between headline and CTA */}
-          <div className="h-[10svh]" />
+          <div className="flex-1 min-h-[20svh]" />
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
@@ -197,22 +204,6 @@ const Index = () => {
             >
               Hitta din bil
             </Button>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
-              className="flex flex-col items-center gap-2"
-            >
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-white/70 text-xs">
-                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
-                </p>
-              </div>
-              <p className="text-white/50 text-xs">
-                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
-              </p>
-            </motion.div>
           </motion.div>
         </div>
 
@@ -223,14 +214,14 @@ const Index = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-24 space-y-4"
+            className="mt-8 space-y-3"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-5xl lg:text-6xl font-bold text-white leading-tight font-serif"
+              className="text-4xl lg:text-5xl font-bold text-white leading-tight font-serif"
             >
               Din objektiva<br />bilrådgivare
             </motion.p>
@@ -238,7 +229,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-lg leading-relaxed max-w-md mx-auto"
+              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
@@ -258,22 +249,6 @@ const Index = () => {
             >
               Hitta din bil
             </Button>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.1, ease: 'easeOut' }}
-              className="flex flex-col items-center gap-2"
-            >
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-white/70 text-xs">
-                  <span className="text-white/90 font-medium">1 200+</span> sökningar gjorda
-                </p>
-              </div>
-              <p className="text-white/50 text-sm">
-                ✔ Tar 30 sek · Gratis · Objektiv rådgivning
-              </p>
-            </motion.div>
           </motion.div>
         </div>
 
@@ -311,10 +286,6 @@ const Index = () => {
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/[0.08] border border-secondary/[0.12] mb-5">
-                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                <p className="text-xs font-medium uppercase tracking-widest text-secondary/80">Personlig bilrådgivning</p>
-              </div>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                 Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
@@ -325,10 +296,10 @@ const Index = () => {
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <GuidedSearch
-            onResults={handleResults}
-            onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            onLanguageChange={setLanguage} />
-
+              onResults={handleResults}
+              onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              onLanguageChange={setLanguage}
+            />
           </ScrollReveal>
         </div>
       </section>
@@ -338,11 +309,15 @@ const Index = () => {
       const topCars = cars.slice(0, 3);
       const similarCars = cars.slice(3);
       return (
-         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} totalMatches={cars.length} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
-          state: {
-            cars: savedCars
-          }
-        })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />);
+         <Suspense fallback={null}>
+           <div ref={(el) => { resultsRef.current = el; }}>
+             <ResultsReveal cars={topCars} similarCars={similarCars} totalMatches={cars.length} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+              state: {
+                cars: savedCars
+              }
+            })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />
+           </div>
+         </Suspense>);
 
     })()}
 
