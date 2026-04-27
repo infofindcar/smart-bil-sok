@@ -457,7 +457,7 @@ Alla filter-fält är valfria — inkludera bara det du har information om.
 BUDGET-FORMAT — EXTREMT VIKTIGT:
 - "budget" ska vara "MIN-MAX" i kronor.
 - Om kunden säger "cirka 500 000" eller "runt 500 000" → sätt budget till "350000-650000" (±30%).
-- Om kunden säger "max 300 000" eller "under 300 000" → sätt budget till "0-300000".
+- Om kunden säger "max 500 000", "under 500 000" eller bara anger ett TAK → fråga ALLTID följdfråga om de har en MIN-budget också, t.ex. "Har du en lägstanivå också? T.ex. minst 300k för att slippa de äldsta bilarna?". Sätt INTE MIN till 0 — det ger bara 40-50k-bilar i resultatet. Om kunden säger "spelar ingen roll" eller "bara billigast" → sätt MIN till ca 60% av MAX (t.ex. "300000-500000" för max 500k).
 - Om kunden säger "minst 200 000", "över 400 000" eller "från X" UTAN att ange ett tak → fråga ALLTID FÖLJDFRÅGA om maxbudget. Exempel: "Över 400k — ska vi säga upp till 600, 800 eller över en miljon?". Sätt INTE search förrän du har ett rimligt tak (max 50% över min, t.ex. över 400k → tolka som 400000-600000 om kunden bekräftar "runt där").
 - Om kunden säger "2 miljoner" utan "max"/"under" → tolka som "cirka" och sätt ±30%, t.ex. "1400000-2600000".
 - ALDRIG sätt MIN till 0 om kunden angett ett ungefärligt belopp — det ger helt fel resultat.
