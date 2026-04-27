@@ -297,13 +297,11 @@ const Index = () => {
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200}>
-            <SuvFrame>
-              <GuidedSearch
-                onResults={handleResults}
-                onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                onLanguageChange={setLanguage}
-              />
-            </SuvFrame>
+            <GuidedSearch
+              onResults={handleResults}
+              onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              onLanguageChange={setLanguage}
+            />
           </ScrollReveal>
         </div>
       </section>

@@ -197,6 +197,30 @@ export type Database = {
         }
         Relationships: []
       }
+      enrichment_health: {
+        Row: {
+          job_name: string
+          last_processed: number | null
+          last_remaining: number | null
+          last_success_at: string
+          updated_at: string
+        }
+        Insert: {
+          job_name: string
+          last_processed?: number | null
+          last_remaining?: number | null
+          last_success_at?: string
+          updated_at?: string
+        }
+        Update: {
+          job_name?: string
+          last_processed?: number | null
+          last_remaining?: number | null
+          last_success_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           car_id: number | null
@@ -537,6 +561,7 @@ export type Database = {
       }
     }
     Functions: {
+      apply_car_model_data_from_cache: { Args: never; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
