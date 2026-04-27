@@ -21,8 +21,6 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 import heroVideoLoopUrl from '@/assets/hero-video-loop.mp4?url';
-import { SuvFrame } from '@/components/SuvFrame';
-
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -297,13 +295,11 @@ const Index = () => {
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200}>
-            <SuvFrame>
-              <GuidedSearch
-                onResults={handleResults}
-                onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                onLanguageChange={setLanguage}
-              />
-            </SuvFrame>
+            <GuidedSearch
+              onResults={handleResults}
+              onScrollToResults={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              onLanguageChange={setLanguage}
+            />
           </ScrollReveal>
         </div>
       </section>
