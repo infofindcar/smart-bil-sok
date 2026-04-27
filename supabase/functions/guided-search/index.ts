@@ -928,12 +928,18 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
-        // Smart sortering: om budgeten är väldigt öppen (max är default 99999999 eller > 5x min)
-        // sortera efter ÅR (nyast först) så vi inte bara får de billigaste längst ner i spannet.
-        // Annars sortera efter pris stigande.
-        const isOpenBudget = maxPrice >= 99999999 || (minPrice > 0 && maxPrice > minPrice * 5);
-        if (isOpenBudget) {
+        // Smart sortering: om kunden bara angett ett tak (eller spannet är brett),
+        // sortera så vi inte bara visar de billigaste skrällena längst ner i spannet.
+        // Vi prioriterar bilar nära MAX (de bästa kunden har råd med) men begränsar till spannet.
+        const isOpenMax = maxPrice >= 99999999;
+        const isOnlyMax = minPrice <= Math.max(50000, maxPrice * 0.1) && maxPrice < 99999999;
+        const isWideRange = minPrice > 0 && maxPrice > minPrice * 3;
+        if (isOpenMax) {
           return query.order("year", { ascending: false, nullsFirst: false }).limit(40);
+        }
+        if (isOnlyMax || isWideRange) {
+          // Sortera efter pris fallande inom spannet → bästa bilen för pengarna först
+          return query.order("price", { ascending: false, nullsFirst: false }).limit(40);
         }
         return query.order("price", { ascending: true }).limit(18);
       };
