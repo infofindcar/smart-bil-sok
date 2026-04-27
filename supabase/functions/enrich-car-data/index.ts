@@ -249,7 +249,9 @@ async function processChunk(
   apiKey: string,
   modelCache: Record<string, Record<string, unknown>>
 ): Promise<{ processed: number; modelsCached: number; colorUpdated: number; bodyTypeUpdated: number; drivetrainUpdated: number; horsepowerUpdated: number; errors: number; remaining: number }> {
-  const FILTER = "color.eq.Unknown,color.is.null,color.eq.Okänd,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil";
+  // Sentinel-konvention: drivetrain='Unknown' och horsepower=0 betyder
+  // "har försökts berika men car_models saknade värdet" – fångas inte här.
+  const FILTER = "color.eq.Unknown,color.is.null,color.eq.Okänd,body_type.is.null,body_type.eq.Unknown,body_type.eq.Personbil,body_type.eq.Transportbil,drivetrain.is.null,horsepower.is.null";
   const BLOCKET_GENERIC = ["Personbil", "Transportbil", "Unknown", "Okänd"];
 
   const { count: totalRemaining } = await supabase
@@ -319,14 +321,20 @@ async function processChunk(
           updates.body_type = carModel.body_type ?? "Okänd";
           results.bodyTypeUpdated++;
         }
-        if ((!car.drivetrain || car.drivetrain === "Unknown") && carModel.drivetrain_default) {
-          updates.drivetrain = carModel.drivetrain_default;
+        // Drivlina: skriv alltid (sentinel 'Unknown' om car_models saknar värde).
+        if (car.drivetrain === null || car.drivetrain === undefined) {
+          updates.drivetrain = (carModel.drivetrain_default as string | null) ?? "Unknown";
           results.drivetrainUpdated++;
         }
-        if ((!car.horsepower || car.horsepower === 0) && carModel.typical_hp_min) {
-          const hp_min = carModel.typical_hp_min as number;
-          const hp_max = (carModel.typical_hp_max as number) || hp_min;
-          updates.horsepower = Math.round((hp_min + hp_max) / 2);
+        // HP: skriv alltid (sentinel 0 om car_models saknar värde).
+        if (car.horsepower === null || car.horsepower === undefined) {
+          if (carModel.typical_hp_min) {
+            const hp_min = carModel.typical_hp_min as number;
+            const hp_max = (carModel.typical_hp_max as number) || hp_min;
+            updates.horsepower = Math.round((hp_min + hp_max) / 2);
+          } else {
+            updates.horsepower = 0;
+          }
           results.horsepowerUpdated++;
         }
       }
@@ -379,7 +387,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { password, ids } = body as { password?: string; ids?: number[] };
 
-    // Auth
+    // Auth – admin-lösenord eller intern sync-secret
     const adminPassword = Deno.env.get("ADMIN_PASSWORD");
     const syncSecret = Deno.env.get("SYNC_SECRET");
     const authHeader = req.headers.get("x-sync-secret");
@@ -401,7 +409,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Om specifika IDs skickades (från sync-cars) – berika bara dessa
+    // Path 1: specifika IDs skickade (från sync-cars) – berika bara dessa
     if (ids && ids.length > 0) {
       const modelCache: Record<string, Record<string, unknown>> = {};
       const totals = { processed: 0, modelsCached: 0, colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, errors: 0 };
@@ -484,7 +492,7 @@ serve(async (req) => {
       });
     }
 
-    // Manuellt anrop (admin) – loopa tills alla bilar är klara
+    // Path 2: manuellt anrop (admin) – loopa processChunk tills klart eller MAX_ITERATIONS
     const modelCache: Record<string, Record<string, unknown>> = {};
     const totals = { processed: 0, modelsCached: 0, colorUpdated: 0, bodyTypeUpdated: 0, drivetrainUpdated: 0, horsepowerUpdated: 0, errors: 0 };
     let iterations = 0;

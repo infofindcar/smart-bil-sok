@@ -39,7 +39,7 @@ const CarComparison = () => {
     },
     { label: 'Bränsle', getValue: (c) => c.fuel_type || '–' },
     { label: 'Kaross', getValue: (c) => c.body_type || '–' },
-    { label: 'Drivlina', getValue: (c) => c.drivetrain || '–' },
+    { label: 'Drivlina', getValue: (c) => (c.drivetrain && c.drivetrain !== 'Unknown' && c.drivetrain !== 'Okänd') ? c.drivetrain : '–' },
     { label: 'Färg', getValue: (c) => c.color || '–' },
     { label: 'Stad', getValue: (c) => c.city || '–' },
   ];

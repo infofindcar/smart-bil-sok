@@ -1,6 +1,8 @@
 // scripts/import-cars.js
 //
-// Hämtar billistings från blocket-api.se och skickar dem till Supabase Edge Function (sync-cars).
+// Blocket → sync-cars. Filtrerar bort leasing (3-stegs: Blocket-flaggor →
+// pris-heuristik → text-pattern) och privatannonser. Leasingfiltret speglas
+// även i guided-search. Se CLAUDE.md "Viktiga konventioner → Leasingfilter".
 // Berikelse (färg, modelldata) sker separat via enrich-batch.
 //
 // HUR DU ANVÄNDER DET:
@@ -159,7 +161,7 @@ async function main() {
       if (seen.has(sid)) continue;
       seen.add(sid);
 
-      // Filtrera bort leasing
+      // Filtrera bort leasing – officiella Blocket-flaggor
       if (car.sales_form === 5 || car.ad_type === 200) {
         leasingCount++;
         continue;
@@ -175,6 +177,20 @@ async function main() {
       // Heuristik-fallback 2: text-baserade leasingmarkörer i model_specification
       const spec = String(car.model_specification ?? "");
       if (/(leasbar|leasebar|leas\.bar|privatleas|business\s*lease|lease\s+fr[åa]n|leasing\s+fr[åa]n|lease\s+fr\.|leasing\s+fr\.)/i.test(spec)) {
+        leasingCount++;
+        continue;
+      }
+
+      // Heuristik 2: pris < 12 000 kr + leasing/månads-text i titeln betyder
+      // att 'priset' faktiskt är månadsbeloppet, inte köp-pris. Återförsäljaren
+      // har då glömt sätta sales_form=5/ad_type=200. Reella köpannonser med
+      // hög prisetikett som råkar nämna "kr/mån"-finansiering filtreras inte.
+      const rawSpec = (car.model_specification ?? "").toString();
+      const priceAmount = car.price?.amount ?? Number.MAX_SAFE_INTEGER;
+      if (
+        priceAmount < 12000 &&
+        /leasing|kr\s*\/\s*m[åa]n|:-?\s*\/\s*m[åa]n|\/\s*m[åa]n/i.test(rawSpec)
+      ) {
         leasingCount++;
         continue;
       }

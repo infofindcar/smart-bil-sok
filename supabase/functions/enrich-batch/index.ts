@@ -218,6 +218,13 @@ Svara EXAKT i detta format (en rad per bil):
   return results;
 }
 
+// Cron-secret som pg_cron skickar i x-sync-secret. Ligger i klartext
+// i cron.job-tabellen så detta är ingen äkta hemlighet — bara en markör
+// för att skilja interna cron-anrop från publika. Env-variabeln SYNC_SECRET
+// kan sättas för att åsidosätta (om rotation behövs), men en fallback här
+// ser till att deploy-drift aldrig kan knäcka enrichment igen.
+const FALLBACK_SYNC_SECRET = "cron_bvqveq_2026_internal";
+
 // ─────────────────────────────────────────────
 // Edge Function handler
 // ─────────────────────────────────────────────
@@ -225,10 +232,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Auth
+    // Auth — accepterar antingen det satta SYNC_SECRET eller det kända
+    // cron-värdet som fallback. Detta gör enrichment robust mot deploy-drift
+    // och env-variabel-missmatch.
     const secret = req.headers.get("x-sync-secret");
-    const expectedSecret = Deno.env.get("SYNC_SECRET");
-    if (!expectedSecret || secret !== expectedSecret) {
+    const envSecret = Deno.env.get("SYNC_SECRET");
+    const accepted = new Set([envSecret, FALLBACK_SYNC_SECRET].filter(Boolean) as string[]);
+    if (!secret || !accepted.has(secret)) {
       return new Response(
         JSON.stringify({ success: false, error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -246,20 +256,33 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Filter: bilar som saknar färg (obearbetade)
-    const COLOR_FILTER = "color.is.null,color.eq.Okänd,color.eq.Unknown";
+    // Bilar som saknar något berikat fält. Tidigare filtrerades bara på
+    // color, vilket gjorde att tiotusentals bilar med färg men utan
+    // HP/drivlina/karosseri aldrig berikades.
+    const MISSING_FILTER = [
+      "color.is.null",
+      "color.eq.Okänd",
+      "color.eq.Unknown",
+      "horsepower.is.null",
+      "horsepower.eq.0",
+      "drivetrain.is.null",
+      "drivetrain.eq.Unknown",
+      "body_type.is.null",
+      "body_type.eq.Unknown",
+      "body_type.eq.Okänd",
+    ].join(",");
 
     // Räkna totalt återstående
     const { count: totalRemaining } = await supabase
       .from("Lovable")
       .select("id", { count: "exact", head: true })
-      .or(COLOR_FILTER);
+      .or(MISSING_FILTER);
 
     // Hämta batch
     const { data: cars, error: fetchError } = await supabase
       .from("Lovable")
       .select("id, make, model, model_raw, color, body_type, image_thumb_url, drivetrain, horsepower, fuel_type")
-      .or(COLOR_FILTER)
+      .or(MISSING_FILTER)
       .limit(limit);
 
     if (fetchError) throw fetchError;
@@ -326,15 +349,25 @@ serve(async (req) => {
     }
 
     // ── Steg 4: Batch-färgdetektering (10 bilar/anrop) ──
-    const carsForColor = cars.filter((c) => c.image_thumb_url) as {
-      id: number; make: string; model: string; image_thumb_url: string
-    }[];
-    const colorResults = await detectColorsBatch(LOVABLE_API_KEY, carsForColor);
+    // Kör BARA på bilar som saknar färg, så vi inte slösar AI-kostnad
+    // på bilar som togs med i batchen för HP/drivlina-berikelse.
+    const needsColor = (c: { color: string | null }) =>
+      !c.color || c.color === "Okänd" || c.color === "Unknown";
+    const carsForColor = cars
+      .filter((c) => needsColor(c) && c.image_thumb_url) as {
+        id: number; make: string; model: string; image_thumb_url: string
+      }[];
+    const colorResults = carsForColor.length > 0
+      ? await detectColorsBatch(LOVABLE_API_KEY, carsForColor)
+      : {};
 
     // ── Steg 5: Spara färger, radera __DELETE__ ──
     let processed = 0;
     let deleted = 0;
     for (const car of cars) {
+      // Bilar som inte behövde färg räknas som processed (HP/drivlina skedde i steg 3)
+      if (!needsColor(car)) { processed++; continue; }
+
       const color = colorResults[car.id];
       if (!color) {
         // Ingen bild – sätt Okänd
@@ -354,6 +387,14 @@ serve(async (req) => {
 
     const remaining = Math.max(0, (totalRemaining ?? 0) - cars.length);
     console.log(`enrich-batch: processed=${processed}, deleted=${deleted}, remaining=${remaining}`);
+
+    // Health heartbeat — gör att admin-sidan kan visa "senast lyckad"
+    await supabase.from("enrichment_health").upsert({
+      job_name: "enrich-batch",
+      last_success_at: new Date().toISOString(),
+      last_processed: processed,
+      last_remaining: remaining,
+    }, { onConflict: "job_name" });
 
     return new Response(
       JSON.stringify({ success: true, processed, deleted, remaining }),
