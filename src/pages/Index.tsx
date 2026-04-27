@@ -62,7 +62,7 @@ const Index = () => {
   const [showResults, setShowResults] = useState(saved?.showResults || false);
   const [language, setLanguage] = useState('sv');
   const searchRef = useRef<HTMLDivElement>(null);
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
   // Persist search state to sessionStorage
@@ -309,11 +309,15 @@ const Index = () => {
       const topCars = cars.slice(0, 3);
       const similarCars = cars.slice(3);
       return (
-         <ResultsReveal ref={resultsRef} cars={topCars} similarCars={similarCars} totalMatches={cars.length} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
-          state: {
-            cars: savedCars
-          }
-        })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />);
+         <Suspense fallback={null}>
+           <div ref={(el) => { resultsRef.current = el; }}>
+             <ResultsReveal cars={topCars} similarCars={similarCars} totalMatches={cars.length} savedCars={savedCars} carReasons={carReasons} resultMessage={resultMessage} language={language} onToggleSave={toggleSave} onCompare={() => navigate('/compare', {
+              state: {
+                cars: savedCars
+              }
+            })} onShowMore={handleLoadMore} loadingMore={loadingMore} getReasonForCar={getReasonForCar} />
+           </div>
+         </Suspense>);
 
     })()}
 
