@@ -457,7 +457,7 @@ Alla filter-fält är valfria — inkludera bara det du har information om.
 BUDGET-FORMAT — EXTREMT VIKTIGT:
 - "budget" ska vara "MIN-MAX" i kronor.
 - Om kunden säger "cirka 500 000" eller "runt 500 000" → sätt budget till "350000-650000" (±30%).
-- Om kunden säger "max 300 000" eller "under 300 000" → sätt budget till "0-300000".
+- Om kunden säger "max 500 000", "under 500 000" eller bara anger ett TAK → fråga ALLTID följdfråga om de har en MIN-budget också, t.ex. "Har du en lägstanivå också? T.ex. minst 300k för att slippa de äldsta bilarna?". Sätt INTE MIN till 0 — det ger bara 40-50k-bilar i resultatet. Om kunden säger "spelar ingen roll" eller "bara billigast" → sätt MIN till ca 60% av MAX (t.ex. "300000-500000" för max 500k).
 - Om kunden säger "minst 200 000", "över 400 000" eller "från X" UTAN att ange ett tak → fråga ALLTID FÖLJDFRÅGA om maxbudget. Exempel: "Över 400k — ska vi säga upp till 600, 800 eller över en miljon?". Sätt INTE search förrän du har ett rimligt tak (max 50% över min, t.ex. över 400k → tolka som 400000-600000 om kunden bekräftar "runt där").
 - Om kunden säger "2 miljoner" utan "max"/"under" → tolka som "cirka" och sätt ±30%, t.ex. "1400000-2600000".
 - ALDRIG sätt MIN till 0 om kunden angett ett ungefärligt belopp — det ger helt fel resultat.
@@ -745,14 +745,25 @@ serve(async (req) => {
     try {
       decision = JSON.parse(cleaned);
     } catch (parseErr) {
-      console.warn("Failed to parse AI decision, returning as message");
-      return new Response(
-        JSON.stringify({
-          action: "ask",
-          message: rawContent,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Försök extrahera ett JSON-objekt ur blandad text (AI:n råkade prata + skicka JSON)
+      const match = cleaned.match(/\{[\s\S]*"action"\s*:\s*"(ask|search)"[\s\S]*\}/);
+      if (match) {
+        try {
+          decision = JSON.parse(match[0]);
+        } catch {}
+      }
+      if (!decision) {
+        // Sista utvägen: ta bort eventuell JSON-svans och visa bara prosatexten
+        const prose = cleaned.replace(/\{[\s\S]*\}\s*$/, "").trim() || rawContent;
+        console.warn("Failed to parse AI decision, returning as message");
+        return new Response(
+          JSON.stringify({
+            action: "ask",
+            message: prose,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // If AI wants to ask a question, return it
@@ -917,12 +928,18 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
-        // Smart sortering: om budgeten är väldigt öppen (max är default 99999999 eller > 5x min)
-        // sortera efter ÅR (nyast först) så vi inte bara får de billigaste längst ner i spannet.
-        // Annars sortera efter pris stigande.
-        const isOpenBudget = maxPrice >= 99999999 || (minPrice > 0 && maxPrice > minPrice * 5);
-        if (isOpenBudget) {
+        // Smart sortering: om kunden bara angett ett tak (eller spannet är brett),
+        // sortera så vi inte bara visar de billigaste skrällena längst ner i spannet.
+        // Vi prioriterar bilar nära MAX (de bästa kunden har råd med) men begränsar till spannet.
+        const isOpenMax = maxPrice >= 99999999;
+        const isOnlyMax = minPrice <= Math.max(50000, maxPrice * 0.1) && maxPrice < 99999999;
+        const isWideRange = minPrice > 0 && maxPrice > minPrice * 3;
+        if (isOpenMax) {
           return query.order("year", { ascending: false, nullsFirst: false }).limit(40);
+        }
+        if (isOnlyMax || isWideRange) {
+          // Sortera efter pris fallande inom spannet → bästa bilen för pengarna först
+          return query.order("price", { ascending: false, nullsFirst: false }).limit(40);
         }
         return query.order("price", { ascending: true }).limit(18);
       };
