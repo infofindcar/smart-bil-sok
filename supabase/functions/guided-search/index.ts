@@ -745,14 +745,25 @@ serve(async (req) => {
     try {
       decision = JSON.parse(cleaned);
     } catch (parseErr) {
-      console.warn("Failed to parse AI decision, returning as message");
-      return new Response(
-        JSON.stringify({
-          action: "ask",
-          message: rawContent,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Försök extrahera ett JSON-objekt ur blandad text (AI:n råkade prata + skicka JSON)
+      const match = cleaned.match(/\{[\s\S]*"action"\s*:\s*"(ask|search)"[\s\S]*\}/);
+      if (match) {
+        try {
+          decision = JSON.parse(match[0]);
+        } catch {}
+      }
+      if (!decision) {
+        // Sista utvägen: ta bort eventuell JSON-svans och visa bara prosatexten
+        const prose = cleaned.replace(/\{[\s\S]*\}\s*$/, "").trim() || rawContent;
+        console.warn("Failed to parse AI decision, returning as message");
+        return new Response(
+          JSON.stringify({
+            action: "ask",
+            message: prose,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // If AI wants to ask a question, return it
