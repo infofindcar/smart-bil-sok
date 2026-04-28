@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MapPin, ExternalLink, Crown } from 'lucide-react';
+import { MapPin, ExternalLink, Crown, Gauge, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { topEquipment } from '@/lib/equipment';
 import type { Car } from './GuidedSearch';
 
 interface Props {
@@ -55,9 +56,35 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
     };
   }, [open, car]);
 
+  // Beräkna superlativ — vilken bil har lägst mil, lägst pris, mest tillval
+  const superlatives = useMemo(() => {
+    if (!listings.length) return { cheapestId: null, lowestMileageId: null, mostEquipmentId: null };
+    let cheapestId: number | null = null;
+    let lowestMileageId: number | null = null;
+    let mostEquipmentId: number | null = null;
+    let minPrice = Infinity;
+    let minMileage = Infinity;
+    let maxEquipment = -1;
+    for (const l of listings) {
+      if (typeof l.price === 'number' && l.price > 0 && l.price < minPrice) {
+        minPrice = l.price;
+        cheapestId = l.id;
+      }
+      if (typeof l.mileage === 'number' && l.mileage >= 0 && l.mileage < minMileage) {
+        minMileage = l.mileage;
+        lowestMileageId = l.id;
+      }
+      const eqCount = topEquipment(l.model_raw, 99).length;
+      if (eqCount > maxEquipment) {
+        maxEquipment = eqCount;
+        mostEquipmentId = l.id;
+      }
+    }
+    return { cheapestId, lowestMileageId, mostEquipmentId };
+  }, [listings]);
+
   if (!car) return null;
 
-  const cheapest = listings[0];
   const baseTitle = `${car.make ?? ''} ${car.model ?? ''} ${car.year ?? ''}`.trim();
 
   return (
@@ -124,10 +151,13 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
             </div>
 
             {/* Andra listas */}
-            {listings.map((l, idx) => {
-              const isCheapest = l.id === cheapest?.id;
+            {listings.map((l) => {
+              const isCheapest = l.id === superlatives.cheapestId;
+              const isLowestMileage = l.id === superlatives.lowestMileageId;
+              const isMostEquipped = l.id === superlatives.mostEquipmentId;
               const priceDiff =
                 car.price && l.price ? l.price - car.price : null;
+              const equipment = topEquipment(l.model_raw, 4);
 
               return (
                 <a
@@ -135,31 +165,47 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
                   href={l.listing_url || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-3 p-3 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-card transition-all"
+                  className="group flex items-start gap-3 p-3 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-card transition-all"
                 >
                   {l.image_thumb_url ? (
                     <img
                       src={l.image_thumb_url}
                       alt=""
-                      className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                      className="w-20 h-20 object-cover rounded-md flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-md bg-muted flex-shrink-0" />
+                    <div className="w-20 h-20 rounded-md bg-muted flex-shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {isCheapest && (
-                        <Badge variant="default" className="text-[9px] px-1.5 py-0 gap-1 bg-amber-500/90 hover:bg-amber-500 text-white">
-                          <Crown className="h-2.5 w-2.5" />
-                          BÄSTA PRISET
-                        </Badge>
-                      )}
-                      {priceDiff !== null && priceDiff < 0 && (
-                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-green-500/40 text-green-600 dark:text-green-400">
-                          {Math.round((priceDiff / (car.price || 1)) * 100)}%
-                        </Badge>
-                      )}
-                    </div>
+                    {/* Superlativ-badges */}
+                    {(isCheapest || isLowestMileage || isMostEquipped || (priceDiff !== null && priceDiff < 0)) && (
+                      <div className="flex flex-wrap items-center gap-1 mb-1">
+                        {isCheapest && (
+                          <Badge className="text-[9px] px-1.5 py-0 gap-0.5 bg-amber-500/90 hover:bg-amber-500 text-white">
+                            <Crown className="h-2.5 w-2.5" />
+                            LÄGSTA PRISET
+                          </Badge>
+                        )}
+                        {isLowestMileage && (
+                          <Badge className="text-[9px] px-1.5 py-0 gap-0.5 bg-emerald-500/90 hover:bg-emerald-500 text-white">
+                            <Gauge className="h-2.5 w-2.5" />
+                            LÄGST MIL
+                          </Badge>
+                        )}
+                        {isMostEquipped && (
+                          <Badge className="text-[9px] px-1.5 py-0 gap-0.5 bg-violet-500/90 hover:bg-violet-500 text-white">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            MEST TILLVAL
+                          </Badge>
+                        )}
+                        {priceDiff !== null && priceDiff < 0 && !isCheapest && (
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-green-500/40 text-green-600 dark:text-green-400">
+                            {Math.round((priceDiff / (car.price || 1)) * 100)}%
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
                     <div className="font-semibold text-sm truncate">
                       {l.make} {l.model} {l.year}
                     </div>
@@ -177,8 +223,23 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
                         </>
                       )}
                     </div>
+
+                    {/* Tillvals-tags */}
+                    {equipment.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {equipment.map((tag) => (
+                          <Badge
+                            key={tag.key}
+                            variant="outline"
+                            className="text-[9px] px-1.5 py-0 bg-primary/5 border-primary/20 text-foreground/70 font-normal"
+                          >
+                            {tag.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
                 </a>
               );
             })}
