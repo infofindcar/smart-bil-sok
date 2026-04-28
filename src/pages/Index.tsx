@@ -18,9 +18,10 @@ const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ 
 const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroVideoLoopUrl from '@/assets/hero-video-loop.mp4?url';
+import heroBridgeReal from '@/assets/hero-bridge-real.mp4.asset.json';
+import findcarLogoFull from '@/assets/findcar-logo-full.png';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -124,16 +125,43 @@ const Index = () => {
     }
   }, [cars, language]);
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
+  // Hero loop: real AI-generated bridge video (~10.04s) plays on loop.
+  // Car drives across frame ~0–6s and exits left. We sync a React overlay
+  // (FindCar logo + tagline) to fade in once the car is gone, hold, then
+  // fade out well before the loop restarts so there is no flicker on the
+  // seam.
+  //
+  // Verified video metadata: duration = 10.041s, 24fps. Fade transition is
+  // 220ms, so we stop fading out at t = 9.6s -> fully invisible by t = 9.82s,
+  // giving ~220ms of safety margin before the loop wraps to t = 0.
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const [showLogo, setShowLogo] = useState(false);
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    const FADE_IN_AT = 6.4;   // wait until the car has fully exited the frame
+    const FADE_OUT_AT = 9.6;  // 220ms transition + ~220ms safety < 10.04s loop
+    let raf = 0;
+    const tick = () => {
+      const dur = video.duration || 10.04;
+      const t = video.currentTime % dur;
+      const visible = t >= FADE_IN_AT && t < FADE_OUT_AT;
+      setShowLogo((prev) => (prev !== visible ? visible : prev));
+      raf = window.requestAnimationFrame(tick);
+    };
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, []);
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
-      {/* Hero with video background */}
+      {/* Hero with canvas-animated night-highway background */}
       <section
-      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Cinematic background video with parallax */}
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a]">
+        {/* Cinematic night-highway video — real cars driving in the dark */}
         <video
-          src={`${heroVideoLoopUrl}?v=13`}
-          poster="/images/hero_findcar.webp"
+          ref={heroVideoRef}
+          src={heroBridgeReal.url}
           autoPlay
           muted
           loop
@@ -141,7 +169,7 @@ const Index = () => {
           preload="auto"
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
-          style={{ transform: `translateY(${parallaxY}px) scale(1.05)` }}
+          style={{ transform: `translateY(${parallaxY * 0.4}px) scale(1.06)` }}
         />
         {/* Cinematic overlays for readability + depth */}
         <div
@@ -159,105 +187,148 @@ const Index = () => {
           }}
         />
 
+        {/* FindCar logo + tagline overlay — fades in when the car has exited.
+            Spotlight cone from above lights the bridge where the logo sits,
+            making it feel like a stage light. Uses the full brand logo image
+            (which already contains the wordmark) plus a shimmer on entry. */}
+        <div
+          className="absolute inset-0 z-[2] pointer-events-none flex flex-col items-center justify-center px-6"
+          style={{
+            opacity: showLogo ? 1 : 0,
+            transition: 'opacity 700ms cubic-bezier(0.22,1,0.36,1)',
+          }}
+        >
+          {/* Spotlight cone from above — wider at the bottom, soft warm-white */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-full"
+            style={{
+              background:
+                'radial-gradient(ellipse 38% 70% at 50% 0%, rgba(220,235,255,0.22) 0%, rgba(180,210,240,0.12) 25%, rgba(120,160,210,0.06) 45%, rgba(0,0,0,0) 70%)',
+              mixBlendMode: 'screen',
+              opacity: showLogo ? 1 : 0,
+              transition: 'opacity 1100ms cubic-bezier(0.22,1,0.36,1)',
+            }}
+          />
+          {/* Ground pool — soft glow on the "bridge floor" beneath the logo */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0"
+            style={{
+              top: '50%',
+              height: '40%',
+              background:
+                'radial-gradient(ellipse 32% 55% at 50% 25%, rgba(5,10,20,0.55) 0%, rgba(5,10,20,0.25) 50%, rgba(5,10,20,0) 80%)',
+              opacity: showLogo ? 1 : 0,
+              transition: 'opacity 900ms cubic-bezier(0.22,1,0.36,1)',
+            }}
+          />
+
+          {/* Logo + tagline stack */}
+          <div
+            className="relative flex flex-col items-center"
+            style={{
+              transform: showLogo
+                ? 'translateY(0) scale(1)'
+                : 'translateY(10px) scale(0.97)',
+              transition: 'transform 900ms cubic-bezier(0.22,1,0.36,1)',
+            }}
+          >
+            {/* Logo with shimmer sweep masked to the image silhouette */}
+            <div className="relative">
+              <img
+                src={findcarLogoFull}
+                alt="FindCar"
+                draggable={false}
+                className="w-[240px] md:w-[400px] lg:w-[480px] h-auto select-none"
+                style={{
+                  filter:
+                    'drop-shadow(0 6px 28px rgba(34,211,238,0.35)) drop-shadow(0 3px 12px rgba(0,0,0,0.65))',
+                }}
+              />
+              {/* Shimmer light sweep — only plays on the entry */}
+              {showLogo && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 overflow-hidden"
+                  style={{
+                    WebkitMaskImage: `url(${findcarLogoFull})`,
+                    maskImage: `url(${findcarLogoFull})`,
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskSize: '100% 100%',
+                    maskSize: '100% 100%',
+                  }}
+                >
+                  <div className="findcar-shimmer-sweep" />
+                </div>
+              )}
+            </div>
+
+            {/* Italic serif tagline — small, tight to the logo */}
+            <div
+              className="-mt-3 md:-mt-4 text-white/85 italic text-xs md:text-base lg:text-lg text-center"
+              style={{
+                fontFamily: 'Lora, Georgia, "Times New Roman", serif',
+                letterSpacing: '0.02em',
+                textShadow: '0 2px 10px rgba(0,0,0,0.6)',
+              }}
+            >
+              Din objektiva bilrådgivare
+            </div>
+          </div>
+        </div>
+
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[14svh]">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-2"
-          >
-            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-2xl font-bold text-white leading-tight font-serif"
-            >
-              Din objektiva<br />bilrådgivare
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-sm leading-relaxed max-w-md mx-auto"
-            >
-              Vi matchar dig med bilar baserat på din livsstil, budget och behov
-            </motion.p>
-          </motion.div>
+          <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
 
           {/* Spacer between headline and CTA */}
           <div className="flex-1 min-h-[20svh]" />
 
-          {/* Bottom: CTA + social proof below the car */}
+          {/* Bottom CTA — sits low, glass + subtle gradient so it blends with the bridge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-10 w-full"
+            className="flex flex-col items-center gap-4 w-full"
+            style={{ marginBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
           >
             <Button
               onClick={scrollToSearch}
-              variant="gradient"
-              className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform hero-cta-glow"
+              className="findcar-cta-hero group w-full h-14 rounded-full text-base font-medium tracking-wide text-white border-0 inline-flex items-center justify-center gap-2"
             >
-              Hitta din bil
+              <span>Hitta din bil</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </div>
 
         {/* Desktop hero content — spread vertically */}
-        <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
-          {/* Top: headline + subtitle together */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-8 space-y-3"
-          >
-            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-4xl lg:text-5xl font-bold text-white leading-tight font-serif"
-            >
-              Din objektiva<br />bilrådgivare
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
-            >
-              Vi matchar dig med bilar baserat på din livsstil, budget och behov
-            </motion.p>
-          </motion.div>
+        <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen pt-20 pb-10">
+          <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
+          {/* Spacer to push CTA to the bottom */}
+          <div />
 
-          {/* Bottom: CTA + social proof below the car */}
+          {/* Bottom CTA — sits low, glass + subtle gradient so it blends with the bridge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-12"
+            className="flex flex-col items-center gap-4 mb-2"
           >
             <Button
               onClick={scrollToSearch}
-              variant="gradient"
-              className="h-12 rounded-full text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform px-10 hero-cta-glow"
+              className="findcar-cta-hero group h-13 rounded-full text-base font-medium tracking-wide px-12 py-3 text-white border-0 inline-flex items-center justify-center gap-2"
             >
-              Hitta din bil
+              <span>Hitta din bil</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </div>
 
-        {/* Bounce arrow — desktop only */}
-        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
-        opacity: 1 - scrollProgress * 3
-      }} aria-label="Scrolla ner">
-          <ChevronDown className="h-8 w-8" />
-        </button>
+        {/* (Bounce arrow removed — CTA is the primary action) */}
 
         {/* Bottom fade — inside hero, no seam possible */}
         <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 z-[2] pointer-events-none" style={{

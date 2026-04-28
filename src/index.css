@@ -467,3 +467,84 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Safe area for mobile fixed input */
 .safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+
+/* Hero logo shimmer sweep — masked to the FindCar logo silhouette */
+@keyframes findcar-shimmer-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(220%) skewX(-12deg); opacity: 0; }
+}
+.findcar-shimmer-sweep {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.18) 35%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0.18) 65%,
+    rgba(255,255,255,0) 100%
+  );
+  filter: blur(2px);
+  animation: findcar-shimmer-sweep 1600ms cubic-bezier(0.22, 1, 0.36, 1) 250ms 1 both;
+  pointer-events: none;
+}
+
+/* Premium hero CTA — blue → cyan gradient that matches the FindCar logo */
+.findcar-cta-gradient {
+  background-image: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #22d3ee 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  box-shadow:
+    0 10px 30px -8px rgba(34, 211, 238, 0.45),
+    0 6px 18px -6px rgba(30, 58, 138, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: background-position 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms ease, transform 200ms ease;
+}
+.findcar-cta-gradient:hover {
+  background-position: 100% 50%;
+  box-shadow:
+    0 14px 38px -8px rgba(34, 211, 238, 0.65),
+    0 8px 22px -6px rgba(30, 58, 138, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+.findcar-cta-gradient:active {
+  transform: translateY(0);
+}
+
+/* Hero CTA — designed to blend into the dark bridge: glass tint + subtle
+   blue→cyan inner sheen, no heavy solid fill. Lifts on hover. */
+.findcar-cta-hero {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%),
+    linear-gradient(135deg, rgba(30,58,138,0.55) 0%, rgba(37,99,235,0.45) 50%, rgba(34,211,238,0.40) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 8px 24px -10px rgba(0,0,0,0.55),
+    0 2px 8px -2px rgba(34,211,238,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+  transition: background-image 400ms ease, box-shadow 300ms ease,
+    transform 200ms ease, border-color 300ms ease;
+}
+.findcar-cta-hero:hover {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%),
+    linear-gradient(135deg, rgba(30,58,138,0.75) 0%, rgba(37,99,235,0.65) 50%, rgba(34,211,238,0.55) 100%);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow:
+    0 12px 32px -10px rgba(0,0,0,0.6),
+    0 4px 14px -2px rgba(34,211,238,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+  transform: translateY(-1px);
+}
+.findcar-cta-hero:active {
+  transform: translateY(0);
+}

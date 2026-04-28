@@ -221,6 +221,36 @@ export type Database = {
         }
         Relationships: []
       }
+      forbattringar: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          page_path: string | null
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          page_path?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          page_path?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           car_id: number | null
@@ -562,6 +592,7 @@ export type Database = {
     }
     Functions: {
       apply_car_model_data_from_cache: { Args: never; Returns: Json }
+      delete_unenrichable_cars: { Args: never; Returns: number }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
