@@ -450,7 +450,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"mileageMax":15000,"preferredHpMin":200,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 
@@ -823,6 +823,13 @@ serve(async (req) => {
       const yearMax = typeof filters.yearMax === "number" && filters.yearMax >= 1900 && filters.yearMax <= 2100
         ? filters.yearMax : null;
 
+      // Mjuka preferenser — påverkar bara sortering, inte filtrering.
+      // Bilar utanför dessa värden filtreras inte bort, bara nedrankas.
+      const mileageMax = typeof filters.mileageMax === "number" && filters.mileageMax > 0 && filters.mileageMax <= 100000
+        ? filters.mileageMax : null;
+      const preferredHpMin = typeof filters.preferredHpMin === "number" && filters.preferredHpMin > 0 && filters.preferredHpMin <= 2000
+        ? filters.preferredHpMin : null;
+
       // Validera equipment-filter
       const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
         ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
@@ -950,8 +957,19 @@ serve(async (req) => {
         buildQuery(1),
       ]);
 
-      // Sort results: prioritize body_type match, then proximity to budget midpoint
-      const budgetMid = (minPrice + maxPrice) / 2;
+      // ── Composite-score sortering ──
+      // Varje bil får ett score 0-200ish baserat på hur väl den matchar
+      // kundens preferenser. Vikter justeras lätt här utan ny deploy-cykel.
+      const SCORE_WEIGHTS = {
+        bodyTypeMatch:    100, // matchar kundens karosseri-val
+        niceToHave:        30, // PER matchat nice-to-have-tillval
+        year:              20, // 0-1 normaliserat: nyare bättre
+        mileage:           15, // 0-1 normaliserat: lägre mil bättre
+        premiumPrice:      12, // 0-1: andel av kundens max-budget
+        hpMatch:           10, // 0-1: matchar preferredHpMin
+        drivetrainMatch:   10, // 0/1: matchar drivetrain-pref (om sortPref men ej hårt filter)
+      };
+
       const bodyTypePatternValues = validBodyTypes.map((b: string) => bodyPatterns[b]?.replace(/%/g, "").toLowerCase()).filter(Boolean);
       const bodyModelNames = validBodyTypes.flatMap((bt: string) => modelBodyTypeMap[bt] || []).map(m => m.toLowerCase());
 
@@ -962,31 +980,91 @@ serve(async (req) => {
           : arr;
 
         // Säkerhetsventil: om strikt filter ger 0 träffar, fall tillbaka till hela poolen
-        // så vi inte returnerar tomt — men markera så meddelandet kan förklara
         if (pool.length === 0 && mustHaveEquipment.length > 0) {
           pool = arr;
         }
 
-        // 2. Sortera: body type match + nice-to-have boost + pris-närhet
-        const sorted = pool.sort((a, b) => {
+        // 2. Förberäknade normalisering-bas (per pool)
+        const years = pool.map((c: any) => c.year).filter((y: number) => typeof y === "number" && y > 0);
+        const mileages = pool.map((c: any) => c.mileage).filter((m: number) => typeof m === "number" && m >= 0);
+        const yearMinPool = years.length ? Math.min(...years) : 2000;
+        const yearMaxPool = years.length ? Math.max(...years) : new Date().getFullYear();
+        const yearSpan = Math.max(1, yearMaxPool - yearMinPool);
+        const mileMaxPool = mileages.length ? Math.max(...mileages) : 30000;
+        const safeMileMax = Math.max(1, mileMaxPool); // undvik /0
+        const safeMaxPrice = Math.max(1, maxPrice);
+
+        // 3. Beräkna score per bil
+        const computeScore = (c: any): number => {
+          let s = 0;
+
+          // Karosseri-match
           if (hasBodyTypeFilter) {
-            const aBodyMatch = bodyTypePatternValues.some(p => (a.body_type || "").toLowerCase().includes(p))
-              || bodyModelNames.some(m => (a.model || "").toLowerCase().includes(m));
-            const bBodyMatch = bodyTypePatternValues.some(p => (b.body_type || "").toLowerCase().includes(p))
-              || bodyModelNames.some(m => (b.model || "").toLowerCase().includes(m));
-            if (aBodyMatch && !bBodyMatch) return -1;
-            if (!aBodyMatch && bBodyMatch) return 1;
+            const matches = bodyTypePatternValues.some(p => (c.body_type || "").toLowerCase().includes(p))
+              || bodyModelNames.some(m => (c.model || "").toLowerCase().includes(m));
+            if (matches) s += SCORE_WEIGHTS.bodyTypeMatch;
           }
-          // Nice-to-have boost: bilar med fler matchade önskvärda tillval rankas högre
+
+          // Nice-to-have-tillval (poäng per matchat tillval)
           if (niceToHaveEquipment.length > 0) {
-            const aRaw = (a.model_raw || "").toLowerCase();
-            const bRaw = (b.model_raw || "").toLowerCase();
-            const aNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => aRaw.includes(p.toLowerCase()))).length;
-            const bNice = niceToHaveEquipment.filter(k => (equipmentPatterns[k] || []).some(p => bRaw.includes(p.toLowerCase()))).length;
-            if (aNice !== bNice) return bNice - aNice;
+            const raw = (c.model_raw || "").toLowerCase();
+            const matchedCount = niceToHaveEquipment.filter(k =>
+              (equipmentPatterns[k] || []).some(p => raw.includes(p.toLowerCase()))
+            ).length;
+            s += matchedCount * SCORE_WEIGHTS.niceToHave;
           }
-          return Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid);
-        });
+
+          // Årsmodell — nyare bättre
+          if (typeof c.year === "number" && c.year > 0) {
+            const yearScore = (c.year - yearMinPool) / yearSpan; // 0-1
+            s += yearScore * SCORE_WEIGHTS.year;
+          }
+
+          // Mil — lägre bättre
+          if (typeof c.mileage === "number" && c.mileage >= 0) {
+            // Om kunden uttryckligen sagt mileageMax, normalisera mot det istället
+            const cap = mileageMax ?? safeMileMax;
+            const mileageScore = Math.max(0, 1 - (c.mileage / cap)); // 0-1, klippt vid 0
+            s += mileageScore * SCORE_WEIGHTS.mileage;
+          }
+
+          // Premium-pris — pris i andel av kundens max-budget
+          if (typeof c.price === "number" && c.price > 0) {
+            const priceScore = Math.min(1, c.price / safeMaxPrice); // 0-1
+            s += priceScore * SCORE_WEIGHTS.premiumPrice;
+          }
+
+          // HP-match
+          if (preferredHpMin && typeof c.horsepower === "number" && c.horsepower > 0) {
+            const hpScore = Math.min(1, c.horsepower / preferredHpMin); // 0-1, full vid pref
+            s += hpScore * SCORE_WEIGHTS.hpMatch;
+          }
+
+          // Drivlina-match (om sanitizedDrivetrain är satt OCH bilen har det)
+          if (sanitizedDrivetrain && c.drivetrain) {
+            const wantAwd = sanitizedDrivetrain === "awd";
+            const wantFwd = sanitizedDrivetrain === "fwd";
+            const wantRwd = sanitizedDrivetrain === "rwd";
+            const has = String(c.drivetrain).toUpperCase();
+            if ((wantAwd && has === "AWD") || (wantFwd && has === "FWD") || (wantRwd && has === "RWD")) {
+              s += SCORE_WEIGHTS.drivetrainMatch;
+            }
+          }
+
+          return s;
+        };
+
+        // 4. Sortera: score desc, sedan last_seen_at desc som tie-breaker
+        // (mest aktiva annonsen vinner när allt annat är lika — fair mot alla säljare)
+        const sorted = pool
+          .map((c: any) => ({ c, score: computeScore(c) }))
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            const aSeen = a.c.last_seen_at ? new Date(a.c.last_seen_at).getTime() : 0;
+            const bSeen = b.c.last_seen_at ? new Date(b.c.last_seen_at).getTime() : 0;
+            return bSeen - aSeen;
+          })
+          .map(x => x.c);
 
         // Only diversify when user didn't request a specific make
         if (sanitizedMake) {
