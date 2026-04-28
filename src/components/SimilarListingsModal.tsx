@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MapPin, ExternalLink, Crown, Gauge, Sparkles } from 'lucide-react';
+import { MapPin, ChevronRight, Crown, Gauge, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { topEquipment } from '@/lib/equipment';
@@ -19,6 +20,7 @@ const formatMileage = (m: number | null | undefined) =>
   typeof m === 'number' ? `${new Intl.NumberFormat('sv-SE').format(m)} mil` : '–';
 
 export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [listings, setListings] = useState<Car[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -160,12 +162,14 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
               const equipment = topEquipment(l.model_raw, 4);
 
               return (
-                <a
+                <button
+                  type="button"
                   key={l.id}
-                  href={l.listing_url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-start gap-3 p-3 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-card transition-all"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/car/${l.id}`, { state: { car: l } });
+                  }}
+                  className="group w-full text-left flex items-start gap-3 p-3 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-card transition-all"
                 >
                   {l.image_thumb_url ? (
                     <img
@@ -239,8 +243,8 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
                       </div>
                     )}
                   </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
-                </a>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
+                </button>
               );
             })}
           </div>
