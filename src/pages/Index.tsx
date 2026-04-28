@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroLoopVideo from '@/assets/hero-loop.mp4';
+import heroBridgeReal from '@/assets/hero-bridge-real.mp4.asset.json';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -124,8 +124,26 @@ const Index = () => {
     }
   }, [cars, language]);
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
-  // Hero loop is a single self-contained MP4 — car drives across, exits,
-  // then FindCar logo + tagline appear for ~5s, then it loops seamlessly.
+  // Hero loop: real AI-generated bridge video plays on loop.
+  // Car drives across frame 0–6s and exits left. Frame 6–10s the bridge is
+  // empty. We sync a React overlay (FindCar logo + tagline) to fade in once
+  // the car is gone, hold ~4s, then fade out before the loop restarts.
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const [showLogo, setShowLogo] = useState(false);
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    let raf = 0;
+    const tick = () => {
+      // Show logo when the car has left the frame (after ~6s of the 10s loop)
+      const t = video.currentTime % (video.duration || 10);
+      const visible = t >= 6.0 && t < 9.5;
+      setShowLogo((prev) => (prev !== visible ? visible : prev));
+      raf = window.requestAnimationFrame(tick);
+    };
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, []);
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
@@ -134,7 +152,8 @@ const Index = () => {
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a]">
         {/* Cinematic night-highway video — real cars driving in the dark */}
         <video
-          src={heroLoopVideo}
+          ref={heroVideoRef}
+          src={heroBridgeReal.url}
           autoPlay
           muted
           loop
@@ -159,6 +178,27 @@ const Index = () => {
               'radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.45) 100%)',
           }}
         />
+
+        {/* FindCar logo + tagline overlay — fades in when the car has exited */}
+        <div
+          className="absolute inset-0 z-[2] pointer-events-none flex flex-col items-center justify-center px-6"
+          style={{
+            opacity: showLogo ? 1 : 0,
+            transform: `scale(${showLogo ? 1 : 0.94})`,
+            transition: 'opacity 700ms cubic-bezier(0.22,1,0.36,1), transform 700ms cubic-bezier(0.22,1,0.36,1)',
+          }}
+        >
+          <div
+            className="font-bold tracking-tight text-6xl md:text-8xl lg:text-9xl leading-none"
+            style={{ textShadow: '0 8px 60px rgba(34,211,238,0.25)' }}
+          >
+            <span className="text-[#1e3a8a]">Find</span>
+            <span className="text-[#22d3ee]">Car</span>
+          </div>
+          <div className="mt-4 md:mt-6 text-white/80 font-light tracking-wide text-base md:text-2xl lg:text-3xl">
+            Din objektiva bilrådgivare
+          </div>
+        </div>
 
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
