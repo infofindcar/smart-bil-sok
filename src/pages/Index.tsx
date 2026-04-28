@@ -18,7 +18,7 @@ const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ 
 const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 import heroBridgeReal from '@/assets/hero-bridge-real.mp4.asset.json';
 import findcarLogoFull from '@/assets/findcar-logo-full.png';
@@ -297,9 +297,10 @@ const Index = () => {
           >
             <Button
               onClick={scrollToSearch}
-              className="findcar-cta-hero w-full h-12 rounded-full text-sm font-medium tracking-wide text-white border-0"
+              className="findcar-cta-hero group w-full h-14 rounded-full text-base font-medium tracking-wide text-white border-0 inline-flex items-center justify-center gap-2"
             >
-              Hitta din bil
+              <span>Hitta din bil</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </div>
@@ -319,9 +320,10 @@ const Index = () => {
           >
             <Button
               onClick={scrollToSearch}
-              className="findcar-cta-hero h-12 rounded-full text-sm font-medium tracking-wide px-12 text-white border-0"
+              className="findcar-cta-hero group h-13 rounded-full text-base font-medium tracking-wide px-12 py-3 text-white border-0 inline-flex items-center justify-center gap-2"
             >
-              Hitta din bil
+              <span>Hitta din bil</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </div>
