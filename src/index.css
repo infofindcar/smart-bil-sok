@@ -517,3 +517,34 @@ html::-webkit-scrollbar-thumb:hover {
 .findcar-cta-gradient:active {
   transform: translateY(0);
 }
+
+/* Hero CTA — designed to blend into the dark bridge: glass tint + subtle
+   blue→cyan inner sheen, no heavy solid fill. Lifts on hover. */
+.findcar-cta-hero {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%),
+    linear-gradient(135deg, rgba(30,58,138,0.55) 0%, rgba(37,99,235,0.45) 50%, rgba(34,211,238,0.40) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 8px 24px -10px rgba(0,0,0,0.55),
+    0 2px 8px -2px rgba(34,211,238,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+  transition: background-image 400ms ease, box-shadow 300ms ease,
+    transform 200ms ease, border-color 300ms ease;
+}
+.findcar-cta-hero:hover {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%),
+    linear-gradient(135deg, rgba(30,58,138,0.75) 0%, rgba(37,99,235,0.65) 50%, rgba(34,211,238,0.55) 100%);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow:
+    0 12px 32px -10px rgba(0,0,0,0.6),
+    0 4px 14px -2px rgba(34,211,238,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+  transform: translateY(-1px);
+}
+.findcar-cta-hero:active {
+  transform: translateY(0);
+}
