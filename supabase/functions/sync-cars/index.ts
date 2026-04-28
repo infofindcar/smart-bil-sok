@@ -48,6 +48,14 @@ serve(async (req) => {
     const carsWithImage = cars.filter((car) => car.image_thumb_url);
     const skippedNoImage = cars.length - carsWithImage.length;
 
+    // Filtrera bort bilar utan regnr — krävs för transportstyrelsen-länken
+    // och för att över huvud taget kunna identifiera bilen unikt utåt.
+    const carsWithReg = carsWithImage.filter((car) => {
+      const r = typeof car.regnr === "string" ? car.regnr.trim() : "";
+      return r.length >= 4;
+    });
+    const skippedNoReg = carsWithImage.length - carsWithReg.length;
+
     // Säkerhetsnät: blockera leasingbilar och orimligt låga priser (felaktiga månadspriser)
     const LEASE_PATTERN = /(leasbar|leasebar|leas\.bar|privatleas|business\s*lease|lease\s+fr[åa]n|leasing\s+fr[åa]n|lease\s+fr\.|leasing\s+fr\.)/i;
     const isLeaseOrBadPrice = (car: Record<string, unknown>) => {
@@ -58,12 +66,13 @@ serve(async (req) => {
       if (Number.isFinite(price) && price > 0 && price < 20000) return true;
       return false;
     };
-    const carsClean = carsWithImage.filter((c) => !isLeaseOrBadPrice(c));
-    const skippedLease = carsWithImage.length - carsClean.length;
+    const carsClean = carsWithReg.filter((c) => !isLeaseOrBadPrice(c));
+    const skippedLease = carsWithReg.length - carsClean.length;
 
     if (skippedNoImage > 0) console.log(`sync-cars: hoppade över ${skippedNoImage} bilar utan bild`);
+    if (skippedNoReg > 0) console.log(`sync-cars: hoppade över ${skippedNoReg} bilar utan regnr`);
     if (skippedLease > 0) console.log(`sync-cars: blockerade ${skippedLease} leasing/lågprisbilar`);
-    console.log(`sync-cars: received ${carsClean.length} giltiga bilar (${skippedNoImage} utan bild, ${skippedLease} leasing), syncStartedAt=${syncStartedAt}`);
+    console.log(`sync-cars: received ${carsClean.length} giltiga bilar (${skippedNoImage} utan bild, ${skippedNoReg} utan regnr, ${skippedLease} leasing), syncStartedAt=${syncStartedAt}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -129,6 +138,7 @@ serve(async (req) => {
         deleted: deleted ?? 0,
         total: carsClean.length,
         skippedNoImage,
+        skippedNoReg,
         skippedLease,
         upsertErrors,
         durationMs,
