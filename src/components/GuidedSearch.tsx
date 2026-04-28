@@ -784,7 +784,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 autoCorrect="off"
                 spellCheck={false}
                 name="clutch-chat-input"
-                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
+                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/60 dark:placeholder:text-foreground/45 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
                 style={{ minHeight: '44px' }}
               />
             </div>
@@ -797,7 +797,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 className={`relative h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center transition-all border ${
                   isListening
                     ? 'bg-primary/15 border-primary/50 text-primary mic-listening'
-                    : 'border-border/40 bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-background'
+                    : 'border-border/40 bg-background/60 text-muted-foreground dark:text-foreground/70 hover:text-foreground dark:hover:text-foreground hover:border-primary/40 hover:bg-background'
                 } disabled:opacity-50`}
               >
                 {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -811,7 +811,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               className={`h-11 w-11 rounded-2xl shrink-0 transition-all duration-200 ${
                 inputValue.trim() && !isLoading
                   ? 'bg-gradient-to-br from-primary to-secondary text-primary-foreground hover:scale-105 active:scale-95 shadow-md hover:shadow-lg'
-                  : 'bg-muted text-muted-foreground/60'
+                  : 'bg-muted text-muted-foreground/60 dark:bg-muted/60 dark:text-foreground/55'
               }`}
             >
               <Send className="h-4 w-4" />
@@ -853,7 +853,7 @@ const SuggestionsRow = memo(function SuggestionsRow({
         ))}
         <button
           onClick={onWriteOwn}
-          className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-dashed border-border/60 bg-transparent hover:bg-accent/60 hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-[0.97]"
+          className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-dashed border-border/60 dark:border-foreground/30 bg-transparent hover:bg-accent/60 hover:border-primary/40 text-muted-foreground dark:text-foreground/80 hover:text-foreground dark:hover:text-foreground transition-all duration-200 active:scale-[0.97]"
           style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
         >
           <PenLine className="h-3.5 w-3.5" />
