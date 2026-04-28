@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import { HeroBackground } from '@/components/HeroBackground';
+import heroCarsNight from '@/assets/hero-cars-night.mp4.asset.json';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -126,9 +126,13 @@ const Index = () => {
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
   // Logo swap: triggered when a "headlight" passes the center of the hero
   const [showLogo, setShowLogo] = useState(false);
-  const handleCenterPass = useCallback(() => {
-    setShowLogo(true);
-    window.setTimeout(() => setShowLogo(false), 1400);
+  useEffect(() => {
+    // Loop logo swap every 6s, briefly revealing the FindCar logo
+    const interval = window.setInterval(() => {
+      setShowLogo(true);
+      window.setTimeout(() => setShowLogo(false), 1400);
+    }, 6000);
+    return () => window.clearInterval(interval);
   }, []);
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
@@ -136,8 +140,18 @@ const Index = () => {
       {/* Hero with canvas-animated night-highway background */}
       <section
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a]">
-        {/* Canvas-animated background: dark gradient + headlight orbs + diagonal streaks */}
-        <HeroBackground parallaxY={parallaxY} onCenterPass={handleCenterPass} />
+        {/* Cinematic night-highway video — real cars driving in the dark */}
+        <video
+          src={heroCarsNight.url}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
+          style={{ transform: `translateY(${parallaxY * 0.4}px) scale(1.06)` }}
+        />
         {/* Cinematic overlays for readability + depth */}
         <div
           className="absolute inset-0 z-[1] pointer-events-none"
