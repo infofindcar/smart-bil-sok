@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Heart, Fuel, MapPin } from 'lucide-react';
+import { Heart, Fuel, MapPin, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import type { Car } from './GuidedSearch';
 import { topEquipment } from '@/lib/equipment';
+import { SimilarListingsModal } from './SimilarListingsModal';
 
 interface CarCardProps {
   car: Car;
@@ -52,6 +53,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
   const displayName = getDisplayName(car);
   const equipment = topEquipment(car.model_raw, 5);
+  const [similarOpen, setSimilarOpen] = useState(false);
 
   return (
     <div
@@ -153,7 +155,25 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
             </p>
           </div>
         )}
+
+        {/* Visa fler dealers — öppnar modal med samma modell hos andra säljare */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSimilarOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+          }}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary border-t border-border/30 pt-2 -mb-1 transition-colors"
+        >
+          <Store className="h-3.5 w-3.5" />
+          Visa fler dealers med samma bil
+        </button>
       </div>
+
+      <SimilarListingsModal car={car} open={similarOpen} onOpenChange={setSimilarOpen} />
     </div>
   );
 };
