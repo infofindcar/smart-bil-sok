@@ -623,19 +623,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   <PopoverContent
                     side="bottom"
                     align="start"
-                    className="w-72 p-4 text-[13px] leading-relaxed bg-card/95 backdrop-blur-md border-border/60"
+                    sideOffset={8}
+                    collisionPadding={12}
+                    className="w-[min(18rem,calc(100vw-24px))] p-3.5 text-[12.5px] md:text-[13px] leading-relaxed bg-card/95 backdrop-blur-md border-border/60 shadow-lg"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center">
-                        <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="clutch-avatar w-6 h-6 rounded-lg flex items-center justify-center shrink-0">
+                        <Sparkles className="h-3 w-3 text-primary-foreground" />
                       </div>
                       <p className="font-semibold text-foreground">Möt Clutch</p>
                     </div>
                     <p className="text-muted-foreground">
-                      Clutch är din personliga AI-bilrådgivare här på FindCar. Namnet är en varm hyllning till kopplingen i bilen — den lilla detaljen som förenar föraren med maskinen.
+                      Clutch är din personliga AI-bilrådgivare på FindCar. Namnet hyllar kopplingen i bilen — den som förenar föraren med maskinen.
                     </p>
-                    <p className="text-muted-foreground mt-2">
-                      På samma sätt kopplar Clutch ihop dig med rätt bil — föraren med sin perfekta följeslagare på vägen.
+                    <p className="text-muted-foreground mt-1.5">
+                      På samma sätt kopplar Clutch ihop dig med rätt bil.
                     </p>
                   </PopoverContent>
                 </Popover>
