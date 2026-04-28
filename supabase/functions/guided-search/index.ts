@@ -366,10 +366,11 @@ TOLKNINGSREGLER FÖR DE NYA FRÅGORNA:
 - "kort ägartid" → premiera bilar med god andrahandsvärde (japanska/koreanska/Volvo).
 - "lång ägartid (5+ år)" → premiera Toyota/Lexus/Volvo + nyare bilar med garanti kvar.
 - "hund / husdjur" → bonus för kombi/SUV i ranking, undvik små halvkombis.
-- "undvik märken X, Y" → strikt filter, dessa märken filtreras BORT (sätt i customerProfile).
+- "undvik märken X, Y" → lägg märkena i filters.excludeMakes (array). Detta filtrerar BORT dem hårt på SQL-nivå.
 - "verkstad nära viktigt + glesbygd/landsbygd" → bias mot vanliga märken (Volvo, VW, Toyota, Skoda, Volkswagen).
 - "vill inte ha färg X" → filtrera bort den färgen.
-- "ingen importbil" → undvik bilar med "import"/"EU-bil" i model_raw.
+- "ingen importbil" → lägg "import" och "EU-bil" i filters.excludeKeywords (array av nyckelord som inte får finnas i annonstexten).
+- "vill inte ha bensin / diesel" → lägg drivmedlet i filters.excludeFuels (array av t.ex. ["bensin"]).
 - "endast få ägare" → premiera nyare bilar med låg ägarhistorik.
 
 BONUS-TRIGGER FÖR ÄLDRE BILAR:
@@ -450,7 +451,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"mileageMax":15000,"preferredHpMin":200,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"mileageMax":15000,"preferredHpMin":200,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"],"excludeMakes":["Renault","Fiat"],"excludeFuels":["bensin"],"excludeKeywords":["import","EU-bil"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 
@@ -830,6 +831,27 @@ serve(async (req) => {
       const preferredHpMin = typeof filters.preferredHpMin === "number" && filters.preferredHpMin > 0 && filters.preferredHpMin <= 2000
         ? filters.preferredHpMin : null;
 
+      // Use-case (pendling/familj/langresa/stad/blandat) — påverkar score-boost
+      const VALID_USE_CASES = ["pendling","familj","langresa","stad","blandat"];
+      const useCase = typeof filters.useCase === "string" && VALID_USE_CASES.includes(filters.useCase)
+        ? filters.useCase : null;
+
+      // Hårda exkluderings-filter — kunden sa "INTE detta"
+      // excludeMakes: array av märken kunden vill undvika (t.ex. ["Renault","Fiat"])
+      const excludeMakes: string[] = Array.isArray(filters.excludeMakes)
+        ? filters.excludeMakes.filter((x: unknown): x is string =>
+            typeof x === "string" && x.length > 0 && x.length < 40 && /^[\w\såäöÅÄÖ\-]+$/.test(x))
+        : [];
+      // excludeFuels: ["bensin","diesel","el","hybrid","laddhybrid","etanol","gas"]
+      const excludeFuels: string[] = Array.isArray(filters.excludeFuels)
+        ? filters.excludeFuels.filter((x: unknown): x is string => typeof x === "string" && x in fuelPatterns)
+        : [];
+      // excludeKeywords: fri-text att NOT-ILIKE:a mot model_raw (t.ex. ["import","EU-bil","leasing"])
+      const excludeKeywords: string[] = Array.isArray(filters.excludeKeywords)
+        ? filters.excludeKeywords.filter((x: unknown): x is string =>
+            typeof x === "string" && x.length > 0 && x.length < 30 && /^[\w\såäöÅÄÖ\-/.]+$/.test(x))
+        : [];
+
       // Validera equipment-filter
       const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
         ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
@@ -935,6 +957,20 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
+        // Hårda exkluderings-filter — kvarstår på alla nivåer (kunden var tydlig
+        // med vad hon INTE vill ha). Utesluts även när filter relaxas.
+        for (const excl of excludeMakes) {
+          query = query.not("make", "ilike", `%${excl}%`);
+        }
+        for (const fuelKey of excludeFuels) {
+          for (const v of fuelPatterns[fuelKey] || []) {
+            query = query.neq("fuel_type", v);
+          }
+        }
+        for (const kw of excludeKeywords) {
+          query = query.not("model_raw", "ilike", `%${kw}%`);
+        }
+
         // Smart pre-sortering inför composite-score:
         // Composite-score körs på max 40 bilar. Vi måste välja DE 40 BÄSTA
         // (inte de billigaste) så scoring-vikter på premium-pris/år/mil fungerar.
@@ -955,16 +991,70 @@ serve(async (req) => {
       ]);
 
       // ── Composite-score sortering ──
-      // Varje bil får ett score 0-200ish baserat på hur väl den matchar
+      // Varje bil får ett score 0-220ish baserat på hur väl den matchar
       // kundens preferenser. Vikter justeras lätt här utan ny deploy-cykel.
       const SCORE_WEIGHTS = {
         bodyTypeMatch:    100, // matchar kundens karosseri-val
         niceToHave:        30, // PER matchat nice-to-have-tillval
         year:              20, // 0-1 normaliserat: nyare bättre
+        useCase:           20, // 0-1: matchar use-case-mappning (familj/pendling/etc)
         mileage:           15, // 0-1 normaliserat: lägre mil bättre
         premiumPrice:      12, // 0-1: andel av kundens max-budget
         hpMatch:           10, // 0-1: matchar preferredHpMin
         drivetrainMatch:   10, // 0/1: matchar drivetrain-pref (om sortPref men ej hårt filter)
+      };
+
+      // Use-case-mappning: vad är "bra" för respektive livssituation?
+      // Returnerar ett 0-1 score per bil baserat på use-case.
+      const computeUseCaseScore = (c: any): number => {
+        if (!useCase) return 0;
+        const bodyType = (c.body_type || "").toLowerCase();
+        const fuel = (c.fuel_type || "").toLowerCase();
+        const seats = typeof c.seats === "number" ? c.seats : null;
+        const hp = typeof c.horsepower === "number" ? c.horsepower : 0;
+        const raw = (c.model_raw || "").toLowerCase();
+        let s = 0;
+        switch (useCase) {
+          case "familj": {
+            // Stora kombi/SUV/minibuss, helst 5+ säten, drag/isofix-boost
+            if (/(suv|kombi|minibuss)/i.test(bodyType)) s += 0.5;
+            if (seats !== null && seats >= 5) s += 0.2;
+            if (raw.includes("drag")) s += 0.15;
+            if (raw.includes("isofix")) s += 0.15;
+            break;
+          }
+          case "pendling": {
+            // El/hybrid/diesel, lägre HP räcker, motorvärmare-boost
+            if (/(el|hybrid|laddhybrid|diesel)/i.test(fuel)) s += 0.5;
+            if (hp > 0 && hp <= 200) s += 0.2;
+            if (raw.includes("värmare")) s += 0.15;
+            if (raw.includes("adaptiv") || raw.includes(" acc ")) s += 0.15;
+            break;
+          }
+          case "stad": {
+            // Mindre bilar, halvkombi/småbil, lägre HP, kamera/parksensor
+            if (/(halvkombi|sm[åa]bil)/i.test(bodyType)) s += 0.5;
+            if (hp > 0 && hp <= 150) s += 0.2;
+            if (raw.includes("kamera") || raw.includes("parkering")) s += 0.2;
+            break;
+          }
+          case "langresa": {
+            // Komfort: kombi/sedan/SUV, automat, högre HP, värmare
+            if (/(kombi|sedan|suv)/i.test(bodyType)) s += 0.4;
+            if (raw.includes("automat") || raw.includes("dsg") || raw.includes("tiptronic")) s += 0.2;
+            if (hp >= 150) s += 0.2;
+            if (raw.includes("adaptiv") || raw.includes(" acc ") || raw.includes("krui")) s += 0.15;
+            break;
+          }
+          case "blandat": {
+            // Allroundbil: kombi/SUV/halvkombi får boost, balanserad HP
+            if (/(suv|kombi|halvkombi)/i.test(bodyType)) s += 0.4;
+            if (hp >= 150 && hp <= 250) s += 0.2;
+            if (raw.includes("drag")) s += 0.1;
+            break;
+          }
+        }
+        return Math.min(1, s);
       };
 
       const bodyTypePatternValues = validBodyTypes.map((b: string) => bodyPatterns[b]?.replace(/%/g, "").toLowerCase()).filter(Boolean);
@@ -1046,6 +1136,11 @@ serve(async (req) => {
             if ((wantAwd && has === "AWD") || (wantFwd && has === "FWD") || (wantRwd && has === "RWD")) {
               s += SCORE_WEIGHTS.drivetrainMatch;
             }
+          }
+
+          // Use-case-match: belönar bilar som passar livssituationen
+          if (useCase) {
+            s += computeUseCaseScore(c) * SCORE_WEIGHTS.useCase;
           }
 
           return s;
