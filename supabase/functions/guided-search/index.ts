@@ -438,6 +438,21 @@ GENERELLA REGLER:
 
 NÄR DU SKA SÖKA: Du ska ha samlat minst 7 datapunkter ovan OCH ha ställt minst 7 frågor. Punkterna 3 (var personen bor), 24 (ägartid) och 26 (märken att undvika) är HÖGT prioriterade — DESSA MÅSTE alltid frågas. Sök INTE förrän du har tillräckligt. Om kunden pressar på, förklara kort att fler frågor ger bättre matchning.
 
+OBLIGATORISKA NISCHNINGSFRÅGOR (för att smala av sökresultaten):
+Innan du söker MÅSTE du ha SVAR (eller ett tydligt "spelar ingen roll") på minst TRE av följande fem frågor. Detta tightar filterresultaten kraftigt — annars får sökningen 5 000+ träffar och kunden får inte den perfekta bilen.
+
+1. ÅRLIG KÖRSTRÄCKA — "Hur många mil rullar du per år?" Påverkar mileageMax-filtret. Lågmilare (<1000 mil/år) → mileageMax: 8000-12000. Normal (1000-2000) → mileageMax: 15000-20000. Höglång pendling (>2000) → mileageMax: 25000+.
+
+2. ÄGARTID + RISKVILJA — "Hur länge ska du äga bilen, och hur viktigt är att den är pålitlig?" → påverkar yearMin (om lång ägartid + låg risk → kräv yearMin = nu - 4 år).
+
+3. ABSOLUT VIKTIGAST — "Vad är ABSOLUT viktigast för dig — pris, säkerhet, körglädje, miljö, utrymme eller status?" → om svar är säkerhet eller miljö → mer aggressiva niceToHaveEquipment + useCase. Om körglädje → preferredHpMin: 200+. Om pris → drop niceToHave-vikten implicit.
+
+4. NEGATIVA UPPLEVELSER — "Stör du dig på något särskilt med din nuvarande/tidigare bil?" → konvertera till excludeMakes/excludeFuels/excludeKeywords. T.ex. "tröttnade på dieselns os" → excludeFuels: ["diesel"]. "Servicekostnaden för Audi var hög" → excludeMakes: ["Audi"].
+
+5. SÄKERHET-MUST-HAVE — "Är det någon säkerhetsfunktion som måste finnas?" → t.ex. ISOFIX, blindspot-varning, autobroms, parkeringssensor. Konvertera till mustHaveEquipment.
+
+VIKTIGT: dessa fem frågor SKA vävas in naturligt i konversationen, inte ställas som ett formulär. Använd informationen kunden redan gav (t.ex. om de sa "tre barn" → fråga inte om barn igen, fråga om ISOFIX). Målet: minst 3 nischningar EXTRAHERADE (inte bara frågade) innan sökning körs.
+
 STRIKT FILTERLÄGE: Om kunden säger att de bara vill ha bilar som matchar deras exakta filter (t.ex. "bara mina filter", "only my filters", "inga extra förslag"), ska du STRIKT följa deras angivna filter utan att lägga till egna rekommendationer, bredda sökningen eller föreslå alternativ utanför deras kriterier. Returnera action "search" direkt med exakt de filter kunden har angett.
 
 VIKTIG REGEL — ALLTID BEKRÄFTA INNAN SÖKNING:
@@ -1158,16 +1173,27 @@ serve(async (req) => {
           })
           .map(x => x.c);
 
+        // Helpers för aggressiv duplett-filtrering — undviker att samma exakta
+        // bil (make+model+year+price) visas flera gånger även om den finns hos
+        // olika återförsäljare. Två toleransnivåer:
+        //   exactKey: helt identisk (samma år, exakt pris) → max 1
+        //   nearKey:  samma make+model+year (oavsett pris) → max 2 i topp 9
+        const exactKeyOf = (c: any) => `${(c.make||"").toLowerCase()}|||${(c.model||"").toLowerCase()}|||${c.year ?? "?"}|||${c.price ?? "?"}`;
+        const nearKeyOf = (c: any) => `${(c.make||"").toLowerCase()}|||${(c.model||"").toLowerCase()}|||${c.year ?? "?"}`;
+
         // Only diversify when user didn't request a specific make
         if (sanitizedMake) {
-          // User asked for a specific brand — just return best matches, diversify by model only
+          // User asked for a specific brand — just return best matches, diversify by model + exact-dup
           const picked: any[] = [];
           const modelCount: Record<string, number> = {};
+          const exactSeen = new Set<string>();
           for (const car of sorted) {
             if (picked.length >= 9) break;
             const model = (car.model || "unknown").toLowerCase();
+            if (exactSeen.has(exactKeyOf(car))) continue; // exakt duplett (samma make+model+year+price)
             if ((modelCount[model] || 0) >= 2) continue;
             picked.push(car);
+            exactSeen.add(exactKeyOf(car));
             modelCount[model] = (modelCount[model] || 0) + 1;
           }
           if (picked.length < MIN_RESULTS) {
@@ -1179,16 +1205,25 @@ serve(async (req) => {
           return picked;
         }
 
-        // No specific make — diversify across brands
+        // No specific make — diversify across brands + filtrera exakta dupletter
         const picked: any[] = [];
         const makeCount: Record<string, number> = {};
         const makeModelCount: Record<string, number> = {};
+        const nearCount: Record<string, number> = {};
+        const exactSeen = new Set<string>();
 
         for (const car of sorted) {
           if (picked.length >= 9) break;
           const make = (car.make || "unknown").toLowerCase();
           const model = (car.model || "unknown").toLowerCase();
           const makeModelKey = `${make}|||${model}`;
+          const exactKey = exactKeyOf(car);
+          const nearKey = nearKeyOf(car);
+
+          // Hård regel: ALDRIG samma exakta bil (make+model+year+price) två gånger
+          if (exactSeen.has(exactKey)) continue;
+          // Mjukare regel: max 2 av samma make+model+year totalt (olika prisnivåer OK)
+          if ((nearCount[nearKey] || 0) >= 2) continue;
 
           if (picked.length < 3) {
             if ((makeCount[make] || 0) >= 1) continue;
@@ -1198,6 +1233,8 @@ serve(async (req) => {
           }
 
           picked.push(car);
+          exactSeen.add(exactKey);
+          nearCount[nearKey] = (nearCount[nearKey] || 0) + 1;
           makeCount[make] = (makeCount[make] || 0) + 1;
           makeModelCount[makeModelKey] = (makeModelCount[makeModelKey] || 0) + 1;
         }
