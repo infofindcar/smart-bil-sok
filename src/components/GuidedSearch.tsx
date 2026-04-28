@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -607,7 +608,38 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <span className="online-dot absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-card" />
             </div>
             <div className="leading-tight">
-              <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Om Clutch"
+                      className="text-muted-foreground/70 hover:text-foreground transition-colors rounded-full p-0.5 -m-0.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    align="start"
+                    className="w-72 p-4 text-[13px] leading-relaxed bg-card/95 backdrop-blur-md border-border/60"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center">
+                        <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                      </div>
+                      <p className="font-semibold text-foreground">Möt Clutch</p>
+                    </div>
+                    <p className="text-muted-foreground">
+                      Clutch är din AI-bilrådgivare i FindCar. Namnet är en hyllning till kopplingen i bilen — den som förenar föraren med maskinen.
+                    </p>
+                    <p className="text-muted-foreground mt-2">
+                      På samma sätt kopplar Clutch ihop dig med rätt bil.
+                    </p>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
