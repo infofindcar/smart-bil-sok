@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroVideoLoopUrl from '@/assets/hero-video-loop.mp4?url';
+import { HeroBackground } from '@/components/HeroBackground';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -124,25 +124,20 @@ const Index = () => {
     }
   }, [cars, language]);
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
+  // Logo swap: triggered when a "headlight" passes the center of the hero
+  const [showLogo, setShowLogo] = useState(false);
+  const handleCenterPass = useCallback(() => {
+    setShowLogo(true);
+    window.setTimeout(() => setShowLogo(false), 1400);
+  }, []);
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
-      {/* Hero with video background */}
+      {/* Hero with canvas-animated night-highway background */}
       <section
-      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a2332]">
-        {/* Cinematic background video with parallax */}
-        <video
-          src={`${heroVideoLoopUrl}?v=13`}
-          poster="/images/hero_findcar.webp"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-center will-change-transform"
-          style={{ transform: `translateY(${parallaxY}px) scale(1.05)` }}
-        />
+      className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a]">
+        {/* Canvas-animated background: dark gradient + headlight orbs + diagonal streaks */}
+        <HeroBackground parallaxY={parallaxY} onCenterPass={handleCenterPass} />
         {/* Cinematic overlays for readability + depth */}
         <div
           className="absolute inset-0 z-[1] pointer-events-none"
@@ -169,19 +164,28 @@ const Index = () => {
             className="space-y-2"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-2xl font-bold text-white leading-tight font-serif"
-            >
-              Din objektiva<br />bilrådgivare
-            </motion.p>
+            <div className="relative h-[3.5rem] flex items-center justify-center">
+              <motion.p
+                animate={{ opacity: showLogo ? 0 : 1, y: showLogo ? -6 : 0 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                className="absolute inset-0 flex items-center justify-center text-2xl font-light text-white leading-tight tracking-tight"
+              >
+                Din objektiva bilrådgivare
+              </motion.p>
+              <motion.p
+                animate={{ opacity: showLogo ? 1 : 0, y: showLogo ? 0 : 6 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                className="absolute inset-0 flex items-center justify-center text-3xl font-bold tracking-tight"
+              >
+                <span className="text-[#1e3a8a]">Find</span>
+                <span className="text-[#22d3ee]">Car</span>
+              </motion.p>
+            </div>
             <motion.p
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-sm leading-relaxed max-w-md mx-auto"
+              className="text-white/60 text-sm font-light leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
@@ -199,8 +203,8 @@ const Index = () => {
           >
             <Button
               onClick={scrollToSearch}
-              variant="gradient"
-              className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform hero-cta-glow"
+              variant="ghost"
+              className="w-full h-14 rounded-full text-base font-light tracking-wide bg-transparent border border-white/80 text-white hover:bg-white hover:text-black transition-colors duration-300"
             >
               Hitta din bil
             </Button>
@@ -217,19 +221,28 @@ const Index = () => {
             className="mt-8 space-y-3"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-              className="text-4xl lg:text-5xl font-bold text-white leading-tight font-serif"
-            >
-              Din objektiva<br />bilrådgivare
-            </motion.p>
+            <div className="relative h-[5rem] lg:h-[6rem] flex items-center justify-center min-w-[28rem]">
+              <motion.p
+                animate={{ opacity: showLogo ? 0 : 1, y: showLogo ? -8 : 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 flex items-center justify-center text-4xl lg:text-6xl font-light text-white leading-tight tracking-tight whitespace-nowrap"
+              >
+                Din objektiva bilrådgivare
+              </motion.p>
+              <motion.p
+                animate={{ opacity: showLogo ? 1 : 0, y: showLogo ? 0 : 8 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 flex items-center justify-center text-5xl lg:text-7xl font-bold tracking-tight"
+              >
+                <span className="text-[#1e3a8a]">Find</span>
+                <span className="text-[#22d3ee]">Car</span>
+              </motion.p>
+            </div>
             <motion.p
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/70 text-base leading-relaxed max-w-md mx-auto"
+              className="text-white/60 text-base font-light leading-relaxed max-w-md mx-auto"
             >
               Vi matchar dig med bilar baserat på din livsstil, budget och behov
             </motion.p>
@@ -244,8 +257,8 @@ const Index = () => {
           >
             <Button
               onClick={scrollToSearch}
-              variant="gradient"
-              className="h-12 rounded-full text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform px-10 hero-cta-glow"
+              variant="ghost"
+              className="h-12 rounded-full text-sm font-light tracking-wide px-10 bg-transparent border border-white/80 text-white hover:bg-white hover:text-black transition-colors duration-300"
             >
               Hitta din bil
             </Button>
@@ -253,7 +266,7 @@ const Index = () => {
         </div>
 
         {/* Bounce arrow — desktop only */}
-        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-secondary hover:text-secondary/80 transition-colors" style={{
+        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-white/70 hover:text-white transition-colors" style={{
         opacity: 1 - scrollProgress * 3
       }} aria-label="Scrolla ner">
           <ChevronDown className="h-8 w-8" />
