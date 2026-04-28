@@ -453,6 +453,34 @@ Innan du söker MÅSTE du ha SVAR (eller ett tydligt "spelar ingen roll") på mi
 
 VIKTIGT: dessa fem frågor SKA vävas in naturligt i konversationen, inte ställas som ett formulär. Använd informationen kunden redan gav (t.ex. om de sa "tre barn" → fråga inte om barn igen, fråga om ISOFIX). Målet: minst 3 nischningar EXTRAHERADE (inte bara frågade) innan sökning körs.
 
+BRÄNSLE-SPECIFIKA UPPFÖLJNINGSFRÅGOR (när drivmedel är bestämt):
+När kunden valt drivmedel ska du ställa en uppföljningsfråga som är SPECIFIK för den bränsletypen — annars missar du nyckeldata för matchningen.
+
+ELBIL → fråga ALLTID:
+- "Hur lång räckvidd behöver du? Räcker 300 km, eller måste den klara 500+ för långresor?"
+- "Har du laddmöjlighet hemma (egen kontakt/laddbox), eller bara publik laddning?"
+Använd svaret för att sätta preferredHpMin (snabbladdning kräver ofta större batteri = mer hp) och nämn räckvidd i customerProfile. Om kunden bara laddar publikt → undvik bilar med < 350 km WLTP.
+
+LADDHYBRID → fråga:
+- "Hur långt är din typiska resa? Laddhybrid är bäst om du oftast kör <5 mil och kan ladda hemma."
+- "Vad är viktigast — låga driftskostnader för pendling, eller kraft för långresor?"
+
+HYBRID (icke-laddbar) → fråga:
+- "Är det främst stadskörning eller blandat? Hybrid är ideal i stad där den får hjälp av elmotorn."
+
+BENSIN → fråga:
+- "Hur viktig är bränsleekonomi? Vill du ha snål motor (~0,6 l/mil) eller är prestanda viktigare?"
+- "Är det blandat körning eller mest landsväg?" (bensin är ineffektiv i stadskörning)
+
+DIESEL → fråga:
+- "Kör du långt om året (>2000 mil)? Diesel lönar sig bara vid mycket körsträcka."
+- "Bekymrad över miljözoner i innerstad?" (vissa städer förbjuder äldre dieslar)
+
+GAS/E85 → fråga:
+- "Har du tillgång till gas/E85-station nära?" (begränsat utbud i Sverige)
+
+Dessa frågor är OBLIGATORISKA när drivmedel diskuterats — väv in naturligt.
+
 STRIKT FILTERLÄGE: Om kunden säger att de bara vill ha bilar som matchar deras exakta filter (t.ex. "bara mina filter", "only my filters", "inga extra förslag"), ska du STRIKT följa deras angivna filter utan att lägga till egna rekommendationer, bredda sökningen eller föreslå alternativ utanför deras kriterier. Returnera action "search" direkt med exakt de filter kunden har angett.
 
 VIKTIG REGEL — ALLTID BEKRÄFTA INNAN SÖKNING:
@@ -1006,17 +1034,18 @@ serve(async (req) => {
       ]);
 
       // ── Composite-score sortering ──
-      // Varje bil får ett score 0-220ish baserat på hur väl den matchar
+      // Varje bil får ett score 0-260ish baserat på hur väl den matchar
       // kundens preferenser. Vikter justeras lätt här utan ny deploy-cykel.
       const SCORE_WEIGHTS = {
         bodyTypeMatch:    100, // matchar kundens karosseri-val
         niceToHave:        30, // PER matchat nice-to-have-tillval
+        colorMatch:        25, // 0/1: matchar kundens färg-val (om angivet)
         year:              20, // 0-1 normaliserat: nyare bättre
         useCase:           20, // 0-1: matchar use-case-mappning (familj/pendling/etc)
         mileage:           15, // 0-1 normaliserat: lägre mil bättre
         premiumPrice:      12, // 0-1: andel av kundens max-budget
         hpMatch:           10, // 0-1: matchar preferredHpMin
-        drivetrainMatch:   10, // 0/1: matchar drivetrain-pref (om sortPref men ej hårt filter)
+        drivetrainMatch:   10, // 0/1: matchar drivetrain-pref
       };
 
       // Use-case-mappning: vad är "bra" för respektive livssituation?
@@ -1158,6 +1187,15 @@ serve(async (req) => {
             s += computeUseCaseScore(c) * SCORE_WEIGHTS.useCase;
           }
 
+          // Färg-match: kunden bryr sig faktiskt om färg, så ge en stark boost
+          if (sanitizedColor && c.color) {
+            const wanted = sanitizedColor.toLowerCase();
+            const has = String(c.color).toLowerCase();
+            if (has.includes(wanted) || wanted.includes(has)) {
+              s += SCORE_WEIGHTS.colorMatch;
+            }
+          }
+
           return s;
         };
 
@@ -1183,18 +1221,24 @@ serve(async (req) => {
 
         // Only diversify when user didn't request a specific make
         if (sanitizedMake) {
-          // User asked for a specific brand — just return best matches, diversify by model + exact-dup
+          // User asked for a specific brand — diversify by model + exact-dup + dealer
           const picked: any[] = [];
           const modelCount: Record<string, number> = {};
+          const dealerCount: Record<string, number> = {};
           const exactSeen = new Set<string>();
           for (const car of sorted) {
             if (picked.length >= 9) break;
             const model = (car.model || "unknown").toLowerCase();
+            const dealer = (car.dealer_name || "").toLowerCase().trim();
             if (exactSeen.has(exactKeyOf(car))) continue; // exakt duplett (samma make+model+year+price)
             if ((modelCount[model] || 0) >= 2) continue;
+            // Max 2 bilar per dealer även när märket är låst (lite mer tillåtet
+            // eftersom kunden vill se utbudet av just det märket)
+            if (dealer && (dealerCount[dealer] || 0) >= 2) continue;
             picked.push(car);
             exactSeen.add(exactKeyOf(car));
             modelCount[model] = (modelCount[model] || 0) + 1;
+            if (dealer) dealerCount[dealer] = (dealerCount[dealer] || 0) + 1;
           }
           if (picked.length < MIN_RESULTS) {
             for (const car of sorted) {
@@ -1210,12 +1254,14 @@ serve(async (req) => {
         const makeCount: Record<string, number> = {};
         const makeModelCount: Record<string, number> = {};
         const nearCount: Record<string, number> = {};
+        const dealerCount: Record<string, number> = {};
         const exactSeen = new Set<string>();
 
         for (const car of sorted) {
           if (picked.length >= 9) break;
           const make = (car.make || "unknown").toLowerCase();
           const model = (car.model || "unknown").toLowerCase();
+          const dealer = (car.dealer_name || "").toLowerCase().trim();
           const makeModelKey = `${make}|||${model}`;
           const exactKey = exactKeyOf(car);
           const nearKey = nearKeyOf(car);
@@ -1224,6 +1270,8 @@ serve(async (req) => {
           if (exactSeen.has(exactKey)) continue;
           // Mjukare regel: max 2 av samma make+model+year totalt (olika prisnivåer OK)
           if ((nearCount[nearKey] || 0) >= 2) continue;
+          // Dealer-spridning: max 1 bil per dealer i topp 9 (kunden ska se olika säljare)
+          if (dealer && (dealerCount[dealer] || 0) >= 1) continue;
 
           if (picked.length < 3) {
             if ((makeCount[make] || 0) >= 1) continue;
@@ -1235,6 +1283,7 @@ serve(async (req) => {
           picked.push(car);
           exactSeen.add(exactKey);
           nearCount[nearKey] = (nearCount[nearKey] || 0) + 1;
+          if (dealer) dealerCount[dealer] = (dealerCount[dealer] || 0) + 1;
           makeCount[make] = (makeCount[make] || 0) + 1;
           makeModelCount[makeModelKey] = (makeModelCount[makeModelKey] || 0) + 1;
         }
