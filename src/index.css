@@ -467,3 +467,29 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Safe area for mobile fixed input */
 .safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+
+/* Hero logo shimmer sweep — masked to the FindCar logo silhouette */
+@keyframes findcar-shimmer-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(220%) skewX(-12deg); opacity: 0; }
+}
+.findcar-shimmer-sweep {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.18) 35%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0.18) 65%,
+    rgba(255,255,255,0) 100%
+  );
+  filter: blur(2px);
+  animation: findcar-shimmer-sweep 1600ms cubic-bezier(0.22, 1, 0.36, 1) 250ms 1 both;
+  pointer-events: none;
+}
