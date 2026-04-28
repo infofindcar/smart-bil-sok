@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroCarsNight from '@/assets/hero-cars-night-v2.mp4.asset.json';
+import heroLoopVideo from '@/assets/hero-loop.mp4';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -124,33 +124,8 @@ const Index = () => {
     }
   }, [cars, language]);
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
-  // Hero loop: video plays (~10s, car drives out of frame),
-  // then we pause on last frame and reveal big FindCar logo for ~10s,
-  // then restart the video.
-  const heroVideoRef = useRef<HTMLVideoElement>(null);
-  const [showLogo, setShowLogo] = useState(false);
-  useEffect(() => {
-    const video = heroVideoRef.current;
-    if (!video) return;
-    let timeoutId: number | undefined;
-    const handleEnded = () => {
-      // Car has exited frame — show FindCar logo and hold for 10s
-      setShowLogo(true);
-      timeoutId = window.setTimeout(() => {
-        setShowLogo(false);
-        try {
-          video.currentTime = 0;
-          void video.play();
-        } catch {}
-      }, 10000);
-    };
-    video.loop = false;
-    video.addEventListener('ended', handleEnded);
-    return () => {
-      video.removeEventListener('ended', handleEnded);
-      if (timeoutId) window.clearTimeout(timeoutId);
-    };
-  }, []);
+  // Hero loop is a single self-contained MP4 — car drives across, exits,
+  // then FindCar logo + tagline appear for ~5s, then it loops seamlessly.
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
 
@@ -159,10 +134,10 @@ const Index = () => {
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a]">
         {/* Cinematic night-highway video — real cars driving in the dark */}
         <video
-          ref={heroVideoRef}
-          src={heroCarsNight.url}
+          src={heroLoopVideo}
           autoPlay
           muted
+          loop
           playsInline
           preload="auto"
           aria-hidden="true"
@@ -188,24 +163,7 @@ const Index = () => {
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[14svh]">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-2"
-          >
-            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <div className="relative h-[5rem] flex items-center justify-center">
-              <motion.p
-                animate={{ opacity: showLogo ? 1 : 0, scale: showLogo ? 1 : 0.92 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0 flex items-center justify-center text-5xl font-bold tracking-tight"
-              >
-                <span className="text-[#1e3a8a]">Find</span>
-                <span className="text-[#22d3ee]">Car</span>
-              </motion.p>
-            </div>
-          </motion.div>
+          <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
 
           {/* Spacer between headline and CTA */}
           <div className="flex-1 min-h-[20svh]" />
@@ -229,25 +187,9 @@ const Index = () => {
 
         {/* Desktop hero content — spread vertically */}
         <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
-          {/* Top: headline + subtitle together */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-8 space-y-3"
-          >
-            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <div className="relative h-[7rem] lg:h-[9rem] flex items-center justify-center min-w-[28rem]">
-              <motion.p
-                animate={{ opacity: showLogo ? 1 : 0, scale: showLogo ? 1 : 0.92 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0 flex items-center justify-center text-7xl lg:text-8xl font-bold tracking-tight"
-              >
-                <span className="text-[#1e3a8a]">Find</span>
-                <span className="text-[#22d3ee]">Car</span>
-              </motion.p>
-            </div>
-          </motion.div>
+          <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
+          {/* Spacer to push CTA to the bottom */}
+          <div />
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
