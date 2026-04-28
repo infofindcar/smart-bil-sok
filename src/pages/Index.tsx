@@ -124,20 +124,27 @@ const Index = () => {
     }
   }, [cars, language]);
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
-  // Hero loop: real AI-generated bridge video plays on loop.
-  // Car drives across frame 0–6s and exits left. Frame 6–10s the bridge is
-  // empty. We sync a React overlay (FindCar logo + tagline) to fade in once
-  // the car is gone, hold ~4s, then fade out before the loop restarts.
+  // Hero loop: real AI-generated bridge video (~10.04s) plays on loop.
+  // Car drives across frame ~0–6s and exits left. We sync a React overlay
+  // (FindCar logo + tagline) to fade in once the car is gone, hold, then
+  // fade out well before the loop restarts so there is no flicker on the
+  // seam.
+  //
+  // Verified video metadata: duration = 10.041s, 24fps. Fade transition is
+  // 300ms, so we stop fading out at t = 9.4s -> fully invisible by t = 9.7s,
+  // giving ~340ms of safety margin before the loop wraps to t = 0.
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const [showLogo, setShowLogo] = useState(false);
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
+    const FADE_IN_AT = 6.3;   // car has fully exited frame
+    const FADE_OUT_AT = 9.4;  // 300ms transition + ~340ms safety < 10.04s loop
     let raf = 0;
     const tick = () => {
-      // Show logo when the car has left the frame (after ~6s of the 10s loop)
-      const t = video.currentTime % (video.duration || 10);
-      const visible = t >= 6.0 && t < 9.5;
+      const dur = video.duration || 10.04;
+      const t = video.currentTime % dur;
+      const visible = t >= FADE_IN_AT && t < FADE_OUT_AT;
       setShowLogo((prev) => (prev !== visible ? visible : prev));
       raf = window.requestAnimationFrame(tick);
     };
@@ -185,7 +192,7 @@ const Index = () => {
           style={{
             opacity: showLogo ? 1 : 0,
             transform: `scale(${showLogo ? 1 : 0.94})`,
-            transition: 'opacity 700ms cubic-bezier(0.22,1,0.36,1), transform 700ms cubic-bezier(0.22,1,0.36,1)',
+            transition: 'opacity 300ms cubic-bezier(0.22,1,0.36,1), transform 300ms cubic-bezier(0.22,1,0.36,1)',
           }}
         >
           <div
