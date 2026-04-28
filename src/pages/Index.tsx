@@ -195,31 +195,16 @@ const Index = () => {
             className="space-y-2"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <div className="relative h-[3.5rem] flex items-center justify-center">
+            <div className="relative h-[5rem] flex items-center justify-center">
               <motion.p
-                animate={{ opacity: showLogo ? 0 : 1, y: showLogo ? -6 : 0 }}
-                transition={{ duration: 0.45, ease: 'easeOut' }}
-                className="absolute inset-0 flex items-center justify-center text-2xl font-light text-white leading-tight tracking-tight"
-              >
-                Din objektiva bilrådgivare
-              </motion.p>
-              <motion.p
-                animate={{ opacity: showLogo ? 1 : 0, y: showLogo ? 0 : 6 }}
-                transition={{ duration: 0.45, ease: 'easeOut' }}
-                className="absolute inset-0 flex items-center justify-center text-3xl font-bold tracking-tight"
+                animate={{ opacity: showLogo ? 1 : 0, scale: showLogo ? 1 : 0.92 }}
+                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 flex items-center justify-center text-5xl font-bold tracking-tight"
               >
                 <span className="text-[#1e3a8a]">Find</span>
                 <span className="text-[#22d3ee]">Car</span>
               </motion.p>
             </div>
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/60 text-sm font-light leading-relaxed max-w-md mx-auto"
-            >
-              Vi matchar dig med bilar baserat på din livsstil, budget och behov
-            </motion.p>
           </motion.div>
 
           {/* Spacer between headline and CTA */}
@@ -252,31 +237,16 @@ const Index = () => {
             className="mt-8 space-y-3"
           >
             <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <div className="relative h-[5rem] lg:h-[6rem] flex items-center justify-center min-w-[28rem]">
+            <div className="relative h-[7rem] lg:h-[9rem] flex items-center justify-center min-w-[28rem]">
               <motion.p
-                animate={{ opacity: showLogo ? 0 : 1, y: showLogo ? -8 : 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0 flex items-center justify-center text-4xl lg:text-6xl font-light text-white leading-tight tracking-tight whitespace-nowrap"
-              >
-                Din objektiva bilrådgivare
-              </motion.p>
-              <motion.p
-                animate={{ opacity: showLogo ? 1 : 0, y: showLogo ? 0 : 8 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0 flex items-center justify-center text-5xl lg:text-7xl font-bold tracking-tight"
+                animate={{ opacity: showLogo ? 1 : 0, scale: showLogo ? 1 : 0.92 }}
+                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 flex items-center justify-center text-7xl lg:text-8xl font-bold tracking-tight"
               >
                 <span className="text-[#1e3a8a]">Find</span>
                 <span className="text-[#22d3ee]">Car</span>
               </motion.p>
             </div>
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-              className="text-white/60 text-base font-light leading-relaxed max-w-md mx-auto"
-            >
-              Vi matchar dig med bilar baserat på din livsstil, budget och behov
-            </motion.p>
           </motion.div>
 
           {/* Bottom: CTA + social proof below the car */}
