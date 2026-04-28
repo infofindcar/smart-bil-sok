@@ -221,6 +221,36 @@ export type Database = {
         }
         Relationships: []
       }
+      forbattringar: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          page_path: string | null
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          page_path?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          page_path?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           car_id: number | null
