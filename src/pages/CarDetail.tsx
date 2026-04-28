@@ -432,6 +432,33 @@ const CarDetail = () => {
             </div>
           )}
 
+          {/* Transportstyrelsen-kontroll — extern länk till biluppgifter.se.
+              Visas bara när vi har regnumret (~90% av bilarna). Hjälper kunden
+              kolla servicehistorik, ev. lån, antal ägare, besiktningsstatus etc. */}
+          {car.regnr && (
+            <a
+              href={`https://biluppgifter.se/fordon/${encodeURIComponent(car.regnr)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-3 bg-card rounded-2xl border border-border hover:border-primary/40 hover:bg-card/80 p-5 mb-6 transition-all"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  Kolla bilen hos Transportstyrelsen
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Se ägarhistorik, besiktning, ev. utestående lån — gratis officiella data via biluppgifter.se
+                </p>
+              </div>
+              <span className="flex-shrink-0 text-xs font-mono px-2 py-1 rounded bg-muted text-muted-foreground group-hover:text-primary transition-colors">
+                {car.regnr.toUpperCase()} →
+              </span>
+            </a>
+          )}
+
           {/* Contact form */}
           <div className="bg-card rounded-2xl border border-border p-6 mb-6">
             {formSubmitted ? (
