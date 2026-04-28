@@ -269,8 +269,7 @@ const Index = () => {
             <div
               className="-mt-1 md:-mt-2 text-white/90 italic text-base md:text-2xl lg:text-3xl text-center"
               style={{
-                fontFamily:
-                  '"Playfair Display", "Cormorant Garamond", Georgia, "Times New Roman", serif',
+                fontFamily: 'Lora, Georgia, "Times New Roman", serif',
                 letterSpacing: '0.01em',
                 textShadow: '0 2px 14px rgba(0,0,0,0.55)',
               }}
