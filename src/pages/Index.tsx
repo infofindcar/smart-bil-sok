@@ -20,7 +20,7 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
-import heroCarsNight from '@/assets/hero-cars-night.mp4.asset.json';
+import heroCarsNight from '@/assets/hero-cars-night-v2.mp4.asset.json';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -124,15 +124,32 @@ const Index = () => {
     }
   }, [cars, language]);
   const { progress: scrollProgress, parallaxY } = useScrollProgress();
-  // Logo swap: triggered when a "headlight" passes the center of the hero
+  // Hero loop: video plays (~10s, car drives out of frame),
+  // then we pause on last frame and reveal big FindCar logo for ~10s,
+  // then restart the video.
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
   const [showLogo, setShowLogo] = useState(false);
   useEffect(() => {
-    // Loop logo swap every 6s, briefly revealing the FindCar logo
-    const interval = window.setInterval(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    let timeoutId: number | undefined;
+    const handleEnded = () => {
+      // Car has exited frame — show FindCar logo and hold for 10s
       setShowLogo(true);
-      window.setTimeout(() => setShowLogo(false), 1400);
-    }, 6000);
-    return () => window.clearInterval(interval);
+      timeoutId = window.setTimeout(() => {
+        setShowLogo(false);
+        try {
+          video.currentTime = 0;
+          void video.play();
+        } catch {}
+      }, 10000);
+    };
+    video.loop = false;
+    video.addEventListener('ended', handleEnded);
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, []);
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
@@ -142,10 +159,10 @@ const Index = () => {
       className="relative min-h-[100svh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a]">
         {/* Cinematic night-highway video — real cars driving in the dark */}
         <video
+          ref={heroVideoRef}
           src={heroCarsNight.url}
           autoPlay
           muted
-          loop
           playsInline
           preload="auto"
           aria-hidden="true"
