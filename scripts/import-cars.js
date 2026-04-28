@@ -142,6 +142,7 @@ async function main() {
   let leasingCount = 0;
   let privateCount = 0;
   let noImageCount = 0;
+  let noRegnoCount = 0;
 
   for (let i = 0; i < PRICE_INTERVALS.length; i++) {
     const [priceMin, priceMax] = PRICE_INTERVALS[i];
@@ -207,6 +208,14 @@ async function main() {
         continue;
       }
 
+      // Filtrera bort bilar utan regnr — krävs för Transportstyrelsen-länken
+      // och unik identifiering. Privatannonser och vissa nybilar saknar det.
+      const regno = typeof car.regno === "string" ? car.regno.trim() : "";
+      if (regno.length < 4) {
+        noRegnoCount++;
+        continue;
+      }
+
       const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make);
 
       allMapped.push({
@@ -244,6 +253,7 @@ async function main() {
   console.log(`  Leasing filtrerade:  ${leasingCount}`);
   console.log(`  Privat filtrerade:   ${privateCount}`);
   console.log(`  Utan bild:           ${noImageCount}`);
+  console.log(`  Utan regnr:          ${noRegnoCount}`);
   console.log(`  Skickar till sync:   ${allMapped.length}`);
 
   if (allMapped.length === 0) {
