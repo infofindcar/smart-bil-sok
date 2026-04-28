@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 import heroBridgeReal from '@/assets/hero-bridge-real.mp4.asset.json';
+import findcarLogoFull from '@/assets/findcar-logo-full.png';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -131,15 +132,15 @@ const Index = () => {
   // seam.
   //
   // Verified video metadata: duration = 10.041s, 24fps. Fade transition is
-  // 300ms, so we stop fading out at t = 9.4s -> fully invisible by t = 9.7s,
-  // giving ~340ms of safety margin before the loop wraps to t = 0.
+  // 220ms, so we stop fading out at t = 9.6s -> fully invisible by t = 9.82s,
+  // giving ~220ms of safety margin before the loop wraps to t = 0.
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const [showLogo, setShowLogo] = useState(false);
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
-    const FADE_IN_AT = 6.3;   // car has fully exited frame
-    const FADE_OUT_AT = 9.4;  // 300ms transition + ~340ms safety < 10.04s loop
+    const FADE_IN_AT = 5.0;   // car is nearly out of frame, logo starts to emerge
+    const FADE_OUT_AT = 9.6;  // 220ms transition + ~220ms safety < 10.04s loop
     let raf = 0;
     const tick = () => {
       const dur = video.duration || 10.04;
@@ -186,24 +187,73 @@ const Index = () => {
           }}
         />
 
-        {/* FindCar logo + tagline overlay — fades in when the car has exited */}
+        {/* FindCar logo + tagline overlay — fades in when the car has exited.
+            Uses the full brand logo image (which already contains the wordmark)
+            with a radial vignette behind it so it lifts off the bridge, plus a
+            light shimmer sweep on entry. */}
         <div
           className="absolute inset-0 z-[2] pointer-events-none flex flex-col items-center justify-center px-6"
           style={{
             opacity: showLogo ? 1 : 0,
-            transform: `scale(${showLogo ? 1 : 0.94})`,
-            transition: 'opacity 300ms cubic-bezier(0.22,1,0.36,1), transform 300ms cubic-bezier(0.22,1,0.36,1)',
+            transition: 'opacity 700ms cubic-bezier(0.22,1,0.36,1)',
           }}
         >
+          {/* Soft radial vignette behind the logo so it blends with the bridge */}
           <div
-            className="font-bold tracking-tight text-6xl md:text-8xl lg:text-9xl leading-none"
-            style={{ textShadow: '0 8px 60px rgba(34,211,238,0.25)' }}
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(ellipse 55% 40% at 50% 48%, rgba(5,10,20,0.78) 0%, rgba(5,10,20,0.45) 45%, rgba(5,10,20,0) 75%)',
+              opacity: showLogo ? 1 : 0,
+              transition: 'opacity 900ms cubic-bezier(0.22,1,0.36,1)',
+            }}
+          />
+
+          {/* Logo + tagline stack */}
+          <div
+            className="relative flex flex-col items-center"
+            style={{
+              transform: showLogo
+                ? 'translateY(0) scale(1)'
+                : 'translateY(8px) scale(0.97)',
+              transition: 'transform 900ms cubic-bezier(0.22,1,0.36,1)',
+            }}
           >
-            <span className="text-[#1e3a8a]">Find</span>
-            <span className="text-[#22d3ee]">Car</span>
-          </div>
-          <div className="mt-4 md:mt-6 text-white/80 font-light tracking-wide text-base md:text-2xl lg:text-3xl">
-            Din objektiva bilrådgivare
+            {/* Logo with shimmer sweep masked to the image silhouette */}
+            <div className="relative">
+              <img
+                src={findcarLogoFull}
+                alt="FindCar"
+                draggable={false}
+                className="w-[260px] md:w-[420px] lg:w-[520px] h-auto select-none"
+                style={{
+                  filter:
+                    'drop-shadow(0 10px 40px rgba(34,211,238,0.25)) drop-shadow(0 4px 18px rgba(0,0,0,0.55))',
+                }}
+              />
+              {/* Shimmer light sweep — only plays on the entry */}
+              {showLogo && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 overflow-hidden"
+                  style={{
+                    WebkitMaskImage: `url(${findcarLogoFull})`,
+                    maskImage: `url(${findcarLogoFull})`,
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskSize: '100% 100%',
+                    maskSize: '100% 100%',
+                  }}
+                >
+                  <div className="findcar-shimmer-sweep" />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 md:mt-6 text-white/85 font-light tracking-[0.08em] text-sm md:text-xl lg:text-2xl text-center">
+              Din objektiva bilrådgivare
+            </div>
           </div>
         </div>
 
