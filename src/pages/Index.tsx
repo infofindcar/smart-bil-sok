@@ -163,24 +163,7 @@ const Index = () => {
         {/* Hero content — unified for mobile & desktop */}
         {/* Mobile hero content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 w-full min-h-[100svh] md:hidden pt-[14svh]">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-2"
-          >
-            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <div className="relative h-[5rem] flex items-center justify-center">
-              <motion.p
-                animate={{ opacity: showLogo ? 1 : 0, scale: showLogo ? 1 : 0.92 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0 flex items-center justify-center text-5xl font-bold tracking-tight"
-              >
-                <span className="text-[#1e3a8a]">Find</span>
-                <span className="text-[#22d3ee]">Car</span>
-              </motion.p>
-            </div>
-          </motion.div>
+          <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
 
           {/* Spacer between headline and CTA */}
           <div className="flex-1 min-h-[20svh]" />
@@ -204,25 +187,9 @@ const Index = () => {
 
         {/* Desktop hero content — spread vertically */}
         <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
-          {/* Top: headline + subtitle together */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-8 space-y-3"
-          >
-            <h1 className="sr-only">FindCar — Din objektiva bilrådgivare i Sverige</h1>
-            <div className="relative h-[7rem] lg:h-[9rem] flex items-center justify-center min-w-[28rem]">
-              <motion.p
-                animate={{ opacity: showLogo ? 1 : 0, scale: showLogo ? 1 : 0.92 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0 flex items-center justify-center text-7xl lg:text-8xl font-bold tracking-tight"
-              >
-                <span className="text-[#1e3a8a]">Find</span>
-                <span className="text-[#22d3ee]">Car</span>
-              </motion.p>
-            </div>
-          </motion.div>
+          <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
+          {/* Spacer to push CTA to the bottom */}
+          <div />
 
           {/* Bottom: CTA + social proof below the car */}
           <motion.div
