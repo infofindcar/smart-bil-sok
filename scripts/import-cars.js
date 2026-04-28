@@ -186,9 +186,9 @@ async function main() {
       // har då glömt sätta sales_form=5/ad_type=200. Reella köpannonser med
       // hög prisetikett som råkar nämna "kr/mån"-finansiering filtreras inte.
       const rawSpec = (car.model_specification ?? "").toString();
-      const priceAmount = car.price?.amount ?? Number.MAX_SAFE_INTEGER;
+      const priceForLeaseCheck = car.price?.amount ?? Number.MAX_SAFE_INTEGER;
       if (
-        priceAmount < 12000 &&
+        priceForLeaseCheck < 12000 &&
         /leasing|kr\s*\/\s*m[åa]n|:-?\s*\/\s*m[åa]n|\/\s*m[åa]n/i.test(rawSpec)
       ) {
         leasingCount++;
