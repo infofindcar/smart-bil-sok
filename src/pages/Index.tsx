@@ -18,11 +18,10 @@ const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ 
 const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 import heroBridgeReal from '@/assets/hero-bridge-real.mp4.asset.json';
 import findcarLogoFull from '@/assets/findcar-logo-full.png';
-import findcarLogoFullWhite from '@/assets/findcar-logo-full-white.png';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -238,13 +237,13 @@ const Index = () => {
             {/* Logo with shimmer sweep masked to the image silhouette */}
             <div className="relative">
               <img
-                src={findcarLogoFullWhite}
+                src={findcarLogoFull}
                 alt="FindCar"
                 draggable={false}
-                className="w-[220px] md:w-[360px] lg:w-[420px] h-auto select-none"
+                className="w-[240px] md:w-[400px] lg:w-[480px] h-auto select-none"
                 style={{
                   filter:
-                    'drop-shadow(0 4px 22px rgba(255,255,255,0.18)) drop-shadow(0 2px 8px rgba(0,0,0,0.7))',
+                    'drop-shadow(0 6px 28px rgba(34,211,238,0.35)) drop-shadow(0 3px 12px rgba(0,0,0,0.65))',
                 }}
               />
               {/* Shimmer light sweep — only plays on the entry */}
@@ -253,8 +252,8 @@ const Index = () => {
                   aria-hidden="true"
                   className="absolute inset-0 overflow-hidden"
                   style={{
-                    WebkitMaskImage: `url(${findcarLogoFullWhite})`,
-                    maskImage: `url(${findcarLogoFullWhite})`,
+                    WebkitMaskImage: `url(${findcarLogoFull})`,
+                    maskImage: `url(${findcarLogoFull})`,
                     WebkitMaskRepeat: 'no-repeat',
                     maskRepeat: 'no-repeat',
                     WebkitMaskSize: '100% 100%',
@@ -298,9 +297,10 @@ const Index = () => {
           >
             <Button
               onClick={scrollToSearch}
-              className="findcar-cta-hero w-full h-12 rounded-full text-sm font-medium tracking-wide text-white border-0"
+              className="findcar-cta-hero group w-full h-14 rounded-full text-base font-medium tracking-wide text-white border-0 inline-flex items-center justify-center gap-2"
             >
-              Hitta din bil
+              <span>Hitta din bil</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </div>
@@ -320,19 +320,15 @@ const Index = () => {
           >
             <Button
               onClick={scrollToSearch}
-              className="findcar-cta-hero h-12 rounded-full text-sm font-medium tracking-wide px-12 text-white border-0"
+              className="findcar-cta-hero group h-13 rounded-full text-base font-medium tracking-wide px-12 py-3 text-white border-0 inline-flex items-center justify-center gap-2"
             >
-              Hitta din bil
+              <span>Hitta din bil</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </div>
 
-        {/* Bounce arrow — desktop only */}
-        <button onClick={scrollToSearch} className="hidden md:block absolute bottom-8 z-10 animate-bounce text-white/70 hover:text-white transition-colors" style={{
-        opacity: 1 - scrollProgress * 3
-      }} aria-label="Scrolla ner">
-          <ChevronDown className="h-8 w-8" />
-        </button>
+        {/* (Bounce arrow removed — CTA is the primary action) */}
 
         {/* Bottom fade — inside hero, no seam possible */}
         <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 z-[2] pointer-events-none" style={{
