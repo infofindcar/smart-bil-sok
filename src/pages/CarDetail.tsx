@@ -205,10 +205,15 @@ const CarDetail = () => {
   const annualTax = modelData?.annual_tax_sek ?? calcAnnualTax(co2, car.fuel_type);
   const monthlyTax = Math.round(annualTax / 12);
 
+  // Bara skicka el-räckvidd till bränslekostnadsberäkning om bilen faktiskt
+  // är el/hybrid/plug-in. car_models-cachen är per make+model och inkluderar
+  // ibland el-räckvidd för modeller som finns i flera versioner — vi vill
+  // inte att en BMW 320i bensin får hybrid-versionens räckvidd.
+  const isEvOrHybrid = !!(car.fuel_type && /el|hybrid|plug/i.test(car.fuel_type));
   const fuelEst = estimateMonthlyFuel(
     car.fuel_type,
     modelData?.fuel_consumption_l100km ?? null,
-    modelData?.electric_range_km ?? null
+    isEvOrHybrid ? (modelData?.electric_range_km ?? null) : null
   );
 
   // Age-based insurance adjustment
@@ -266,7 +271,7 @@ const CarDetail = () => {
     { icon: Weight, label: 'Max dragvikt', value: modelData?.max_towing_kg ? `${fmt(modelData.max_towing_kg)} kg` : null },
     { icon: Car, label: 'Antal säten', value: modelData?.seats ? String(modelData.seats) : null },
     { icon: Droplets, label: 'Förbrukning', value: modelData?.fuel_consumption_l100km ? `${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : null },
-    { icon: BatteryCharging, label: 'Elräckvidd', value: modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
+    { icon: BatteryCharging, label: 'Elräckvidd', value: (car.fuel_type && /el|hybrid|plug/i.test(car.fuel_type)) && modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
     { icon: Leaf, label: 'CO₂-utsläpp', value: co2 ? `${co2} g/km` : null },
   ].filter(s => s.value);
 
@@ -432,12 +437,12 @@ const CarDetail = () => {
             </div>
           )}
 
-          {/* Transportstyrelsen-kontroll — extern länk till biluppgifter.se.
+          {/* Transportstyrelsen-kontroll — extern länk till officiella myndighetsdata.
               Visas bara när vi har regnumret (~90% av bilarna). Hjälper kunden
               kolla servicehistorik, ev. lån, antal ägare, besiktningsstatus etc. */}
           {car.regnr && (
             <a
-              href={`https://biluppgifter.se/fordon/${encodeURIComponent(car.regnr)}`}
+              href={`https://fordon-fu-regnr.transportstyrelsen.se/?Registreringsnummer=${encodeURIComponent(car.regnr.toUpperCase().replace(/\s+/g, ''))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-3 bg-card rounded-2xl border border-border hover:border-primary/40 hover:bg-card/80 p-5 mb-6 transition-all"
@@ -450,7 +455,7 @@ const CarDetail = () => {
                   Kolla bilen hos Transportstyrelsen
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Se ägarhistorik, besiktning, ev. utestående lån — gratis officiella data via biluppgifter.se
+                  Officiella myndighetsdata — ägarhistorik, besiktning, skatt och teknisk info. Gratis.
                 </p>
               </div>
               <span className="flex-shrink-0 text-xs font-mono px-2 py-1 rounded bg-muted text-muted-foreground group-hover:text-primary transition-colors">
