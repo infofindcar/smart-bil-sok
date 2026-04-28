@@ -188,9 +188,9 @@ const Index = () => {
         />
 
         {/* FindCar logo + tagline overlay — fades in when the car has exited.
-            Uses the full brand logo image (which already contains the wordmark)
-            with a radial vignette behind it so it lifts off the bridge, plus a
-            light shimmer sweep on entry. */}
+            Spotlight cone from above lights the bridge where the logo sits,
+            making it feel like a stage light. Uses the full brand logo image
+            (which already contains the wordmark) plus a shimmer on entry. */}
         <div
           className="absolute inset-0 z-[2] pointer-events-none flex flex-col items-center justify-center px-6"
           style={{
@@ -198,13 +198,27 @@ const Index = () => {
             transition: 'opacity 700ms cubic-bezier(0.22,1,0.36,1)',
           }}
         >
-          {/* Soft radial vignette behind the logo so it blends with the bridge */}
+          {/* Spotlight cone from above — wider at the bottom, soft warm-white */}
           <div
             aria-hidden="true"
-            className="absolute inset-0"
+            className="absolute inset-x-0 top-0 h-full"
             style={{
               background:
-                'radial-gradient(ellipse 55% 40% at 50% 48%, rgba(5,10,20,0.78) 0%, rgba(5,10,20,0.45) 45%, rgba(5,10,20,0) 75%)',
+                'radial-gradient(ellipse 38% 70% at 50% 0%, rgba(220,235,255,0.22) 0%, rgba(180,210,240,0.12) 25%, rgba(120,160,210,0.06) 45%, rgba(0,0,0,0) 70%)',
+              mixBlendMode: 'screen',
+              opacity: showLogo ? 1 : 0,
+              transition: 'opacity 1100ms cubic-bezier(0.22,1,0.36,1)',
+            }}
+          />
+          {/* Ground pool — soft glow on the "bridge floor" beneath the logo */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0"
+            style={{
+              top: '50%',
+              height: '40%',
+              background:
+                'radial-gradient(ellipse 32% 55% at 50% 25%, rgba(5,10,20,0.55) 0%, rgba(5,10,20,0.25) 50%, rgba(5,10,20,0) 80%)',
               opacity: showLogo ? 1 : 0,
               transition: 'opacity 900ms cubic-bezier(0.22,1,0.36,1)',
             }}
@@ -216,7 +230,7 @@ const Index = () => {
             style={{
               transform: showLogo
                 ? 'translateY(0) scale(1)'
-                : 'translateY(8px) scale(0.97)',
+                : 'translateY(10px) scale(0.97)',
               transition: 'transform 900ms cubic-bezier(0.22,1,0.36,1)',
             }}
           >
@@ -226,10 +240,10 @@ const Index = () => {
                 src={findcarLogoFull}
                 alt="FindCar"
                 draggable={false}
-                className="w-[260px] md:w-[420px] lg:w-[520px] h-auto select-none"
+                className="w-[240px] md:w-[400px] lg:w-[480px] h-auto select-none"
                 style={{
                   filter:
-                    'drop-shadow(0 10px 40px rgba(34,211,238,0.25)) drop-shadow(0 4px 18px rgba(0,0,0,0.55))',
+                    'drop-shadow(0 6px 28px rgba(34,211,238,0.30)) drop-shadow(0 2px 10px rgba(0,0,0,0.6))',
                 }}
               />
               {/* Shimmer light sweep — only plays on the entry */}
@@ -251,7 +265,16 @@ const Index = () => {
               )}
             </div>
 
-            <div className="mt-4 md:mt-6 text-white/85 font-light tracking-[0.08em] text-sm md:text-xl lg:text-2xl text-center">
+            {/* Italic serif tagline, tight to the logo */}
+            <div
+              className="-mt-1 md:-mt-2 text-white/90 italic text-base md:text-2xl lg:text-3xl text-center"
+              style={{
+                fontFamily:
+                  '"Playfair Display", "Cormorant Garamond", Georgia, "Times New Roman", serif',
+                letterSpacing: '0.01em',
+                textShadow: '0 2px 14px rgba(0,0,0,0.55)',
+              }}
+            >
               Din objektiva bilrådgivare
             </div>
           </div>
@@ -265,17 +288,16 @@ const Index = () => {
           {/* Spacer between headline and CTA */}
           <div className="flex-1 min-h-[20svh]" />
 
-          {/* Bottom: CTA + social proof below the car */}
+          {/* Bottom CTA — premium gradient */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-10 w-full"
+            className="flex flex-col items-center gap-4 mb-4 w-full"
           >
             <Button
               onClick={scrollToSearch}
-              variant="ghost"
-              className="w-full h-14 rounded-full text-base font-light tracking-wide bg-transparent border border-white/80 text-white hover:bg-white hover:text-black transition-colors duration-300"
+              className="findcar-cta-gradient w-full h-14 rounded-full text-base font-medium tracking-wide text-white border-0"
             >
               Hitta din bil
             </Button>
@@ -283,22 +305,21 @@ const Index = () => {
         </div>
 
         {/* Desktop hero content — spread vertically */}
-        <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen py-20">
+        <div className="relative z-10 hidden md:flex flex-col items-center justify-between text-center px-6 w-full min-h-screen pt-20 pb-10">
           <h1 className="sr-only">FindCar — Din objektiva bilrecensent i Sverige</h1>
           {/* Spacer to push CTA to the bottom */}
           <div />
 
-          {/* Bottom: CTA + social proof below the car */}
+          {/* Bottom CTA — premium gradient, sits lower */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-12"
+            className="flex flex-col items-center gap-4 mb-6"
           >
             <Button
               onClick={scrollToSearch}
-              variant="ghost"
-              className="h-12 rounded-full text-sm font-light tracking-wide px-10 bg-transparent border border-white/80 text-white hover:bg-white hover:text-black transition-colors duration-300"
+              className="findcar-cta-gradient h-13 rounded-full text-base font-medium tracking-wide px-12 py-3 text-white border-0"
             >
               Hitta din bil
             </Button>
