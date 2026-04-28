@@ -632,10 +632,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                       <p className="font-semibold text-foreground">Möt Clutch</p>
                     </div>
                     <p className="text-muted-foreground">
-                      Clutch är din AI-bilrådgivare i FindCar. Namnet är en hyllning till kopplingen i bilen — den som förenar föraren med maskinen.
+                      Clutch är din personliga AI-bilrådgivare här på FindCar. Namnet är en varm hyllning till kopplingen i bilen — den lilla detaljen som förenar föraren med maskinen.
                     </p>
                     <p className="text-muted-foreground mt-2">
-                      På samma sätt kopplar Clutch ihop dig med rätt bil.
+                      På samma sätt kopplar Clutch ihop dig med rätt bil — föraren med sin perfekta följeslagare på vägen.
                     </p>
                   </PopoverContent>
                 </Popover>
