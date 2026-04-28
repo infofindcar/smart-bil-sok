@@ -22,6 +22,7 @@ import { ChevronDown } from 'lucide-react';
 import findcarLogoHero from '@/assets/findcar-logo-hero.png';
 import heroBridgeReal from '@/assets/hero-bridge-real.mp4.asset.json';
 import findcarLogoFull from '@/assets/findcar-logo-full.png';
+import findcarLogoFullWhite from '@/assets/findcar-logo-full-white.png';
 const useScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [parallaxY, setParallaxY] = useState(0);
@@ -139,7 +140,7 @@ const Index = () => {
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
-    const FADE_IN_AT = 5.0;   // car is nearly out of frame, logo starts to emerge
+    const FADE_IN_AT = 6.4;   // wait until the car has fully exited the frame
     const FADE_OUT_AT = 9.6;  // 220ms transition + ~220ms safety < 10.04s loop
     let raf = 0;
     const tick = () => {
@@ -237,13 +238,13 @@ const Index = () => {
             {/* Logo with shimmer sweep masked to the image silhouette */}
             <div className="relative">
               <img
-                src={findcarLogoFull}
+                src={findcarLogoFullWhite}
                 alt="FindCar"
                 draggable={false}
-                className="w-[240px] md:w-[400px] lg:w-[480px] h-auto select-none"
+                className="w-[220px] md:w-[360px] lg:w-[420px] h-auto select-none"
                 style={{
                   filter:
-                    'drop-shadow(0 6px 28px rgba(34,211,238,0.30)) drop-shadow(0 2px 10px rgba(0,0,0,0.6))',
+                    'drop-shadow(0 4px 22px rgba(255,255,255,0.18)) drop-shadow(0 2px 8px rgba(0,0,0,0.7))',
                 }}
               />
               {/* Shimmer light sweep — only plays on the entry */}
@@ -252,8 +253,8 @@ const Index = () => {
                   aria-hidden="true"
                   className="absolute inset-0 overflow-hidden"
                   style={{
-                    WebkitMaskImage: `url(${findcarLogoFull})`,
-                    maskImage: `url(${findcarLogoFull})`,
+                    WebkitMaskImage: `url(${findcarLogoFullWhite})`,
+                    maskImage: `url(${findcarLogoFullWhite})`,
                     WebkitMaskRepeat: 'no-repeat',
                     maskRepeat: 'no-repeat',
                     WebkitMaskSize: '100% 100%',
@@ -265,13 +266,13 @@ const Index = () => {
               )}
             </div>
 
-            {/* Italic serif tagline, tight to the logo */}
+            {/* Italic serif tagline — small, tight to the logo */}
             <div
-              className="-mt-1 md:-mt-2 text-white/90 italic text-base md:text-2xl lg:text-3xl text-center"
+              className="-mt-3 md:-mt-4 text-white/85 italic text-xs md:text-base lg:text-lg text-center"
               style={{
                 fontFamily: 'Lora, Georgia, "Times New Roman", serif',
-                letterSpacing: '0.01em',
-                textShadow: '0 2px 14px rgba(0,0,0,0.55)',
+                letterSpacing: '0.02em',
+                textShadow: '0 2px 10px rgba(0,0,0,0.6)',
               }}
             >
               Din objektiva bilrådgivare
@@ -287,16 +288,17 @@ const Index = () => {
           {/* Spacer between headline and CTA */}
           <div className="flex-1 min-h-[20svh]" />
 
-          {/* Bottom CTA — premium gradient */}
+          {/* Bottom CTA — sits low, glass + subtle gradient so it blends with the bridge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-4 w-full"
+            className="flex flex-col items-center gap-4 w-full"
+            style={{ marginBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
           >
             <Button
               onClick={scrollToSearch}
-              className="findcar-cta-gradient w-full h-14 rounded-full text-base font-medium tracking-wide text-white border-0"
+              className="findcar-cta-hero w-full h-12 rounded-full text-sm font-medium tracking-wide text-white border-0"
             >
               Hitta din bil
             </Button>
@@ -309,16 +311,16 @@ const Index = () => {
           {/* Spacer to push CTA to the bottom */}
           <div />
 
-          {/* Bottom CTA — premium gradient, sits lower */}
+          {/* Bottom CTA — sits low, glass + subtle gradient so it blends with the bridge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
-            className="flex flex-col items-center gap-4 mb-6"
+            className="flex flex-col items-center gap-4 mb-2"
           >
             <Button
               onClick={scrollToSearch}
-              className="findcar-cta-gradient h-13 rounded-full text-base font-medium tracking-wide px-12 py-3 text-white border-0"
+              className="findcar-cta-hero h-12 rounded-full text-sm font-medium tracking-wide px-12 text-white border-0"
             >
               Hitta din bil
             </Button>
