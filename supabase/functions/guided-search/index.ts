@@ -935,20 +935,17 @@ serve(async (req) => {
         if (yearMin && level < 3) query = query.gte("year", yearMin);
         if (yearMax && level < 3) query = query.lte("year", yearMax);
 
-        // Smart sortering: om kunden bara angett ett tak (eller spannet är brett),
-        // sortera så vi inte bara visar de billigaste skrällena längst ner i spannet.
-        // Vi prioriterar bilar nära MAX (de bästa kunden har råd med) men begränsar till spannet.
-        const isOpenMax = maxPrice >= 99999999;
-        const isOnlyMax = minPrice <= Math.max(50000, maxPrice * 0.1) && maxPrice < 99999999;
-        const isWideRange = minPrice > 0 && maxPrice > minPrice * 3;
-        if (isOpenMax) {
-          return query.order("year", { ascending: false, nullsFirst: false }).limit(40);
-        }
-        if (isOnlyMax || isWideRange) {
-          // Sortera efter pris fallande inom spannet → bästa bilen för pengarna först
-          return query.order("price", { ascending: false, nullsFirst: false }).limit(40);
-        }
-        return query.order("price", { ascending: true }).limit(18);
+        // Smart pre-sortering inför composite-score:
+        // Composite-score körs på max 40 bilar. Vi måste välja DE 40 BÄSTA
+        // (inte de billigaste) så scoring-vikter på premium-pris/år/mil fungerar.
+        //
+        // Strategi: alltid sortera year DESC primärt, price DESC sekundärt.
+        // Då hämtas de nyaste bilarna nära max-budget — där composite-score
+        // sen kan finjustera mellan body-type, tillval och mil.
+        return query
+          .order("year", { ascending: false, nullsFirst: false })
+          .order("price", { ascending: false, nullsFirst: false })
+          .limit(40);
       };
 
       // Fire levels 0 and 1 in parallel
