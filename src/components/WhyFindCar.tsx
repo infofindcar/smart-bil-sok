@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { ScrollReveal } from './ScrollReveal';
-import { Shield, Target, MessageCircle, Handshake, Check } from 'lucide-react';
+import { Shield, Target, MessageCircle, Handshake, Check, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const benefits = [
   {
     icon: Shield,
     title: 'Objektiv – alltid på din sida',
     description:
-      'Till skillnad från traditionella bilhandlare representerar FindCar ingen enskild säljare. Vi hjälper dig att fatta ett genomtänkt bilbeslut – baserat på dina behov, inte provision.',
-    checks: ['Tryggare beslut', 'Mindre köpångest', 'Högre chans till ett nöjt köp'],
+      'Till skillnad från traditionella bilhandlare representerar FindCar ingen enskild säljare. Vi hjälper dig att fatta ett genomtänkt bilbeslut.',
   },
   {
     icon: Target,
@@ -33,6 +35,7 @@ const benefits = [
 ];
 
 export const WhyFindCar = () => {
+  const [showBoxes, setShowBoxes] = useState(false);
   return (
     <section className="py-8 md:py-16 px-4 bg-section-alt">
       <div className="max-w-5xl mx-auto">
@@ -41,13 +44,39 @@ export const WhyFindCar = () => {
             <h2 className="text-3xl md:text-4xl font-bold">
               Varför <span className="text-gradient">FindCar</span>?
             </h2>
+            {!showBoxes && (
+              <div className="mt-6 flex justify-center">
+                <Button
+                  onClick={() => setShowBoxes(true)}
+                  variant="outline"
+                  className="rounded-full px-6 h-11 group"
+                >
+                  Jag vill veta
+                  <ChevronDown className="h-4 w-4 ml-2 transition-transform group-hover:translate-y-0.5" />
+                </Button>
+              </div>
+            )}
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {benefits.map((b, i) => (
-            <ScrollReveal key={b.title} delay={i * 100}>
-              <div className="bg-card rounded-2xl p-5 md:p-8 border border-border hover-lift h-full flex flex-col">
+        <AnimatePresence initial={false}>
+          {showBoxes && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pt-2">
+                {benefits.map((b, i) => (
+                  <motion.div
+                    key={b.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <div className="bg-card rounded-2xl p-5 md:p-8 border border-border hover-lift h-full flex flex-col">
                 {/* Icon */}
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
                   <b.icon className="h-6 w-6 text-primary" />
@@ -81,10 +110,13 @@ export const WhyFindCar = () => {
                     </blockquote>
                   )}
                 </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            </ScrollReveal>
-          ))}
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
