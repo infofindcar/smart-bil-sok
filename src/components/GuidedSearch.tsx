@@ -684,10 +684,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto overscroll-contain chat-scrollbar pb-12 ${
+          className={`relative px-4 md:px-6 lg:px-8 py-4 space-y-3 overflow-y-auto overscroll-contain chat-scrollbar pb-8 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
-              : 'max-h-[78dvh] md:max-h-[680px] min-h-[360px]'
+              : 'max-h-[calc(100dvh-280px)] md:max-h-[calc(100dvh-260px)] min-h-[220px]'
           }`}
         >
           {messages.map((msg, idx) => {
