@@ -280,10 +280,25 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const liveContainer = chatContainerRef.current;
       if (!liveContainer || (!force && !isAutoFollowRef.current)) return;
 
-      targetScrollTopRef.current = Math.max(0, liveContainer.scrollHeight - liveContainer.clientHeight);
+      const target = Math.max(0, liveContainer.scrollHeight - liveContainer.clientHeight);
+      targetScrollTopRef.current = target;
+
+      if (force || isTypingRef.current) {
+        stopScrollLoop();
+        liveContainer.scrollTop = target;
+        setShowScrollDown(false);
+
+        requestAnimationFrame(() => {
+          const settledContainer = chatContainerRef.current;
+          if (!settledContainer) return;
+          settledContainer.scrollTop = Math.max(0, settledContainer.scrollHeight - settledContainer.clientHeight);
+        });
+        return;
+      }
+
       startScrollLoop();
     });
-  }, [startScrollLoop]);
+  }, [startScrollLoop, stopScrollLoop]);
 
   // Scroll-to-bottom detection for the arrow button
   useEffect(() => {
@@ -359,9 +374,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [isLoading, phase]);
 
-  // Follow the typewriter — scroll on every commit (cheap because rAF-batched)
+  // Follow the typewriter all the way down so the latest words stay visible.
   useEffect(() => {
-    queueScrollToBottom(false);
+    queueScrollToBottom(true);
   }, [visibleText, queueScrollToBottom]);
 
   // When the "thinking" indicator appears, make sure it's fully visible.
