@@ -356,7 +356,7 @@ const Index = () => {
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-8 md:mb-10">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-[1.1]">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl text-foreground tracking-tight leading-[1.1] font-bold">
                 Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
               <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-[15px] md:text-base leading-relaxed">

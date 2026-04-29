@@ -791,7 +791,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div
-          className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/40 shrink-0 bg-gradient-to-b from-card/40 to-card/80 backdrop-blur-sm safe-pb"
+          className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/40 shrink-0 bg-gradient-to-b from-card/40 to-card/80 backdrop-blur-sm safe-pb py-px rounded-none"
         >
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
