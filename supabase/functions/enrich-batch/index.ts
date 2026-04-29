@@ -218,13 +218,6 @@ Svara EXAKT i detta format (en rad per bil):
   return results;
 }
 
-// Cron-secret som pg_cron skickar i x-sync-secret. Ligger i klartext
-// i cron.job-tabellen så detta är ingen äkta hemlighet — bara en markör
-// för att skilja interna cron-anrop från publika. Env-variabeln SYNC_SECRET
-// kan sättas för att åsidosätta (om rotation behövs), men en fallback här
-// ser till att deploy-drift aldrig kan knäcka enrichment igen.
-const FALLBACK_SYNC_SECRET = "cron_bvqveq_2026_internal";
-
 // ─────────────────────────────────────────────
 // Edge Function handler
 // ─────────────────────────────────────────────
@@ -232,13 +225,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Auth — accepterar antingen det satta SYNC_SECRET eller det kända
-    // cron-värdet som fallback. Detta gör enrichment robust mot deploy-drift
-    // och env-variabel-missmatch.
+    // Auth — kräver SYNC_SECRET-env. Ingen hardcoded fallback (säkerhet).
     const secret = req.headers.get("x-sync-secret");
     const envSecret = Deno.env.get("SYNC_SECRET");
-    const accepted = new Set([envSecret, FALLBACK_SYNC_SECRET].filter(Boolean) as string[]);
-    if (!secret || !accepted.has(secret)) {
+    if (!envSecret) {
+      console.error("SYNC_SECRET env var not configured");
+      return new Response(
+        JSON.stringify({ success: false, error: "Server misconfigured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (!secret || secret !== envSecret) {
       return new Response(
         JSON.stringify({ success: false, error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
