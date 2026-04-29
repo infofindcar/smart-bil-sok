@@ -272,18 +272,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     scrollRafRef.current = requestAnimationFrame(step);
   }, []);
 
-  const keepChatBottomInViewport = useCallback((container: HTMLDivElement) => {
-    const rect = container.getBoundingClientRect();
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const inputHeight = inputAreaRef.current?.getBoundingClientRect().height ?? 0;
-    const safeGap = Math.min(Math.max(inputHeight + 12, 72), 150);
-    const overflow = rect.bottom - (viewportHeight - safeGap);
-
-    if (overflow > 0) {
-      window.scrollBy({ top: overflow, behavior: 'smooth' });
-    }
-  }, []);
-
   const queueScrollToBottom = useCallback((force = false) => {
     const container = chatContainerRef.current;
     if (!container || (!force && !isAutoFollowRef.current)) return;
@@ -299,20 +287,18 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         stopScrollLoop();
         liveContainer.scrollTop = target;
         setShowScrollDown(false);
-        keepChatBottomInViewport(liveContainer);
 
         requestAnimationFrame(() => {
           const settledContainer = chatContainerRef.current;
           if (!settledContainer) return;
           settledContainer.scrollTop = Math.max(0, settledContainer.scrollHeight - settledContainer.clientHeight);
-          keepChatBottomInViewport(settledContainer);
         });
         return;
       }
 
       startScrollLoop();
     });
-  }, [keepChatBottomInViewport, startScrollLoop, stopScrollLoop]);
+  }, [startScrollLoop, stopScrollLoop]);
 
   // Scroll-to-bottom detection for the arrow button
   useEffect(() => {
@@ -329,8 +315,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
-  // Also keep the input in view by scrolling the window when the textarea grows.
+  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height.
+  // Keep all follow-scroll inside the Clutch chat, never by moving the page.
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -341,17 +327,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         el.style.height = `${next}px`;
         lastTextareaHeightRef.current = next;
       }
-      // Keep input visible in viewport as it grows
-      const area = inputAreaRef.current;
-      if (area) {
-        const rect = area.getBoundingClientRect();
-        const vh = window.innerHeight || document.documentElement.clientHeight;
-        const overflow = rect.bottom - vh + 16;
-        if (overflow > 0) {
-          window.scrollBy({ top: overflow, behavior: 'smooth' });
-        }
-      }
-      // Keep chat scrolled to bottom too
       queueScrollToBottom(true);
     });
   }, [inputValue, queueScrollToBottom]);
