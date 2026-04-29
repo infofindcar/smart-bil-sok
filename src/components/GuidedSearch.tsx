@@ -359,14 +359,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [isLoading, phase]);
 
-  // Debounced scroll during typewriter — only every 200ms
-  const lastTypeScrollRef = useRef(0);
+  // Follow the typewriter — scroll on every commit (cheap because rAF-batched)
   useEffect(() => {
-    const now = Date.now();
-    if (now - lastTypeScrollRef.current > 200) {
-      lastTypeScrollRef.current = now;
-      queueScrollToBottom(false);
-    }
+    queueScrollToBottom(false);
   }, [visibleText, queueScrollToBottom]);
 
   useEffect(() => {
@@ -681,7 +676,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-6 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
-              : 'max-h-[52dvh] md:max-h-[420px] min-h-[200px]'
+              : 'max-h-[62dvh] md:max-h-[540px] min-h-[260px]'
           }`}
         >
           {messages.map((msg, idx) => {
