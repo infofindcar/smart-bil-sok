@@ -356,13 +356,6 @@ const Index = () => {
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-8 md:mb-10">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-medium text-primary uppercase tracking-wider">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
-                </span>
-                AI-driven sökning
-              </div>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-[1.1]">
                 Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
