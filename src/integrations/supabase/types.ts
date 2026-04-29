@@ -522,7 +522,6 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          password: string | null
         }
         Insert: {
           approved?: boolean | null
@@ -530,7 +529,6 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
-          password?: string | null
         }
         Update: {
           approved?: boolean | null
@@ -538,7 +536,6 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
-          password?: string | null
         }
         Relationships: []
       }
