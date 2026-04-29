@@ -141,16 +141,15 @@ const Index = () => {
     if (!video) return;
     const FADE_IN_AT = 6.4;   // wait until the car has fully exited the frame
     const FADE_OUT_AT = 9.6;  // 220ms transition + ~220ms safety < 10.04s loop
-    let raf = 0;
-    const tick = () => {
+    // Poll at ~10fps instead of 60fps — fade timing only needs ~100ms accuracy,
+    // and this frees the main thread during chat typing/scrolling.
+    const interval = window.setInterval(() => {
       const dur = video.duration || 10.04;
       const t = video.currentTime % dur;
       const visible = t >= FADE_IN_AT && t < FADE_OUT_AT;
       setShowLogo((prev) => (prev !== visible ? visible : prev));
-      raf = window.requestAnimationFrame(tick);
-    };
-    raf = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(raf);
+    }, 100);
+    return () => window.clearInterval(interval);
   }, []);
   return <div className="min-h-screen overflow-x-hidden">
       <Header />
@@ -357,11 +356,19 @@ const Index = () => {
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            <div className="text-center mb-8 md:mb-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-medium text-primary uppercase tracking-wider">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                </span>
+                AI-driven sökning
+              </div>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-[1.1]">
                 Hitta bilen som passar <span className="text-gradient">just dig</span>
               </h2>
-              <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm">
-                Clutch lär känna dina behov och hittar de bästa matchningarna — helt gratis.
+              <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-[15px] md:text-base leading-relaxed">
+                Berätta om dina behov — Clutch matchar dig med rätt bil bland tusentals annonser. Helt gratis.
               </p>
             </div>
           </ScrollReveal>
