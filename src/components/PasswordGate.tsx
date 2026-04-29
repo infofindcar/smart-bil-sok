@@ -2,8 +2,10 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, Mail, CheckCircle, Send } from 'lucide-react';
+import { Lock, Mail, CheckCircle, Send, Instagram, Linkedin } from 'lucide-react';
 import heroLogo from '@/assets/findcar-logo-hero.png';
+import footerLogo from '@/assets/findcar-logo.png';
+import kthLogo from '@/assets/kth-logo.png';
 
 const SESSION_KEY = 'findcar_session';
 
@@ -126,6 +128,55 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-secondary text-secondary-foreground mt-10">
+        <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-8 pb-6">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 mb-6">
+            {/* Logo + tagline */}
+            <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-5 md:max-w-sm">
+              <img
+                src={footerLogo}
+                alt="FindCar"
+                className="h-20 md:h-28 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
+              />
+              <p className="text-secondary-foreground/60 leading-relaxed text-sm md:text-base">
+                Sveriges objektiva bilrådgivare — driven av AI.
+                <br className="hidden md:block" />
+                {' '}Vi hjälper dig hitta rätt bil, helt utan provision.
+              </p>
+            </div>
+
+            {/* Kontakt */}
+            <div className="flex flex-col items-center md:items-start gap-4">
+              <h4 className="font-semibold text-xs uppercase tracking-[0.2em] text-secondary-foreground/40">Kontakt</h4>
+              <a href="mailto:info@findcar.se" className="flex items-center gap-2 text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors">
+                <Mail className="h-4 w-4 shrink-0" />
+                info@findcar.se
+              </a>
+              <div className="flex items-center gap-3 pt-1">
+                <a href="https://instagram.com/findcar.se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="Instagram">
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a href="https://linkedin.com/company/findcar-se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="LinkedIn">
+                  <Linkedin className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="border-t border-secondary-foreground/10 pt-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-secondary-foreground/40">
+              © {new Date().getFullYear()} FindCar. Alla rättigheter förbehållna.
+            </p>
+            <div className="flex items-center gap-1 text-xs italic text-secondary-foreground/50 tracking-wide leading-none">
+              <span>Framtagen på KTH</span>
+              <img src={kthLogo} alt="KTH" className="h-14 w-auto brightness-0 invert object-contain" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -159,8 +210,8 @@ const WaitlistForm = () => {
     return (
       <div className="space-y-2 text-center py-2">
         <CheckCircle className="h-6 w-6 text-primary mx-auto" />
-        <p className="text-sm font-medium text-foreground">Thanks! You're on the list.</p>
-        <p className="text-xs text-muted-foreground">We'll reach out when it's time.</p>
+        <p className="text-sm font-medium text-foreground">Tack! Vi har tagit emot din mail.</p>
+        <p className="text-xs text-muted-foreground">Vi återkommer med din kod så fort som möjligt.</p>
       </div>
     );
   }
