@@ -185,6 +185,7 @@ const WaitlistForm = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [waitlistError, setWaitlistError] = useState('');
 
   const handleWaitlist = async (e: React.FormEvent) => {
@@ -198,6 +199,7 @@ const WaitlistForm = () => {
       });
       if (fnError) throw fnError;
       if (!data?.success) throw new Error(data?.error || 'Failed');
+      setAlreadyRegistered(Boolean(data?.alreadyRegistered));
       setIsSubmitted(true);
     } catch {
       setWaitlistError('Something went wrong. Please try again.');
@@ -207,6 +209,17 @@ const WaitlistForm = () => {
   };
 
   if (isSubmitted) {
+    if (alreadyRegistered) {
+      return (
+        <div className="space-y-2 text-center py-2">
+          <CheckCircle className="h-6 w-6 text-secondary mx-auto" />
+          <p className="text-sm font-medium text-foreground">Du finns redan på listan ✨</p>
+          <p className="text-xs text-muted-foreground">
+            Vi har din mail sparad sedan tidigare och hör av oss med din kod så snart vi öppnar upp.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="space-y-2 text-center py-2">
         <CheckCircle className="h-6 w-6 text-primary mx-auto" />
