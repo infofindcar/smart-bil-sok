@@ -158,7 +158,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const inputAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const isAutoFollowRef = useRef(true);
   const isTypingRef = useRef(false);
@@ -792,7 +791,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div
-          ref={inputAreaRef}
           className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/40 shrink-0 bg-gradient-to-b from-card/40 to-card/80 backdrop-blur-sm safe-pb"
         >
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
