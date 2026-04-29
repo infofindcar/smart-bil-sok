@@ -158,7 +158,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const inputAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const isAutoFollowRef = useRef(true);
   const isTypingRef = useRef(false);
@@ -280,10 +279,25 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const liveContainer = chatContainerRef.current;
       if (!liveContainer || (!force && !isAutoFollowRef.current)) return;
 
-      targetScrollTopRef.current = Math.max(0, liveContainer.scrollHeight - liveContainer.clientHeight);
+      const target = Math.max(0, liveContainer.scrollHeight - liveContainer.clientHeight);
+      targetScrollTopRef.current = target;
+
+      if (force || isTypingRef.current) {
+        stopScrollLoop();
+        liveContainer.scrollTop = target;
+        setShowScrollDown(false);
+
+        requestAnimationFrame(() => {
+          const settledContainer = chatContainerRef.current;
+          if (!settledContainer) return;
+          settledContainer.scrollTop = Math.max(0, settledContainer.scrollHeight - settledContainer.clientHeight);
+        });
+        return;
+      }
+
       startScrollLoop();
     });
-  }, [startScrollLoop]);
+  }, [startScrollLoop, stopScrollLoop]);
 
   // Scroll-to-bottom detection for the arrow button
   useEffect(() => {
@@ -300,8 +314,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
-  // Also keep the input in view by scrolling the window when the textarea grows.
+  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height.
+  // Keep all follow-scroll inside the Clutch chat, never by moving the page.
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -312,17 +326,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         el.style.height = `${next}px`;
         lastTextareaHeightRef.current = next;
       }
-      // Keep input visible in viewport as it grows
-      const area = inputAreaRef.current;
-      if (area) {
-        const rect = area.getBoundingClientRect();
-        const vh = window.innerHeight || document.documentElement.clientHeight;
-        const overflow = rect.bottom - vh + 16;
-        if (overflow > 0) {
-          window.scrollBy({ top: overflow, behavior: 'smooth' });
-        }
-      }
-      // Keep chat scrolled to bottom too
       queueScrollToBottom(true);
     });
   }, [inputValue, queueScrollToBottom]);
@@ -359,15 +362,18 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [isLoading, phase]);
 
-  // Debounced scroll during typewriter — only every 200ms
-  const lastTypeScrollRef = useRef(0);
+  // Follow the typewriter all the way down so the latest words stay visible.
   useEffect(() => {
-    const now = Date.now();
-    if (now - lastTypeScrollRef.current > 200) {
-      lastTypeScrollRef.current = now;
-      queueScrollToBottom(false);
-    }
+    queueScrollToBottom(true);
   }, [visibleText, queueScrollToBottom]);
+
+  // When the "thinking" indicator appears, make sure it's fully visible.
+  useEffect(() => {
+    if (showTypingDots) {
+      isAutoFollowRef.current = true;
+      queueScrollToBottom(true);
+    }
+  }, [showTypingDots, queueScrollToBottom]);
 
   useEffect(() => {
     return () => {
@@ -391,10 +397,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     setVisibleText((prev) => ({ ...prev, [msgId]: '' }));
 
     const getCharDelay = (char: string, nextChar: string) => {
-      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 55 + Math.random() * 18;
-      if (',;:'.includes(char) && nextChar === ' ') return 26 + Math.random() * 12;
-      if (char === ' ') return 7 + Math.random() * 4;
-      return 5 + Math.random() * 5;
+      if ('.!?…'.includes(char) && (nextChar === ' ' || nextChar === '')) return 38;
+      if (',;:'.includes(char) && nextChar === ' ') return 18;
+      return 0; // batch within frame
     };
 
     // Batch state updates inside a single rAF so React commits at most once per frame
@@ -408,13 +413,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
 
     const tick = () => {
-      i += 1;
+      // Reveal a chunk of characters per frame for smoother, less laggy typing.
+      // Stop early if we hit punctuation that warrants a pause.
+      const CHARS_PER_FRAME = 3;
+      let pauseDelay = 0;
+      for (let n = 0; n < CHARS_PER_FRAME && i < fullText.length; n++) {
+        i += 1;
+        const currentChar = fullText[i - 1] || '';
+        const nextChar = fullText[i] || '';
+        const d = getCharDelay(currentChar, nextChar);
+        if (d > 0) { pauseDelay = d; break; }
+      }
       scheduleCommit();
 
       if (i < fullText.length) {
-        const currentChar = fullText[i - 1] || '';
-        const nextChar = fullText[i] || '';
-        typingTimeoutRef.current = setTimeout(tick, getCharDelay(currentChar, nextChar));
+        typingTimeoutRef.current = setTimeout(tick, pauseDelay > 0 ? pauseDelay : 16);
       } else {
         // Final flush
         if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
@@ -425,7 +438,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       }
     };
 
-    typingTimeoutRef.current = setTimeout(tick, 200);
+    typingTimeoutRef.current = setTimeout(tick, 120);
   };
   const addAssistantMessage = (
     content: string,
@@ -587,16 +600,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     !isTypingMsg(lastAssistantMsg);
 
   return (
-    <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">
       <div
-        className={`clutch-shell overflow-hidden border border-border/50 ${
+        className={`clutch-shell overflow-hidden border border-border/50 flex flex-col ${
           inputFocused ? 'is-focused' : ''
         } ${
           isMobile && mobileExpanded
-            ? 'rounded-2xl flex flex-col'
+            ? 'rounded-2xl'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}
+        style={{ height: isMobile ? 'min(60svh, calc(100dvh - 180px))' : '500px' }}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
@@ -623,18 +636,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   <PopoverContent
                     side="bottom"
                     align="start"
-                    className="w-72 p-4 text-[13px] leading-relaxed bg-card/95 backdrop-blur-md border-border/60"
+                    sideOffset={8}
+                    collisionPadding={12}
+                    className="w-[min(18rem,calc(100vw-24px))] p-3.5 text-[12.5px] md:text-[13px] leading-relaxed bg-card/95 backdrop-blur-md border-border/60 shadow-lg"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center">
-                        <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="clutch-avatar w-6 h-6 rounded-lg flex items-center justify-center shrink-0">
+                        <Sparkles className="h-3 w-3 text-primary-foreground" />
                       </div>
                       <p className="font-semibold text-foreground">Möt Clutch</p>
                     </div>
                     <p className="text-muted-foreground">
-                      Clutch är din AI-bilrådgivare i FindCar. Namnet är en hyllning till kopplingen i bilen — den som förenar föraren med maskinen.
+                      Clutch är din personliga AI-bilrådgivare på FindCar. Namnet hyllar kopplingen i bilen — den som förenar föraren med maskinen.
                     </p>
-                    <p className="text-muted-foreground mt-2">
+                    <p className="text-muted-foreground mt-1.5">
                       På samma sätt kopplar Clutch ihop dig med rätt bil.
                     </p>
                   </PopoverContent>
@@ -669,11 +684,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-6 ${
-            isMobile && mobileExpanded
-              ? 'flex-1 min-h-0'
-              : 'max-h-[52dvh] md:max-h-[420px] min-h-[200px]'
-          }`}
+          className="relative px-4 md:px-6 lg:px-8 py-4 space-y-3 overflow-y-auto overscroll-contain chat-scrollbar pb-8 flex-1 min-h-0"
         >
           {messages.map((msg, idx) => {
             const isLast = idx === messages.length - 1;
@@ -713,8 +724,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {showTypingDots && (
-            <div className="flex justify-start gap-2 bubble-in">
-              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 avatar-thinking">
+            <div className="flex justify-start gap-2 bubble-in pl-1 pr-2">
+              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ml-1 avatar-thinking">
                 <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
               <div className="bubble-assistant rounded-2xl rounded-bl-md px-4 py-3.5">
@@ -776,17 +787,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div
-          ref={inputAreaRef}
-          className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/30 shrink-0 bg-card/60 backdrop-blur-sm safe-pb"
+          className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/40 shrink-0 bg-gradient-to-b from-card/40 to-card/80 backdrop-blur-sm safe-pb py-px rounded-none"
         >
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
-              className={`clutch-input-shell flex-1 relative rounded-2xl border ${
+              className={`clutch-input-shell flex-1 relative rounded-2xl border transition-all duration-200 ${
                 isListening
-                  ? 'border-primary/50 ring-2 ring-primary/20'
+                  ? 'border-primary/60 ring-2 ring-primary/25 shadow-[0_0_0_4px_hsl(var(--primary)/0.08)]'
                   : inputFocused
-                    ? 'border-primary/40 ring-1 ring-primary/15'
-                    : 'border-border/40'
+                    ? 'border-primary/50 ring-2 ring-primary/15 shadow-[0_4px_20px_-8px_hsl(var(--primary)/0.35)]'
+                    : 'border-border/50 shadow-[0_2px_10px_-4px_hsl(var(--secondary)/0.12)] hover:border-border/70'
               }`}
             >
               <textarea
@@ -794,15 +804,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 value={inputValue}
                 onChange={(e) => {
                   setInputValue(e.target.value);
-                  const el = e.currentTarget;
-                  requestAnimationFrame(() => {
-                    el.style.height = 'auto';
-                    const next = el.scrollHeight;
-                    if (next !== lastTextareaHeightRef.current) {
-                      el.style.height = `${next}px`;
-                      lastTextareaHeightRef.current = next;
-                    }
-                  });
                 }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
@@ -816,7 +817,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 autoCorrect="off"
                 spellCheck={false}
                 name="clutch-chat-input"
-                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/60 dark:placeholder:text-foreground/45 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
+                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/60 dark:placeholder:text-foreground/50 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
                 style={{ minHeight: '44px' }}
               />
             </div>
@@ -826,10 +827,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 onClick={() => { navigator.vibrate?.(10); toggleListening(); }}
                 disabled={isLoading}
                 aria-label={isListening ? 'Stop listening' : 'Start voice input'}
-                className={`relative h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center transition-all border ${
+                className={`relative h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center transition-all duration-200 border ${
                   isListening
                     ? 'bg-primary/15 border-primary/50 text-primary mic-listening'
-                    : 'border-border/40 bg-background/60 text-muted-foreground dark:text-foreground/70 hover:text-foreground dark:hover:text-foreground hover:border-primary/40 hover:bg-background'
+                    : 'border-border/50 bg-background/70 text-muted-foreground dark:text-foreground/75 hover:text-foreground dark:hover:text-foreground hover:border-primary/50 hover:bg-background hover:scale-[1.03] active:scale-95'
                 } disabled:opacity-50`}
               >
                 {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -840,10 +841,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               size="icon"
               disabled={!inputValue.trim() || isLoading}
               aria-label="Send"
-              className={`h-11 w-11 rounded-2xl shrink-0 transition-all duration-200 ${
+              className={`h-11 w-11 rounded-2xl shrink-0 transition-all duration-200 border ${
                 inputValue.trim() && !isLoading
-                  ? 'bg-gradient-to-br from-primary to-secondary text-primary-foreground hover:scale-105 active:scale-95 shadow-md hover:shadow-lg'
-                  : 'bg-muted text-muted-foreground/60 dark:bg-muted/60 dark:text-foreground/55'
+                  ? 'bg-gradient-to-br from-primary to-secondary text-primary-foreground hover:scale-105 active:scale-95 shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.55)] hover:shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.7)] border-primary/30'
+                  : 'bg-muted text-muted-foreground/60 dark:bg-muted/60 dark:text-foreground/55 border-border/40'
               }`}
             >
               <Send className="h-4 w-4" />

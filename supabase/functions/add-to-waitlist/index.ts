@@ -98,7 +98,7 @@ serve(async (req) => {
       // Handle duplicate gracefully
       if (error.message?.includes("duplicate") || error.code === "23505") {
         return new Response(
-          JSON.stringify({ success: true }),
+          JSON.stringify({ success: true, alreadyRegistered: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
