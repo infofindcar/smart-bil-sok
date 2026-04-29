@@ -272,6 +272,18 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     scrollRafRef.current = requestAnimationFrame(step);
   }, []);
 
+  const keepChatBottomInViewport = useCallback((container: HTMLDivElement) => {
+    const rect = container.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const inputHeight = inputAreaRef.current?.getBoundingClientRect().height ?? 0;
+    const safeGap = Math.min(Math.max(inputHeight + 12, 72), 150);
+    const overflow = rect.bottom - (viewportHeight - safeGap);
+
+    if (overflow > 0) {
+      window.scrollBy({ top: overflow, behavior: 'smooth' });
+    }
+  }, []);
+
   const queueScrollToBottom = useCallback((force = false) => {
     const container = chatContainerRef.current;
     if (!container || (!force && !isAutoFollowRef.current)) return;
@@ -287,18 +299,20 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         stopScrollLoop();
         liveContainer.scrollTop = target;
         setShowScrollDown(false);
+        keepChatBottomInViewport(liveContainer);
 
         requestAnimationFrame(() => {
           const settledContainer = chatContainerRef.current;
           if (!settledContainer) return;
           settledContainer.scrollTop = Math.max(0, settledContainer.scrollHeight - settledContainer.clientHeight);
+          keepChatBottomInViewport(settledContainer);
         });
         return;
       }
 
       startScrollLoop();
     });
-  }, [startScrollLoop, stopScrollLoop]);
+  }, [keepChatBottomInViewport, startScrollLoop, stopScrollLoop]);
 
   // Scroll-to-bottom detection for the arrow button
   useEffect(() => {
