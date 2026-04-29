@@ -158,7 +158,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const inputAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const isAutoFollowRef = useRef(true);
   const isTypingRef = useRef(false);
@@ -272,18 +271,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     scrollRafRef.current = requestAnimationFrame(step);
   }, []);
 
-  const keepChatBottomInViewport = useCallback((container: HTMLDivElement) => {
-    const rect = container.getBoundingClientRect();
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const inputHeight = inputAreaRef.current?.getBoundingClientRect().height ?? 0;
-    const safeGap = Math.min(Math.max(inputHeight + 12, 72), 150);
-    const overflow = rect.bottom - (viewportHeight - safeGap);
-
-    if (overflow > 0) {
-      window.scrollBy({ top: overflow, behavior: 'smooth' });
-    }
-  }, []);
-
   const queueScrollToBottom = useCallback((force = false) => {
     const container = chatContainerRef.current;
     if (!container || (!force && !isAutoFollowRef.current)) return;
@@ -299,20 +286,18 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         stopScrollLoop();
         liveContainer.scrollTop = target;
         setShowScrollDown(false);
-        keepChatBottomInViewport(liveContainer);
 
         requestAnimationFrame(() => {
           const settledContainer = chatContainerRef.current;
           if (!settledContainer) return;
           settledContainer.scrollTop = Math.max(0, settledContainer.scrollHeight - settledContainer.clientHeight);
-          keepChatBottomInViewport(settledContainer);
         });
         return;
       }
 
       startScrollLoop();
     });
-  }, [keepChatBottomInViewport, startScrollLoop, stopScrollLoop]);
+  }, [startScrollLoop, stopScrollLoop]);
 
   // Scroll-to-bottom detection for the arrow button
   useEffect(() => {
@@ -329,8 +314,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return () => container.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height
-  // Also keep the input in view by scrolling the window when the textarea grows.
+  // Auto-resize textarea when inputValue changes (voice or clear) — cache last height.
+  // Keep all follow-scroll inside the Clutch chat, never by moving the page.
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -341,17 +326,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         el.style.height = `${next}px`;
         lastTextareaHeightRef.current = next;
       }
-      // Keep input visible in viewport as it grows
-      const area = inputAreaRef.current;
-      if (area) {
-        const rect = area.getBoundingClientRect();
-        const vh = window.innerHeight || document.documentElement.clientHeight;
-        const overflow = rect.bottom - vh + 16;
-        if (overflow > 0) {
-          window.scrollBy({ top: overflow, behavior: 'smooth' });
-        }
-      }
-      // Keep chat scrolled to bottom too
       queueScrollToBottom(true);
     });
   }, [inputValue, queueScrollToBottom]);
@@ -635,7 +609,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             ? 'rounded-2xl flex flex-col'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}
+        style={isMobile && mobileExpanded ? { height: 'min(500px, calc(100dvh - 180px))' } : undefined}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
@@ -710,7 +684,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-12 ${
+          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto overscroll-contain chat-scrollbar pb-12 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
               : 'max-h-[62dvh] md:max-h-[540px] min-h-[260px]'
@@ -817,7 +791,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
         {/* Input area */}
         <div
-          ref={inputAreaRef}
           className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/40 shrink-0 bg-gradient-to-b from-card/40 to-card/80 backdrop-blur-sm safe-pb"
         >
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
