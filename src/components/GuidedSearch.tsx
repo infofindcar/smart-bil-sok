@@ -600,7 +600,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     !isTypingMsg(lastAssistantMsg);
 
   return (
-    <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">
       <div
         className={`clutch-shell overflow-hidden border border-border/50 ${
           inputFocused ? 'is-focused' : ''
