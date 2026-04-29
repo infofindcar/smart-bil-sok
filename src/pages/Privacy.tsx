@@ -30,8 +30,10 @@ const Privacy = () => {
           <section className="space-y-3">
             <h2 className="text-xl font-bold">1. Vem är personuppgiftsansvarig</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              FindCar drivs av en privatperson som hobby- och utvecklingsprojekt. Vi är inte ett
-              registrerat företag. Kontakt för alla integritetsfrågor:{' '}
+              FindCar drivs som ett <strong>ideellt utvecklingsprojekt av en privatperson</strong> —
+              inte som registrerad näringsverksamhet. Tjänsten är gratis för slutkunder, säljer
+              ingen reklam, tar inga provisioner och har ingen kommersiell verksamhet. Kontakt
+              för alla integritetsfrågor:{' '}
               <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>.
             </p>
           </section>
@@ -98,17 +100,30 @@ const Privacy = () => {
           <section className="space-y-3">
             <h2 className="text-xl font-bold">5. Var bilannonserna kommer ifrån</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              FindCar är en oberoende sökmotor som visar bilannonser hämtade från offentliga källor på internet.
-              Vi visar bara information som redan är offentligt tillgänglig — pris, modell, mil, säljarnamn,
-              kontaktuppgifter till bilfirmor osv. Vi har ingen direkt affärsrelation med säljarna.
+              FindCar är en <strong>oberoende sökmotor</strong> som indexerar publikt tillgängliga
+              bilannonser från flera källor på internet. Vi visar endast information som redan
+              är öppet publicerad — pris, modell, årsmodell, mil, registreringsnummer, säljarens
+              firmanamn, ort och bild. <strong>Vi lagrar inga personuppgifter från privatannonser</strong>{' '}
+              (t.ex. privatpersoners namn eller telefonnummer).
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              <strong className="text-foreground">Är du bilfirma och vill inte synas på FindCar?</strong>{' '}
-              Skicka ett mejl till{' '}
-              <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>{' '}
-              med ditt firmanamn och organisationsnummer, så tar vi bort era annonser inom 7 dagar och
-              ser till att de inte återimporteras.
+              FindCar förmedlar trafik <strong>tillbaka till annonsgivaren</strong> via kontaktformuläret
+              — vi konkurrerar inte med originalkällorna, tar inga avgifter och drar ingen direkt
+              kommersiell nytta av annonserna. Tjänsten är gratis och drivs som ett utvecklingsprojekt.
             </p>
+            <div className="rounded-lg border border-border bg-card/50 p-4 mt-3">
+              <p className="text-foreground text-sm leading-relaxed font-medium mb-2">
+                Information för bilförsäljare och annonsgivare
+              </p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Vill du <strong>inte</strong> att dina annonser ska synas på FindCar? Skicka ett mejl
+                till <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>{' '}
+                med ditt firmanamn (eller organisationsnummer). Vi tar bort era annonser
+                inom <strong>7 dagar</strong>, lägger till er på en blockeringslista så de inte
+                återimporteras, och bekräftar via mejl när det är klart. <strong>Ingen motivering krävs</strong> —
+                vi respekterar valet utan följdfrågor.
+              </p>
+            </div>
           </section>
 
           <section className="space-y-3">
