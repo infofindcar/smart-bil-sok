@@ -602,14 +602,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   return (
     <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">
       <div
-        className={`clutch-shell overflow-hidden border border-border/50 ${
+        className={`clutch-shell overflow-hidden border border-border/50 flex flex-col ${
           inputFocused ? 'is-focused' : ''
         } ${
           isMobile && mobileExpanded
-            ? 'rounded-2xl flex flex-col'
+            ? 'rounded-2xl'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={isMobile && mobileExpanded ? { height: 'min(500px, calc(100dvh - 180px))' } : undefined}
+        style={{ height: isMobile ? 'min(60svh, calc(100dvh - 180px))' : '500px' }}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
@@ -684,11 +684,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 lg:px-8 py-4 space-y-3 overflow-y-auto overscroll-contain chat-scrollbar pb-8 ${
-            isMobile && mobileExpanded
-              ? 'flex-1 min-h-0'
-              : 'max-h-[calc(100dvh-280px)] md:max-h-[calc(100dvh-260px)] min-h-[220px]'
-          }`}
+          className="relative px-4 md:px-6 lg:px-8 py-4 space-y-3 overflow-y-auto overscroll-contain chat-scrollbar pb-8 flex-1 min-h-0"
         >
           {messages.map((msg, idx) => {
             const isLast = idx === messages.length - 1;
