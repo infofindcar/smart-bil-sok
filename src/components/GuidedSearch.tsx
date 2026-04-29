@@ -609,7 +609,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             ? 'rounded-2xl flex flex-col'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={isMobile && mobileExpanded ? { height: 'calc(100dvh - 120px)' } : undefined}
+        style={isMobile && mobileExpanded ? { height: 'min(500px, calc(100dvh - 180px))' } : undefined}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
@@ -684,7 +684,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-12 ${
+          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto overscroll-contain chat-scrollbar pb-12 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
               : 'max-h-[62dvh] md:max-h-[540px] min-h-[260px]'
