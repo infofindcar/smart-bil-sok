@@ -687,7 +687,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto overscroll-contain chat-scrollbar pb-12 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
-              : 'max-h-[62dvh] md:max-h-[540px] min-h-[260px]'
+              : 'max-h-[78dvh] md:max-h-[680px] min-h-[360px]'
           }`}
         >
           {messages.map((msg, idx) => {
