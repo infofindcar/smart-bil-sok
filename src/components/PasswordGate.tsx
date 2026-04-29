@@ -94,8 +94,12 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-secondary/20 bg-secondary/[0.04] p-6 sm:p-8">
-            <WaitlistForm />
+          <div className="relative overflow-hidden rounded-3xl border border-secondary/30 bg-gradient-to-br from-secondary/[0.08] via-card/40 to-primary/[0.06] p-6 sm:p-8 shadow-[0_8px_40px_-12px_hsl(var(--secondary)/0.25)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-secondary/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-primary/15 blur-3xl" />
+            <div className="relative">
+              <WaitlistForm />
+            </div>
           </div>
 
           {/* Code entry */}
@@ -162,25 +166,29 @@ const WaitlistForm = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row gap-2">
+    <div className="space-y-3">
+      <form onSubmit={handleWaitlist} className="group relative flex items-center gap-2 rounded-2xl border border-border/50 bg-background/80 p-1.5 shadow-inner focus-within:border-secondary/60 focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
         <div className="relative flex-1">
-          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground/70 group-focus-within:text-secondary transition-colors" />
           <Input
             type="email"
             placeholder="din@mail.se"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="pl-12 h-14 bg-background text-base rounded-xl border-border/50 focus:border-secondary/40"
+            className="pl-11 h-12 bg-transparent border-0 text-base rounded-xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             required
           />
         </div>
-        <Button type="submit" className="h-14 px-6 rounded-xl text-base font-semibold" disabled={isSubmitting || !email}>
-          <Send className="h-4 w-4 mr-2" />
+        <Button
+          type="submit"
+          className="h-12 px-5 rounded-xl text-sm font-semibold bg-gradient-to-br from-secondary to-primary text-primary-foreground shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-100 transition-all"
+          disabled={isSubmitting || !email}
+        >
+          <Send className="h-4 w-4 mr-1.5" />
           {isSubmitting ? '...' : 'Skicka'}
         </Button>
       </form>
-      {waitlistError && <p className="text-destructive text-sm">{waitlistError}</p>}
+      {waitlistError && <p className="text-destructive text-sm text-center">{waitlistError}</p>}
     </div>
   );
 };
