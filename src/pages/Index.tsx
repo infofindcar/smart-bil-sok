@@ -355,7 +355,6 @@ const Index = () => {
 
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal>
-            <div className="text-center mb-10">
             <div className="text-center mb-8 md:mb-10">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-medium text-primary uppercase tracking-wider">
                 <span className="relative flex h-1.5 w-1.5">
