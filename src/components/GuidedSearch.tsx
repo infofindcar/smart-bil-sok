@@ -364,6 +364,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     queueScrollToBottom(false);
   }, [visibleText, queueScrollToBottom]);
 
+  // When the "thinking" indicator appears, make sure it's fully visible.
+  useEffect(() => {
+    if (showTypingDots) {
+      isAutoFollowRef.current = true;
+      queueScrollToBottom(true);
+    }
+  }, [showTypingDots, queueScrollToBottom]);
+
   useEffect(() => {
     return () => {
       stopScrollLoop();
@@ -673,7 +681,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Chat area — scroll is contained here */}
         <div
           ref={chatContainerRef}
-          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-6 ${
+          className={`relative px-4 md:px-6 lg:px-8 py-5 space-y-3.5 overflow-y-auto chat-scrollbar pb-12 ${
             isMobile && mobileExpanded
               ? 'flex-1 min-h-0'
               : 'max-h-[62dvh] md:max-h-[540px] min-h-[260px]'
@@ -717,8 +725,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {showTypingDots && (
-            <div className="flex justify-start gap-2 bubble-in">
-              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 avatar-thinking">
+            <div className="flex justify-start gap-2 bubble-in pl-1 pr-2">
+              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ml-1 avatar-thinking">
                 <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
               <div className="bubble-assistant rounded-2xl rounded-bl-md px-4 py-3.5">
