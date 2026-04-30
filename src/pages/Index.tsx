@@ -17,10 +17,6 @@ const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ 
 const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 
-const SectionDivider = ({ variant }: { variant: 'bg-to-alt' | 'alt-to-bg' }) => (
-  <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />
-);
-
 const STORAGE_KEY = 'findcar-search-state';
 const loadSearchState = () => {
   try {
