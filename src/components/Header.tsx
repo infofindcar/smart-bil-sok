@@ -31,15 +31,15 @@ export const Header = () => {
     el?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // When not scrolled (transparent header over hero), use white text
+  // Header sits over aurora landing — use foreground text always so it adapts
+  // to light/dark mode automatically. When scrolled the header gets its own
+  // backdrop-blur background so contrast is even better.
   const navLinkBase = 'transition-colors font-medium';
   const navLinkClass = scrolled
     ? `${navLinkBase} text-sm text-primary hover:text-primary/80`
-    : `${navLinkBase} text-[15px] text-white/90 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]`;
+    : `${navLinkBase} text-[15px] text-foreground/85 hover:text-foreground`;
 
-  const hamburgerClass = (scrolled || mobileOpen)
-    ? 'text-foreground'
-    : 'text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]';
+  const hamburgerClass = 'text-foreground';
 
   return (
     <header
@@ -57,7 +57,7 @@ export const Header = () => {
             src={logo}
             alt="FindCar"
             className={`h-10 sm:h-14 md:h-20 lg:h-22 w-auto transition-all duration-300 group-hover:brightness-110 ${
-              scrolled ? 'h-9 sm:h-12 md:h-16 drop-shadow-lg' : 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)] brightness-110'
+              scrolled ? 'h-9 sm:h-12 md:h-16 drop-shadow-lg' : 'drop-shadow-md'
             }`}
           />
         </Link>
@@ -89,7 +89,7 @@ export const Header = () => {
           >
             Kontakta oss
           </button>
-          <ThemeToggle className={scrolled ? '' : 'text-white hover:bg-white/10'} />
+          <ThemeToggle />
           <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
             Hitta din bil
           </Button>
@@ -98,7 +98,7 @@ export const Header = () => {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className={`md:hidden w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors touch-target ${hamburgerClass}`}
+          className={`md:hidden w-11 h-11 flex items-center justify-center rounded-lg hover:bg-foreground/5 active:bg-foreground/10 transition-colors touch-target ${hamburgerClass}`}
           aria-label="Meny"
         >
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

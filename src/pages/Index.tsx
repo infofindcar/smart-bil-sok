@@ -125,10 +125,10 @@ const Index = () => {
           <div className="relative z-10 max-w-3xl mx-auto w-full">
             <ScrollReveal>
               <div className="text-center mb-6 md:mb-8">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08]">
                   Hitta bilen som passar <span className="text-gradient">just dig</span>
                 </h1>
-                <p className="text-muted-foreground mt-4 max-w-xl mx-auto text-base md:text-lg leading-relaxed">
+                <p className="text-muted-foreground mt-3 md:mt-4 max-w-xl mx-auto text-sm md:text-lg leading-relaxed">
                   Berätta om dina behov — Clutch matchar dig med rätt bil bland tusentals annonser.
                 </p>
               </div>
@@ -148,28 +148,28 @@ const Index = () => {
             </ScrollReveal>
 
             <ScrollReveal delay={300}>
-              <p className="text-center text-xs md:text-sm text-muted-foreground/80 mt-6 tracking-wide">
+              <p className="text-center text-[11px] md:text-sm text-muted-foreground/80 mt-5 md:mt-6 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                 {carCount !== null ? (
                   <>Söker bland <strong className="text-foreground">{formatCount(carCount)}</strong> bilar</>
                 ) : (
                   <>Söker bland tusentals bilar</>
                 )}
-                <span className="mx-2 opacity-40">•</span>
+                <span className="mx-1.5 md:mx-2 opacity-40">•</span>
                 Helt gratis
-                <span className="mx-2 opacity-40">•</span>
+                <span className="mx-1.5 md:mx-2 opacity-40">•</span>
                 Inga provisioner
               </p>
             </ScrollReveal>
           </div>
 
-          {/* Scroll hint */}
+          {/* Scroll hint — desktop only, mobile users scroll naturally */}
           <a
             href="#how-it-works"
             onClick={(e) => {
               e.preventDefault();
               document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-muted-foreground/60 hover:text-foreground transition-colors flex flex-col items-center gap-1"
+            className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-muted-foreground/60 hover:text-foreground transition-colors flex-col items-center gap-1"
             aria-label="Mer information"
           >
             <span>Mer info</span>
