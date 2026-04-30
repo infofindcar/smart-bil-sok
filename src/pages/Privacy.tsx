@@ -136,16 +136,17 @@ const Privacy = () => {
                 <strong>Endast offentlig fordons- och firmadata</strong> — t.ex. pris, modell,
                 årsmodell, miltal, registreringsnummer, karosseri, drivmedel, växellåda, drivlina,
                 effekt, antal säten, dragvikt, färg, skatteklass, första registreringsdatum, ort,
-                firmanamn samt länk till källans annons. All denna information är publicerad öppet
-                av bilfirman själv på den ursprungliga annonsplatsen.
+                firmanamn samt länk till annonsen. All denna information är redan publicerad öppet
+                av bilfirman själv på publika annonsplatser online.
               </li>
               <li>
                 <strong>Bilden lagras aldrig hos oss</strong> — vi sparar bara en länk (URL) till
-                thumbnail-bilden som ligger kvar hos den ursprungliga källan. När du ser en bild
-                på FindCar laddas den direkt från källans server, inte från oss.
+                thumbnail-bilden, som ligger kvar hos den externa server där den ursprungligen
+                publicerats. När du ser en bild på FindCar laddas den direkt från den externa
+                servern, inte från oss.
               </li>
               <li><strong>Inga privatpersoners namn eller telefonnummer</strong> sparas eller visas någonsin.</li>
-              <li><strong>Vi konkurrerar inte med originalkällan</strong> — kunder som vill kontakta säljaren skickas vidare via kontaktformulär eller direkt extern länk.</li>
+              <li><strong>Vi konkurrerar inte med ursprungsannonserna</strong> — kunder som vill kontakta säljaren skickas vidare via kontaktformulär eller direkt extern länk.</li>
             </ul>
             <div className="rounded-lg border border-border bg-card/50 p-4 mt-3">
               <p className="text-foreground text-sm leading-relaxed font-medium mb-2">
