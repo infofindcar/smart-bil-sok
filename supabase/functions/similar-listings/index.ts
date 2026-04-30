@@ -87,7 +87,7 @@ serve(async (req) => {
 
     let query = supabase
       .from("Lovable")
-      .select("id, make, model, model_raw, year, price, mileage, city, dealer_name, image_thumb_url, listing_url, fuel_type, body_type, transmission, drivetrain, horsepower, color")
+      .select("id, make, model, model_raw, year, price, mileage, city, dealer_name, image_thumb_url, fuel_type, body_type, transmission, drivetrain, horsepower, color")
       .eq("make", make)
       .eq("model", model);
 
