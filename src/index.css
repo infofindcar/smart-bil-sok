@@ -386,14 +386,15 @@ html::-webkit-scrollbar-thumb:hover {
     inset 0 1px 0 hsl(0 0% 100% / 0.18);
 }
 
-/* Online dot */
+/* Online dot — pulse outward to feel "alive" */
 @keyframes online-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(142 76% 45% / 0.55); }
-  50% { box-shadow: 0 0 0 5px hsl(142 76% 45% / 0); }
+  0%   { box-shadow: 0 0 0 0 hsl(142 76% 45% / 0.6); }
+  70%  { box-shadow: 0 0 0 9px hsl(142 76% 45% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(142 76% 45% / 0); }
 }
 .online-dot {
   background: hsl(142 76% 45%);
-  animation: online-pulse 2s ease-in-out infinite;
+  animation: online-pulse 2s ease-out infinite;
 }
 
 /* Bubble entry: fade + slide */
@@ -643,3 +644,52 @@ html::-webkit-scrollbar-thumb:hover {
 @media (prefers-reduced-motion: reduce) {
   .aurora-blob { animation: none !important; }
 }
+
+/* ========== Animated AI-vibe gradient border on the chat shell ========== */
+
+@property --shell-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.clutch-shell {
+  position: relative;
+}
+
+.clutch-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--shell-angle),
+    hsl(190 95% 60% / 0.85) 0deg,
+    hsl(190 95% 60% / 0) 70deg,
+    hsl(270 80% 65% / 0.75) 180deg,
+    hsl(270 80% 65% / 0) 250deg,
+    hsl(320 85% 62% / 0.85) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: shell-border-spin 9s linear infinite;
+  z-index: 5;
+}
+
+.clutch-shell.is-focused::before {
+  animation-duration: 4s;
+}
+
+@keyframes shell-border-spin {
+  to { --shell-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clutch-shell::before { animation: none !important; }
+}
+
