@@ -1,5 +1,5 @@
 import { ScrollReveal } from './ScrollReveal';
-import { Star } from 'lucide-react';
+import { Star, Quote } from 'lucide-react';
 
 const testimonials = [
   {
@@ -26,14 +26,14 @@ const testimonials = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-12 md:py-16 px-4 bg-background">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-20 md:py-32 px-4 bg-background">
+      <div className="max-w-6xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl md:text-4xl font-bold">Vad våra användare säger</h2>
-            <p className="text-sm text-muted-foreground mt-2">
-              Tidig feedback från våra beta-användare
-            </p>
+          <div className="text-center mb-14 md:mb-20">
+            <span className="eyebrow mb-5 mx-auto justify-center">Tidiga röster</span>
+            <h2 className="display-headline text-4xl md:text-5xl lg:text-6xl mt-4">
+              Skrivet av riktiga användare.
+            </h2>
           </div>
         </ScrollReveal>
 
@@ -42,13 +42,14 @@ export const Testimonials = () => {
           <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 similar-cars-scroll">
             {testimonials.map((t, idx) => (
               <div key={idx} className="snap-start shrink-0 w-[85vw] max-w-[340px]">
-                <div className="bg-testimonial-bg rounded-2xl p-6 border border-border h-full">
-                  <div className="flex gap-0.5 mb-3">
+                <div className="premium-card rounded-2xl p-6 h-full">
+                  <Quote className="h-6 w-6 text-primary/40 mb-3" />
+                  <p className="text-base text-foreground/90 leading-relaxed font-light">{t.text}</p>
+                  <div className="flex gap-0.5 mt-4">
                     {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                      <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
                     ))}
                   </div>
-                  <p className="text-sm text-foreground leading-relaxed italic">{t.text}</p>
                 </div>
               </div>
             ))}
@@ -57,15 +58,16 @@ export const Testimonials = () => {
 
         {/* DESKTOP: grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-6">
-          {testimonials.map((t, idx) => (
-            <ScrollReveal key={idx}>
-              <div className="bg-testimonial-bg rounded-2xl p-6 border border-border">
-                <div className="flex gap-0.5 mb-3">
+          {testimonials.slice(0, 3).map((t, idx) => (
+            <ScrollReveal key={idx} delay={idx * 80}>
+              <div className="premium-card rounded-2xl p-8 h-full flex flex-col">
+                <Quote className="h-7 w-7 text-primary/40 mb-4" />
+                <p className="text-base text-foreground/90 leading-relaxed font-light flex-1">{t.text}</p>
+                <div className="flex gap-0.5 mt-6 pt-6 border-t border-border/40">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-sm text-foreground leading-relaxed italic">{t.text}</p>
               </div>
             </ScrollReveal>
           ))}
