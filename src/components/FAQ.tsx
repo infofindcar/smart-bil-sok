@@ -9,23 +9,23 @@ import {
 const faqs = [
   {
     q: 'Vad är FindCar egentligen?',
-    a: 'FindCar är en objektiv digital bilrådgivare. Vi säljer inga bilar och representerar ingen enskild bilhandlare. Istället hjälper vi dig att hitta rätt bil baserat på din livssituation, dina behov och hur du faktiskt använder bilen.',
+    a: 'FindCar är en gratis bilrådgivare på nätet. Hjärtat är vår AI Clutch som hjälper dig hitta rätt bil utifrån din livssituation och hur du faktiskt använder bilen — inte vilken modell som råkar synas mest just nu. Vi säljer inga bilar själva och tar ingen provision.',
   },
   {
     q: 'Hur hittar FindCar rätt bil för mig?',
-    a: 'Du beskriver ditt liv och dina behov i vanligt språk – till exempel hur du kör, din budget och vad som är viktigt för dig. FindCar analyserar detta och matchar dig med bilar som passar just din situation, istället för att visa allt på en gång.',
+    a: 'Du chattar med Clutch på vanlig svenska — om din vardag, din budget och vad du vill ha bilen till. Clutch jämför sen tusentals annonser och plockar ut de som faktiskt passar dig, så du slipper scrolla i timmar.',
   },
   {
     q: 'Är FindCar verkligen objektivt?',
-    a: 'Ja. FindCar är oberoende och styrs inte av vilken bil som ger högst provision. Vårt fokus är att du som bilköpare ska känna dig trygg och nöjd med ditt val.',
+    a: 'Ja. Vi tar inga provisioner, säljer ingen reklam och har inga samarbeten med vissa bilfirmor. Det betyder att Clutch inte har någon anledning att rekommendera en bil framför en annan — bara den som passar dig bäst.',
   },
   {
     q: 'Kostar det något att använda FindCar?',
-    a: 'Nej, FindCar är kostnadsfritt för dig som bilköpare. Du betalar inget för att få matchning eller rekommendationer.',
+    a: 'Nej, allt är gratis. FindCar drivs som ett ideellt projekt — vi tar inga betalningar från användare eller bilfirmor.',
   },
   {
     q: 'Är detta bara för erfarna bilköpare?',
-    a: 'Nej. FindCar är särskilt hjälpsamt om du tycker att bilköp känns krångligt eller tidskrävande. Vi är byggda för både förstagångsköpare och mer erfarna bilägare.',
+    a: 'Tvärtom — det är ofta de som tycker bilköp är krångligt som har mest nytta av Clutch. Du behöver inte kunna fackuttryck eller ha koll på modellnamn; berätta bara hur du tänker använda bilen, så löser Clutch resten.',
   },
 ];
 
