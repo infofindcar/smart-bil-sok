@@ -548,3 +548,98 @@ html::-webkit-scrollbar-thumb:hover {
 .findcar-cta-hero:active {
   transform: translateY(0);
 }
+
+/* ========== Aurora landing background ========== */
+
+@keyframes aurora-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50%      { transform: translate(12%, 8%) scale(1.18) rotate(8deg); }
+}
+@keyframes aurora-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1.05) rotate(0deg); }
+  50%      { transform: translate(-14%, 10%) scale(0.95) rotate(-12deg); }
+}
+@keyframes aurora-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(0.95) rotate(0deg); }
+  50%      { transform: translate(8%, -12%) scale(1.12) rotate(15deg); }
+}
+
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+
+.aurora-blob-1 {
+  width: 60vw;
+  height: 50vw;
+  top: -15vh;
+  left: -12vw;
+  background: radial-gradient(ellipse 60% 80% at center, hsl(190 90% 55% / 0.32) 0%, hsl(190 90% 55% / 0) 70%);
+  animation: aurora-drift-1 24s ease-in-out infinite;
+}
+.aurora-blob-2 {
+  width: 60vw;
+  height: 55vw;
+  top: 10vh;
+  right: -15vw;
+  background: radial-gradient(ellipse 70% 60% at center, hsl(270 80% 65% / 0.28) 0%, hsl(270 80% 65% / 0) 70%);
+  animation: aurora-drift-2 30s ease-in-out infinite;
+}
+.aurora-blob-3 {
+  width: 55vw;
+  height: 50vw;
+  bottom: -25vh;
+  left: 25vw;
+  background: radial-gradient(ellipse 65% 70% at center, hsl(320 80% 62% / 0.24) 0%, hsl(320 80% 62% / 0) 70%);
+  animation: aurora-drift-3 36s ease-in-out infinite;
+}
+
+.dark .aurora-blob-1 {
+  background: radial-gradient(ellipse 60% 80% at center, hsl(190 90% 55% / 0.42) 0%, hsl(190 90% 55% / 0) 70%);
+}
+.dark .aurora-blob-2 {
+  background: radial-gradient(ellipse 70% 60% at center, hsl(270 85% 68% / 0.4) 0%, hsl(270 85% 68% / 0) 70%);
+}
+.dark .aurora-blob-3 {
+  background: radial-gradient(ellipse 65% 70% at center, hsl(320 85% 65% / 0.34) 0%, hsl(320 85% 65% / 0) 70%);
+}
+
+/* Subtle dot grain over aurora to give a tactile, "tech" feel */
+.aurora-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  z-index: 1;
+}
+
+/* Soft glow pool behind the chat input — makes Clutch feel like the heart */
+.search-glow {
+  position: absolute;
+  inset: -60px;
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.18) 0%, transparent 65%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+}
+.dark .search-glow {
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.28) 0%, transparent 65%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob { animation: none !important; }
+}
