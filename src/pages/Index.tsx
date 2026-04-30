@@ -232,17 +232,11 @@ const Index = () => {
         <section id="how-it-works">
           <HowItWorks />
         </section>
-        <SectionDivider variant="bg-to-alt" />
         <WhyFindCar />
-        <SectionDivider variant="alt-to-bg" />
         <Testimonials />
-        <SectionDivider variant="bg-to-alt" />
         <section id="faq">
           <FAQ />
         </section>
-        <div className="hidden md:block">
-          <SectionDivider variant="alt-to-bg" />
-        </div>
         <CtaBanner />
       </Suspense>
       <Footer />
