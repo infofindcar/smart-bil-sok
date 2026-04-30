@@ -132,8 +132,18 @@ const Privacy = () => {
             </p>
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li><strong>Endast bilfirmor</strong> — vi visar aldrig privatannonser. Säljarens organisationsnamn och ort är firmadata, inte personuppgifter.</li>
-              <li><strong>Endast offentligt publicerad information</strong> — pris, modell, årsmodell, mil, registreringsnummer, ort och firmanamn.</li>
-              <li><strong>Endast en suddig thumbnail-bild</strong> i låg upplösning, som vi länkar tillbaka via för identifiering. Originalbilden ligger kvar hos källan.</li>
+              <li>
+                <strong>Endast offentlig fordons- och firmadata</strong> — t.ex. pris, modell,
+                årsmodell, miltal, registreringsnummer, karosseri, drivmedel, växellåda, drivlina,
+                effekt, antal säten, dragvikt, färg, skatteklass, första registreringsdatum, ort,
+                firmanamn samt länk till källans annons. All denna information är publicerad öppet
+                av bilfirman själv på den ursprungliga annonsplatsen.
+              </li>
+              <li>
+                <strong>Bilden lagras aldrig hos oss</strong> — vi sparar bara en länk (URL) till
+                thumbnail-bilden som ligger kvar hos den ursprungliga källan. När du ser en bild
+                på FindCar laddas den direkt från källans server, inte från oss.
+              </li>
               <li><strong>Inga privatpersoners namn eller telefonnummer</strong> sparas eller visas någonsin.</li>
               <li><strong>Vi konkurrerar inte med originalkällan</strong> — kunder som vill kontakta säljaren skickas vidare via kontaktformulär eller direkt extern länk.</li>
             </ul>
