@@ -147,7 +147,11 @@ const CarDetail = () => {
   useEffect(() => {
     if (!car && id) {
       (async () => {
-        const { data } = await supabase.from('Lovable').select('*').eq('id', Number(id)).single();
+        const { data } = await supabase
+          .from('Lovable')
+          .select('id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, regnr, horsepower, transmission, dealer_name')
+          .eq('id', Number(id))
+          .single();
         if (data) setCar(data as CarType);
         setIsLoading(false);
       })();

@@ -586,7 +586,7 @@ serve(async (req) => {
       const buildLoadMoreQuery = (level: number) => {
         const priceMult = [1.3, 1.6, 2.5][level] || 2.5;
         const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
-        let q = sb.from("Lovable").select("*")
+        let q = sb.from("Lovable").select("id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, regnr, horsepower, transmission, dealer_name, last_seen_at, seats")
           .gte("price", Math.floor(minPrice * priceMinMult))
           .lte("price", Math.ceil(maxPrice * priceMult));
 
@@ -923,7 +923,7 @@ serve(async (req) => {
       const hasBodyTypeFilter = validBodyTypes.length > 0;
 
       const buildQuery = (level: number) => {
-        let query = supabase.from("Lovable").select("*");
+        let query = supabase.from("Lovable").select("id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, regnr, horsepower, transmission, dealer_name, last_seen_at, seats");
 
         query = query
           .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
