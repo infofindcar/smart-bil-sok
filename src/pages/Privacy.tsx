@@ -20,10 +20,10 @@ const Privacy = () => {
             <h1 className="text-3xl font-bold">Integritetspolicy</h1>
             <p className="text-sm text-muted-foreground mt-2">Senast uppdaterad: April 2026</p>
             <p className="text-sm leading-relaxed mt-4">
-              FindCar (findcar.se) hjälper privatpersoner att hitta rätt bil med hjälp av AI.
-              Vi tar din integritet på allvar och följer dataskyddsförordningen (GDPR). Den här
-              policyn beskriver vilka uppgifter vi samlar in, varför, hur länge, och vilka
-              rättigheter du har.
+              FindCar (findcar.se) är en gratis sökmotor som hjälper privatpersoner att hitta
+              rätt bil med hjälp av AI. Den här policyn beskriver vilka uppgifter vi samlar
+              in, på vilken laglig grund, hur länge, och vilka rättigheter du har enligt
+              dataskyddsförordningen (GDPR).
             </p>
           </div>
 
@@ -32,8 +32,12 @@ const Privacy = () => {
             <p className="text-muted-foreground text-sm leading-relaxed">
               FindCar drivs som ett <strong>ideellt utvecklingsprojekt av en privatperson</strong> —
               inte som registrerad näringsverksamhet. Tjänsten är gratis för slutkunder, säljer
-              ingen reklam, tar inga provisioner och har ingen kommersiell verksamhet. Kontakt
-              för alla integritetsfrågor:{' '}
+              ingen reklam, tar inga provisioner och har ingen kommersiell verksamhet. Eftersom
+              behandlingen är begränsad och småskalig har vi inte utsett ett dataskyddsombud
+              (DPO) — det är inte heller ett krav enligt GDPR-art. 37 för verksamhet av vår typ.
+            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Kontakt för alla integritetsfrågor:{' '}
               <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>.
             </p>
           </section>
@@ -44,13 +48,14 @@ const Privacy = () => {
             <div className="space-y-3 text-sm leading-relaxed">
               <div>
                 <strong className="text-foreground">Kontaktuppgifter (när du fyller i kontaktformulär):</strong>
-                <p className="text-muted-foreground mt-1">Namn, e-postadress, telefonnummer och meddelande som du frivilligt lämnar för att kontakta en bilförsäljare.</p>
+                <p className="text-muted-foreground mt-1">Namn, e-postadress, telefonnummer (valfritt) och meddelande som du frivilligt lämnar för att kontakta en bilförsäljare.</p>
               </div>
               <div>
                 <strong className="text-foreground">Konversation med Clutch (vår AI-rådgivare):</strong>
                 <p className="text-muted-foreground mt-1">
-                  Det du skriver i AI-chatten — t.ex. vilken typ av bil du vill ha, var du bor, budget, livssituation. Sparas
-                  endast tillfälligt i din webbläsare (sessionStorage) och raderas automatiskt när du stänger fliken. Vi sparar inte konversationen permanent.
+                  Det du skriver i AI-chatten — t.ex. budget, livssituation, önskemål — sparas
+                  endast tillfälligt i din webbläsare (sessionStorage) och raderas automatiskt
+                  när du stänger fliken. Vi sparar ingen permanent kopia av konversationen.
                 </p>
               </div>
               <div>
@@ -62,55 +67,76 @@ const Privacy = () => {
               <div>
                 <strong className="text-foreground">Teknisk information:</strong>
                 <p className="text-muted-foreground mt-1">
-                  IP-adress, webbläsare, enhetstyp, vilka sidor du besöker och hur du klickar. Används för felsökning och anonym
-                  statistik om hur tjänsten fungerar. Loggas automatiskt av vår plattform (Supabase, EU-baserad).
+                  IP-adress, webbläsare, enhetstyp, vilka sidor du besöker och hur du klickar.
+                  Används för felsökning och anonym statistik. Loggas automatiskt av vår
+                  plattform (Supabase, EU-baserad).
                 </p>
               </div>
             </div>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">3. Hur vi använder uppgifterna</h2>
+            <h2 className="text-xl font-bold">3. Laglig grund för behandlingen</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Enligt GDPR-artikel 6 har vi en specifik laglig grund för varje typ av behandling:
+            </p>
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
-              <li>Att leverera Clutch-rekommendationer som matchar dina preferenser.</li>
-              <li>Att förmedla din kontaktförfrågan till bilförsäljaren du valt (se punkt 4).</li>
-              <li>Att förbättra tjänsten — anonym statistik om vad som söks och vad som fungerar bra.</li>
-              <li>Att förebygga missbruk och tekniska fel.</li>
+              <li><strong>Kontaktformulär:</strong> samtycke (art. 6.1.a) + nödvändigt för åtgärd på din begäran (art. 6.1.b).</li>
+              <li><strong>Clutch-konversation:</strong> samtycke (du startar chatten frivilligt). Datan lämnar aldrig din enhet i permanent form.</li>
+              <li><strong>Anonym statistik om användning:</strong> berättigat intresse (art. 6.1.f) — att utveckla och förbättra tjänsten.</li>
+              <li><strong>Tekniska loggar för säkerhet:</strong> berättigat intresse — att förebygga missbruk och fel.</li>
+              <li><strong>Indexering av offentliga bilannonser från bilfirmor:</strong> berättigat intresse — att hjälpa konsumenter hitta bilar; ingen personuppgift om privatperson behandlas (se punkt 6).</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">4. Delning med tredje part</h2>
+            <h2 className="text-xl font-bold">4. Hur vi använder uppgifterna</h2>
+            <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
+              <li>Att leverera Clutch-rekommendationer som matchar dina preferenser.</li>
+              <li>Att förmedla din kontaktförfrågan till bilförsäljaren du valt (se punkt 5).</li>
+              <li>Att förbättra tjänsten — anonym statistik om vad som söks och vad som fungerar bra.</li>
+              <li>Att förebygga missbruk och tekniska fel.</li>
+            </ul>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Vi använder data <strong>aldrig</strong> för marknadsföring, profilering till externa
+              parter eller försäljning.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold">5. Delning med tredje part</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               <strong className="text-foreground">När du fyller i kontaktformuläret för en bil:</strong> dina kontaktuppgifter och meddelandet skickas via e-post till
-              den bilförsäljare som annonserar bilen, så att de kan kontakta dig. Försäljaren hanterar därefter
-              uppgifterna enligt sin egen integritetspolicy. Vi säljer aldrig din data och delar den inte i
-              något annat sammanhang.
+              den bilförsäljare som annonserar bilen, så att de kan kontakta dig. Säljaren
+              hanterar därefter uppgifterna enligt sin egen integritetspolicy och blir
+              självständig personuppgiftsansvarig.
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              <strong className="text-foreground">Tjänsteleverantörer vi använder:</strong>
+              <strong className="text-foreground">Personuppgiftsbiträden vi anlitar:</strong> vi har skrivit eller accepterat
+              personuppgiftsbiträdesavtal (DPA) med varje leverantör nedan i enlighet med
+              GDPR-art. 28.
             </p>
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1 pl-5">
-              <li><strong>Supabase</strong> (EU/Irland) — databas, autentisering, edge functions.</li>
-              <li><strong>Lovable AI Gateway / Google Gemini</strong> — AI-modell som driver Clutch-rådgivaren.</li>
+              <li><strong>Supabase Inc.</strong> — databas, autentisering, edge functions. Server i EU (Irland). DPA: <a href="https://supabase.com/legal/dpa" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">supabase.com/legal/dpa</a>.</li>
+              <li><strong>Lovable AI Gateway / Google Gemini</strong> — AI-modell som driver Clutch-rådgivaren. Se punkt 9 om tredjelandsöverföring.</li>
               <li><strong>Resend</strong> — e-postutskick av kontaktförfrågningar till säljare.</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">5. Var bilannonserna kommer ifrån</h2>
+            <h2 className="text-xl font-bold">6. Var bilannonserna kommer ifrån</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              FindCar är en <strong>oberoende sökmotor</strong> som indexerar publikt tillgängliga
-              bilannonser från flera källor på internet. Vi visar endast information som redan
-              är öppet publicerad — pris, modell, årsmodell, mil, registreringsnummer, säljarens
-              firmanamn, ort och bild. <strong>Vi lagrar inga personuppgifter från privatannonser</strong>{' '}
-              (t.ex. privatpersoners namn eller telefonnummer).
+              FindCar är en <strong>oberoende sökmotor</strong> som indexerar publikt
+              tillgängliga bilannonser från flera källor på internet. Vi behandlar bara
+              annonser som möter följande kriterier:
             </p>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              FindCar förmedlar trafik <strong>tillbaka till annonsgivaren</strong> via kontaktformuläret
-              — vi konkurrerar inte med originalkällorna, tar inga avgifter och drar ingen direkt
-              kommersiell nytta av annonserna. Tjänsten är gratis och drivs som ett utvecklingsprojekt.
-            </p>
+            <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
+              <li><strong>Endast bilfirmor</strong> — vi visar aldrig privatannonser. Säljarens organisationsnamn och ort är firmadata, inte personuppgifter.</li>
+              <li><strong>Endast offentligt publicerad information</strong> — pris, modell, årsmodell, mil, registreringsnummer, ort och firmanamn.</li>
+              <li><strong>Endast en suddig thumbnail-bild</strong> i låg upplösning, som vi länkar tillbaka via för identifiering. Originalbilden ligger kvar hos källan.</li>
+              <li><strong>Inga privatpersoners namn eller telefonnummer</strong> sparas eller visas någonsin.</li>
+              <li><strong>Vi konkurrerar inte med originalkällan</strong> — kunder som vill kontakta säljaren skickas vidare via kontaktformulär eller direkt extern länk.</li>
+            </ul>
             <div className="rounded-lg border border-border bg-card/50 p-4 mt-3">
               <p className="text-foreground text-sm leading-relaxed font-medium mb-2">
                 Information för bilförsäljare och annonsgivare
@@ -120,69 +146,158 @@ const Privacy = () => {
                 till <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>{' '}
                 med ditt firmanamn (eller organisationsnummer). Vi tar bort era annonser
                 inom <strong>7 dagar</strong>, lägger till er på en blockeringslista så de inte
-                återimporteras, och bekräftar via mejl när det är klart. <strong>Ingen motivering krävs</strong> —
-                vi respekterar valet utan följdfrågor.
+                återimporteras, och bekräftar via mejl när det är klart. <strong>Ingen motivering krävs</strong>.
+              </p>
+              <p className="text-muted-foreground text-sm leading-relaxed mt-2">
+                Som annonsgivare har du även rätt att få veta vilka uppgifter vi har om er
+                firma, få felaktiga uppgifter rättade, eller begära radering enligt GDPR
+                (rättigheterna i punkt 9).
               </p>
             </div>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">6. Hur länge vi sparar data</h2>
+            <h2 className="text-xl font-bold">7. Hur länge vi sparar data</h2>
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li><strong>Clutch-konversationer:</strong> raderas automatiskt när du stänger webbläsarfliken.</li>
               <li><strong>Kontaktförfrågningar (leads):</strong> sparas tillsvidare för att kunna besvara
-                eventuella följdfrågor från dig eller säljaren. Du kan när som helst begära radering — se punkt 8.</li>
+                eventuella följdfrågor från dig eller säljaren. Du kan när som helst begära radering — se punkt 9.</li>
               <li><strong>Anonym användarstatistik:</strong> 12 månader, sedan raderas eller anonymiseras.</li>
               <li><strong>Tekniska loggar:</strong> 30 dagar, sedan rensas automatiskt.</li>
+              <li><strong>Bilannonser från bilfirmor:</strong> uppdateras dagligen — annonser som inte längre är aktiva hos källan tas bort vid nästa synkronisering.</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">7. Cookies och liknande tekniker</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">Vi använder följande:</p>
-            <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
-              <li><strong>Nödvändiga cookies:</strong> får tjänsten att fungera (t.ex. komma ihåg att du
-                klickat OK på cookie-banner). Krävs ingen samtycke.</li>
-              <li><strong>SessionStorage:</strong> Clutch-konversationen och dina sparade favoriter ligger
-                i din webbläsare och lämnar aldrig din enhet.</li>
-              <li><strong>Anonym statistik:</strong> vi mäter klick och visningar internt utan att kunna
-                koppla det till dig som person.</li>
-            </ul>
+            <h2 className="text-xl font-bold">8. Cookies och liknande tekniker</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">Vi använder följande cookies/lokal lagring:</p>
+            <div className="overflow-x-auto -mx-4 px-4">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold">Namn</th>
+                    <th className="text-left p-2 font-semibold">Typ</th>
+                    <th className="text-left p-2 font-semibold">Syfte</th>
+                    <th className="text-left p-2 font-semibold">Varaktighet</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted-foreground">
+                  <tr className="border-b border-border/50">
+                    <td className="p-2 font-mono">findcar_cookie_consent</td>
+                    <td className="p-2">Nödvändig</td>
+                    <td className="p-2">Kommer ihåg ditt cookie-val</td>
+                    <td className="p-2">Tillsvidare</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="p-2 font-mono">findcar-search-state</td>
+                    <td className="p-2">Funktionell</td>
+                    <td className="p-2">Sparar Clutch-konversation under sessionen</td>
+                    <td className="p-2">Sessionen</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="p-2 font-mono">findcar-saved-cars</td>
+                    <td className="p-2">Funktionell</td>
+                    <td className="p-2">Bilar du markerat som favorit</td>
+                    <td className="p-2">Tillsvidare (lokalt)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">Anonym statistik</td>
+                    <td className="p-2">Statistik</td>
+                    <td className="p-2">Mäter klick och visningar (kräver samtycke)</td>
+                    <td className="p-2">12 månader</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Vi använder <strong>inte</strong> Google Analytics, Meta Pixel eller andra externa spårningsverktyg.
+              Vi använder <strong>inte</strong> Google Analytics, Meta Pixel eller andra externa
+              spårningsverktyg. All statistik är intern och kan inte kopplas till dig som person.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">8. Dina rättigheter enligt GDPR</h2>
+            <h2 className="text-xl font-bold">9. Tredjelandsöverföring</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Vår AI-rådgivare Clutch drivs av <strong>Google Gemini</strong> (via Lovable AI Gateway).
+              Google är USA-baserat, vilket innebär att din konversation kan bearbetas på
+              servrar utanför EU. Detta är en tredjelandsöverföring enligt GDPR-art. 44–49.
+            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Överföringen är skyddad av Googles certifiering enligt <strong>EU-US Data Privacy
+              Framework</strong> samt Standard Contractual Clauses (SCC). Eftersom du själv väljer
+              vad du skriver i Clutch och vi inte sparar konversationen permanent, är
+              risken minimal — men du har alltid rätt att avstå från att använda Clutch och
+              istället söka manuellt.
+            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              All annan data (kontaktförfrågningar, statistik, loggar) lagras hos Supabase
+              i EU (Irland) och lämnar aldrig EU.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold">10. Automatiserat beslutsfattande och AI</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Clutch använder AI för att <strong>föreslå</strong> bilar baserat på din konversation.
+              Det är ingen automatiserad bedömning som har rättsliga eller liknande
+              betydande effekter på dig — du fattar alltid det slutliga beslutet själv.
+              Enligt GDPR-art. 22 har du ändå rätt att:
+            </p>
+            <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
+              <li>Få en mänsklig bedömning istället för AI-rekommendationen — kontakta oss på {' '}
+                <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>.
+              </li>
+              <li>Uttrycka din synpunkt på rekommendationen.</li>
+              <li>Bestrida ett resultat du inte håller med om.</li>
+            </ul>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold">11. Dina rättigheter enligt GDPR</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">Du har rätt att:</p>
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
-              <li><strong>Få veta</strong> vilka uppgifter vi har om dig.</li>
+              <li><strong>Få veta</strong> vilka uppgifter vi har om dig (registerutdrag).</li>
               <li><strong>Få dina uppgifter raderade</strong> ("rätten att bli glömd").</li>
               <li><strong>Rätta felaktiga uppgifter.</strong></li>
               <li><strong>Begära dataportabilitet</strong> — få ut dina uppgifter i ett strukturerat format.</li>
               <li><strong>Invända mot behandling</strong> som baseras på berättigat intresse.</li>
-              <li><strong>Lämna in klagomål till Integritetsskyddsmyndigheten (IMY)</strong> om du anser att vi behandlar dina uppgifter felaktigt.</li>
+              <li><strong>Begränsa behandling</strong> medan en tvist utreds.</li>
+              <li><strong>Återkalla samtycke</strong> när som helst (gäller framåt i tiden).</li>
+              <li>
+                <strong>Lämna in klagomål till Integritetsskyddsmyndigheten (IMY)</strong>{' '}
+                — <a href="https://www.imy.se" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">imy.se</a>{' '}
+                — om du anser att vi behandlar dina uppgifter felaktigt.
+              </li>
             </ul>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Skicka mejl till{' '}
               <a href="mailto:info@findcar.se" className="text-primary hover:underline">info@findcar.se</a>{' '}
-              så hanterar vi din begäran inom 30 dagar.
+              så hanterar vi din begäran inom 30 dagar (GDPR-art. 12.3).
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">9. Säkerhet</h2>
+            <h2 className="text-xl font-bold">12. Barnskydd</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              FindCar är inte avsedd för personer under 16 år. Vi samlar inte medvetet in
+              personuppgifter från barn. Om du är vårdnadshavare och tror att ditt barn
+              har lämnat uppgifter — kontakta oss så raderar vi dem.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold">13. Säkerhet</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               All data lagras hos Supabase i EU (Irland) över krypterade anslutningar (TLS).
-              Endast den som driver tjänsten har åtkomst till databasen. Vi följer rimliga
-              säkerhetsåtgärder men kan inte garantera 100 % säkerhet — om en incident
-              skulle inträffa informerar vi dig så snabbt vi kan.
+              Endast den som driver tjänsten har åtkomst till databasen. Edge-funktioner
+              har rate limiting och CORS-begränsningar för att skydda mot missbruk. Vi
+              följer rimliga säkerhetsåtgärder men kan inte garantera 100 % säkerhet — vid
+              en allvarlig incident informerar vi berörda inom 72 timmar enligt GDPR-art. 33.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">10. Ändringar i policyn</h2>
+            <h2 className="text-xl font-bold">14. Ändringar i policyn</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Vi kan uppdatera den här policyn när tjänsten utvecklas. Stora ändringar
               meddelar vi via en banner på startsidan. Datumet ovan visar senaste
@@ -198,6 +313,8 @@ const Privacy = () => {
             <p className="text-muted-foreground text-sm leading-relaxed">
               Frågor, klagomål, eller begäran om radering — skicka mejl till{' '}
               <a href="mailto:info@findcar.se" className="text-primary hover:underline font-medium">info@findcar.se</a>.
+              Vi svarar normalt inom några arbetsdagar och behandlar formella GDPR-ärenden
+              inom 30 dagar.
             </p>
           </section>
         </div>
