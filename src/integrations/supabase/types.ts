@@ -521,21 +521,27 @@ export type Database = {
           approved_at: string | null
           created_at: string
           email: string
+          first_name: string | null
           id: string
+          last_name: string | null
         }
         Insert: {
           approved?: boolean | null
           approved_at?: string | null
           created_at?: string
           email: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
         }
         Update: {
           approved?: boolean | null
           approved_at?: string | null
           created_at?: string
           email?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
         }
         Relationships: []
       }
