@@ -39,6 +39,7 @@ const Index = () => {
   const [showResults, setShowResults] = useState(saved?.showResults || false);
   const [language, setLanguage] = useState('sv');
   const [carCount, setCarCount] = useState<number | null>(null);
+  const [displayCount, setDisplayCount] = useState(0);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
@@ -64,6 +65,23 @@ const Index = () => {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Animate displayCount from 0 → carCount once we have it
+  useEffect(() => {
+    if (carCount === null) return;
+    const target = carCount;
+    const duration = 1400;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      setDisplayCount(Math.floor(target * eased));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [carCount]);
 
   const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
     if (append) {
@@ -150,7 +168,7 @@ const Index = () => {
             <ScrollReveal delay={300}>
               <p className="text-center text-[11px] md:text-sm text-muted-foreground/80 mt-5 md:mt-6 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                 {carCount !== null ? (
-                  <>Söker bland <strong className="text-foreground">{formatCount(carCount)}</strong> bilar</>
+                  <>Söker bland <strong className="text-foreground tabular-nums">{formatCount(displayCount)}</strong> bilar</>
                 ) : (
                   <>Söker bland tusentals bilar</>
                 )}
