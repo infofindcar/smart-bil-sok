@@ -7,7 +7,7 @@ export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
-    <footer className="bg-secondary text-secondary-foreground">
+    <footer className="bg-[hsl(205_55%_8%)] text-secondary-foreground border-t border-border/40">
       <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-6 md:pt-8 pb-6 md:pb-8">
         {/* MOBILE: single column centered layout */}
         <div className="md:hidden flex flex-col items-center text-center space-y-8 mb-8">
