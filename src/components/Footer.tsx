@@ -17,8 +17,7 @@ export const Footer = () => {
             className="h-20 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
           />
           <p className="text-secondary-foreground/60 leading-relaxed text-sm max-w-xs">
-            Sveriges objektiva bilrådgivare — driven av AI.
-            Vi hjälper dig hitta rätt bil, helt utan provision.
+            Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
           </p>
 
           {/* Stacked links */}
@@ -72,9 +71,7 @@ export const Footer = () => {
               className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
             />
             <p className="text-secondary-foreground/60 leading-relaxed max-w-sm text-base">
-              Sveriges objektiva bilrådgivare — driven av AI.
-              <br />
-              Vi hjälper dig hitta rätt bil, helt utan provision.
+              Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
             </p>
           </div>
           <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-10 lg:gap-8 lg:pt-4">
