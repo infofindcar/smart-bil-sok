@@ -141,9 +141,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
                 className="h-20 md:h-28 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
               />
               <p className="text-secondary-foreground/60 leading-relaxed text-sm md:text-base">
-                Sveriges objektiva bilrådgivare — driven av AI.
-                <br className="hidden md:block" />
-                {' '}Vi hjälper dig hitta rätt bil, helt utan provision.
+                Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
               </p>
             </div>
 
