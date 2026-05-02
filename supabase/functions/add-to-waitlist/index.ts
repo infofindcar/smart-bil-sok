@@ -68,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    const { email } = await req.json();
+    const { email, firstName, lastName } = await req.json();
 
     // Server-side email validation
     if (typeof email !== "string" || email.length === 0 || email.length > 254) {
@@ -87,12 +87,32 @@ serve(async (req) => {
       );
     }
 
+    // Validate names
+    if (typeof firstName !== "string" || firstName.trim().length === 0 || firstName.length > 100) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid first name" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (typeof lastName !== "string" || lastName.trim().length === 0 || lastName.length > 100) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid last name" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const sanitizedFirst = firstName.trim();
+    const sanitizedLast = lastName.trim();
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { error } = await supabase.from("waitlist").insert({ email: sanitized });
+    const { error } = await supabase.from("waitlist").insert({
+      email: sanitized,
+      first_name: sanitizedFirst,
+      last_name: sanitizedLast,
+    });
 
     if (error) {
       // Handle duplicate gracefully
