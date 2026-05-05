@@ -31,11 +31,14 @@ const faqs = [
 
 export const FAQ = () => {
   return (
-    <section className="py-8 md:py-16 px-4 bg-section-alt">
-      <div className="max-w-2xl mx-auto">
+    <section className="py-20 md:py-32 px-4 bg-section-alt">
+      <div className="max-w-3xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold">Vanliga frågor</h2>
+          <div className="text-center mb-12 md:mb-16">
+            <span className="eyebrow mb-5 mx-auto justify-center">FAQ</span>
+            <h2 className="display-headline text-4xl md:text-5xl lg:text-6xl mt-4">
+              Vanliga frågor.
+            </h2>
           </div>
         </ScrollReveal>
         <ScrollReveal>
@@ -44,12 +47,12 @@ export const FAQ = () => {
               <AccordionItem
                 key={i}
                 value={`faq-${i}`}
-                className="bg-card rounded-xl border border-border px-4"
+                className="premium-card rounded-2xl px-5 md:px-6 border-border/60"
               >
-                <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline min-h-[48px] py-4">
+                <AccordionTrigger className="text-base font-medium text-left hover:no-underline min-h-[56px] py-5">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                <AccordionContent className="text-sm md:text-base text-muted-foreground leading-relaxed font-light pb-5">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

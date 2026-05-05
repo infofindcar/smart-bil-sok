@@ -9,20 +9,35 @@ export const CtaBanner = () => {
   };
 
   return (
-    <section className="py-6 md:py-16 px-4 bg-background">
-      <div className="max-w-2xl mx-auto">
+    <section className="relative py-20 md:py-32 px-4 bg-background overflow-hidden">
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 50% 50% at 50% 50%, hsl(var(--primary) / 0.12), transparent 70%)',
+        }}
+      />
+      <div className="relative max-w-3xl mx-auto">
         <ScrollReveal>
-          <div className="text-center space-y-5 md:space-y-6">
-            <h2 className="text-2xl md:text-4xl font-bold">
+          <div className="text-center space-y-8">
+            <h2 className="display-headline text-4xl md:text-5xl lg:text-6xl">
               Redo att hitta din <span className="text-gradient">drömbil</span>?
             </h2>
-            <p className="text-muted-foreground max-w-md mx-auto text-sm">
-              Clutch hjälper dig helt gratis. Berätta vad du söker så gör vi resten.
+            <p className="text-muted-foreground max-w-lg mx-auto text-base md:text-lg font-light leading-relaxed">
+              Clutch hjälper dig — helt gratis. Berätta vad du söker, så gör vi resten.
             </p>
-            <Button variant="gradient" size="lg" onClick={scrollToSearch} className="w-full md:w-auto rounded-2xl md:rounded-xl px-8 h-14 md:h-11 text-base md:text-sm">
-              Starta sökning
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="pt-2">
+              <Button
+                variant="gradient"
+                size="lg"
+                onClick={scrollToSearch}
+                className="w-full md:w-auto rounded-full px-10 h-14 text-base font-medium"
+              >
+                Starta sökningen
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
           </div>
         </ScrollReveal>
       </div>

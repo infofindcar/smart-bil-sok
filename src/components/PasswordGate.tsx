@@ -2,7 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, Mail, CheckCircle, Send, Instagram, Linkedin } from 'lucide-react';
+import { Lock, Mail, CheckCircle, Send, Instagram, Linkedin, User } from 'lucide-react';
 import heroLogo from '@/assets/findcar-logo-hero.png';
 import footerLogo from '@/assets/findcar-logo.png';
 import kthLogo from '@/assets/kth-logo.png';
@@ -141,9 +141,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
                 className="h-20 md:h-28 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
               />
               <p className="text-secondary-foreground/60 leading-relaxed text-sm md:text-base">
-                Sveriges objektiva bilrådgivare — driven av AI.
-                <br className="hidden md:block" />
-                {' '}Vi hjälper dig hitta rätt bil, helt utan provision.
+                Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
               </p>
             </div>
 
@@ -183,6 +181,8 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
 
 const WaitlistForm = () => {
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
@@ -195,7 +195,7 @@ const WaitlistForm = () => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('add-to-waitlist', {
-        body: { email },
+        body: { email, firstName, lastName },
       });
       if (fnError) throw fnError;
       if (!data?.success) throw new Error(data?.error || 'Failed');
@@ -231,26 +231,54 @@ const WaitlistForm = () => {
 
   return (
     <div className="space-y-3">
-      <form onSubmit={handleWaitlist} className="group relative flex items-center gap-2 rounded-2xl border border-border/50 bg-background/80 p-1.5 shadow-inner focus-within:border-secondary/60 focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
-        <div className="relative flex-1">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground/70 group-focus-within:text-secondary transition-colors" />
-          <Input
-            type="email"
-            placeholder="din@mail.se"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="pl-11 h-12 bg-transparent border-0 text-base rounded-xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            required
-          />
+      <form onSubmit={handleWaitlist} className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+            <Input
+              type="text"
+              placeholder="Förnamn"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="pl-11 h-12 bg-background/80 border-border/50 text-base rounded-xl"
+              required
+              maxLength={100}
+            />
+          </div>
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+            <Input
+              type="text"
+              placeholder="Efternamn"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="pl-11 h-12 bg-background/80 border-border/50 text-base rounded-xl"
+              required
+              maxLength={100}
+            />
+          </div>
         </div>
-        <Button
-          type="submit"
-          className="h-12 px-5 rounded-xl text-sm font-semibold bg-gradient-to-br from-secondary to-primary text-primary-foreground shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-100 transition-all"
-          disabled={isSubmitting || !email}
-        >
-          <Send className="h-4 w-4 mr-1.5" />
-          {isSubmitting ? '...' : 'Skicka'}
-        </Button>
+        <div className="group relative flex items-center gap-2 rounded-2xl border border-border/50 bg-background/80 p-1.5 shadow-inner focus-within:border-secondary/60 focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
+          <div className="relative flex-1">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 group-focus-within:text-secondary transition-colors" />
+            <Input
+              type="email"
+              placeholder="din@mail.se"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-11 h-12 bg-transparent border-0 text-base rounded-xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            className="h-12 px-5 rounded-xl text-sm font-semibold bg-gradient-to-br from-secondary to-primary text-primary-foreground shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-100 transition-all"
+            disabled={isSubmitting || !email || !firstName.trim() || !lastName.trim()}
+          >
+            <Send className="h-4 w-4 mr-1.5" />
+            {isSubmitting ? '...' : 'Skicka'}
+          </Button>
+        </div>
       </form>
       {waitlistError && <p className="text-destructive text-sm text-center">{waitlistError}</p>}
     </div>

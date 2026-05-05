@@ -7,7 +7,7 @@ export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
-    <footer className="bg-secondary text-secondary-foreground">
+    <footer className="bg-[hsl(205_55%_8%)] text-secondary-foreground border-t border-border/40">
       <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-6 md:pt-8 pb-6 md:pb-8">
         {/* MOBILE: single column centered layout */}
         <div className="md:hidden flex flex-col items-center text-center space-y-8 mb-8">
@@ -17,8 +17,7 @@ export const Footer = () => {
             className="h-20 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
           />
           <p className="text-secondary-foreground/60 leading-relaxed text-sm max-w-xs">
-            Sveriges objektiva bilrådgivare — driven av AI.
-            Vi hjälper dig hitta rätt bil, helt utan provision.
+            Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
           </p>
 
           {/* Stacked links */}
@@ -72,9 +71,7 @@ export const Footer = () => {
               className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
             />
             <p className="text-secondary-foreground/60 leading-relaxed max-w-sm text-base">
-              Sveriges objektiva bilrådgivare — driven av AI.
-              <br />
-              Vi hjälper dig hitta rätt bil, helt utan provision.
+              Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
             </p>
           </div>
           <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-10 lg:gap-8 lg:pt-4">

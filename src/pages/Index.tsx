@@ -17,10 +17,6 @@ const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ 
 const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 
-const SectionDivider = ({ variant }: { variant: 'bg-to-alt' | 'alt-to-bg' }) => (
-  <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />
-);
-
 const STORAGE_KEY = 'findcar-search-state';
 const loadSearchState = () => {
   try {
@@ -131,7 +127,7 @@ const Index = () => {
   const formatCount = (n: number) => new Intl.NumberFormat('sv-SE').format(n);
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden premium-page-bg">
       <Header />
 
       {/* Landing — search-first with aurora background */}
@@ -142,12 +138,15 @@ const Index = () => {
         >
           <div className="relative z-10 max-w-3xl mx-auto w-full">
             <ScrollReveal>
-              <div className="text-center mb-6 md:mb-8">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08]">
-                  Hitta bilen som passar <span className="text-gradient">just dig</span>
+              <div className="text-center mb-7 md:mb-10">
+                <span className="eyebrow mb-5 md:mb-6 mx-auto justify-center">Driven av Clutch AI</span>
+                <h1 className="display-headline text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl mt-4">
+                  Bilen som passar
+                  <br className="hidden sm:block" />
+                  <span className="text-gradient"> just ditt liv.</span>
                 </h1>
-                <p className="text-muted-foreground mt-3 md:mt-4 max-w-xl mx-auto text-sm md:text-lg leading-relaxed">
-                  Berätta om dina behov — Clutch matchar dig med rätt bil bland tusentals annonser.
+                <p className="text-muted-foreground mt-5 md:mt-6 max-w-xl mx-auto text-base md:text-lg leading-relaxed font-light">
+                  Berätta om din vardag. Clutch matchar dig med rätt bil bland tusentals annonser — utan provision, utan brus.
                 </p>
               </div>
             </ScrollReveal>
@@ -166,32 +165,35 @@ const Index = () => {
             </ScrollReveal>
 
             <ScrollReveal delay={300}>
-              <p className="text-center text-[11px] md:text-sm text-muted-foreground/80 mt-5 md:mt-6 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                {carCount !== null ? (
-                  <>Söker bland <strong className="text-foreground tabular-nums">{formatCount(displayCount)}</strong> bilar</>
-                ) : (
-                  <>Söker bland tusentals bilar</>
-                )}
-                <span className="mx-1.5 md:mx-2 opacity-40">•</span>
-                Helt gratis
-                <span className="mx-1.5 md:mx-2 opacity-40">•</span>
-                Inga provisioner
-              </p>
+              <div className="mt-6 md:mt-8 flex items-center justify-center gap-4 md:gap-8 text-[11px] md:text-xs uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  {carCount !== null ? (
+                    <><span className="text-foreground tabular-nums font-semibold">{formatCount(displayCount)}</span>&nbsp;bilar</>
+                  ) : (
+                    <>tusentals bilar</>
+                  )}
+                </span>
+                <span className="opacity-30">|</span>
+                <span>Gratis</span>
+                <span className="opacity-30 hidden sm:inline">|</span>
+                <span className="hidden sm:inline">0 % provision</span>
+              </div>
             </ScrollReveal>
           </div>
 
-          {/* Scroll hint — desktop only, mobile users scroll naturally */}
+          {/* Scroll hint — minimal vertical line */}
           <a
             href="#how-it-works"
             onClick={(e) => {
               e.preventDefault();
               document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-muted-foreground/60 hover:text-foreground transition-colors flex-col items-center gap-1"
-            aria-label="Mer information"
+            className="hidden md:flex absolute bottom-8 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground/50 hover:text-foreground transition-colors flex-col items-center gap-3"
+            aria-label="Skrolla för mer"
           >
-            <span>Mer info</span>
-            <span className="animate-bounce">↓</span>
+            <span>Skrolla</span>
+            <span className="block w-px h-10 bg-gradient-to-b from-muted-foreground/40 to-transparent" />
           </a>
         </section>
       </AuroraBackground>
@@ -226,17 +228,11 @@ const Index = () => {
         <section id="how-it-works">
           <HowItWorks />
         </section>
-        <SectionDivider variant="bg-to-alt" />
         <WhyFindCar />
-        <SectionDivider variant="alt-to-bg" />
         <Testimonials />
-        <SectionDivider variant="bg-to-alt" />
         <section id="faq">
           <FAQ />
         </section>
-        <div className="hidden md:block">
-          <SectionDivider variant="alt-to-bg" />
-        </div>
         <CtaBanner />
       </Suspense>
       <Footer />
