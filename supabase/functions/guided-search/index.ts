@@ -49,6 +49,43 @@ setInterval(() => {
   }
 }, 60 * 1000);
 
+// --- Defensive leasing/avbetalnings-block ---
+// Blockets titel-fält ("model_raw") innehåller ofta månadsbetalningar för
+// leasing och avbetalning. Vi är köp-fokuserade, så dessa ska aldrig nå
+// användaren även om Blockets sales_form-flagga missar dem.
+const LEASING_BLOCK_PATTERNS = [
+  "%/mån%",            // "kr/mån", ":-/mån", "5990/mån"
+  "%/manad%",          // utan ä
+  "%/månad%",          // "Kr/Månad", "kr/månaden"
+  "%avbet%",           // avbetalning, avbet
+  "%p-leasing%",       // P-LEASING FR ...
+  "%p-lease%",         // P-Lease, P-LEASE
+  "%p.lease%",         // P.Lease, P.lease
+  "%p lease%",         // separator
+  "%pl fr%",           // PL fr 4995
+  "%pl:%",             // PL: 5495KR
+  "%pl-kampanj%",      // PL-KAMPANJ
+  "%op-leasing%",      // OP-Leasing
+  "%op leasing%",      // OP Leasing
+  "%oplease%",         // OPLeasing
+  "%businessleas%",    // BUSINESSLEASA
+  "%business lease%",
+  "%privatleasing%",
+  "%privatlasing%",    // typo som finns i datan
+  "%privatlease%",
+  "%leasing fr%",      // Leasing fr 4390 kr
+  "%leasingkampanj%",
+  "%kr/m %",           // "kr/m " (utan å, troligen avkapad titel)
+];
+
+function applyLeasingBlock<T extends { not: (col: string, op: string, v: string) => T }>(query: T): T {
+  let q = query;
+  for (const pattern of LEASING_BLOCK_PATTERNS) {
+    q = q.not("model_raw", "ilike", pattern);
+  }
+  return q;
+}
+
 // --- Input validation ---
 const MAX_MESSAGES = 50;
 const MAX_MESSAGE_LENGTH = 2000;
@@ -589,6 +626,7 @@ serve(async (req) => {
         let q = sb.from("Lovable").select("id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, regnr, horsepower, transmission, dealer_name, last_seen_at, seats")
           .gte("price", Math.floor(minPrice * priceMinMult))
           .lte("price", Math.ceil(maxPrice * priceMult));
+        q = applyLeasingBlock(q);
 
         // Level 0: all filters except city
         // Level 1: drop body type too
@@ -928,6 +966,7 @@ serve(async (req) => {
         query = query
           .gte("price", Math.floor(minPrice * PRICE_MIN_MULT[level]))
           .lte("price", Math.ceil(maxPrice * PRICE_MULT[level]));
+        query = applyLeasingBlock(query);
 
         // Level 0: city
         if (sanitizedCity && level < 1) {
