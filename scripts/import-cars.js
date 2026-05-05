@@ -69,7 +69,13 @@ const DEFAULT_AWD_MAKES = new Set(["Subaru"]);
 function parseModelRaw(modelRaw, make) {
   const raw = modelRaw ?? "";
   const hpMatch = raw.match(/(\d{2,4})\s*h[pk]/i);
-  const horsepower = hpMatch ? parseInt(hpMatch[1]) : null;
+  const parsedHp = hpMatch ? parseInt(hpMatch[1]) : null;
+  // Sanity-clamp: bilar med under 50 eller över 1000 HK är parsing-fel
+  // (t.ex. "15hk" från trunkerad titel, eller "1250 HK" supercar — vi
+  // accepterar upp till 1000). Sätt till null så frontend visar "–"
+  // istället för en absurd siffra.
+  const horsepower =
+    parsedHp !== null && parsedHp >= 50 && parsedHp <= 1000 ? parsedHp : null;
 
   let drivetrain = null;
   if (/quattro|xdrive|4matic|4motion|4x4|\bawd\b|\b4wd\b|allrad|syncro|e-awd|\b4M\b/i.test(raw)) {

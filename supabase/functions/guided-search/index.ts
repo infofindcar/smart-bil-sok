@@ -1411,16 +1411,23 @@ serve(async (req) => {
                   parts.push(`tillval: ${matched.map(k => equipmentLabels[k] || k).join(", ")}`);
                 }
               }
-              // Berikad modelldata
+              // Berikad modelldata. car_models-cachen är per make+model och inkluderar
+              // ibland data som bara gäller en variant — t.ex. en BMW 3-serie kan ha
+              // elräckvidd från PHEV-versionen, men inte gäller en 320i bensin. Skicka
+              // därför bara elräckvidd och elförbrukning till AI:n om bilens egen
+              // fuel_type matchar, och bensinförbrukning bara om bilen inte är ren el.
               if (cm) {
+                const fuelLower = (c.fuel_type || "").toLowerCase();
+                const isEvOrHybrid = /el|hybrid|plug/i.test(c.fuel_type || "");
+                const isPureEv = /^el$|^elektrisk/i.test(fuelLower) && !/hybrid|plug/i.test(fuelLower);
                 if (cm.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
                 if (cm.boot_space_liters) parts.push(`bagageutrymme: ${cm.boot_space_liters}L`);
                 if (cm.max_towing_kg) parts.push(`dragvikt: ${cm.max_towing_kg}kg`);
                 if (cm.zero_to_hundred_sec) parts.push(`0-100: ${cm.zero_to_hundred_sec}s`);
                 if (cm.seats) parts.push(`${cm.seats} säten`);
-                if (cm.electric_range_km) parts.push(`elräckvidd: ${cm.electric_range_km}km`);
-                if (cm.fuel_consumption_l100km) parts.push(`förbrukning: ${cm.fuel_consumption_l100km}l/100km`);
-                if (cm.co2_g_per_km) parts.push(`CO2: ${cm.co2_g_per_km}g/km`);
+                if (cm.electric_range_km && isEvOrHybrid) parts.push(`elräckvidd: ${cm.electric_range_km}km`);
+                if (cm.fuel_consumption_l100km && !isPureEv) parts.push(`förbrukning: ${cm.fuel_consumption_l100km}l/100km`);
+                if (cm.co2_g_per_km && !isPureEv) parts.push(`CO2: ${cm.co2_g_per_km}g/km`);
                 if (cm.reliability_notes) parts.push(`tillförlitlighet: ${cm.reliability_notes}`);
               }
               // Garanti från märkesdata
