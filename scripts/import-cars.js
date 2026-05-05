@@ -196,6 +196,18 @@ async function main() {
         continue;
       }
 
+      // Heuristik 3: starka leasingsignaler i titeln blockeras OAVSETT pris.
+      // Många återförsäljare sätter ett "fake purchase price" på 200-400k kr
+      // (residualvärde) men annonsen är egentligen ren leasing — då slinker
+      // den igenom heuristik 1 & 2. Blocker explicit på vanliga leasing-
+      // markörer som ingen seriös köpannons skulle ha i titeln.
+      const STRONG_LEASE_RE =
+        /(\/m[åa]n|p-leasing|p-lease|p\.lease|\bpl\s*fr\b|\bpl\s*[:.]|op-leasing|op\s*leasing|opleasing|businessleas|business\s+lease|privatleas|leasingkampanj|leasing\s+fr|avbet)/i;
+      if (STRONG_LEASE_RE.test(rawSpec)) {
+        leasingCount++;
+        continue;
+      }
+
       // Filtrera bort privat (organisation_name saknas)
       if (!car.organisation_name) {
         privateCount++;
