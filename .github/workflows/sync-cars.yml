@@ -1,12 +1,11 @@
 name: Daglig bilsynkronisering
 
 on:
-  # Kör varannan dag kl 04:00 UTC (06:00 svensk sommartid / 05:00 vintertid).
-  # Skonsamt mot Blocket-API:et för att undvika rate-limit/avstängning.
-  schedule:
-    - cron: "0 4 */2 * *"
+  # PAUSAD – avkommentera schedule-blocket nedan för att aktivera nattlig körning igen
+  # schedule:
+  #   - cron: "0 4 * * *"
 
-  # Tillåter manuell körning från GitHub UI (Actions > Daily Car Sync > Run workflow)
+  # Manuell körning: GitHub UI > Actions > Daglig bilsynkronisering > Run workflow
   workflow_dispatch:
 
 jobs:
