@@ -1,9 +1,9 @@
 // scripts/generate-sitemap.js
 //
-// Hämtar alla aktiva bil-ID:n från Supabase och genererar public/sitemap.xml.
+// Hämtar alla aktiva bil-ID:n från Supabase (via edge function) och genererar public/sitemap.xml.
 //
 // Kör manuellt:
-//   node scripts/generate-sitemap.js
+//   SYNC_SECRET=... node scripts/generate-sitemap.js
 //
 // Kör automatiskt via GitHub Actions: .github/workflows/update-sitemap.yml
 
@@ -13,52 +13,33 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const SUPABASE_URL = 'https://bvqveqoschdpenvbxygj.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2cXZlcW9zY2hkcGVudmJ4eWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzOTI0MTIsImV4cCI6MjA4NTk2ODQxMn0.IkIaMMSTZE7mms3JEzN59HQ317audInFGIo5e-JcohE';
+const FUNCTION_URL =
+  process.env.SUPABASE_LIST_IDS_URL ||
+  'https://bvqveqoschdpenvbxygj.supabase.co/functions/v1/list-car-ids';
+const SYNC_SECRET = process.env.SYNC_SECRET;
 const SITE_URL = 'https://findcar.se';
-const PAGE_SIZE = 1000;
 
 async function fetchAllCarIds() {
-  const ids = [];
-  let offset = 0;
+  const res = await fetch(FUNCTION_URL, {
+    method: 'GET',
+    headers: {
+      'x-sync-secret': SYNC_SECRET || '',
+    },
+  });
 
-  while (true) {
-    const url =
-      `${SUPABASE_URL}/rest/v1/Lovable` +
-      `?select=id&active=eq.true&order=id.asc&limit=${PAGE_SIZE}&offset=${offset}`;
-
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Prefer': 'count=none',
-      },
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Supabase REST ${res.status}: ${text}`);
-    }
-
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) break;
-
-    ids.push(...data.map((r) => r.id));
-    console.log(`  Sida ${Math.floor(offset / PAGE_SIZE) + 1}: ${data.length} bilar (totalt ${ids.length})`);
-
-    if (data.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`list-car-ids ${res.status}: ${text}`);
   }
 
+  const { ids } = await res.json();
   return ids;
 }
 
 async function main() {
-  console.log('Genererar sitemap.xml...');
-
+  console.log('Hämtar bil-ID:n från Supabase...');
   const ids = await fetchAllCarIds();
-  console.log(`Totalt ${ids.length} aktiva bilar hittade`);
+  console.log(`Totalt ${ids.length} aktiva bilar`);
 
   const today = new Date().toISOString().split('T')[0];
 

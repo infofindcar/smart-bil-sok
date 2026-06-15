@@ -19,6 +19,8 @@ jobs:
           node-version: "20"
 
       - name: Generera sitemap
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
         run: node scripts/generate-sitemap.js
 
       - name: Committa och pusha sitemap
