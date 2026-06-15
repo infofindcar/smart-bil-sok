@@ -55,7 +55,7 @@ export const Header = () => {
         <Link to="/" className="flex items-center gap-2 group">
           <img
             src={logo}
-            alt="FindCar"
+            alt="FindCar logotyp"
             className={`h-10 sm:h-14 md:h-20 lg:h-22 w-auto transition-all duration-300 group-hover:brightness-110 ${
               scrolled ? 'h-9 sm:h-12 md:h-16 drop-shadow-lg' : 'drop-shadow-md'
             }`}
