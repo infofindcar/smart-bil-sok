@@ -4,6 +4,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { Car } from '@/components/GuidedSearch';
+import { SEO } from '@/components/SEO';
 
 const formatPrice = (price: number | null) => {
   if (!price) return '–';
@@ -18,6 +19,11 @@ const CarComparison = () => {
   if (cars.length < 2) {
     return (
       <div className="min-h-screen bg-background">
+        <SEO
+          title="Jämför bilar | FindCar"
+          description="Jämför dina sparade bilar sida vid sida — pris, årsmodell, miltal och utrustning."
+          path="/compare"
+        />
         <Header />
         <div className="flex flex-col items-center justify-center py-32 gap-4">
           <p className="text-muted-foreground">Spara minst 2 bilar för att jämföra.</p>

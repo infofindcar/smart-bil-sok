@@ -3,11 +3,17 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Mail } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 const Privacy = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Integritetspolicy | FindCar"
+        description="Så hanterar FindCar dina personuppgifter enligt GDPR. Läs vilka uppgifter vi samlar in, varför, hur länge och dina rättigheter."
+        path="/privacy"
+      />
       <Header />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-2xl mx-auto space-y-8">
