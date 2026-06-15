@@ -20,6 +20,7 @@ import {
   formatZeroHundred, formatBootSpace,
 } from '@/lib/carData';
 import { parseEquipment } from '@/lib/equipment';
+import { SEO } from '@/components/SEO';
 
 /* ── Types ── */
 interface CarModelData {

@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { AuroraBackground } from '@/components/AuroraBackground';
+import { SEO } from '@/components/SEO';
 
 // Lazy-load below-fold sections
 const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) => ({ default: m.ResultsReveal })));
@@ -128,6 +129,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden premium-page-bg">
+      <SEO
+        title="Vi säljer inte bilar. Vi hittar din. | FindCar"
+        description="FindCar ger dig objektiv bilrådgivning med hjälp av AI. Jämför tusentals begagnade bilar utifrån dina villkor. Helt gratis."
+        path="/"
+      />
       <Header />
 
       {/* Landing — search-first with aurora background */}

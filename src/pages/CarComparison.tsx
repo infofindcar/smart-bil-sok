@@ -52,6 +52,11 @@ const CarComparison = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Jämför bilar | FindCar"
+        description="Jämför dina sparade bilar sida vid sida — pris, årsmodell, miltal och utrustning."
+        path="/compare"
+      />
       <Header />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
