@@ -26,7 +26,7 @@ async function fetchAllCarIds() {
   while (true) {
     const url =
       `${SUPABASE_URL}/rest/v1/Lovable` +
-      `?select=id&active=eq.true&order=id.asc&limit=${PAGE_SIZE}&offset=${offset}`;
+      `?select=id&is_active=eq.true&order=id.asc&limit=${PAGE_SIZE}&offset=${offset}`;
 
     const res = await fetch(url, {
       headers: {
