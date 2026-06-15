@@ -1,6 +1,10 @@
 name: Uppdatera sitemap
 
 on:
+  # Kör varje dag kl 06:00 UTC
+  schedule:
+    - cron: "0 6 * * *"
+
   # Manuell körning: GitHub UI > Actions > Uppdatera sitemap > Run workflow
   workflow_dispatch:
 
