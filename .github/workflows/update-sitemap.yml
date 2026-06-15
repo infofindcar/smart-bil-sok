@@ -8,6 +8,8 @@ jobs:
   sitemap:
     name: Generera sitemap.xml
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Hämta kod
