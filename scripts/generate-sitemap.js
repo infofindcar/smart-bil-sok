@@ -64,6 +64,7 @@ async function main() {
 
   const staticUrls = [
     { loc: `${SITE_URL}/`, changefreq: 'weekly', priority: '1.0' },
+    { loc: `${SITE_URL}/compare`, changefreq: 'monthly', priority: '0.4' },
     { loc: `${SITE_URL}/privacy`, changefreq: 'monthly', priority: '0.3' },
     { loc: `${SITE_URL}/terms`, changefreq: 'monthly', priority: '0.3' },
   ];

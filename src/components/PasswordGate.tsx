@@ -69,7 +69,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse-subtle">
-          <img src={heroLogo} alt="FindCar" className="h-20" />
+          <img src={heroLogo} alt="FindCar logotyp" className="h-20" />
         </div>
       </div>
     );
@@ -81,7 +81,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Logo top-left */}
       <header className="px-6 sm:px-10 pt-6 sm:pt-8">
-        <img src={heroLogo} alt="FindCar" className="h-10 sm:h-12" />
+        <img src={heroLogo} alt="FindCar logotyp" className="h-10 sm:h-12" />
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
@@ -137,7 +137,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
             <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-5 md:max-w-sm">
               <img
                 src={footerLogo}
-                alt="FindCar"
+                alt="FindCar logotyp"
                 className="h-20 md:h-28 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
               />
               <p className="text-secondary-foreground/60 leading-relaxed text-sm md:text-base">
@@ -170,7 +170,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
             </p>
             <div className="flex items-center gap-1 text-xs italic text-secondary-foreground/50 tracking-wide leading-none">
               <span>Framtagen på KTH</span>
-              <img src={kthLogo} alt="KTH" className="h-14 w-auto brightness-0 invert object-contain" loading="lazy" />
+              <img src={kthLogo} alt="KTH Royal Institute of Technology" className="h-14 w-auto brightness-0 invert object-contain" loading="lazy" />
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Helmet } from 'react-helmet-async';
 
 const faqs = [
   {
@@ -30,8 +31,20 @@ const faqs = [
 ];
 
 export const FAQ = () => {
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
   return (
     <section className="py-20 md:py-32 px-4 bg-section-alt">
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+      </Helmet>
       <div className="max-w-3xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-12 md:mb-16">

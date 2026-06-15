@@ -13,7 +13,7 @@ export const Footer = () => {
         <div className="md:hidden flex flex-col items-center text-center space-y-8 mb-8">
           <img
             src={logo}
-            alt="FindCar"
+            alt="FindCar logotyp"
             className="h-20 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
           />
           <p className="text-secondary-foreground/60 leading-relaxed text-sm max-w-xs">
@@ -67,7 +67,7 @@ export const Footer = () => {
           <div className="lg:col-span-5 space-y-6">
             <img
               src={logo}
-              alt="FindCar"
+              alt="FindCar logotyp"
               className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
             />
             <p className="text-secondary-foreground/60 leading-relaxed max-w-sm text-base">
@@ -109,7 +109,7 @@ export const Footer = () => {
           </p>
           <div className="flex items-center gap-1 text-xs italic text-secondary-foreground/50 tracking-wide leading-none">
             <span>Framtagen på KTH</span>
-            <img src={kthLogo} alt="KTH" className="h-16 w-auto brightness-0 invert object-contain" loading="lazy" />
+            <img src={kthLogo} alt="KTH Royal Institute of Technology" className="h-16 w-auto brightness-0 invert object-contain" loading="lazy" />
           </div>
         </div>
       </div>

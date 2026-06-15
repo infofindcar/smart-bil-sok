@@ -3,11 +3,17 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Mail } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 const Terms = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Användarvillkor | FindCar"
+        description="Villkoren för att använda FindCar — en gratis, ideell AI-driven bilrådgivare utan reklam eller provision."
+        path="/terms"
+      />
       <Header />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-2xl mx-auto space-y-8">
