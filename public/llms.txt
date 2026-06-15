@@ -1,16 +1,25 @@
 # FindCar
 
-> Sveriges objektiva bilrådgivare — driven av AI. Vi säljer inte bilar, vi hittar din. Helt gratis, utan provision.
+> FindCar är Sveriges objektiva AI-drivna bilplattform. Vi hjälper privatpersoner hitta rätt bil utifrån deras villkor – pris, miltal, drivmedel och budget – utan säljsnack.
 
-FindCar är en svensk webbplats som hjälper användare att hitta rätt begagnad bil bland tusentals annonser. En AI-assistent vid namn Clutch chattar med användaren på svenska om vardag, budget och behov, och föreslår sedan bilar som matchar — utan reklam, samarbeten eller provisioner. Sajten drivs som ett ideellt projekt från KTH.
+## Om FindCar
 
-## Pages
+- Aggregerar tusentals billistningar från svenska återförsäljare
+- AI-driven rådgivning som matchar köpare med rätt bil
+- Objektiv jämförelse utan provision eller säljintressen
+- Leadgenerering mellan bilköpare och återförsäljare
 
-- [Startsida — AI-driven bilsökning](/): Chatta med Clutch AI och få bilförslag matchade efter din livssituation.
-- [Jämför bilar](/compare): Jämför sparade bilar sida vid sida.
-- [Integritetspolicy](/privacy): Hur FindCar hanterar personuppgifter.
-- [Användarvillkor](/terms): Villkor för att använda tjänsten.
+## Tillgängliga sidor
 
-## Optional
+- https://findcar.se/ - Startsida med AI-bilsök
+- https://findcar.se/car/[id] - Individuella bilsidor med detaljer
+- https://findcar.se/sitemap.xml - Komplett lista över alla bilsidor
 
-- Bil-detaljsidor: `/car/{id}` — varje aktiv bil har en egen sida med specifikationer, ägandekostnader och kontaktformulär. Listas i sitemap.xml.
+## Data
+
+FindCar innehåller begägnade bilar från svenska återförsäljare med information om pris, miltal, drivmedel, årsmodell, karosstyp och mer.
+
+## Kontakt
+
+- Webb: https://findcar.se
+- E-post: info@findcar.se
