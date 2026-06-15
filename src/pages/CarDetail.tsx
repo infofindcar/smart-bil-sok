@@ -282,8 +282,49 @@ const CarDetail = () => {
 
   const ncapStars = modelData?.euro_ncap_stars ?? null;
 
+  // SEO meta + Schema.org Car/Product
+  const seoTitle = [car.make, displayTitle, car.year, car.price ? `${fmt(car.price)} kr` : null]
+    .filter(Boolean).join(' ') + ' | FindCar';
+  const seoDescParts = [
+    car.year ? `Årsmodell ${car.year}` : null,
+    car.mileage ? `${fmt(car.mileage)} mil` : null,
+    car.fuel_type,
+    car.transmission,
+    car.city ? `i ${car.city}` : null,
+  ].filter(Boolean);
+  const seoDesc = `${car.make} ${displayTitle}${car.year ? ` ${car.year}` : ''}${car.price ? ` för ${fmt(car.price)} kr` : ''}. ${seoDescParts.join(', ')}. Hitta rätt bil med FindCar.`.slice(0, 158);
+  const carJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Car',
+    name: `${car.make} ${displayTitle}${car.year ? ` ${car.year}` : ''}`.trim(),
+    brand: { '@type': 'Brand', name: car.make },
+    model: displayTitle,
+    vehicleModelDate: car.year ? String(car.year) : undefined,
+    bodyType: car.body_type || undefined,
+    fuelType: car.fuel_type || undefined,
+    vehicleTransmission: car.transmission || undefined,
+    mileageFromOdometer: car.mileage ? { '@type': 'QuantitativeValue', value: car.mileage * 10, unitCode: 'KMT' } : undefined,
+    color: car.color && car.color !== 'Okänd' ? car.color : undefined,
+    image: car.image_thumb_url || undefined,
+    offers: car.price ? {
+      '@type': 'Offer',
+      price: car.price,
+      priceCurrency: 'SEK',
+      availability: 'https://schema.org/InStock',
+      url: `https://findcar.se/car/${car.id}`,
+    } : undefined,
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={seoTitle}
+        description={seoDesc}
+        path={`/car/${car.id}`}
+        type="product"
+        image={car.image_thumb_url || undefined}
+        jsonLd={carJsonLd}
+      />
       <Header />
       <main className="pt-20 pb-16">
         <div className="max-w-4xl mx-auto px-4">
