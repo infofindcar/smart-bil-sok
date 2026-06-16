@@ -882,17 +882,86 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
 type SuggestionsRowProps = {
   suggestions?: string[];
+  multiSelect?: boolean;
   onPick: (s: string) => void;
   onWriteOwn: () => void;
   writeOwnLabel: string;
+  sendLabel: string;
+  andWord: string;
 };
 
 const SuggestionsRow = memo(function SuggestionsRow({
   suggestions,
+  multiSelect,
   onPick,
   onWriteOwn,
   writeOwnLabel,
+  sendLabel,
+  andWord,
 }: SuggestionsRowProps) {
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggle = (s: string) => {
+    navigator.vibrate?.(10);
+    setSelected((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
+  };
+
+  const sendSelected = () => {
+    if (!selected.length) return;
+    let text: string;
+    if (selected.length === 1) text = selected[0];
+    else if (selected.length === 2) text = `${selected[0]} ${andWord} ${selected[1]}`;
+    else text = `${selected.slice(0, -1).join(', ')} ${andWord} ${selected[selected.length - 1]}`;
+    setSelected([]);
+    onPick(text);
+  };
+
+  if (multiSelect) {
+    return (
+      <div className="px-3 md:px-6 lg:px-8 pb-3 pt-1 shrink-0">
+        <div className="flex flex-wrap gap-2 items-center">
+          {suggestions?.map((s, i) => {
+            const active = selected.includes(s);
+            return (
+              <button
+                key={s}
+                onClick={() => toggle(s)}
+                className={`chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border transition-all duration-200 active:scale-[0.97] shadow-sm ${
+                  active
+                    ? 'border-primary/60 bg-primary/15 text-foreground shadow-md'
+                    : 'border-border/60 bg-gradient-to-b from-background to-muted/40 hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 text-foreground/90 hover:text-foreground hover:shadow-md'
+                }`}
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
+                {active && <Check className="h-3.5 w-3.5" />}
+                {s}
+              </button>
+            );
+          })}
+          <button
+            onClick={onWriteOwn}
+            className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-dashed border-border/60 dark:border-foreground/30 bg-transparent hover:bg-accent/60 hover:border-primary/40 text-muted-foreground dark:text-foreground/80 hover:text-foreground dark:hover:text-foreground transition-all duration-200 active:scale-[0.97]"
+            style={{ animationDelay: `${(suggestions?.length || 0) * 50}ms` }}
+          >
+            <PenLine className="h-3.5 w-3.5" />
+            {writeOwnLabel}
+          </button>
+          {selected.length > 0 && (
+            <button
+              onClick={sendSelected}
+              className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-semibold px-3.5 md:px-4 py-2 md:py-2.5 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground border border-primary/30 shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.55)] hover:scale-[1.03] active:scale-95 transition-all duration-200"
+            >
+              <Send className="h-3.5 w-3.5" />
+              {sendLabel} ({selected.length})
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-3 md:px-6 lg:px-8 pb-3 pt-1 shrink-0">
       <div className="flex flex-wrap gap-2 items-center">
