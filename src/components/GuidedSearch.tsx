@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -41,6 +41,7 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   suggestions?: string[];
+  multiSelect?: boolean;
 };
 
 interface GuidedSearchProps {
@@ -96,6 +97,22 @@ const WRITE_OWN: Record<string, string> = {
   no: 'Skriv eget svar',
   da: 'Skriv eget svar',
   fi: 'Kirjoita oma vastaus',
+};
+
+const SEND_LABEL: Record<string, string> = {
+  sv: 'Skicka',
+  en: 'Send',
+  no: 'Send',
+  da: 'Send',
+  fi: 'Lähetä',
+};
+
+const AND_WORD: Record<string, string> = {
+  sv: 'och',
+  en: 'and',
+  no: 'og',
+  da: 'og',
+  fi: 'ja',
 };
 
 const NEW_SEARCH: Record<string, string> = {
