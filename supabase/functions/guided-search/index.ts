@@ -623,6 +623,13 @@ serve(async (req) => {
       const mustEq = Array.isArray(f.mustHaveEquipment)
         ? f.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
         : [];
+      const dealerNameRegexLM = /^[\w\såäöÅÄÖ\-&.,'/()]+$/;
+      const dealersLM: string[] = Array.isArray(f.dealers)
+        ? f.dealers.filter((x: unknown): x is string => typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegexLM.test(x))
+        : [];
+      const excludeDealersLM: string[] = Array.isArray(f.excludeDealers)
+        ? f.excludeDealers.filter((x: unknown): x is string => typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegexLM.test(x))
+        : [];
       const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
       // Progressive relaxation: try with filters, then relax
@@ -655,6 +662,19 @@ serve(async (req) => {
         }
         if (yMin && level < 2) q = q.gte("year", yMin);
         if (yMax && level < 2) q = q.lte("year", yMax);
+
+        // Bilfirma-filter — kvarstår alltid
+        if (dealersLM.length > 0) {
+          const ors = dealersLM
+            .map((d) => `dealer_name.ilike.%${d.replace(/[%,()]/g, " ").trim()}%`)
+            .filter((s) => s.length > "dealer_name.ilike.%%".length)
+            .join(",");
+          if (ors) q = q.or(ors);
+        }
+        for (const d of excludeDealersLM) {
+          const safe = d.replace(/[%,()]/g, " ").trim();
+          if (safe) q = q.not("dealer_name", "ilike", `%${safe}%`);
+        }
 
         // Exclude already-shown cars
         for (const eid of exclude) {
