@@ -775,10 +775,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Quick-reply suggestions */}
         {showSuggestions && (
           <SuggestionsRow
+            key={lastAssistantMsg?.id}
             suggestions={lastAssistantMsg?.suggestions}
+            multiSelect={lastAssistantMsg?.multiSelect}
             onPick={handleSuggestionClick}
             onWriteOwn={() => inputRef.current?.focus()}
             writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
+            sendLabel={SEND_LABEL[language] || SEND_LABEL.sv}
+            andWord={AND_WORD[language] || AND_WORD.sv}
           />
         )}
 
