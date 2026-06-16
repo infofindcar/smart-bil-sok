@@ -1,0 +1,25 @@
+name: Synka Bilförmedlingen
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Importera bilar från Bilförmedlingen
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Hämta kod
+        uses: actions/checkout@v4
+
+      - name: Sätt upp Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Importera bilar
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: node scripts/import-bilformedlingen.js
