@@ -940,6 +940,17 @@ serve(async (req) => {
             typeof x === "string" && x.length > 0 && x.length < 30 && /^[\w\såäöÅÄÖ\-/.]+$/.test(x))
         : [];
 
+      // Bilfirmor — include/exclude. Matchas ILIKE mot dealer_name.
+      const dealerNameRegex = /^[\w\såäöÅÄÖ\-&.,'/()]+$/;
+      const dealers: string[] = Array.isArray(filters.dealers)
+        ? filters.dealers.filter((x: unknown): x is string =>
+            typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegex.test(x))
+        : [];
+      const excludeDealers: string[] = Array.isArray(filters.excludeDealers)
+        ? filters.excludeDealers.filter((x: unknown): x is string =>
+            typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegex.test(x))
+        : [];
+
       // Validera equipment-filter
       const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
         ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
@@ -1058,6 +1069,19 @@ serve(async (req) => {
         }
         for (const kw of excludeKeywords) {
           query = query.not("model_raw", "ilike", `%${kw}%`);
+        }
+
+        // Bilfirma-filter — kvarstår på alla relax-nivåer (kunden var explicit).
+        if (dealers.length > 0) {
+          const ors = dealers
+            .map((d) => `dealer_name.ilike.%${d.replace(/[%,()]/g, " ").trim()}%`)
+            .filter((s) => s.length > "dealer_name.ilike.%%".length)
+            .join(",");
+          if (ors) query = query.or(ors);
+        }
+        for (const d of excludeDealers) {
+          const safe = d.replace(/[%,()]/g, " ").trim();
+          if (safe) query = query.not("dealer_name", "ilike", `%${safe}%`);
         }
 
         // Smart pre-sortering inför composite-score:
