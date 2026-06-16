@@ -460,10 +460,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const addAssistantMessage = (
     content: string,
     suggestions?: string[],
-    onDone?: () => void
+    onDone?: () => void,
+    multiSelect?: boolean,
   ) => {
     const id = Date.now().toString() + Math.random();
-    const msg: ChatMessage = { id, role: 'assistant', content, suggestions };
+    const msg: ChatMessage = { id, role: 'assistant', content, suggestions, multiSelect };
     setMessages((prev) => [...prev, msg]);
     typewriteMessage(id, content, onDone);
     return msg;
@@ -512,7 +513,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       if (error) throw error;
 
       if (data?.action === 'ask') {
-        addAssistantMessage(data.message, data.suggestions);
+        addAssistantMessage(data.message, data.suggestions, undefined, data.multiSelect === true);
         setIsLoading(false);
       } else if (data?.action === 'search') {
         if (data.filters?.driverAge) {
