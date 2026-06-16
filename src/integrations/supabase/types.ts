@@ -59,6 +59,72 @@ export type Database = {
         }
         Relationships: []
       }
+      avtal_bilar: {
+        Row: {
+          body_type: string | null
+          city: string | null
+          color: string | null
+          created_at: string | null
+          fuel_type: string | null
+          horsepower: number | null
+          id: number
+          image_thumb_url: string | null
+          is_active: boolean | null
+          last_seen_at: string | null
+          make: string | null
+          mileage: number | null
+          model: string | null
+          model_raw: string | null
+          partner: string
+          price: number | null
+          reg_nr: string
+          transmission: string | null
+          year: number | null
+        }
+        Insert: {
+          body_type?: string | null
+          city?: string | null
+          color?: string | null
+          created_at?: string | null
+          fuel_type?: string | null
+          horsepower?: number | null
+          id?: number
+          image_thumb_url?: string | null
+          is_active?: boolean | null
+          last_seen_at?: string | null
+          make?: string | null
+          mileage?: number | null
+          model?: string | null
+          model_raw?: string | null
+          partner: string
+          price?: number | null
+          reg_nr: string
+          transmission?: string | null
+          year?: number | null
+        }
+        Update: {
+          body_type?: string | null
+          city?: string | null
+          color?: string | null
+          created_at?: string | null
+          fuel_type?: string | null
+          horsepower?: number | null
+          id?: number
+          image_thumb_url?: string | null
+          is_active?: boolean | null
+          last_seen_at?: string | null
+          make?: string | null
+          mileage?: number | null
+          model?: string | null
+          model_raw?: string | null
+          partner?: string
+          price?: number | null
+          reg_nr?: string
+          transmission?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       car_makes: {
         Row: {
           country_of_origin: string | null
@@ -336,6 +402,7 @@ export type Database = {
           model_clean: string | null
           model_raw: string | null
           price: number | null
+          reg_nr: string | null
           regnr: string | null
           seats: number | null
           source: string | null
@@ -371,6 +438,7 @@ export type Database = {
           model_clean?: string | null
           model_raw?: string | null
           price?: number | null
+          reg_nr?: string | null
           regnr?: string | null
           seats?: number | null
           source?: string | null
@@ -406,6 +474,7 @@ export type Database = {
           model_clean?: string | null
           model_raw?: string | null
           price?: number | null
+          reg_nr?: string | null
           regnr?: string | null
           seats?: number | null
           source?: string | null

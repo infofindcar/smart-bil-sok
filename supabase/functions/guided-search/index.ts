@@ -393,6 +393,7 @@ INFORMATION DU BEHÖVER SAMLA (alla påverkar vilken bil som passar):
 29. IMPORTERAD BIL OK? — vissa undviker importbilar pga. servicehistorik/garanti. Fråga om kunden bryr sig.
 30. ANTAL TIDIGARE ÄGARE — spelar antal ägare roll? Påverkar val mellan demobil (1 ägare) vs äldre bil (3+ ägare).
 31. LADDNING HEMMA (vid elbil) — kan de ladda hemma eller är de beroende av publika stolpar? Avgör om elbil överhuvudtaget är ett bra val.
+32. BILFIRMA / SÄLJARE — har kunden en eller flera SPECIFIKA bilfirmor de vill köpa från (t.ex. "bara Bilia", "Hedin Bil eller Bilmånsson")? ELLER finns det bilfirmor de absolut INTE vill köpa från? Detta är en obligatorisk fråga att väva in naturligt innan sökning — många kunder har starka åsikter om vissa firmor. Multi-select om kunden nämner flera.
 
 EXTREMT VIKTIG REGEL — INGA FINANSIERINGSFRÅGOR:
 Fråga ALDRIG om finansiering, lån, kredit, kontantköp, leasing eller hur kunden tänker betala. Det är inte din roll. Hoppa över ALLT som rör pengar/finansiering — fokusera på bilen och kundens behov.
@@ -409,6 +410,8 @@ TOLKNINGSREGLER FÖR DE NYA FRÅGORNA:
 - "ingen importbil" → lägg "import" och "EU-bil" i filters.excludeKeywords (array av nyckelord som inte får finnas i annonstexten).
 - "vill inte ha bensin / diesel" → lägg drivmedlet i filters.excludeFuels (array av t.ex. ["bensin"]).
 - "endast få ägare" → premiera nyare bilar med låg ägarhistorik.
+- "bara från firma X" eller "endast Bilia/Hedin" → lägg firmornas namn i filters.dealers (array av strängar). Endast bilar vars dealer_name matchar någon av dessa visas.
+- "inte från firma X" eller "undvik Y" → lägg firmornas namn i filters.excludeDealers (array av strängar). Bilar från dessa firmor filtreras bort hårt.
 
 BONUS-TRIGGER FÖR ÄLDRE BILAR:
 Om bilarna du föreslår är ÄLDRE ÄN 8 ÅR — nämn proaktivt i customerProfile/reasoning att kunden bör räkna med högre servicekostnader och rekommendera kontroll av servicehistorik innan köp.
@@ -534,7 +537,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"],"multiSelect":false}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"mileageMax":15000,"preferredHpMin":200,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"],"excludeMakes":["Renault","Fiat"],"excludeFuels":["bensin"],"excludeKeywords":["import","EU-bil"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"mileageMax":15000,"preferredHpMin":200,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"],"excludeMakes":["Renault","Fiat"],"excludeFuels":["bensin"],"excludeKeywords":["import","EU-bil"],"dealers":["Bilia","Hedin Bil"],"excludeDealers":["Bilfirma X"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 
@@ -620,6 +623,13 @@ serve(async (req) => {
       const mustEq = Array.isArray(f.mustHaveEquipment)
         ? f.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
         : [];
+      const dealerNameRegexLM = /^[\w\såäöÅÄÖ\-&.,'/()]+$/;
+      const dealersLM: string[] = Array.isArray(f.dealers)
+        ? f.dealers.filter((x: unknown): x is string => typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegexLM.test(x))
+        : [];
+      const excludeDealersLM: string[] = Array.isArray(f.excludeDealers)
+        ? f.excludeDealers.filter((x: unknown): x is string => typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegexLM.test(x))
+        : [];
       const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
       // Progressive relaxation: try with filters, then relax
@@ -652,6 +662,19 @@ serve(async (req) => {
         }
         if (yMin && level < 2) q = q.gte("year", yMin);
         if (yMax && level < 2) q = q.lte("year", yMax);
+
+        // Bilfirma-filter — kvarstår alltid
+        if (dealersLM.length > 0) {
+          const ors = dealersLM
+            .map((d) => `dealer_name.ilike.%${d.replace(/[%,()]/g, " ").trim()}%`)
+            .filter((s) => s.length > "dealer_name.ilike.%%".length)
+            .join(",");
+          if (ors) q = q.or(ors);
+        }
+        for (const d of excludeDealersLM) {
+          const safe = d.replace(/[%,()]/g, " ").trim();
+          if (safe) q = q.not("dealer_name", "ilike", `%${safe}%`);
+        }
 
         // Exclude already-shown cars
         for (const eid of exclude) {
@@ -937,6 +960,17 @@ serve(async (req) => {
             typeof x === "string" && x.length > 0 && x.length < 30 && /^[\w\såäöÅÄÖ\-/.]+$/.test(x))
         : [];
 
+      // Bilfirmor — include/exclude. Matchas ILIKE mot dealer_name.
+      const dealerNameRegex = /^[\w\såäöÅÄÖ\-&.,'/()]+$/;
+      const dealers: string[] = Array.isArray(filters.dealers)
+        ? filters.dealers.filter((x: unknown): x is string =>
+            typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegex.test(x))
+        : [];
+      const excludeDealers: string[] = Array.isArray(filters.excludeDealers)
+        ? filters.excludeDealers.filter((x: unknown): x is string =>
+            typeof x === "string" && x.length > 0 && x.length < 80 && dealerNameRegex.test(x))
+        : [];
+
       // Validera equipment-filter
       const mustHaveEquipment: string[] = Array.isArray(filters.mustHaveEquipment)
         ? filters.mustHaveEquipment.filter((x: unknown): x is string => typeof x === "string" && x in equipmentPatterns)
@@ -1055,6 +1089,19 @@ serve(async (req) => {
         }
         for (const kw of excludeKeywords) {
           query = query.not("model_raw", "ilike", `%${kw}%`);
+        }
+
+        // Bilfirma-filter — kvarstår på alla relax-nivåer (kunden var explicit).
+        if (dealers.length > 0) {
+          const ors = dealers
+            .map((d) => `dealer_name.ilike.%${d.replace(/[%,()]/g, " ").trim()}%`)
+            .filter((s) => s.length > "dealer_name.ilike.%%".length)
+            .join(",");
+          if (ors) query = query.or(ors);
+        }
+        for (const d of excludeDealers) {
+          const safe = d.replace(/[%,()]/g, " ").trim();
+          if (safe) query = query.not("dealer_name", "ilike", `%${safe}%`);
         }
 
         // Smart pre-sortering inför composite-score:
