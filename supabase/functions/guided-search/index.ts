@@ -525,10 +525,13 @@ Innan du söker (action: "search") MÅSTE du ställa en sista bekräftelsefråga
 
 NÄR DU STÄLLER EN FRÅGA, inkludera "suggestions" — 2-4 korta svarsförslag.
 
+MULTI-SELECT FRÅGOR:
+Om frågan rimligen kan ha FLERA svar samtidigt (t.ex. "Vilka tillval vill du ha? Drag, taklucka, skinn?", "Vilka drivmedel är ok? Bensin, diesel, hybrid?", "Vilka karosstyper passar? SUV, kombi, sedan?"), sätt ALLTID "multiSelect": true så användaren kan välja flera chips innan de skickar. För frågor med ett enda naturligt svar (t.ex. "Vad är din budget?", "Hur gammal är du?", "Vill du söka nu?") ska multiSelect vara false eller utelämnas.
+
 SVAR-FORMAT (svara ENBART med JSON, ingen markdown, inga code fences):
 
 Om du behöver mer info:
-{"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
+{"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"],"multiSelect":false}
 
 Om du har tillräckligt med info för att söka:
 {"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"mileageMax":15000,"preferredHpMin":200,"useCase":"pendling","driverAge":30,"mustHaveEquipment":["drag","varmare"],"niceToHaveEquipment":["taklucka","kamera"],"excludeMakes":["Renault","Fiat"],"excludeFuels":["bensin"],"excludeKeywords":["import","EU-bil"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
