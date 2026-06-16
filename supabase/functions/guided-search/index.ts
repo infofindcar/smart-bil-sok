@@ -858,6 +858,7 @@ serve(async (req) => {
           action: "ask",
           message: decision.message,
           suggestions: decision.suggestions || [],
+          multiSelect: decision.multiSelect === true,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
