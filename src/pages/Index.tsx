@@ -13,7 +13,6 @@ import { SEO } from '@/components/SEO';
 const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) => ({ default: m.ResultsReveal })));
 const HowItWorks = lazy(() => import('@/components/HowItWorks').then((m) => ({ default: m.HowItWorks })));
 const WhyFindCar = lazy(() => import('@/components/WhyFindCar').then((m) => ({ default: m.WhyFindCar })));
-const Testimonials = lazy(() => import('@/components/Testimonials').then((m) => ({ default: m.Testimonials })));
 const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ })));
 const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
@@ -140,13 +139,14 @@ const Index = () => {
       <AuroraBackground>
         <section
           data-search-section
-          className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 pt-20 md:pt-24 pb-10 md:pb-12"
+          className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 pt-16 md:pt-24 pb-10 md:pb-12"
         >
           <div className="relative z-10 max-w-3xl mx-auto w-full">
             <ScrollReveal>
-              <div className="text-center mb-8 md:mb-10">
-                <span className="hidden md:inline-flex eyebrow mb-5 md:mb-6 mx-auto justify-center">
-                  Driven av Clutch AI
+              <div className="text-center mb-7 md:mb-10">
+                <span className="inline-flex eyebrow mb-4 md:mb-6 mx-auto justify-center text-[10px] md:text-xs">
+                  <span className="md:hidden">Vi säljer inte bilar. Vi hittar din.</span>
+                  <span className="hidden md:inline">Driven av Clutch AI</span>
                 </span>
                 <h1 className="display-headline text-[2rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
                   Hitta din
@@ -238,7 +238,6 @@ const Index = () => {
           <HowItWorks />
         </section>
         <WhyFindCar />
-        <Testimonials />
         <section id="faq">
           <FAQ />
         </section>
