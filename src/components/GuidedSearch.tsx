@@ -91,6 +91,25 @@ const PLACEHOLDERS: Record<string, string> = {
   fi: 'Kirjoita tähän...',
 };
 
+// Rotating placeholder examples — gives users concrete inspiration for what to write.
+const PLACEHOLDER_EXAMPLES: Record<string, string[]> = {
+  sv: [
+    'Försök t.ex. "Pendlar 5 mil till jobbet, bensin under 150k"',
+    'Försök t.ex. "Familj med två barn, behöver stort bagage"',
+    'Försök t.ex. "Elbil med bra räckvidd, max 350k"',
+    'Försök t.ex. "Liten bil för stan, automatlåda"',
+  ],
+  en: [
+    'Try e.g. "I commute 50 km, petrol under 150k"',
+    'Try e.g. "Family with two kids, need big trunk"',
+    'Try e.g. "EV with good range, max 350k"',
+    'Try e.g. "Small city car, automatic"',
+  ],
+  no: ['Skriv f.eks. "Pendler til jobb, bensin under 150k"'],
+  da: ['Skriv f.eks. "Familie med to børn, stort bagagerum"'],
+  fi: ['Kirjoita esim. "Perheauto, automaattivaihteisto"'],
+};
+
 const WRITE_OWN: Record<string, string> = {
   sv: 'Skriv eget svar',
   en: 'Write your own',
@@ -170,6 +189,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [isListening, setIsListening] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showTypingDots, setShowTypingDots] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
   const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
@@ -248,6 +268,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
+
+  // Rotate placeholder examples every 3.5s while idle on first message
+  useEffect(() => {
+    if (messages.length > 1 || inputFocused || inputValue) return;
+    const examples = PLACEHOLDER_EXAMPLES[language] || PLACEHOLDER_EXAMPLES.sv;
+    if (examples.length <= 1) return;
+    const t = setInterval(() => {
+      setPlaceholderIndex((i) => (i + 1) % examples.length);
+    }, 3500);
+    return () => clearInterval(t);
+  }, [language, messages.length, inputFocused, inputValue]);
 
   const stopScrollLoop = useCallback(() => {
     if (scrollRafRef.current !== null) {
@@ -832,7 +863,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 onKeyDown={handleKeyDown}
                 placeholder={isListening
                   ? (language === 'en' ? 'Listening...' : 'Lyssnar...')
-                  : (PLACEHOLDERS[language] || PLACEHOLDERS.sv)}
+                  : (messages.length <= 1 && !inputFocused
+                      ? (PLACEHOLDER_EXAMPLES[language] || PLACEHOLDER_EXAMPLES.sv)[placeholderIndex % (PLACEHOLDER_EXAMPLES[language] || PLACEHOLDER_EXAMPLES.sv).length]
+                      : (PLACEHOLDERS[language] || PLACEHOLDERS.sv))}
                 disabled={isLoading}
                 rows={1}
                 autoComplete="off"
