@@ -392,6 +392,23 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     queueScrollToBottom(true);
   }, [messages.length, queueScrollToBottom]);
 
+  // When the last assistant message has suggestion chips, align the message's
+  // TOP into view so the user can read it from the beginning (otherwise the
+  // chips + input push the message scroll-area down and only the tail shows).
+  useEffect(() => {
+    if (!isMobile) return;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+    if (!lastAssistant?.suggestions?.length) return;
+    const container = chatContainerRef.current;
+    const target = lastMessageRef.current;
+    if (!container || !target) return;
+    const t = setTimeout(() => {
+      const top = target.offsetTop - 8;
+      container.scrollTo({ top, behavior: 'smooth' });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [messages, isMobile, visibleText]);
+
   // Delayed typing dots to prevent flicker
   useEffect(() => {
     if (isLoading && phase !== 'searching') {
@@ -658,7 +675,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             ? 'rounded-2xl'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={{ height: isMobile ? 'min(60svh, calc(100dvh - 180px))' : '500px' }}
+        style={{ height: isMobile ? 'min(82svh, calc(100dvh - 110px))' : '500px' }}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
