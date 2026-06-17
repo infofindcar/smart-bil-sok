@@ -863,7 +863,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 onKeyDown={handleKeyDown}
                 placeholder={isListening
                   ? (language === 'en' ? 'Listening...' : 'Lyssnar...')
-                  : (PLACEHOLDERS[language] || PLACEHOLDERS.sv)}
+                  : (messages.length <= 1 && !inputFocused
+                      ? (PLACEHOLDER_EXAMPLES[language] || PLACEHOLDER_EXAMPLES.sv)[placeholderIndex % (PLACEHOLDER_EXAMPLES[language] || PLACEHOLDER_EXAMPLES.sv).length]
+                      : (PLACEHOLDERS[language] || PLACEHOLDERS.sv))}
                 disabled={isLoading}
                 rows={1}
                 autoComplete="off"
