@@ -839,8 +839,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 autoCorrect="off"
                 spellCheck={false}
                 name="clutch-chat-input"
-                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3 text-[15px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/60 dark:placeholder:text-foreground/50 disabled:opacity-50 max-h-[120px] overflow-y-auto leading-relaxed"
-                style={{ minHeight: '44px' }}
+                inputMode="text"
+                enterKeyHint="send"
+                className="field-sizing-content w-full resize-none bg-transparent px-4 py-3.5 md:py-3 text-[16px] md:text-sm outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground/60 dark:placeholder:text-foreground/50 disabled:opacity-50 max-h-[140px] overflow-y-auto leading-relaxed"
+                style={{ minHeight: '48px', fontSize: 'max(16px, 1rem)' }}
               />
             </div>
             {speechSupported && (
