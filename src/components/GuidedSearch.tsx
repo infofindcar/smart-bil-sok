@@ -189,6 +189,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [isListening, setIsListening] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showTypingDots, setShowTypingDots] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
   const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
   const [visibleText, setVisibleText] = useState<Record<string, string>>({});
@@ -267,6 +268,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
+
+  // Rotate placeholder examples every 3.5s while idle on first message
+  useEffect(() => {
+    if (messages.length > 1 || inputFocused || inputValue) return;
+    const examples = PLACEHOLDER_EXAMPLES[language] || PLACEHOLDER_EXAMPLES.sv;
+    if (examples.length <= 1) return;
+    const t = setInterval(() => {
+      setPlaceholderIndex((i) => (i + 1) % examples.length);
+    }, 3500);
+    return () => clearInterval(t);
+  }, [language, messages.length, inputFocused, inputValue]);
 
   const stopScrollLoop = useCallback(() => {
     if (scrollRafRef.current !== null) {
