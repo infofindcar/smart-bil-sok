@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Fuel, MapPin, Store } from 'lucide-react';
+import { Heart, Fuel, MapPin, Store, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import type { Car } from './GuidedSearch';
@@ -149,9 +149,15 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
 
         {/* Personlig motivering från Clutch */}
         {matchReason && (
-          <div className="mt-3 pt-2 border-t border-border/30">
-            <p className="text-xs italic text-muted-foreground leading-relaxed">
-              "{matchReason}"
+          <div className="mt-3 rounded-lg border border-primary/20 bg-gradient-to-br from-primary/[0.08] to-secondary/[0.04] p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/90">
+                Clutch tycker
+              </span>
+            </div>
+            <p className="text-xs text-foreground/85 leading-relaxed">
+              {matchReason}
             </p>
           </div>
         )}
