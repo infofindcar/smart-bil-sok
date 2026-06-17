@@ -148,13 +148,15 @@ const Index = () => {
                 <span className="hidden md:inline-flex eyebrow mb-5 md:mb-6 mx-auto justify-center">
                   Driven av Clutch AI
                 </span>
-                <h1 className="display-headline text-[2.15rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
-                  Bilen som passar
-                  <br />
-                  <span className="text-gradient">just ditt liv.</span>
+                <h1 className="display-headline text-[2rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
+                  Hitta din
+                  <br className="md:hidden" />
+                  <span className="text-gradient"> rätta bil.</span>
+                  <span className="hidden md:inline"><br />just för dig.</span>
                 </h1>
-                <p className="text-muted-foreground mt-4 md:mt-6 max-w-md md:max-w-xl mx-auto text-[15px] md:text-lg leading-relaxed font-light">
-                  Berätta om din vardag — vi hittar rätt bil bland tusentals annonser. Helt gratis, utan provision.
+                <p className="text-muted-foreground mt-3 md:mt-6 max-w-md md:max-w-xl mx-auto text-[14px] md:text-lg leading-relaxed font-light">
+                  <span className="md:hidden">Berätta om din vardag — vi gör jobbet.</span>
+                  <span className="hidden md:inline">Berätta om din vardag — vi hittar rätt bil bland tusentals annonser. Helt gratis, utan provision.</span>
                 </p>
               </div>
             </ScrollReveal>
