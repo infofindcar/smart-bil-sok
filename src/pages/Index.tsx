@@ -140,19 +140,21 @@ const Index = () => {
       <AuroraBackground>
         <section
           data-search-section
-          className="relative min-h-[100svh] flex flex-col items-center justify-center px-4 pt-24 pb-12"
+          className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 pt-20 md:pt-24 pb-10 md:pb-12"
         >
           <div className="relative z-10 max-w-3xl mx-auto w-full">
             <ScrollReveal>
-              <div className="text-center mb-7 md:mb-10">
-                <span className="eyebrow mb-5 md:mb-6 mx-auto justify-center">Driven av Clutch AI</span>
-                <h1 className="display-headline text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl mt-4">
+              <div className="text-center mb-8 md:mb-10">
+                <span className="hidden md:inline-flex eyebrow mb-5 md:mb-6 mx-auto justify-center">
+                  Driven av Clutch AI
+                </span>
+                <h1 className="display-headline text-[2.15rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
                   Bilen som passar
-                  <br className="hidden sm:block" />
-                  <span className="text-gradient"> just ditt liv.</span>
+                  <br />
+                  <span className="text-gradient">just ditt liv.</span>
                 </h1>
-                <p className="text-muted-foreground mt-5 md:mt-6 max-w-xl mx-auto text-base md:text-lg leading-relaxed font-light">
-                  Berätta om din vardag. Clutch matchar dig med rätt bil bland tusentals annonser — utan provision, utan brus.
+                <p className="text-muted-foreground mt-4 md:mt-6 max-w-md md:max-w-xl mx-auto text-[15px] md:text-lg leading-relaxed font-light">
+                  Berätta om din vardag — vi hittar rätt bil bland tusentals annonser. Helt gratis, utan provision.
                 </p>
               </div>
             </ScrollReveal>
@@ -171,19 +173,18 @@ const Index = () => {
             </ScrollReveal>
 
             <ScrollReveal delay={300}>
-              <div className="mt-6 md:mt-8 flex items-center justify-center gap-4 md:gap-8 text-[11px] md:text-xs uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <div className="mt-6 md:mt-8 flex items-center justify-center gap-3 md:gap-8 text-[10px] md:text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-medium">
+                <span className="flex items-center gap-1.5">
                   {carCount !== null ? (
-                    <><span className="text-foreground tabular-nums font-semibold">{formatCount(displayCount)}</span>&nbsp;bilar</>
+                    <><span className="text-foreground/90 tabular-nums font-semibold normal-case tracking-normal">{formatCount(displayCount)}</span>&nbsp;bilar</>
                   ) : (
                     <>tusentals bilar</>
                   )}
                 </span>
-                <span className="opacity-30">|</span>
+                <span className="opacity-30">·</span>
                 <span>Gratis</span>
-                <span className="opacity-30 hidden sm:inline">|</span>
-                <span className="hidden sm:inline">0 % provision</span>
+                <span className="opacity-30">·</span>
+                <span>0 % provision</span>
               </div>
             </ScrollReveal>
           </div>
