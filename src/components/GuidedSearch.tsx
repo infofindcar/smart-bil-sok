@@ -91,6 +91,25 @@ const PLACEHOLDERS: Record<string, string> = {
   fi: 'Kirjoita tähän...',
 };
 
+// Rotating placeholder examples — gives users concrete inspiration for what to write.
+const PLACEHOLDER_EXAMPLES: Record<string, string[]> = {
+  sv: [
+    'Försök t.ex. "Pendlar 5 mil till jobbet, bensin under 150k"',
+    'Försök t.ex. "Familj med två barn, behöver stort bagage"',
+    'Försök t.ex. "Elbil med bra räckvidd, max 350k"',
+    'Försök t.ex. "Liten bil för stan, automatlåda"',
+  ],
+  en: [
+    'Try e.g. "I commute 50 km, petrol under 150k"',
+    'Try e.g. "Family with two kids, need big trunk"',
+    'Try e.g. "EV with good range, max 350k"',
+    'Try e.g. "Small city car, automatic"',
+  ],
+  no: ['Skriv f.eks. "Pendler til jobb, bensin under 150k"'],
+  da: ['Skriv f.eks. "Familie med to børn, stort bagagerum"'],
+  fi: ['Kirjoita esim. "Perheauto, automaattivaihteisto"'],
+};
+
 const WRITE_OWN: Record<string, string> = {
   sv: 'Skriv eget svar',
   en: 'Write your own',
