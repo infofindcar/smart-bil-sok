@@ -17,19 +17,70 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "No cars provided" }), { status: 400 });
   }
 
-  const { error, count } = await supabase
+  // 1. Skriv till avtal_bilar (källtabell för avtalsbilar)
+  const avtalCars = cars.map((c: Record<string, unknown>) => ({
+    reg_nr: c.reg_nr,
+    partner: "bilformedlingen",
+    make: c.make,
+    model: c.model,
+    model_raw: c.model_raw,
+    year: c.year,
+    price: c.price,
+    mileage: c.mileage,
+    fuel_type: c.fuel_type,
+    transmission: c.transmission,
+    body_type: c.body_type,
+    color: c.color,
+    city: c.city,
+    image_thumb_url: c.image_thumb_url,
+    horsepower: c.horsepower,
+    is_active: c.is_active,
+    last_seen_at: c.last_seen_at,
+  }));
+
+  const { error: avtalError } = await supabase
+    .from("avtal_bilar")
+    .upsert(avtalCars, { onConflict: "partner,reg_nr", ignoreDuplicates: false });
+
+  if (avtalError) {
+    console.error("avtal_bilar upsert error:", avtalError.message);
+    return new Response(JSON.stringify({ error: avtalError.message }), { status: 500 });
+  }
+
+  // 2. Skriv till Lovable (sökindex – samma bilar syns i söket)
+  const lovableCars = cars.map((c: Record<string, unknown>) => ({
+    make: c.make,
+    model: c.model,
+    model_raw: c.model_raw,
+    year: c.year,
+    price: c.price,
+    mileage: c.mileage,
+    fuel_type: c.fuel_type,
+    transmission: c.transmission,
+    body_type: c.body_type,
+    color: c.color,
+    city: c.city,
+    image_thumb_url: c.image_thumb_url,
+    horsepower: c.horsepower,
+    is_active: c.is_active,
+    last_seen_at: c.last_seen_at,
+    source: "bilformedlingen",
+    source_listing_id: c.reg_nr,
+    regnr: c.reg_nr,
+  }));
+
+  const { error: lovableError, count } = await supabase
     .from("Lovable")
-    .upsert(cars, { onConflict: "reg_nr", ignoreDuplicates: false })
+    .upsert(lovableCars, { onConflict: "source,source_listing_id", ignoreDuplicates: false })
     .select("id", { count: "exact", head: true });
 
-  if (error) {
-    console.error("Upsert error:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (lovableError) {
+    console.error("Lovable upsert error:", lovableError.message);
+    return new Response(JSON.stringify({ error: lovableError.message }), { status: 500 });
   }
 
   return new Response(JSON.stringify({
     success: true,
     upserted: count ?? cars.length,
-    skipped: 0,
   }), { headers: { "Content-Type": "application/json" } });
 });

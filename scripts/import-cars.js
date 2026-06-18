@@ -1,8 +1,6 @@
 // scripts/import-cars.js
 //
-// Blocket → sync-cars. Filtrerar bort leasing (3-stegs: Blocket-flaggor →
-// pris-heuristik → text-pattern) och privatannonser. Leasingfiltret speglas
-// även i guided-search. Se CLAUDE.md "Viktiga konventioner → Leasingfilter".
+// Hämtar billistings från blocket-api.se och skickar dem till Supabase Edge Function (sync-cars).
 // Berikelse (färg, modelldata) sker separat via enrich-batch.
 //
 // HUR DU ANVÄNDER DET:
@@ -69,13 +67,7 @@ const DEFAULT_AWD_MAKES = new Set(["Subaru"]);
 function parseModelRaw(modelRaw, make) {
   const raw = modelRaw ?? "";
   const hpMatch = raw.match(/(\d{2,4})\s*h[pk]/i);
-  const parsedHp = hpMatch ? parseInt(hpMatch[1]) : null;
-  // Sanity-clamp: bilar med under 50 eller över 1000 HK är parsing-fel
-  // (t.ex. "15hk" från trunkerad titel, eller "1250 HK" supercar — vi
-  // accepterar upp till 1000). Sätt till null så frontend visar "–"
-  // istället för en absurd siffra.
-  const horsepower =
-    parsedHp !== null && parsedHp >= 50 && parsedHp <= 1000 ? parsedHp : null;
+  const horsepower = hpMatch ? parseInt(hpMatch[1]) : null;
 
   let drivetrain = null;
   if (/quattro|xdrive|4matic|4motion|4x4|\bawd\b|\b4wd\b|allrad|syncro|e-awd|\b4M\b/i.test(raw)) {
@@ -148,7 +140,6 @@ async function main() {
   let leasingCount = 0;
   let privateCount = 0;
   let noImageCount = 0;
-  let noRegnoCount = 0;
 
   for (let i = 0; i < PRICE_INTERVALS.length; i++) {
     const [priceMin, priceMax] = PRICE_INTERVALS[i];
@@ -168,48 +159,14 @@ async function main() {
       if (seen.has(sid)) continue;
       seen.add(sid);
 
-      // Filtrera bort leasing – officiella Blocket-flaggor
+      // Filtrera bort leasing
       if (car.sales_form === 5 || car.ad_type === 200) {
         leasingCount++;
         continue;
       }
 
-      // Heuristik-fallback 1: orimligt lågt pris = trolig leasing-månadskostnad
-      const priceAmount = car.price?.amount ?? 0;
-      if (priceAmount > 0 && priceAmount < 20000) {
-        leasingCount++;
-        continue;
-      }
-
-      // Heuristik-fallback 2: text-baserade leasingmarkörer i model_specification
-      const spec = String(car.model_specification ?? "");
-      if (/(leasbar|leasebar|leas\.bar|privatleas|business\s*lease|lease\s+fr[åa]n|leasing\s+fr[åa]n|lease\s+fr\.|leasing\s+fr\.)/i.test(spec)) {
-        leasingCount++;
-        continue;
-      }
-
-      // Heuristik 2: pris < 12 000 kr + leasing/månads-text i titeln betyder
-      // att 'priset' faktiskt är månadsbeloppet, inte köp-pris. Återförsäljaren
-      // har då glömt sätta sales_form=5/ad_type=200. Reella köpannonser med
-      // hög prisetikett som råkar nämna "kr/mån"-finansiering filtreras inte.
-      const rawSpec = (car.model_specification ?? "").toString();
-      const priceForLeaseCheck = car.price?.amount ?? Number.MAX_SAFE_INTEGER;
-      if (
-        priceForLeaseCheck < 12000 &&
-        /leasing|kr\s*\/\s*m[åa]n|:-?\s*\/\s*m[åa]n|\/\s*m[åa]n/i.test(rawSpec)
-      ) {
-        leasingCount++;
-        continue;
-      }
-
-      // Heuristik 3: starka leasingsignaler i titeln blockeras OAVSETT pris.
-      // Många återförsäljare sätter ett "fake purchase price" på 200-400k kr
-      // (residualvärde) men annonsen är egentligen ren leasing — då slinker
-      // den igenom heuristik 1 & 2. Blocker explicit på vanliga leasing-
-      // markörer som ingen seriös köpannons skulle ha i titeln.
-      const STRONG_LEASE_RE =
-        /(\/m[åa]n|p-leasing|p-lease|p\.lease|\bpl\s*fr\b|\bpl\s*[:.]|op-leasing|op\s*leasing|opleasing|businessleas|business\s+lease|privatleas|leasingkampanj|leasing\s+fr|avbet)/i;
-      if (STRONG_LEASE_RE.test(rawSpec)) {
+      // Heuristik-fallback: ny bil med månadsbelopp (trolig leasing)
+      if ((car.year ?? 0) >= 2025 && (car.price?.amount ?? 0) < 10000) {
         leasingCount++;
         continue;
       }
@@ -226,13 +183,10 @@ async function main() {
         continue;
       }
 
-      // Filtrera bort bilar utan regnr — krävs för Transportstyrelsen-länken
-      // och unik identifiering. Privatannonser och vissa nybilar saknar det.
-      const regno = typeof car.regno === "string" ? car.regno.trim() : "";
-      if (regno.length < 4) {
-        noRegnoCount++;
-        continue;
-      }
+      // Skippa Bilförmedlingen – de hanteras via avtal_bilar/sync-bilformedlingen
+      // Kontrollerar båda stavningarna (med och utan ö) eftersom Blocket kan variera
+      const orgLower = car.organisation_name?.toLowerCase() ?? '';
+      if (orgLower.includes('bilförmedlingen') || orgLower.includes('bilformedlingen')) continue;
 
       const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make);
 
@@ -271,7 +225,6 @@ async function main() {
   console.log(`  Leasing filtrerade:  ${leasingCount}`);
   console.log(`  Privat filtrerade:   ${privateCount}`);
   console.log(`  Utan bild:           ${noImageCount}`);
-  console.log(`  Utan regnr:          ${noRegnoCount}`);
   console.log(`  Skickar till sync:   ${allMapped.length}`);
 
   if (allMapped.length === 0) {

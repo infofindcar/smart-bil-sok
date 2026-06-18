@@ -1,8 +1,11 @@
 name: Synka Bilförmedlingen
 
 on:
+  # Kör varje dag kl 07:30 UTC (feedet uppdateras kl 07:00 UTC)
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "30 7 * * *"
+
+  # Manuell körning: GitHub UI > Actions > Synka Bilförmedlingen > Run workflow
   workflow_dispatch:
 
 jobs:

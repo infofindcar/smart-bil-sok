@@ -1,19 +1,27 @@
 // scripts/import-bilformedlingen.js
 //
 // Hämtar billistingar från Bilförmedlingen CSV-export och importerar till Supabase.
-// Filtrerar endast Personbil. Använder reg_nr för att undvika dubletter.
+// Filtrerar Personbil och Lätt transportbil. Använder reg_nr för att undvika dubletter.
+//
+// Kör manuellt:
+//   SYNC_SECRET=... node scripts/import-bilformedlingen.js
+//
+// Kör automatiskt via GitHub Actions: .github/workflows/sync-bilformedlingen.yml
 
 const FEED_URL = 'https://www.bilformedlingen.com/export/wayke/wayke.txt';
 const EDGE_URL = 'https://bvqveqoschdpenvbxygj.supabase.co/functions/v1/sync-bilformedlingen';
 const SYNC_SECRET = process.env.SYNC_SECRET;
 
+// Mappning bränsle
 function mapFuel(f) {
   if (!f || f === 'Ingen information') return null;
-  if (f.toLowerCase().includes('el')) return 'El';
-  if (f.toLowerCase().includes('hybrid')) return 'Hybrid';
-  return f;
+  const lower = f.toLowerCase();
+  if (lower.includes('hybrid')) return 'Hybrid'; // före 'el' – "Hybrid el/bensin" innehåller 'el'
+  if (lower.includes('el')) return 'El';
+  return f; // Bensin, Diesel
 }
 
+// Mappning färg – fuzzy match mot giltiga färger
 const COLOR_MAP = {
   svart: 'Svart', black: 'Svart',
   vit: 'Vit', white: 'Vit',
@@ -38,15 +46,18 @@ function mapColor(raw) {
   return null;
 }
 
+// Extrahera hästkrafter ur modellsträngen, t.ex. "170hk" → 170
 function extractHp(modelStr) {
   const m = modelStr.match(/(\d+)\s*hk/i);
   return m ? parseInt(m[1]) : null;
 }
 
+// Extrahera stad ur "Bilförmedlingen Helsingborg" → "Helsingborg"
 function extractCity(dealer) {
   return dealer.replace(/bilf[öo]rmedlingen\s*/i, '').trim() || null;
 }
 
+// Rensa modellnamn (ta bort hk-suffix och utrustning)
 function cleanModel(modelStr) {
   return modelStr
     .replace(/\s+\d+\s*hk.*/i, '')
@@ -54,13 +65,14 @@ function cleanModel(modelStr) {
     .trim();
 }
 
+// Mappa karosstyp
 function mapBodyType(raw) {
   if (!raw) return null;
   const lower = raw.toLowerCase();
   if (lower.includes('suv') || lower.includes('crossover')) return 'SUV';
   if (lower.includes('kombi')) return 'Kombi';
   if (lower.includes('sedan')) return 'Sedan';
-  if (lower.includes('halvkombi')) return 'Halvkombi';
+  if (lower.includes('halvkombi') || lower.includes('5-d')) return 'Halvkombi';
   if (lower.includes('cab') || lower.includes('cabriolet') || lower.includes('roadster')) return 'Cab';
   if (lower.includes('coup')) return 'Coupé';
   if (lower.includes('pickup')) return 'Pickup';
@@ -74,11 +86,14 @@ async function main() {
 
   const text = await res.text();
   const lines = text.split('\n').filter(l => l.trim());
+
+  // Hoppa över header-raden
   const rows = lines.slice(1);
 
   const cars = [];
 
   for (const line of rows) {
+    // Dela på max 20 delar (sista fältet = bilder, kan innehålla kommatecken)
     const parts = line.split(';');
     if (parts.length < 19) continue;
 
@@ -89,46 +104,68 @@ async function main() {
       carInfo, dealer, carImages,
     ] = parts;
 
-    if (carType?.trim() !== 'Personbil') continue;
+    // Filtrera: personbilar och lätta transportbilar
+    const carTypeStr = carType?.trim();
+    if (carTypeStr !== 'Personbil' && carTypeStr !== 'Lätt transportbil') continue;
 
+    // Hoppa över utan regnr
     const regNr = carRegNr?.trim();
     if (!regNr) continue;
 
+    // Första bildbild-URL
     const firstImage = carImages?.split(',')[0]?.trim() || null;
+
+    const price = parseInt(carPrice) || null;
+    const mileage = parseInt(carIndicatorMil) || null;
+    const year = parseInt(carYearModel) || null;
+    const hp = extractHp(carModel || '');
 
     cars.push({
       reg_nr: regNr,
+      source: 'bilformedlingen',
+      source_listing_id: regNr,
       make: carBrand?.trim() || null,
       model: cleanModel(carModel?.trim() || ''),
       model_raw: carModel?.trim() || null,
-      year: parseInt(carYearModel) || null,
-      price: parseInt(carPrice) || null,
-      mileage: parseInt(carIndicatorMil) || null,
+      year,
+      price,
+      mileage,
       fuel_type: mapFuel(carFuel?.trim()),
       transmission: carGearBox?.trim() || null,
       body_type: mapBodyType(carBody?.trim()),
       color: mapColor(carColour?.trim()),
       city: extractCity(dealer?.trim() || ''),
       image_thumb_url: firstImage,
-      horsepower: extractHp(carModel || ''),
+      horsepower: hp,
       is_active: true,
       last_seen_at: new Date().toISOString(),
     });
   }
 
-  console.log(`Hittade ${cars.length} personbilar att importera`);
-  if (cars.length === 0) { console.log('Inga bilar.'); return; }
+  console.log(`Hittade ${cars.length} fordon att importera`);
 
+  if (cars.length === 0) {
+    console.log('Inga fordon att importera.');
+    return;
+  }
+
+  // Skicka till edge function
   const r = await fetch(EDGE_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-sync-secret': SYNC_SECRET || '' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-sync-secret': SYNC_SECRET || '',
+    },
     body: JSON.stringify({ cars }),
   });
 
-  if (!r.ok) { const err = await r.text(); throw new Error(`Edge function fel ${r.status}: ${err}`); }
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(`Edge function fel ${r.status}: ${err}`);
+  }
 
   const data = await r.json();
-  console.log(`Klart: ${data.upserted} bilar upsertade`);
+  console.log(`Klart: ${data.upserted} fordon upsertade`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
