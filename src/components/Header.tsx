@@ -90,7 +90,7 @@ export const Header = () => {
             Kontakta oss
           </button>
           <ThemeToggle />
-          <Button size="sm" variant="gradient" onClick={scrollToSearch} className="rounded-xl">
+          <Button size="sm" variant="default" onClick={scrollToSearch} className="rounded-full px-5">
             Hitta din bil
           </Button>
         </nav>
@@ -145,7 +145,7 @@ export const Header = () => {
           </button>
           <div className="flex items-center gap-3 pt-3 border-t border-border/20">
             <ThemeToggle className="text-foreground" />
-            <Button size="sm" variant="gradient" onClick={scrollToSearch} className="flex-1 rounded-xl text-sm h-11">
+            <Button size="sm" variant="default" onClick={scrollToSearch} className="flex-1 rounded-full text-sm h-11">
               Hitta din bil
             </Button>
           </div>

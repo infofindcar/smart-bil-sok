@@ -30,16 +30,7 @@ const benefits = [
 
 export const WhyFindCar = () => {
   return (
-    <section className="relative py-20 md:py-32 px-4 bg-section-alt overflow-hidden">
-      {/* subtle radial glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none opacity-60"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 40% at 50% 0%, hsl(var(--primary) / 0.08), transparent 60%)',
-        }}
-      />
+    <section className="relative py-20 md:py-28 px-4 bg-section-alt border-y border-border">
       <div className="relative max-w-6xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-14 md:mb-20">

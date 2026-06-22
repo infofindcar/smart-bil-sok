@@ -6,7 +6,6 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { AuroraBackground } from '@/components/AuroraBackground';
 import { SEO } from '@/components/SEO';
 
 // Lazy-load below-fold sections
@@ -14,7 +13,6 @@ const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) =
 const HowItWorks = lazy(() => import('@/components/HowItWorks').then((m) => ({ default: m.HowItWorks })));
 const WhyFindCar = lazy(() => import('@/components/WhyFindCar').then((m) => ({ default: m.WhyFindCar })));
 const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ })));
-const CtaBanner = lazy(() => import('@/components/CtaBanner').then((m) => ({ default: m.CtaBanner })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 
 const STORAGE_KEY = 'findcar-search-state';
@@ -135,77 +133,53 @@ const Index = () => {
       />
       <Header />
 
-      {/* Landing — search-first with aurora background */}
-      <AuroraBackground>
-        <section
-          data-search-section
-          className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 pt-16 md:pt-24 pb-10 md:pb-12"
-        >
-          <div className="relative z-10 max-w-3xl mx-auto w-full">
-            <ScrollReveal>
-              <div className="text-center mb-7 md:mb-10">
-                <span className="inline-flex eyebrow mb-4 md:mb-6 mx-auto justify-center text-[10px] md:text-xs">
-                  <span className="md:hidden">Vi säljer inte bilar. Vi hittar din.</span>
-                  <span className="hidden md:inline">Driven av Clutch AI</span>
-                </span>
-                <h1 className="display-headline text-[2rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
-                  Hitta din
-                  <br className="md:hidden" />
-                  <span className="text-gradient"> rätta bil.</span>
-                  <span className="hidden md:inline"><br />just för dig.</span>
-                </h1>
-                <p className="text-muted-foreground mt-3 md:mt-6 max-w-md md:max-w-xl mx-auto text-[14px] md:text-lg leading-relaxed font-light">
-                  <span className="md:hidden">Berätta om din vardag — vi gör jobbet.</span>
-                  <span className="hidden md:inline">Berätta om din vardag — vi hittar rätt bil bland tusentals annonser. Helt gratis, utan provision.</span>
-                </p>
-              </div>
-            </ScrollReveal>
+      {/* Advisor first — Anyfin / Wise style split layout, no hero image */}
+      <section
+        data-search-section
+        className="relative pt-24 md:pt-28 pb-14 md:pb-20 px-5 md:px-8"
+      >
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+          {/* Left: pitch */}
+          <ScrollReveal className="lg:col-span-5 lg:pt-6">
+            <span className="eyebrow mb-5 text-[11px]">Bilrådgivning · gratis</span>
+            <h1 className="display-headline text-[2.5rem] sm:text-5xl lg:text-[3.75rem] mt-3">
+              Hitta rätt bil <span className="text-gradient">för dig</span>.
+            </h1>
+            <p className="text-muted-foreground mt-5 max-w-md text-base md:text-lg leading-relaxed">
+              Jämför bilar utifrån budget, behov, ägandekostnad och risk. Oberoende, datadrivet — helt utan provision.
+            </p>
+            <ul className="mt-7 space-y-3 text-[15px] text-foreground/80">
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                {carCount !== null ? (
+                  <><span className="tabular-nums font-semibold text-foreground">{formatCount(displayCount)}</span>&nbsp;bilar uppdaterade dagligen</>
+                ) : (
+                  <>Tusentals bilar uppdaterade dagligen</>
+                )}
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                Oberoende — vi tjänar inget på ditt val
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                0 % provision, alltid gratis
+              </li>
+            </ul>
+          </ScrollReveal>
 
-            <ScrollReveal delay={150}>
-              <div className="relative">
-                <div className="search-glow" aria-hidden="true" />
-                <GuidedSearch
-                  onResults={handleResults}
-                  onScrollToResults={() =>
-                    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }
-                  onLanguageChange={setLanguage}
-                />
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={300}>
-              <div className="mt-6 md:mt-8 flex items-center justify-center gap-3 md:gap-8 text-[10px] md:text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-medium">
-                <span className="flex items-center gap-1.5">
-                  {carCount !== null ? (
-                    <><span className="text-foreground/90 tabular-nums font-semibold normal-case tracking-normal">{formatCount(displayCount)}</span>&nbsp;bilar</>
-                  ) : (
-                    <>tusentals bilar</>
-                  )}
-                </span>
-                <span className="opacity-30">·</span>
-                <span>Gratis</span>
-                <span className="opacity-30">·</span>
-                <span>0 % provision</span>
-              </div>
-            </ScrollReveal>
-          </div>
-
-          {/* Scroll hint — minimal vertical line */}
-          <a
-            href="#how-it-works"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="hidden md:flex absolute bottom-8 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground/50 hover:text-foreground transition-colors flex-col items-center gap-3"
-            aria-label="Skrolla för mer"
-          >
-            <span>Skrolla</span>
-            <span className="block w-px h-10 bg-gradient-to-b from-muted-foreground/40 to-transparent" />
-          </a>
-        </section>
-      </AuroraBackground>
+          {/* Right: advisor module */}
+          <ScrollReveal delay={120} className="lg:col-span-7 w-full">
+            <GuidedSearch
+              onResults={handleResults}
+              onScrollToResults={() =>
+                resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              onLanguageChange={setLanguage}
+            />
+          </ScrollReveal>
+        </div>
+      </section>
 
       {/* Results */}
       {showResults && cars.length > 0 && (() => {
@@ -241,7 +215,6 @@ const Index = () => {
         <section id="faq">
           <FAQ />
         </section>
-        <CtaBanner />
       </Suspense>
       <Footer />
 
