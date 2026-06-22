@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,30 +6,31 @@
 
 @layer base {
   :root {
-    --background: 45 25% 95%;
-    --foreground: 205 55% 20%;
-    --card: 45 20% 98%;
-    --card-foreground: 205 55% 20%;
-    --popover: 45 20% 98%;
-    --popover-foreground: 205 55% 20%;
-    --primary: 190 70% 38%;
+    /* Anyfin / Wise inspired cream + fintech blue */
+    --background: 40 33% 97%;          /* #FAF8F3 */
+    --foreground: 222 18% 9%;          /* near-black */
+    --card: 0 0% 100%;
+    --card-foreground: 222 18% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 18% 9%;
+    --primary: 226 88% 56%;            /* fintech blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 205 60% 25%;
+    --secondary: 226 50% 22%;          /* deep navy */
     --secondary-foreground: 0 0% 100%;
-    --muted: 200 15% 85%;
-    --muted-foreground: 205 40% 35%;
-    --accent: 190 40% 92%;
-    --accent-foreground: 205 55% 20%;
+    --muted: 40 24% 93%;
+    --muted-foreground: 220 9% 42%;
+    --accent: 226 80% 96%;
+    --accent-foreground: 226 60% 22%;
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 200 15% 85%;
-    --input: 200 15% 85%;
-    --ring: 190 70% 38%;
-    --radius: 0.75rem;
-    --chat-bubble: 45 20% 94%;
-    --step-icon: 205 60% 25%;
-    --testimonial-bg: 45 20% 94%;
-    --section-alt: 45 20% 92%;
+    --border: 36 18% 88%;              /* hairline */
+    --input: 36 18% 88%;
+    --ring: 226 88% 56%;
+    --radius: 1rem;
+    --chat-bubble: 40 24% 95%;
+    --step-icon: 226 88% 56%;
+    --testimonial-bg: 40 24% 95%;
+    --section-alt: 40 28% 95%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -41,29 +42,29 @@
   }
 
   .dark {
-    --background: 205 55% 12%;
-    --foreground: 45 20% 95%;
-    --card: 205 50% 15%;
-    --card-foreground: 45 20% 95%;
-    --popover: 205 50% 15%;
-    --popover-foreground: 45 20% 95%;
-    --primary: 190 75% 50%;
-    --primary-foreground: 205 55% 10%;
-    --secondary: 190 60% 40%;
-    --secondary-foreground: 45 20% 90%;
-    --muted: 205 40% 20%;
-    --muted-foreground: 200 20% 65%;
-    --accent: 190 40% 20%;
-    --accent-foreground: 45 20% 95%;
+    --background: 222 30% 7%;
+    --foreground: 40 24% 95%;
+    --card: 222 25% 11%;
+    --card-foreground: 40 24% 95%;
+    --popover: 222 25% 11%;
+    --popover-foreground: 40 24% 95%;
+    --primary: 226 95% 65%;
+    --primary-foreground: 222 30% 8%;
+    --secondary: 226 40% 28%;
+    --secondary-foreground: 40 24% 95%;
+    --muted: 222 18% 18%;
+    --muted-foreground: 220 12% 65%;
+    --accent: 226 40% 18%;
+    --accent-foreground: 40 24% 95%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 205 40% 20%;
-    --input: 205 40% 20%;
-    --ring: 190 75% 50%;
-    --chat-bubble: 205 40% 18%;
-    --step-icon: 190 75% 50%;
-    --testimonial-bg: 205 40% 18%;
-    --section-alt: 205 50% 14%;
+    --border: 222 18% 20%;
+    --input: 222 18% 20%;
+    --ring: 226 95% 65%;
+    --chat-bubble: 222 18% 16%;
+    --step-icon: 226 95% 65%;
+    --testimonial-bg: 222 18% 16%;
+    --section-alt: 222 25% 10%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
