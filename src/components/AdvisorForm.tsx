@@ -173,7 +173,7 @@ export const AdvisorForm = ({ onResults, onScrollToResults }: AdvisorFormProps) 
           <ChipGroup
             options={PRIORITIES.map((p) => ({ key: p.key, label: p.label }))}
             selected={priorities}
-            onToggle={(v) => toggle(priorities, setPriorities as (a: string[]) => void, v) as unknown as void}
+            onToggle={(v) => toggle(priorities, setPriorities, v as Priority)}
           />
         </Field>
       </div>
