@@ -652,45 +652,7 @@ html::-webkit-scrollbar-thumb:hover {
   inherits: false;
 }
 
-.clutch-shell {
-  position: relative;
-}
-
-.clutch-shell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--shell-angle),
-    hsl(190 95% 60% / 0.85) 0deg,
-    hsl(190 95% 60% / 0) 70deg,
-    hsl(270 80% 65% / 0.75) 180deg,
-    hsl(270 80% 65% / 0) 250deg,
-    hsl(320 85% 62% / 0.85) 360deg
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-  animation: shell-border-spin 9s linear infinite;
-  z-index: 5;
-}
-
-.clutch-shell.is-focused::before {
-  animation-duration: 4s;
-}
-
-@keyframes shell-border-spin {
-  to { --shell-angle: 360deg; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .clutch-shell::before { animation: none !important; }
-}
+.clutch-shell { position: relative; }
 
 
 /* ========== Tesla/Porsche-style premium utilities ========== */
