@@ -153,7 +153,7 @@ html::-webkit-scrollbar-thumb:hover {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(245 90% 78%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
