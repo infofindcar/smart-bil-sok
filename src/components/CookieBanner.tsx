@@ -36,14 +36,12 @@ export const CookieBanner = () => {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up">
-      <div className="max-w-2xl mx-auto bg-card rounded-2xl shadow-warm-lg border border-border p-5">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 fade-in">
+      <div className="max-w-2xl mx-auto bg-card rounded-lg border border-border p-5">
         <div className="flex items-start gap-3 mb-3">
-          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-            <Cookie className="h-4 w-4 text-primary" />
-          </div>
+          <Cookie className="h-4 w-4 text-foreground mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold mb-1">Vi använder cookies</h3>
+            <h3 className="text-sm font-medium mb-1 text-foreground">Cookies</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Nödvändiga cookies används alltid för att tjänsten ska fungera. Vi använder
               också anonym statistik för att förbättra Clutch och sökresultaten — du kan
@@ -51,9 +49,9 @@ export const CookieBanner = () => {
             </p>
             <a
               href="/privacy"
-              className="text-xs text-primary hover:underline inline-block mt-1.5"
+              className="text-xs text-foreground underline inline-block mt-1.5"
             >
-              Läs vår integritetspolicy →
+              Läs vår integritetspolicy
             </a>
           </div>
         </div>
