@@ -27,8 +27,7 @@ export const HowItWorks = () => {
       <div className="max-w-6xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-14 md:mb-20">
-            <span className="eyebrow mb-5 mx-auto justify-center">Processen</span>
-            <h2 className="display-headline text-4xl md:text-5xl lg:text-6xl mt-4">
+            <h2 className="font-serif text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.05] tracking-tight">
               Tre steg till din nästa bil.
             </h2>
           </div>

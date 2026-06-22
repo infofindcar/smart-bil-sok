@@ -34,11 +34,10 @@ export const WhyFindCar = () => {
       <div className="relative max-w-6xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-14 md:mb-20">
-            <span className="eyebrow mb-5 mx-auto justify-center">Varför FindCar</span>
-            <h2 className="display-headline text-4xl md:text-5xl lg:text-6xl mt-4">
-              Bilköp, <span className="text-gradient">utan agenda</span>.
+            <h2 className="font-serif text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.05] tracking-tight">
+              Bilköp, <em className="italic font-normal">utan agenda</em>.
             </h2>
-            <p className="text-muted-foreground mt-5 max-w-xl mx-auto text-base md:text-lg font-light leading-relaxed">
+            <p className="text-muted-foreground mt-5 max-w-xl mx-auto text-base md:text-lg leading-relaxed">
               Vi tjänar inga pengar på vilken bil du väljer. Det betyder att vårt enda mål är att hjälpa dig välja rätt.
             </p>
           </div>
