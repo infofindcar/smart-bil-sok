@@ -81,15 +81,13 @@
     @apply border-border;
   }
   html {
-    background-color: #1a2332;
+    background-color: hsl(40 33% 97%);
   }
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  h1, h2, h3 {
-    @apply font-sans;
-  }
+  h1, h2, h3 { @apply font-sans; }
 }
 
 /* Custom animations */
