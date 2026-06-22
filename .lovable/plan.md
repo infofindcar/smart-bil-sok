@@ -1,107 +1,71 @@
-## Vision
+## Hero-loop video — cinematisk bro-scen i Remotion
 
-FindCar ska kännas som **Linear möter Mercury**: ett lugnt, ljust, tekniskt verktyg byggt av experter. Inga gimmicks, inga gradients, ingen AI-glöd. Hela startsidan är **en enda sak**: sökrutan, centrerad på en pappersvit yta. Allt annat är borta.
+Vi bygger en kort cinematisk loop helt i kod (Remotion → MP4) som ersätter nuvarande `hero-cars-night-v2.mp4`. Allt renderas pixelperfekt med garanterat korrekt "FINDCAR"-text på reg-skylten.
 
-## Designspråk
-
-**Palett (Paper & Ink, ljust)**
-- `--background: 40 20% 97%` (#f7f5f1, varm off-white "paper")
-- `--foreground: 0 0% 8%` (#141414, near-black)
-- `--muted-foreground: 0 0% 42%` (sekundär text)
-- `--border: 36 12% 88%` (#e4e1db, hairlines)
-- `--card: 0 0% 100%` (rena vita kort)
-- `--primary: 0 0% 10%` (svart knapp)
-- `--accent: 0 0% 96%` (chip-hover)
-- Inga blå, inga indigo, inga gradients. En enda accent: svart.
-
-**Typografi** — `@fontsource/inter-tight` (rubriker, weight 500, tracking -0.03em) + `@fontsource/inter` (body, 400/500, tabular nums på siffror). Inga serifer.
-
-**Form**
-- Border radius: 6px på inputs/knappar, 8px på kort. Inget 14px+.
-- Borders: alltid 1px hairline i `--border`. Inga skuggor någonstans.
-- Spacing: generös. Luft är designen.
-
-**Rörelse**
-- Bara 200ms opacity-fade på mount. En 150ms border-color transition på focus. Inget annat.
-- Bort: aurora, glow, shimmer, float, pulse, conic-borders, card-pop, scroll-bounce, mic-glow, hero-cta-glow, findcar-shimmer-sweep.
-
-## Sidstruktur — `/` (efter PasswordGate)
+### Koncept & timing
 
 ```text
-┌──────────────────────────────────────────────────┐
-│ FindCar                          Om   Kontakt    │  56px, hairline botten
-├──────────────────────────────────────────────────┤
-│                                                  │
-│                                                  │
-│                                                  │
-│         Din objektiva bilrådgivare.              │  Inter Tight 500, 56px,
-│                                                  │  tracking -0.03em, centrerad
-│         Beskriv bilen du letar efter             │  Inter 400, 17px, muted
-│         så hittar vi den åt dig.                 │
-│                                                  │
-│   ┌────────────────────────────────────────┐    │
-│   │ "Familjebil under 250 000, automat…"   │    │  stor textarea, vit, 1px border,
-│   │                                        │    │  fokus = border blir svart
-│   │                              Sök  →    │    │
-│   └────────────────────────────────────────┘    │
-│                                                  │
-│   Familjebil ~250k   Sportig under 400k          │  chips, hairline border,
-│   Eldrift med dragkrok   SUV automat             │  Inter 14px, hover = fyll svart
-│                                                  │
-│                                                  │
-├──────────────────────────────────────────────────┤
-│ © FindCar · Framtagen på KTH        Integritet   │  tunn footer
-└──────────────────────────────────────────────────┘
+0s ─────► 5s ─────────► 10s ──► loop
+[bil åker förbi]   [tom bro + logga + tagline]
 ```
 
-Centrerad vertikalt i viewport (min-height calc). Inget under att scrolla till. Inga sektioner. Inga bilar. Inga ikoner. Bara den här ytan.
+- **0–5s**: Premium-coupé i sidovy glider långsamt över en mörk bro från höger till vänster. Bron har subtila gatlampor, lätt dimma och reflektioner. Reg-skylten visar tydligt **FINDCAR** i klassisk EU-stil (vit/gul bakgrund, svart text). Inga märkeslogos på bilen — endast formgiven anonym premium-coupé-siluett (lång motorhuv, låg taklinje, runda strålkastare/bakljus).
+- **5–10s**: Bilen har försvunnit ut ur frame. Bron och bakgrunden fortsätter röra sig (parallax på lampor, dimrörelse, lätt kamerasväng) — det ser inte ut som en frusen bild. **FindCar-loggan** tonar in stort i mitten (Find i mörkblå #1e3a8a, Car i cyan #22d3ee), och under den **"Din objektiva bilrecensent"** i tunn vit typografi.
+- **10s**: Loop tillbaka till 0s — bilen kommer in från höger igen.
 
-När man skickar första meddelandet → GuidedSearch expanderar **in place** till conversation-mode (befintlig logik), inga andra UI-ändringar.
+### Visuell direktion
 
-## Filer som ändras
+- **Färgpalett**: bg #0a0f1a → #1a1a2e (gradient), bil mörk antracit #1c1c20 med kalla blå reflektioner, lampor varmvit #fff8e0, bakljus röd #ff2a2a, accent cyan #22d3ee.
+- **Bil**: byggd med SVG/CSS-shapes — sidovy av en lång coupé (tänk Porsche 911-proportioner men generiska former), inga märkesdetaljer. Strålkastare och bakljus glöder med radial gradient + lätt motion-blur via stretch.
+- **Bro**: lager med horisontella linjer (räcke + vägbana), gatlampor som rör sig från vänster→höger (parallax åt motsatt håll mot bilens rörelse), subtilt stjärnhimmel-/dimskikt i bakgrunden.
+- **Typografi**: Inter (Google Fonts) — bold för loggan, light för tagline.
+- **Motion**: bil rör sig med svag ease-out, lampor med konstant linjär hastighet (skapar djupkänsla), logga + tagline fade+scale-in med spring.
 
-1. **`src/index.css`** — riv allt tema-relaterat. Skriv om från scratch: nya HSL-tokens (ljus paper), en `.hairline`, en `.eyebrow`. Behåll bara `chat-scrollbar`, `bubble-in`, reduced-motion. Bort: aurora-*, search-glow, clutch-shell + ::before, findcar-*, hero-*, card-pop-*, shimmer, float, glow, mic-*, scroll-bounce, online-pulse, wave-bounce, avatar-thinking, premium-page-bg, step-numeral, hero-gradient, text-gradient.
-2. **`src/App.tsx`** — `ThemeProvider defaultTheme="light" forcedTheme="light"`.
-3. **`src/main.tsx`** — installera + importera `@fontsource/inter-tight` (400,500,600) och `@fontsource/inter` (400,500). Ta bort Google Fonts-import från index.css.
-4. **`tailwind.config.ts`** — `fontFamily: { sans: ['Inter', ...], display: ['Inter Tight', ...] }`. Behåll semantiska tokens, ta bort gamla custom-färger som inte används.
-5. **`index.html`** — `<html style="background:#f7f5f1">` (iOS bounce).
-6. **`src/pages/Index.tsx`** — total omskrivning. Bort: `AuroraBackground`, `SearchAnimation`, video-bg, KTH-text-overlay, scroll-arrow, "Senast tillagda", `HowItWorks`, `WhyFindCar`, `Testimonials`, `FAQ`, `CtaBanner`, `StickyMobileCTA`. Kvar: `Header`, centrerad rubrik + underrubrik + `GuidedSearch`, `Footer`. Centrera med flex min-h-[calc(100svh-header-footer)].
-7. **`src/components/Header.tsx`** — tunn 56px header, vit/paper, hairline botten, logotext "FindCar" i Inter Tight 500 + 2 länkar i Inter 14px muted.
-8. **`src/components/Footer.tsx`** — en rad, hairline topp, Inter 13px muted.
-9. **`src/components/GuidedSearch.tsx`** — visuell omstart (logik orörd):
-   - Bort `clutch-shell` (animerad gradient-border), `clutch-avatar` glow, `search-glow`, `online-dot`, `wave-dot`, `avatar-thinking`, `bubble-user/assistant` gradients.
-   - Ny ruta: vit bakgrund, 1px hairline, 6px radius, ingen skugga. Focus = border `--foreground`.
-   - Textarea: Inter 16px, min 64px höjd, auto-grow.
-   - Submit-knapp: liten svart pill nere höger, "Sök →" i Inter 14px 500, vit text. Hover = 90% opacity.
-   - Chips under: 4 förslag, Inter 14px, hairline border, padding 8x14, hover = svart fyll vit text. 150ms transition.
-   - Conversation-mode (efter första msg): assistant-text utan bubbla (bara text på paper-bg), user-text i svart pill höger. Avatar = liten svart cirkel med "C" istället för Sparkles-glow.
-10. **`src/components/PasswordGate.tsx`** — samma paper-tema: centrerad, "FindCar" i Inter Tight 32px, hairline input, svart knapp. **Logik orörd** (kod kvar).
-11. **`src/components/CookieBanner.tsx`** — hairline, vit, ingen skugga.
-12. **`src/components/CarCard.tsx`** — uppdatera till ljus stil (vit kort, hairline, tabular nums på pris) **endast så att den fungerar i sökresultaten** — vi visar den inte på `/` längre.
-13. **`src/components/ui/button.tsx`** — uppdatera default-variant till svart fyll vit text utan skugga, ghost = transparent + hairline border. Bort: alla custom premium-varianter.
+### Teknisk plan
 
-## Filer som tas bort från `/` (inte raderas, bara inte importeras)
+**1. Remotion-projekt** (`remotion/`)
+- `bun init`, installera `remotion`, `@remotion/cli`, `@remotion/renderer`, `@remotion/bundler`, `@remotion/google-fonts`, `@remotion/compositor-linux-x64-musl`, react/react-dom/typescript.
+- Fixa compositor-binär (musl → gnu) + symlinka ffmpeg/ffprobe enligt skill-rules.
+- `tsconfig.json` + `src/index.ts` enligt skill-mall.
 
-`AuroraBackground`, `SearchAnimation`, `CtaBanner`, `StickyMobileCTA`, `HowItWorks`, `WhyFindCar`, `Testimonials`, `FAQ`, hero-video assets. Komponenterna ligger kvar för ev. framtida bruk men är inte i flödet.
+**2. Composition**
+- `id: "hero-loop"`, **1920×1080**, **30 fps**, **300 frames** (10s).
 
-## Vad som INTE rörs
+**3. Komponenter**
+```text
+remotion/src/
+  index.ts
+  Root.tsx
+  HeroLoop.tsx              ← orkestrerar lager
+  components/
+    BridgeBackground.tsx    ← gradient sky + bro-räcke + parallax-lampor (synlig hela tiden)
+    CoupeCar.tsx            ← SVG-bil med FINDCAR-skylt, animerad x-position 0-150f
+    LogoReveal.tsx          ← FindCar-logo + tagline, fade-in 150-300f
+```
 
-- PasswordGate-**logik** (kod-verifiering kvar).
-- All söklogik, edge-functions, Supabase, conversation-state, sessionStorage, analytics.
-- CarDetail, CarComparison, Admin, Privacy, Terms (egna sidor, oförändrade).
-- Mobile UX-fixes (100svh, iOS keyboard, haptics) — kvar i `GuidedSearch`.
+**4. Animationer (alla via `useCurrentFrame()` + `interpolate`/`spring`)**
+- Bil: `x` interpolerar från `width + 400` → `-800` över frame `0–150` med ease-out. Strålkastar-glow pulserar lätt med `Math.sin(frame/8)`.
+- Lampor på bron: kontinuerlig translateX-loop (modulo) — alltid i rörelse, även under logo-fasen.
+- Dimma: två semi-transparenta lager som driver i motsatta riktningar.
+- Logga: `opacity 0→1` + `scale 0.92→1` mellan frame 165–185 (spring damping 18). Tagline fade in frame 185–205.
+- Logga ut: `opacity 1→0` mellan frame 285–300 så loopen blir sömlös.
 
-## Acceptanskriterier
+**5. Render**
+- `scripts/render-remotion.mjs` (programmatisk, `chrome-for-testing`, `muted: true`).
+- Output: `src/assets/hero-loop.mp4` (kopieras in i React-projektet).
+- Spot-check med `bunx remotion still` på frame 60 (bil mitt i frame), 220 (logga synlig), 295 (logga toning ut) för att verifiera.
 
-- `/` har **bara** header + rubrik + sökruta + chips + footer. Inget annat.
-- Allt är på ljus paper-bakgrund. Inga mörka ytor, inga blåa accenter, inga glows.
-- Sökrutan ligger above-the-fold, vertikalt centrerad, på både desktop (1130px) och mobil (390px).
-- Ingen animation utöver 200ms fades och focus-transitions.
-- Kod-gate fungerar fortfarande.
-- Bygget passerar utan TS-fel.
+**6. Integration i React-appen**
+- Ersätt `import heroCarsNight from '@/assets/hero-cars-night-v2.mp4.asset.json'` med den nya `hero-loop.mp4` i `src/pages/Index.tsx`.
+- Ta bort den nuvarande JS-styrda logo-swap-logiken (`heroVideoRef`, `ended`-event, `setShowLogo`-timeout) — videon innehåller nu hela loopen själv. `loop` på `<video>` återställs.
+- "Din objektiva bilrådgivare"-text + FindCar-text-overlay i hero tas bort eftersom de nu är inbakade i videon. **CTA-knappen "Hitta din bil" behålls alltid synlig** längst ner i hero (oförändrad).
+- Sr-only `<h1>` behålls för SEO/tillgänglighet.
 
-## Frågor jag fortfarande har (svara om du vill, annars kör jag med defaults)
+### Kvalitetskontroll
+- Renderar 3 stillbilder före full render för att verifiera bil-utseende, FINDCAR-skyltens läsbarhet, och logo-reveal.
+- Verifierar att MP4 är < 5 MB (loop-loadtime) och att frame 0 ≈ frame 300 så loopen är osynlig.
 
-1. **Chips-texterna** — okej med "Familjebil ~250k", "Sportig under 400k", "Eldrift med dragkrok", "SUV automat"? Eller har du 4 egna?
-2. **Logo** — texten "FindCar" i Inter Tight, eller behåller vi nuvarande logo-bild?
-3. **Header-länkar** — "Om" och "Kontakt" räcker, eller vill du ha fler (Bilar, Sälj, Logga in)?
+### Filer som ändras
+- **Nya**: hela `remotion/`-mappen, `src/assets/hero-loop.mp4` + `.asset.json`.
+- **Ändrade**: `src/pages/Index.tsx` (byter video-källa, tar bort logo-swap-state och text-overlays).
+- **Borttagna**: `src/assets/hero-cars-night-v2.mp4.asset.json` (efter verifiering).

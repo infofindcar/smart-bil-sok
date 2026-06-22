@@ -14,10 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Inter"', "system-ui", "sans-serif"],
-        display: ['"Inter Tight"', '"Inter"', "system-ui", "sans-serif"],
-        serif: ["Georgia", "serif"],
-        mono: ['ui-monospace', "monospace"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Lora", "Georgia", "serif"],
+        mono: ["Space Mono", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",

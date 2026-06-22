@@ -1,61 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 40 20% 97%;
-    --foreground: 0 0% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
-    --primary: 0 0% 10%;
+    --background: 45 25% 95%;
+    --foreground: 205 55% 20%;
+    --card: 45 20% 98%;
+    --card-foreground: 205 55% 20%;
+    --popover: 45 20% 98%;
+    --popover-foreground: 205 55% 20%;
+    --primary: 190 70% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 10%;
+    --secondary: 205 60% 25%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 36 12% 92%;
-    --muted-foreground: 0 0% 42%;
-    --accent: 36 12% 94%;
-    --accent-foreground: 0 0% 8%;
-    --destructive: 0 65% 45%;
+    --muted: 200 15% 85%;
+    --muted-foreground: 205 40% 35%;
+    --accent: 190 40% 92%;
+    --accent-foreground: 205 55% 20%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 36 12% 88%;
-    --input: 36 12% 88%;
-    --ring: 0 0% 10%;
-    --radius: 0.5rem;
-    --chat-bubble: 36 12% 94%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 8%;
-    --sidebar-primary: 0 0% 10%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 36 12% 94%;
-    --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 36 12% 88%;
-    --sidebar-ring: 0 0% 10%;
+    --border: 200 15% 85%;
+    --input: 200 15% 85%;
+    --ring: 190 70% 38%;
+    --radius: 0.75rem;
+    --chat-bubble: 45 20% 94%;
+    --step-icon: 205 60% 25%;
+    --testimonial-bg: 45 20% 94%;
+    --section-alt: 45 20% 92%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 40 20% 97%;
-    --foreground: 0 0% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
-    --primary: 0 0% 10%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 36 12% 92%;
-    --muted-foreground: 0 0% 42%;
-    --accent: 36 12% 94%;
-    --accent-foreground: 0 0% 8%;
-    --destructive: 0 65% 45%;
+    --background: 205 55% 12%;
+    --foreground: 45 20% 95%;
+    --card: 205 50% 15%;
+    --card-foreground: 45 20% 95%;
+    --popover: 205 50% 15%;
+    --popover-foreground: 45 20% 95%;
+    --primary: 190 75% 50%;
+    --primary-foreground: 205 55% 10%;
+    --secondary: 190 60% 40%;
+    --secondary-foreground: 45 20% 90%;
+    --muted: 205 40% 20%;
+    --muted-foreground: 200 20% 65%;
+    --accent: 190 40% 20%;
+    --accent-foreground: 45 20% 95%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 36 12% 88%;
-    --input: 36 12% 88%;
-    --ring: 0 0% 10%;
-    --chat-bubble: 36 12% 94%;
+    --border: 205 40% 20%;
+    --input: 205 40% 20%;
+    --ring: 190 75% 50%;
+    --chat-bubble: 205 40% 18%;
+    --step-icon: 190 75% 50%;
+    --testimonial-bg: 205 40% 18%;
+    --section-alt: 205 50% 14%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -64,182 +80,684 @@
     @apply border-border;
   }
   html {
-    background-color: #f7f5f1;
+    background-color: #1a2332;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
-  h1, h2, h3, h4 {
-    font-family: "Inter Tight", "Inter", system-ui, sans-serif;
-    letter-spacing: -0.025em;
-    font-weight: 500;
+  h1, h2, h3 {
+    @apply font-sans;
   }
-  .tabular { font-variant-numeric: tabular-nums; }
 }
 
-/* Hairline + eyebrow utilities */
-.hairline {
-  height: 1px;
-  background: hsl(var(--border));
-}
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
+/* Custom animations */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
 }
 
-/* Slim scrollbars */
+@keyframes logo-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px hsl(190 70% 38% / 0.3)); }
+  50% { filter: drop-shadow(0 0 20px hsl(190 70% 38% / 0.6)); }
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float { animation: gentle-float 4s ease-in-out infinite; }
+.animate-glow { animation: logo-glow 3s ease-in-out infinite; }
+.animate-reveal-up { animation: reveal-up 0.6s ease-out forwards; }
+
+.chat-scrollbar::-webkit-scrollbar { width: 3px; }
+.chat-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.chat-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 2px; }
+.chat-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.3); }
+
+/* Slim global scrollbar */
 html {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
 }
 html::-webkit-scrollbar { width: 6px; }
+html::-webkit-scrollbar-track { background: transparent; }
 html::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.18);
+  background: hsl(var(--muted-foreground) / 0.15);
   border-radius: 3px;
 }
-.chat-scrollbar::-webkit-scrollbar { width: 3px; }
-.chat-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.chat-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.2);
-  border-radius: 2px;
+html::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
 }
 
 .touch-target { min-height: 44px; min-width: 44px; }
-.safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
 
-/* Accessible focus rings */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px hsl(var(--secondary) / 0.1);
+}
+
+.clutch-card {
+  box-shadow:
+    0 1px 3px hsl(var(--secondary) / 0.04),
+    0 8px 40px -12px hsl(var(--secondary) / 0.08);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, hsl(205 55% 18%) 0%, hsl(205 60% 14%) 40%, hsl(190 70% 25%) 100%);
+}
+
+/* Section divider gradient transitions */
+.section-divider {
+  height: 2.5rem;
+  background: linear-gradient(to bottom, var(--div-from), var(--div-to));
+  pointer-events: none;
+}
+
+.section-divider-bg-to-alt {
+  --div-from: hsl(var(--background));
+  --div-to: hsl(var(--section-alt));
+}
+
+.section-divider-alt-to-bg {
+  --div-from: hsl(var(--section-alt));
+  --div-to: hsl(var(--background));
+}
+
+/* Decorative glow effect */
+.bg-glow {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.25;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.5), transparent 70%);
+}
+
+/* Results section enter animation */
+@keyframes results-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.results-section-enter {
+  animation: results-enter 0.6s ease-out both;
+}
+
+/* Staggered fade-in for car cards */
+@keyframes stagger-card {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.stagger-fade-in {
+  opacity: 0;
+  animation: stagger-card 0.5s ease-out both;
+}
+
+/* Premium card pop-in animation */
+@keyframes card-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.8);
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-8px) scale(1.02);
+    filter: blur(0px);
+  }
+  70% {
+    transform: translateY(4px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.card-pop-wrapper {
+  will-change: transform, opacity, filter;
+}
+
+.card-pop-hidden {
+  opacity: 0;
+  transform: translateY(40px) scale(0.8);
+  filter: blur(8px);
+}
+
+.card-pop-visible {
+  animation: card-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.card-pop-instant {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Sparkle animation for results header */
+@keyframes sparkle-rotate {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(15deg) scale(1.2); }
+  75% { transform: rotate(-15deg) scale(1.1); }
+}
+
+.card-pop-sparkle {
+  animation: sparkle-rotate 2s ease-in-out infinite;
+}
+
+/* Scroll arrow bounce */
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(8px); }
+  50% { transform: translateY(-2px); }
+  70% { transform: translateY(5px); }
+}
+
+.scroll-arrow-bounce {
+  animation: scroll-bounce 2s ease-in-out infinite;
+}
+
+/* Subtle float animation */
+.animate-float-subtle {
+  animation: gentle-float 5s ease-in-out infinite;
+}
+
+/* Horizontal scroll for similar cars */
+.similar-cars-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.similar-cars-scroll > * {
+  scroll-snap-align: start;
+}
+.similar-cars-scroll::-webkit-scrollbar { height: 4px; }
+.similar-cars-scroll::-webkit-scrollbar-track { background: transparent; }
+.similar-cars-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 2px;
+}
+.similar-cars-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Hero CTA glow effect */
+@keyframes cta-glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--secondary) / 0.3), 0 0 40px hsl(var(--secondary) / 0.1); }
+  50% { box-shadow: 0 0 30px hsl(var(--secondary) / 0.5), 0 0 60px hsl(var(--secondary) / 0.2); }
+}
+.hero-cta-glow {
+  animation: cta-glow-pulse 3s ease-in-out infinite;
+}
+
+/* Accessibility: visible focus rings */
 *:focus-visible {
-  outline: 1px solid hsl(var(--foreground));
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Minimal mount fade */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Mic listening glow */
+@keyframes mic-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
 }
-.fade-in { animation: fade-in 240ms ease-out both; }
-
-/* Bubble entry (used by chat) */
-@keyframes bubble-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+.mic-listening {
+  animation: mic-glow 1.5s ease-in-out infinite;
 }
-.bubble-in { animation: bubble-in 200ms ease-out both; }
-.whoosh-in { animation: bubble-in 200ms ease-out both; }
-.chip-in { opacity: 0; animation: bubble-in 220ms ease-out both; }
 
-/* Chat surfaces — flat, hairline, paper-ish.
-   We keep the original class names so GuidedSearch.tsx doesn't need
-   structural changes — just the looks change. */
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse, .animate-bounce {
+    animation: none !important;
+  }
+}
+
+/* ========== Clutch chat polish ========== */
+
+/* Allow smooth height animation on auto values where supported */
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+}
+
+/* Premium chat container */
 .clutch-shell {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
-  box-shadow: none;
-  transition: border-color 150ms ease;
+  background:
+    linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.92) 100%);
+  box-shadow:
+    0 1px 0 hsl(var(--background) / 0.6) inset,
+    0 1px 2px hsl(var(--secondary) / 0.05),
+    0 24px 60px -24px hsl(var(--secondary) / 0.18),
+    0 8px 24px -12px hsl(var(--secondary) / 0.08);
+  transition: box-shadow 280ms ease, border-color 280ms ease;
 }
 .clutch-shell.is-focused {
-  border-color: hsl(var(--foreground));
+  box-shadow:
+    0 1px 0 hsl(var(--background) / 0.6) inset,
+    0 0 0 1px hsl(var(--primary) / 0.18),
+    0 28px 70px -22px hsl(var(--primary) / 0.22),
+    0 10px 28px -12px hsl(var(--secondary) / 0.12);
 }
 
+/* Avatar gradient + soft glow */
 .clutch-avatar {
-  background: hsl(var(--foreground));
-  color: hsl(var(--background));
-  border-radius: 999px;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  box-shadow:
+    0 4px 14px -4px hsl(var(--primary) / 0.45),
+    inset 0 1px 0 hsl(0 0% 100% / 0.18);
 }
 
-.online-dot { display: none; }
-
-.bubble-assistant {
-  background: transparent;
-  border: none;
-  padding-left: 0 !important;
-  padding-right: 12px !important;
-  color: hsl(var(--foreground));
+/* Online dot — pulse outward to feel "alive" */
+@keyframes online-pulse {
+  0%   { box-shadow: 0 0 0 0 hsl(142 76% 45% / 0.6); }
+  70%  { box-shadow: 0 0 0 9px hsl(142 76% 45% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(142 76% 45% / 0); }
 }
-.bubble-user {
-  background: hsl(var(--foreground));
-  color: hsl(var(--background));
-  border: none;
-  border-radius: 999px !important;
+.online-dot {
+  background: hsl(142 76% 45%);
+  animation: online-pulse 2s ease-out infinite;
 }
 
-.clutch-input-shell {
-  background: hsl(var(--background));
-  border-radius: 6px;
+/* Bubble entry: fade + slide */
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bubble-in {
+  animation: bubble-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Thinking dots */
-@keyframes wave {
-  0%, 80%, 100% { opacity: 0.25; }
-  40% { opacity: 1; }
+/* Wave typing indicator */
+@keyframes wave-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-4px); opacity: 1; }
 }
 .wave-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: hsl(var(--muted-foreground));
-  display: inline-block;
-  animation: wave 1.2s ease-in-out infinite;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  animation: wave-bounce 1.1s ease-in-out infinite;
 }
 
+/* Avatar thinking pulse ring */
+@keyframes avatar-thinking {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+}
+.avatar-thinking { animation: avatar-thinking 1.6s ease-in-out infinite; }
+
+/* Suggestion chip stagger */
+@keyframes chip-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.chip-in {
+  opacity: 0;
+  animation: chip-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Send whoosh on user message */
+@keyframes whoosh-out {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.whoosh-in { animation: whoosh-out 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Chat bubbles */
+.bubble-assistant {
+  background: linear-gradient(180deg, hsl(var(--muted) / 0.85) 0%, hsl(var(--muted) / 0.55) 100%);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+.bubble-user {
+  background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary) / 0.88) 100%);
+  border: 1px solid hsl(var(--secondary) / 0.4);
+  box-shadow: 0 6px 18px -10px hsl(var(--secondary) / 0.55);
+}
+
+/* Input field shell */
+.clutch-input-shell {
+  background: hsl(var(--background));
+  box-shadow: inset 0 1px 2px hsl(var(--secondary) / 0.04);
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+/* Modern textareas auto-grow */
 @supports (field-sizing: content) {
   .field-sizing-content { field-sizing: content; }
 }
 
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+/* Safe area for mobile fixed input */
+.safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+
+/* Hero logo shimmer sweep — masked to the FindCar logo silhouette */
+@keyframes findcar-shimmer-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(220%) skewX(-12deg); opacity: 0; }
+}
+.findcar-shimmer-sweep {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.18) 35%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0.18) 65%,
+    rgba(255,255,255,0) 100%
+  );
+  filter: blur(2px);
+  animation: findcar-shimmer-sweep 1600ms cubic-bezier(0.22, 1, 0.36, 1) 250ms 1 both;
+  pointer-events: none;
 }
 
-/* Removed in this redesign — provide no-op fallbacks so legacy classes
-   don't throw layout off if they're still referenced anywhere. */
-.search-glow,
-.aurora-bg,
-.aurora-blob,
-.aurora-grain,
-.hero-gradient,
-.hero-cta-glow,
-.findcar-cta-gradient,
-.findcar-cta-hero,
-.findcar-shimmer-sweep,
-.premium-page-bg,
-.card-pop-wrapper,
-.card-pop-hidden,
-.card-pop-visible,
-.card-pop-instant,
-.card-pop-sparkle,
-.scroll-arrow-bounce,
-.animate-float,
-.animate-float-subtle,
-.animate-glow,
-.animate-reveal-up,
-.mic-listening,
-.avatar-thinking,
-.bg-glow,
-.text-gradient,
-.display-headline,
-.step-numeral {
-  background: none !important;
-  box-shadow: none !important;
-  animation: none !important;
-  filter: none !important;
+/* Premium hero CTA — blue → cyan gradient that matches the FindCar logo */
+.findcar-cta-gradient {
+  background-image: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #22d3ee 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  box-shadow:
+    0 10px 30px -8px rgba(34, 211, 238, 0.45),
+    0 6px 18px -6px rgba(30, 58, 138, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: background-position 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms ease, transform 200ms ease;
 }
-.text-gradient {
-  -webkit-background-clip: initial !important;
-  -webkit-text-fill-color: currentColor !important;
-  background-clip: initial !important;
-  color: hsl(var(--foreground));
+.findcar-cta-gradient:hover {
+  background-position: 100% 50%;
+  box-shadow:
+    0 14px 38px -8px rgba(34, 211, 238, 0.65),
+    0 8px 22px -6px rgba(30, 58, 138, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+.findcar-cta-gradient:active {
+  transform: translateY(0);
+}
+
+/* Hero CTA — designed to blend into the dark bridge: glass tint + subtle
+   blue→cyan inner sheen, no heavy solid fill. Lifts on hover. */
+.findcar-cta-hero {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%),
+    linear-gradient(135deg, rgba(30,58,138,0.55) 0%, rgba(37,99,235,0.45) 50%, rgba(34,211,238,0.40) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 8px 24px -10px rgba(0,0,0,0.55),
+    0 2px 8px -2px rgba(34,211,238,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+  transition: background-image 400ms ease, box-shadow 300ms ease,
+    transform 200ms ease, border-color 300ms ease;
+}
+.findcar-cta-hero:hover {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%),
+    linear-gradient(135deg, rgba(30,58,138,0.75) 0%, rgba(37,99,235,0.65) 50%, rgba(34,211,238,0.55) 100%);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow:
+    0 12px 32px -10px rgba(0,0,0,0.6),
+    0 4px 14px -2px rgba(34,211,238,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+  transform: translateY(-1px);
+}
+.findcar-cta-hero:active {
+  transform: translateY(0);
+}
+
+/* ========== Aurora landing background ========== */
+
+@keyframes aurora-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50%      { transform: translate(12%, 8%) scale(1.18) rotate(8deg); }
+}
+@keyframes aurora-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1.05) rotate(0deg); }
+  50%      { transform: translate(-14%, 10%) scale(0.95) rotate(-12deg); }
+}
+@keyframes aurora-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(0.95) rotate(0deg); }
+  50%      { transform: translate(8%, -12%) scale(1.12) rotate(15deg); }
+}
+
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+
+.aurora-blob-1 {
+  width: 60vw;
+  height: 50vw;
+  top: -15vh;
+  left: -12vw;
+  background: radial-gradient(ellipse 60% 80% at center, hsl(190 90% 55% / 0.18) 0%, hsl(190 90% 55% / 0) 70%);
+  animation: aurora-drift-1 24s ease-in-out infinite;
+}
+.aurora-blob-2 {
+  width: 60vw;
+  height: 55vw;
+  top: 10vh;
+  right: -15vw;
+  background: radial-gradient(ellipse 70% 60% at center, hsl(210 80% 55% / 0.16) 0%, hsl(210 80% 55% / 0) 70%);
+  animation: aurora-drift-2 30s ease-in-out infinite;
+}
+.aurora-blob-3 {
+  width: 55vw;
+  height: 50vw;
+  bottom: -25vh;
+  left: 25vw;
+  background: radial-gradient(ellipse 65% 70% at center, hsl(190 80% 50% / 0.12) 0%, hsl(190 80% 50% / 0) 70%);
+  animation: aurora-drift-3 36s ease-in-out infinite;
+}
+
+.dark .aurora-blob-1 {
+  background: radial-gradient(ellipse 60% 80% at center, hsl(190 90% 55% / 0.22) 0%, hsl(190 90% 55% / 0) 70%);
+}
+.dark .aurora-blob-2 {
+  background: radial-gradient(ellipse 70% 60% at center, hsl(210 85% 60% / 0.20) 0%, hsl(210 85% 60% / 0) 70%);
+}
+.dark .aurora-blob-3 {
+  background: radial-gradient(ellipse 65% 70% at center, hsl(190 85% 55% / 0.16) 0%, hsl(190 85% 55% / 0) 70%);
+}
+
+/* Subtle dot grain over aurora to give a tactile, "tech" feel */
+.aurora-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(hsl(var(--foreground) / 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  z-index: 1;
+}
+
+/* Soft glow pool behind the chat input — makes Clutch feel like the heart */
+.search-glow {
+  position: absolute;
+  inset: -60px;
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.18) 0%, transparent 65%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+}
+.dark .search-glow {
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.28) 0%, transparent 65%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob { animation: none !important; }
+}
+
+/* ========== Animated AI-vibe gradient border on the chat shell ========== */
+
+@property --shell-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.clutch-shell {
+  position: relative;
+}
+
+.clutch-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--shell-angle),
+    hsl(190 95% 60% / 0.85) 0deg,
+    hsl(190 95% 60% / 0) 70deg,
+    hsl(270 80% 65% / 0.75) 180deg,
+    hsl(270 80% 65% / 0) 250deg,
+    hsl(320 85% 62% / 0.85) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: shell-border-spin 9s linear infinite;
+  z-index: 5;
+}
+
+.clutch-shell.is-focused::before {
+  animation-duration: 4s;
+}
+
+@keyframes shell-border-spin {
+  to { --shell-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clutch-shell::before { animation: none !important; }
+}
+
+
+/* ========== Tesla/Porsche-style premium utilities ========== */
+
+/* Display headline — tighter tracking, lighter weight */
+.display-headline {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+/* Tiny eyebrow label above sections */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+}
+.eyebrow::before {
+  content: '';
+  width: 1.75rem;
+  height: 1px;
+  background: hsl(var(--primary) / 0.5);
+}
+
+/* Premium subtle card */
+.premium-card {
+  background: linear-gradient(180deg, hsl(var(--card) / 0.6) 0%, hsl(var(--card) / 0.3) 100%);
+  border: 1px solid hsl(var(--border) / 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 300ms ease, transform 300ms ease, background 300ms ease;
+}
+.premium-card:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  background: linear-gradient(180deg, hsl(var(--card) / 0.75) 0%, hsl(var(--card) / 0.45) 100%);
+}
+
+/* Numbered step — large outlined numeral */
+.step-numeral {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 4rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  background: linear-gradient(180deg, hsl(var(--foreground) / 0.9) 0%, hsl(var(--foreground) / 0.3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle hairline divider */
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+}
+
+/* Premium dark page bg with extremely subtle mesh */
+.premium-page-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, hsl(190 80% 30% / 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, hsl(210 80% 30% / 0.08), transparent 70%),
+    hsl(var(--background));
 }

@@ -18,7 +18,7 @@ import { FeedbackWidget } from "@/components/FeedbackWidget";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" enableSystem={false}>
+  <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />

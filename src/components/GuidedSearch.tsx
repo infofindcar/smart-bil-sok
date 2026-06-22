@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -680,8 +680,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <div className="clutch-avatar w-8 h-8 flex items-center justify-center text-[13px] font-display font-medium">
-              C
+            <div className="relative">
+              <div className="clutch-avatar w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center">
+                <Sparkles className="h-4 w-4 md:h-[18px] md:w-[18px] text-primary-foreground" />
+              </div>
+              <span className="online-dot absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-card" />
             </div>
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
@@ -704,8 +707,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                     className="w-[min(18rem,calc(100vw-24px))] p-3.5 text-[12.5px] md:text-[13px] leading-relaxed bg-card/95 backdrop-blur-md border-border/60 shadow-lg"
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <div className="clutch-avatar w-5 h-5 flex items-center justify-center text-[10px] font-display font-medium shrink-0">C</div>
-                      <p className="font-medium text-foreground">Möt Clutch</p>
+                      <div className="clutch-avatar w-6 h-6 rounded-lg flex items-center justify-center shrink-0">
+                        <Sparkles className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                      <p className="font-semibold text-foreground">Möt Clutch</p>
                     </div>
                     <p className="text-muted-foreground">
                       Clutch är din personliga AI-bilrådgivare på FindCar. Namnet hyllar kopplingen i bilen — den som förenar föraren med maskinen.
@@ -763,8 +768,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} ${animClass}`}
               >
                 {msg.role === 'assistant' && (
-                  <div className="clutch-avatar w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-display font-medium">
-                    C
+                  <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
                   </div>
                 )}
                 <div
@@ -786,10 +791,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           {isLoading && phase === 'searching' && <SearchAnimation />}
           {showTypingDots && (
             <div className="flex justify-start gap-2 bubble-in pl-1 pr-2">
-              <div className="clutch-avatar w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 ml-1 text-[11px] font-display font-medium">
-                C
+              <div className="clutch-avatar w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ml-1 avatar-thinking">
+                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
-              <div className="bubble-assistant px-4 py-3">
+              <div className="bubble-assistant rounded-2xl rounded-bl-md px-4 py-3.5">
                 <div className="flex items-end gap-1.5 h-3">
                   <span className="wave-dot" style={{ animationDelay: '0ms' }} />
                   <span className="wave-dot" style={{ animationDelay: '140ms' }} />
@@ -807,7 +812,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                 queueScrollToBottom(true);
               }}
               aria-label="Scroll to latest"
-              className="sticky bottom-2 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center transition-opacity hover:opacity-90"
+              className="sticky bottom-2 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground border border-primary/30 shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
               style={{ marginLeft: 'auto', marginRight: 'auto', display: 'block' }}
             >
               <ArrowDown className="h-4 w-4" />
@@ -910,10 +915,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               size="icon"
               disabled={!inputValue.trim() || isLoading}
               aria-label="Send"
-              className={`h-11 w-11 rounded-md shrink-0 transition-opacity ${
+              className={`h-11 w-11 rounded-2xl shrink-0 transition-all duration-200 border ${
                 inputValue.trim() && !isLoading
-                  ? 'bg-foreground text-background hover:opacity-90'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-gradient-to-br from-primary to-secondary text-primary-foreground hover:scale-105 active:scale-95 shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.55)] hover:shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.7)] border-primary/30'
+                  : 'bg-muted text-muted-foreground/60 dark:bg-muted/60 dark:text-foreground/55 border-border/40'
               }`}
             >
               <Send className="h-4 w-4" />
