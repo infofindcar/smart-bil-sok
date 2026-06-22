@@ -338,6 +338,30 @@ html::-webkit-scrollbar-thumb:hover {
   animation: mic-glow 1.5s ease-in-out infinite;
 }
 
+/* Premium subtle road / navigation line drift behind hero */
+@keyframes road-drift {
+  0%   { transform: translateX(-2%); opacity: 0.55; }
+  50%  { transform: translateX(2%);  opacity: 0.9; }
+  100% { transform: translateX(-2%); opacity: 0.55; }
+}
+.road-lines-drift {
+  transform-origin: center;
+  animation: road-drift 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Subtle hover lift utility — applied to interactive cards/surfaces */
+.lift-on-hover {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 220ms ease;
+}
+.lift-on-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -16px hsl(var(--secondary) / 0.18),
+              0 2px 8px -4px hsl(var(--secondary) / 0.08);
+}
+
 /* Reduced motion: respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
