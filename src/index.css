@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -41,29 +39,30 @@
   }
 
   .dark {
-    --background: 205 55% 12%;
-    --foreground: 45 20% 95%;
-    --card: 205 50% 15%;
-    --card-foreground: 45 20% 95%;
-    --popover: 205 50% 15%;
-    --popover-foreground: 45 20% 95%;
-    --primary: 190 75% 50%;
-    --primary-foreground: 205 55% 10%;
-    --secondary: 190 60% 40%;
-    --secondary-foreground: 45 20% 90%;
-    --muted: 205 40% 20%;
-    --muted-foreground: 200 20% 65%;
-    --accent: 190 40% 20%;
-    --accent-foreground: 45 20% 95%;
-    --destructive: 0 62.8% 30.6%;
+    /* Midnight Indigo — premium, Linear/Mercury feel */
+    --background: 240 35% 6%;            /* #0A0A14 deep ink */
+    --foreground: 230 25% 94%;           /* #E8EAF2 */
+    --card: 235 32% 10%;                 /* #10121F surface */
+    --card-foreground: 230 25% 94%;
+    --popover: 235 32% 10%;
+    --popover-foreground: 230 25% 94%;
+    --primary: 239 84% 67%;              /* #6366F1 indigo */
+    --primary-foreground: 240 35% 6%;
+    --secondary: 234 60% 24%;            /* #1E1E5A muted indigo */
+    --secondary-foreground: 230 25% 94%;
+    --muted: 235 25% 14%;
+    --muted-foreground: 230 12% 62%;     /* #8A8FA8 */
+    --accent: 239 70% 18%;
+    --accent-foreground: 230 25% 94%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 205 40% 20%;
-    --input: 205 40% 20%;
-    --ring: 190 75% 50%;
-    --chat-bubble: 205 40% 18%;
-    --step-icon: 190 75% 50%;
-    --testimonial-bg: 205 40% 18%;
-    --section-alt: 205 50% 14%;
+    --border: 235 30% 16%;               /* hairline */
+    --input: 235 30% 16%;
+    --ring: 239 84% 67%;
+    --chat-bubble: 235 28% 12%;
+    --step-icon: 239 84% 67%;
+    --testimonial-bg: 235 28% 11%;
+    --section-alt: 236 32% 8%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -80,14 +79,15 @@
     @apply border-border;
   }
   html {
-    background-color: #1a2332;
+    background-color: #0A0A14;
   }
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1, h2, h3 {
-    @apply font-sans;
+    @apply font-serif;
+    font-feature-settings: "ss01" 1, "liga" 1;
   }
 }
 
@@ -153,14 +153,14 @@ html::-webkit-scrollbar-thumb:hover {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(245 90% 78%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, hsl(205 55% 18%) 0%, hsl(205 60% 14%) 40%, hsl(190 70% 25%) 100%);
+  background: linear-gradient(135deg, hsl(240 40% 9%) 0%, hsl(240 35% 6%) 50%, hsl(239 50% 14%) 100%);
 }
 
 /* Section divider gradient transitions */
@@ -445,13 +445,16 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Chat bubbles */
 .bubble-assistant {
-  background: linear-gradient(180deg, hsl(var(--muted) / 0.85) 0%, hsl(var(--muted) / 0.55) 100%);
-  border: 1px solid hsl(var(--border) / 0.5);
+  background: transparent;
+  border: none;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 .bubble-user {
-  background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary) / 0.88) 100%);
-  border: 1px solid hsl(var(--secondary) / 0.4);
-  box-shadow: 0 6px 18px -10px hsl(var(--secondary) / 0.55);
+  background: hsl(var(--primary) / 0.14);
+  border: 1px solid hsl(var(--primary) / 0.35);
+  color: hsl(var(--foreground));
+  box-shadow: 0 6px 18px -10px hsl(var(--primary) / 0.4);
 }
 
 /* Input field shell */
@@ -497,12 +500,12 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Premium hero CTA — blue → cyan gradient that matches the FindCar logo */
 .findcar-cta-gradient {
-  background-image: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #22d3ee 100%);
+  background-image: linear-gradient(135deg, hsl(239 70% 50%) 0%, hsl(239 84% 60%) 50%, hsl(245 80% 65%) 100%);
   background-size: 200% 100%;
   background-position: 0% 50%;
   box-shadow:
-    0 10px 30px -8px rgba(34, 211, 238, 0.45),
-    0 6px 18px -6px rgba(30, 58, 138, 0.55),
+    0 10px 30px -8px hsl(239 84% 60% / 0.45),
+    0 6px 18px -6px hsl(239 70% 30% / 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: background-position 600ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 300ms ease, transform 200ms ease;
@@ -510,8 +513,8 @@ html::-webkit-scrollbar-thumb:hover {
 .findcar-cta-gradient:hover {
   background-position: 100% 50%;
   box-shadow:
-    0 14px 38px -8px rgba(34, 211, 238, 0.65),
-    0 8px 22px -6px rgba(30, 58, 138, 0.65),
+    0 14px 38px -8px hsl(239 84% 60% / 0.6),
+    0 8px 22px -6px hsl(239 70% 30% / 0.65),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
 }
@@ -607,13 +610,13 @@ html::-webkit-scrollbar-thumb:hover {
 }
 
 .dark .aurora-blob-1 {
-  background: radial-gradient(ellipse 60% 80% at center, hsl(190 90% 55% / 0.22) 0%, hsl(190 90% 55% / 0) 70%);
+  background: radial-gradient(ellipse 60% 80% at center, hsl(239 84% 67% / 0.14) 0%, hsl(239 84% 67% / 0) 70%);
 }
 .dark .aurora-blob-2 {
-  background: radial-gradient(ellipse 70% 60% at center, hsl(210 85% 60% / 0.20) 0%, hsl(210 85% 60% / 0) 70%);
+  background: radial-gradient(ellipse 70% 60% at center, hsl(250 70% 60% / 0.10) 0%, hsl(250 70% 60% / 0) 70%);
 }
 .dark .aurora-blob-3 {
-  background: radial-gradient(ellipse 65% 70% at center, hsl(190 85% 55% / 0.16) 0%, hsl(190 85% 55% / 0) 70%);
+  background: radial-gradient(ellipse 65% 70% at center, hsl(234 60% 50% / 0.08) 0%, hsl(234 60% 50% / 0) 70%);
 }
 
 /* Subtle dot grain over aurora to give a tactile, "tech" feel */
@@ -632,13 +635,13 @@ html::-webkit-scrollbar-thumb:hover {
 .search-glow {
   position: absolute;
   inset: -60px;
-  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.18) 0%, transparent 65%);
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.12) 0%, transparent 65%);
   filter: blur(50px);
   pointer-events: none;
   z-index: 0;
 }
 .dark .search-glow {
-  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.28) 0%, transparent 65%);
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.18) 0%, transparent 65%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -662,27 +665,15 @@ html::-webkit-scrollbar-thumb:hover {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--shell-angle),
-    hsl(190 95% 60% / 0.85) 0deg,
-    hsl(190 95% 60% / 0) 70deg,
-    hsl(270 80% 65% / 0.75) 180deg,
-    hsl(270 80% 65% / 0) 250deg,
-    hsl(320 85% 62% / 0.85) 360deg
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  border: 1px solid hsl(var(--border));
   pointer-events: none;
-  animation: shell-border-spin 9s linear infinite;
+  transition: border-color 240ms ease, box-shadow 240ms ease;
   z-index: 5;
 }
 
 .clutch-shell.is-focused::before {
-  animation-duration: 4s;
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.10);
 }
 
 @keyframes shell-border-spin {
@@ -698,9 +689,9 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Display headline — tighter tracking, lighter weight */
 .display-headline {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.035em;
+  font-family: 'Instrument Serif', 'Lora', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
   line-height: 1.02;
 }
 
@@ -710,16 +701,17 @@ html::-webkit-scrollbar-thumb:hover {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
+  font-family: 'Work Sans', system-ui, sans-serif;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: hsl(var(--primary));
+  color: hsl(var(--muted-foreground));
 }
 .eyebrow::before {
   content: '';
   width: 1.75rem;
   height: 1px;
-  background: hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.6);
 }
 
 /* Premium subtle card */
@@ -737,8 +729,8 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Numbered step — large outlined numeral */
 .step-numeral {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
+  font-family: 'Instrument Serif', 'Lora', Georgia, serif;
+  font-weight: 400;
   font-size: 4rem;
   line-height: 1;
   letter-spacing: -0.05em;
@@ -757,7 +749,7 @@ html::-webkit-scrollbar-thumb:hover {
 /* Premium dark page bg with extremely subtle mesh */
 .premium-page-bg {
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, hsl(190 80% 30% / 0.10), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, hsl(210 80% 30% / 0.08), transparent 70%),
+    radial-gradient(ellipse 80% 50% at 50% 0%, hsl(239 84% 50% / 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, hsl(250 60% 40% / 0.06), transparent 70%),
     hsl(var(--background));
 }

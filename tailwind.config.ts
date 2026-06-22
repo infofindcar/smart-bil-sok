@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Lora", "Georgia", "serif"],
+        sans: ["Work Sans", "Inter", "system-ui", "sans-serif"],
+        serif: ["Instrument Serif", "Lora", "Georgia", "serif"],
+        display: ["Instrument Serif", "Lora", "Georgia", "serif"],
         mono: ["Space Mono", "monospace"],
       },
       colors: {
