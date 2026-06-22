@@ -78,59 +78,50 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
   if (isAuthenticated) return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Subtle indigo glow backdrop */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-80"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 50% at 50% 0%, hsl(239 84% 50% / 0.10), transparent 65%), radial-gradient(ellipse 50% 40% at 50% 100%, hsl(245 70% 40% / 0.08), transparent 70%)',
-        }}
-      />
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Logo top-left */}
-      <header className="relative px-6 sm:px-10 pt-6 sm:pt-8 z-10">
+      <header className="px-6 sm:px-10 pt-6 sm:pt-8">
         <img src={heroLogo} alt="FindCar logotyp" className="h-10 sm:h-12" />
       </header>
 
-      <main className="relative flex-1 flex items-center justify-center px-4 sm:px-6 py-10 z-10">
-        <div className="w-full max-w-xl space-y-10">
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
+        <div className="w-full max-w-xl space-y-8">
           {/* Headline + waitlist */}
-          <div className="space-y-5 text-center">
-            <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-[0.28em] text-muted-foreground font-medium">
-              <span className="block w-7 h-px bg-primary/60" />
-              Early access
-            </span>
-            <h1 className="font-serif text-4xl sm:text-6xl text-foreground leading-[1.03] tracking-[-0.02em]">
-              En ny era av <em className="not-italic text-gradient">bilköp</em>.
+          <div className="space-y-6 text-center">
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
+              Vill du vara med och utveckla en ny era av bilköp?
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
-              FindCar är i privat beta. Lämna din mail så hör vi av oss med en personlig kod.
+            <p className="text-base sm:text-lg text-muted-foreground">
+              Skriv in din mail så skickar vi koden till dig.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-6 sm:p-8">
-            <WaitlistForm />
+          <div className="relative overflow-hidden rounded-3xl border border-secondary/30 bg-gradient-to-br from-secondary/[0.08] via-card/40 to-primary/[0.06] p-6 sm:p-8 shadow-[0_8px_40px_-12px_hsl(var(--secondary)/0.25)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-secondary/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-primary/15 blur-3xl" />
+            <div className="relative">
+              <WaitlistForm />
+            </div>
           </div>
 
-          {/* Code entry — compact */}
-          <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground/70 text-center font-medium">
+          {/* Code entry */}
+          <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-6 sm:p-8 space-y-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium text-center">
               Har du redan en kod?
             </p>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="password"
                   placeholder="Ange din kod"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-12 h-12 bg-card/40 text-center text-sm rounded-xl border-border focus:border-primary/60"
+                  className="pl-12 h-14 bg-background text-center text-base rounded-xl border-border/50 focus:border-secondary/40"
                 />
               </div>
               {error && <p className="text-destructive text-sm text-center">{error}</p>}
-              <Button type="submit" className="w-full h-12 text-sm rounded-xl font-medium" disabled={isLoading || !password}>
+              <Button type="submit" className="w-full h-14 text-base rounded-xl font-semibold" disabled={isLoading || !password}>
                 {isLoading ? 'Verifierar...' : 'Logga in'}
               </Button>
             </form>
@@ -139,7 +130,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
       </main>
 
       {/* Footer */}
-      <footer className="relative bg-background text-foreground border-t border-border/60 mt-10 z-10">
+      <footer className="bg-secondary text-secondary-foreground mt-10">
         <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-8 pb-6">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 mb-6">
             {/* Logo + tagline */}
