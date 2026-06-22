@@ -139,7 +139,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-secondary text-secondary-foreground mt-10">
+      <footer className="relative bg-background text-foreground border-t border-border/60 mt-10 z-10">
         <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-8 pb-6">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 mb-6">
             {/* Logo + tagline */}
