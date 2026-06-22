@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { RoadLines } from '@/components/RoadLines';
 import { SEO } from '@/components/SEO';
 
 // Lazy-load below-fold sections
@@ -138,6 +139,8 @@ const Index = () => {
         data-search-section
         className="relative pt-24 md:pt-28 pb-14 md:pb-20 px-5 md:px-8"
       >
+        {/* Premium ambient road-line motion */}
+        <RoadLines />
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           {/* Left: pitch */}
           <ScrollReveal className="lg:col-span-5 lg:pt-6">
