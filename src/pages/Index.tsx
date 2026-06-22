@@ -4,9 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { type Car, type CarReason } from '@/components/GuidedSearch';
-import { AdvisorForm } from '@/components/AdvisorForm';
-import { AdvisorPreview } from '@/components/AdvisorPreview';
+import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { SEO } from '@/components/SEO';
 
@@ -172,17 +170,14 @@ const Index = () => {
 
           {/* Right: advisor module */}
           <ScrollReveal delay={120} className="lg:col-span-7 w-full">
-            <AdvisorForm
+            <GuidedSearch
               onResults={handleResults}
               onScrollToResults={() =>
                 resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
+              onLanguageChange={setLanguage}
             />
           </ScrollReveal>
-        </div>
-
-        <div className="max-w-6xl mx-auto">
-          <AdvisorPreview />
         </div>
       </section>
 
