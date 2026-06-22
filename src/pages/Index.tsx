@@ -125,6 +125,12 @@ const Index = () => {
 
   const formatCount = (n: number) => new Intl.NumberFormat('sv-SE').format(n);
 
+  const scrollToSearch = () => {
+    document
+      .querySelector('[data-search-section]')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="min-h-screen overflow-x-hidden premium-page-bg">
       <SEO
@@ -134,42 +140,54 @@ const Index = () => {
       />
       <Header />
 
-      {/* Advisor first — Anyfin / Wise style split layout, no hero image */}
+      {/* Cinematic Squarespace-style hero — full-bleed image, centered headline */}
+      <section className="relative h-[100svh] min-h-[640px] w-full overflow-hidden">
+        <img
+          src={heroImage}
+          alt=""
+          fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/15 to-black/50" />
+
+        <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">
+          <h1 className="font-serif text-[2.75rem] sm:text-6xl lg:text-[5.25rem] leading-[1.03] tracking-tight max-w-5xl">
+            Hitta rätt bil <em className="italic font-normal">för dig</em>.
+          </h1>
+          <p className="mt-6 max-w-xl text-base md:text-lg text-white/85 leading-relaxed">
+            Oberoende bilrådgivning. Vi jämför tusentals annonser utifrån din vardag — utan provision, helt gratis.
+          </p>
+          <button
+            onClick={scrollToSearch}
+            className="mt-10 inline-flex items-center justify-center bg-white text-foreground hover:bg-white/90 transition-colors px-8 py-3.5 text-sm font-medium tracking-wide"
+          >
+            Kom igång
+          </button>
+          <p className="mt-5 text-xs text-white/75">
+            {carCount !== null ? (
+              <><span className="tabular-nums">{formatCount(displayCount)}</span> bilar, uppdaterade dagligen</>
+            ) : (
+              <>Tusentals bilar uppdaterade dagligen</>
+            )}
+          </p>
+        </div>
+      </section>
+
+      {/* Search module — calm section below hero */}
       <section
         data-search-section
-        className="relative pt-24 md:pt-28 pb-14 md:pb-20 px-5 md:px-8"
+        className="relative px-5 md:px-8 py-20 md:py-28 bg-background"
       >
-        <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
-          {/* Left: pitch */}
-          <ScrollReveal className="lg:col-span-5 lg:pt-6">
-            <h1 className="font-serif text-[2.5rem] sm:text-5xl lg:text-[3.75rem] leading-[1.05] tracking-tight text-foreground">
-              Hitta rätt bil <em className="italic font-normal">för dig</em>.
-            </h1>
-            <p className="text-muted-foreground mt-6 max-w-md text-base md:text-[17px] leading-relaxed">
-              Oberoende bilrådgivning. Vi jämför tusentals annonser utifrån din vardag — utan provision, helt gratis.
+        <div className="max-w-3xl mx-auto">
+          <ScrollReveal className="text-center mb-10 md:mb-14">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground mb-4">
+              Berätta vad du letar efter
             </p>
-            <ul className="mt-8 space-y-2.5 text-[14px] text-muted-foreground">
-              <li className="flex items-center gap-2.5">
-                <span className="w-1 h-1 rounded-full bg-foreground/40" />
-                {carCount !== null ? (
-                  <><span className="tabular-nums text-foreground">{formatCount(displayCount)}</span>&nbsp;bilar, uppdaterade dagligen</>
-                ) : (
-                  <>Tusentals bilar uppdaterade dagligen</>
-                )}
-              </li>
-              <li className="flex items-center gap-2.5">
-                <span className="w-1 h-1 rounded-full bg-foreground/40" />
-                Oberoende — vi tjänar inget på ditt val
-              </li>
-              <li className="flex items-center gap-2.5">
-                <span className="w-1 h-1 rounded-full bg-foreground/40" />
-                0 % provision, alltid gratis
-              </li>
-            </ul>
+            <h2 className="font-serif text-3xl md:text-5xl leading-tight tracking-tight text-foreground">
+              Beskriv din drömbil <em className="italic font-normal">med egna ord</em>.
+            </h2>
           </ScrollReveal>
-
-          {/* Right: advisor module */}
-          <ScrollReveal delay={120} className="lg:col-span-7 w-full">
+          <ScrollReveal delay={120}>
             <GuidedSearch
               onResults={handleResults}
               onScrollToResults={() =>
