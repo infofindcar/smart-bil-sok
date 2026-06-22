@@ -695,12 +695,13 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* ========== Tesla/Porsche-style premium utilities ========== */
 
-/* Display headline — tighter tracking, lighter weight */
+/* Display headline — Instrument Serif, editorial fintech feel */
 .display-headline {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.035em;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
   line-height: 1.02;
+  color: hsl(var(--foreground));
 }
 
 /* Tiny eyebrow label above sections */
@@ -721,17 +722,15 @@ html::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.5);
 }
 
-/* Premium subtle card */
+/* Clean card — solid surface, hairline border, no glass */
 .premium-card {
-  background: linear-gradient(180deg, hsl(var(--card) / 0.6) 0%, hsl(var(--card) / 0.3) 100%);
-  border: 1px solid hsl(var(--border) / 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: border-color 300ms ease, transform 300ms ease, background 300ms ease;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .premium-card:hover {
   border-color: hsl(var(--primary) / 0.4);
-  background: linear-gradient(180deg, hsl(var(--card) / 0.75) 0%, hsl(var(--card) / 0.45) 100%);
+  box-shadow: 0 6px 24px -12px hsl(var(--primary) / 0.18);
 }
 
 /* Numbered step — large outlined numeral */
@@ -753,10 +752,5 @@ html::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
 }
 
-/* Premium dark page bg with extremely subtle mesh */
-.premium-page-bg {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, hsl(190 80% 30% / 0.10), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, hsl(210 80% 30% / 0.08), transparent 70%),
-    hsl(var(--background));
-}
+/* Page bg — clean cream */
+.premium-page-bg { background: hsl(var(--background)); }
