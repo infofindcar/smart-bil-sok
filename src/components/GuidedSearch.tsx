@@ -54,8 +54,15 @@ const GREETINGS: Record<string, ChatMessage> = {
   sv: {
     id: '1',
     role: 'assistant',
-    content: 'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Berätta lite om dig och vad du letar efter — så hittar jag bilen som passar just dig.',
-    suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
+    content: 'Hej! Berätta kort om vad du behöver — vardag, budget eller biltyp — så hittar jag bilar som matchar.',
+    suggestions: [
+      'Jag pendlar till jobbet',
+      'Behöver en familjebil',
+      'Vill ha låg månadskostnad',
+      'Vill ha elbil/hybrid',
+      'Vill ha en rolig bil',
+      'Vet inte riktigt',
+    ],
   },
   en: {
     id: '1',
@@ -688,7 +695,9 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
-                <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">Clutch</h3>
+                <h3 className="font-semibold text-[15px] md:text-base tracking-tight text-foreground">
+                  {language === 'en' ? 'Describe the car you want' : 'Beskriv bilen du söker'}
+                </h3>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -721,6 +730,11 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   </PopoverContent>
                 </Popover>
               </div>
+              <p className="text-[11px] md:text-xs text-muted-foreground mt-0.5">
+                {language === 'en'
+                  ? 'Personal car advisor · powered by Clutch AI'
+                  : 'Din personliga bilrådgivare · drivs av Clutch AI'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -859,6 +873,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         <div
           className="px-4 md:px-6 lg:px-8 pb-4 pt-3 border-t border-border/40 shrink-0 bg-gradient-to-b from-card/40 to-card/80 backdrop-blur-sm safe-pb py-px rounded-none"
         >
+          {messages.length <= 1 && language === 'sv' && (
+            <p className="text-[11px] md:text-xs text-muted-foreground mb-2 px-0.5">
+              Skriv t.ex. budget, körning, biltyp eller vad som är viktigt för dig.
+            </p>
+          )}
+          {messages.length <= 1 && language === 'en' && (
+            <p className="text-[11px] md:text-xs text-muted-foreground mb-2 px-0.5">
+              Type e.g. budget, driving style, body type or what matters most to you.
+            </p>
+          )}
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div
               className={`clutch-input-shell flex-1 relative rounded-2xl border transition-all duration-200 ${
@@ -924,6 +948,36 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
               <Send className="h-4 w-4" />
             </Button>
           </form>
+          {messages.length <= 1 && (
+            <div className="mt-3 pt-3 border-t border-border/30">
+              <p className="text-[10.5px] md:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80 mb-1.5">
+                {language === 'en' ? 'Examples of what you can write' : 'Exempel på vad du kan skriva'}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {(language === 'en'
+                  ? [
+                      'I commute 50 km a day, max 180 000 kr',
+                      'Family car with low ownership cost',
+                      'Small automatic city car',
+                    ]
+                  : [
+                      'Pendlar 5 mil om dagen, max 180 000 kr',
+                      'Familjebil med låg ägandekostnad',
+                      'Liten automatbil för stan',
+                    ]
+                ).map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    onClick={() => { navigator.vibrate?.(10); setInputValue(ex); inputRef.current?.focus(); }}
+                    className="text-[11.5px] md:text-xs text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/40 rounded-md px-2 py-1 transition-colors"
+                  >
+                    “{ex}”
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
