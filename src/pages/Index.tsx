@@ -145,18 +145,15 @@ const Index = () => {
             <ScrollReveal>
               <div className="text-center mb-7 md:mb-10">
                 <span className="inline-flex eyebrow mb-4 md:mb-6 mx-auto justify-center text-[10px] md:text-xs">
-                  <span className="md:hidden">Vi säljer inte bilar. Vi hittar din.</span>
-                  <span className="hidden md:inline">Driven av Clutch AI</span>
+                  Clutch&nbsp;AI · Privat beta
                 </span>
-                <h1 className="display-headline text-[2rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
-                  Hitta din
+                <h1 className="display-headline text-[2.4rem] leading-[1.02] sm:text-5xl md:text-6xl lg:text-7xl md:mt-4">
+                  Hitta bilen du
                   <br className="md:hidden" />
-                  <span className="text-gradient"> rätta bil.</span>
-                  <span className="hidden md:inline"><br />just för dig.</span>
+                  <em className="not-italic text-gradient"> faktiskt</em> vill ha.
                 </h1>
-                <p className="text-muted-foreground mt-3 md:mt-6 max-w-md md:max-w-xl mx-auto text-[14px] md:text-lg leading-relaxed font-light">
-                  <span className="md:hidden">Berätta om din vardag — vi gör jobbet.</span>
-                  <span className="hidden md:inline">Berätta om din vardag — vi hittar rätt bil bland tusentals annonser. Helt gratis, utan provision.</span>
+                <p className="text-muted-foreground mt-4 md:mt-6 max-w-md md:max-w-xl mx-auto text-[14px] md:text-lg leading-relaxed">
+                  Beskriv vad du letar efter. Clutch hittar bilen — utan annonser, utan provision.
                 </p>
               </div>
             </ScrollReveal>
