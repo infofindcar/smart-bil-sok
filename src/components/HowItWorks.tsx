@@ -37,7 +37,7 @@ export const HowItWorks = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
           {steps.map((step, i) => (
             <ScrollReveal key={step.number} delay={i * 100}>
-              <div className="relative h-full bg-background p-8 md:p-10 flex flex-col gap-6 transition-colors duration-300 hover:bg-card/40">
+              <div className="relative h-full bg-background p-8 md:p-10 flex flex-col gap-6 transition-all duration-300 hover:bg-card/40 hover:-translate-y-[2px]">
                 <div className="step-numeral">{step.number}</div>
                 <div className="hairline" />
                 <div>
