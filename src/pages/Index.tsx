@@ -6,7 +6,6 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearch';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { RoadLines } from '@/components/RoadLines';
 import { SEO } from '@/components/SEO';
 
 // Lazy-load below-fold sections
@@ -139,33 +138,30 @@ const Index = () => {
         data-search-section
         className="relative pt-24 md:pt-28 pb-14 md:pb-20 px-5 md:px-8"
       >
-        {/* Premium ambient road-line motion */}
-        <RoadLines />
         <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           {/* Left: pitch */}
           <ScrollReveal className="lg:col-span-5 lg:pt-6">
-            <span className="eyebrow mb-5 text-[11px]">Bilrådgivning · gratis</span>
-            <h1 className="display-headline text-[2.5rem] sm:text-5xl lg:text-[3.75rem] mt-3">
-              Hitta rätt bil <span className="text-gradient">för dig</span>.
+            <h1 className="font-serif text-[2.5rem] sm:text-5xl lg:text-[3.75rem] leading-[1.05] tracking-tight text-foreground">
+              Hitta rätt bil <em className="italic font-normal">för dig</em>.
             </h1>
-            <p className="text-muted-foreground mt-5 max-w-md text-base md:text-lg leading-relaxed">
-              Jämför bilar utifrån budget, behov, ägandekostnad och risk. Oberoende, datadrivet — helt utan provision.
+            <p className="text-muted-foreground mt-6 max-w-md text-base md:text-[17px] leading-relaxed">
+              Oberoende bilrådgivning. Vi jämför tusentals annonser utifrån din vardag — utan provision, helt gratis.
             </p>
-            <ul className="mt-7 space-y-3 text-[15px] text-foreground/80">
-              <li className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <ul className="mt-8 space-y-2.5 text-[14px] text-muted-foreground">
+              <li className="flex items-center gap-2.5">
+                <span className="w-1 h-1 rounded-full bg-foreground/40" />
                 {carCount !== null ? (
-                  <><span className="tabular-nums font-semibold text-foreground">{formatCount(displayCount)}</span>&nbsp;bilar uppdaterade dagligen</>
+                  <><span className="tabular-nums text-foreground">{formatCount(displayCount)}</span>&nbsp;bilar, uppdaterade dagligen</>
                 ) : (
                   <>Tusentals bilar uppdaterade dagligen</>
                 )}
               </li>
-              <li className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <li className="flex items-center gap-2.5">
+                <span className="w-1 h-1 rounded-full bg-foreground/40" />
                 Oberoende — vi tjänar inget på ditt val
               </li>
-              <li className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <li className="flex items-center gap-2.5">
+                <span className="w-1 h-1 rounded-full bg-foreground/40" />
                 0 % provision, alltid gratis
               </li>
             </ul>

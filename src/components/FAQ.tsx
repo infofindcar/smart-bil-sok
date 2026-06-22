@@ -48,8 +48,7 @@ export const FAQ = () => {
       <div className="max-w-3xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-12 md:mb-16">
-            <span className="eyebrow mb-5 mx-auto justify-center">FAQ</span>
-            <h2 className="display-headline text-4xl md:text-5xl lg:text-6xl mt-4">
+            <h2 className="font-serif text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.05] tracking-tight">
               Vanliga frågor.
             </h2>
           </div>
