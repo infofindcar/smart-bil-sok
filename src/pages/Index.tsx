@@ -141,7 +141,7 @@ const Index = () => {
       >
         {/* Premium ambient road-line motion */}
         <RoadLines />
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+        <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           {/* Left: pitch */}
           <ScrollReveal className="lg:col-span-5 lg:pt-6">
             <span className="eyebrow mb-5 text-[11px]">Bilrådgivning · gratis</span>
