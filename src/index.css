@@ -445,13 +445,16 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* Chat bubbles */
 .bubble-assistant {
-  background: linear-gradient(180deg, hsl(var(--muted) / 0.85) 0%, hsl(var(--muted) / 0.55) 100%);
-  border: 1px solid hsl(var(--border) / 0.5);
+  background: transparent;
+  border: none;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 .bubble-user {
-  background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary) / 0.88) 100%);
-  border: 1px solid hsl(var(--secondary) / 0.4);
-  box-shadow: 0 6px 18px -10px hsl(var(--secondary) / 0.55);
+  background: hsl(var(--primary) / 0.14);
+  border: 1px solid hsl(var(--primary) / 0.35);
+  color: hsl(var(--foreground));
+  box-shadow: 0 6px 18px -10px hsl(var(--primary) / 0.4);
 }
 
 /* Input field shell */
