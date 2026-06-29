@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ScanSearch, CheckCircle2, AlertTriangle, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { ScanSearch, CheckCircle2, AlertTriangle, AlertCircle, Loader2, ArrowRight, Sparkles, Car } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollReveal } from './ScrollReveal';
 
@@ -11,8 +12,24 @@ type Result = {
   annonskvalitet: Section;
   agandekostnad: Section;
   summering: string;
-  bil?: { make?: string; model?: string; year?: number };
+  score?: number;
+  score_label?: string;
+  liknande_modeller?: string[];
+  bil?: { make?: string; model?: string; year?: number; mileage_km?: number; price_sek?: number };
 };
+
+type CarRow = {
+  id: number;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  price: number | null;
+  mileage: number | null;
+  image_thumb_url: string | null;
+  city: string | null;
+};
+
+type SimMode = 'better' | 'class';
 
 const verdictStyles: Record<Verdict, { dot: string; label: string }> = {
   bra: { dot: 'bg-emerald-500', label: 'Bra' },
@@ -26,18 +43,35 @@ const VerdictIcon = ({ v }: { v: Verdict }) => {
   return <AlertTriangle className="h-4 w-4 text-rose-500" />;
 };
 
-const rows: Array<{ key: keyof Omit<Result, 'summering' | 'bil'>; label: string }> = [
+type SectionKey = 'pris' | 'rykte' | 'annonskvalitet' | 'agandekostnad';
+const rows: Array<{ key: SectionKey; label: string }> = [
   { key: 'pris', label: 'Pris vs marknad' },
   { key: 'rykte', label: 'Modellens rykte' },
   { key: 'annonskvalitet', label: 'Annonsens kvalitet' },
   { key: 'agandekostnad', label: 'Ägandekostnad' },
 ];
 
+const scoreColor = (s: number) => {
+  if (s >= 8) return 'text-emerald-500';
+  if (s >= 6) return 'text-amber-500';
+  return 'text-rose-500';
+};
+
+const scoreRing = (s: number) => {
+  if (s >= 8) return 'from-emerald-500/30 to-emerald-500/5 border-emerald-500/40';
+  if (s >= 6) return 'from-amber-500/30 to-amber-500/5 border-amber-500/40';
+  return 'from-rose-500/30 to-rose-500/5 border-rose-500/40';
+};
+
 export const ListingAnalyzer = () => {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [simMode, setSimMode] = useState<SimMode | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
+  const [simCars, setSimCars] = useState<CarRow[]>([]);
+  const [simError, setSimError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +115,63 @@ export const ListingAnalyzer = () => {
     setResult(null);
     setError(null);
     setUrl('');
+    setSimMode(null);
+    setSimCars([]);
+    setSimError(null);
+  };
+
+  const findCars = async (mode: SimMode) => {
+    if (!result?.bil) return;
+    setSimMode(mode);
+    setSimLoading(true);
+    setSimError(null);
+    setSimCars([]);
+    try {
+      const { make, model, year, mileage_km, price_sek } = result.bil;
+      let query = supabase
+        .from('Lovable')
+        .select('id, make, model, year, price, mileage, image_thumb_url, city')
+        .eq('is_active', true)
+        .not('price', 'is', null)
+        .not('image_thumb_url', 'is', null)
+        .gt('price', 1500);
+
+      if (mode === 'better' && make && model) {
+        query = query.ilike('make', make).ilike('model', `%${model}%`);
+        if (year) query = query.gte('year', year - 1);
+        if (mileage_km && mileage_km > 0) query = query.lte('mileage', mileage_km);
+        if (price_sek && price_sek > 0) query = query.lte('price', Math.round(price_sek * 1.05));
+        query = query.order('price', { ascending: true });
+      } else if (mode === 'class') {
+        const models = result.liknande_modeller ?? [];
+        if (models.length === 0) {
+          setSimError('Vi hittade inga liknande modeller att jämföra med.');
+          setSimLoading(false);
+          return;
+        }
+        const ors = models
+          .map((m) => m.trim())
+          .filter(Boolean)
+          .map((m) => `model.ilike.%${m.split(/\s+/).slice(-1)[0]}%`)
+          .join(',');
+        if (ors) query = query.or(ors);
+        if (year) query = query.gte('year', year - 2).lte('year', year + 2);
+        if (price_sek && price_sek > 0) {
+          query = query.gte('price', Math.round(price_sek * 0.7)).lte('price', Math.round(price_sek * 1.3));
+        }
+        query = query.order('year', { ascending: false });
+      }
+
+      const { data, error: qErr } = await query.limit(6);
+      if (qErr) throw qErr;
+      setSimCars((data ?? []) as CarRow[]);
+      if (!data || data.length === 0) setSimError('Inga matchande bilar i vår databas just nu.');
+    } catch (e) {
+      console.error(e);
+      setSimError('Kunde inte hämta bilar just nu.');
+    } finally {
+      setSimLoading(false);
+    }
   };
 
   return (
@@ -156,9 +247,26 @@ export const ListingAnalyzer = () => {
 
           {result && (
             <div className="mt-5">
-              {result.bil?.make && (
-                <div className="text-[12px] text-muted-foreground mb-3">
-                  {[result.bil.make, result.bil.model, result.bil.year].filter(Boolean).join(' · ')}
+              {(result.bil?.make || typeof result.score === 'number') && (
+                <div className={`mb-4 flex items-center gap-4 rounded-xl border bg-gradient-to-br p-4 ${typeof result.score === 'number' ? scoreRing(result.score) : 'from-card to-card border-border/40'}`}>
+                  {typeof result.score === 'number' && (
+                    <div className="shrink-0 flex flex-col items-center justify-center">
+                      <div className={`font-serif text-3xl md:text-4xl leading-none ${scoreColor(result.score)}`}>
+                        {result.score.toFixed(1)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">/ 10</div>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    {result.bil?.make && (
+                      <div className="text-[13px] font-medium text-foreground truncate">
+                        {[result.bil.make, result.bil.model, result.bil.year].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
+                    {result.score_label && (
+                      <div className="text-[12px] text-muted-foreground mt-0.5">{result.score_label}</div>
+                    )}
+                  </div>
                 </div>
               )}
               <div className="divide-y divide-border/40 border border-border/40 rounded-xl overflow-hidden">
@@ -190,6 +298,82 @@ export const ListingAnalyzer = () => {
                   {result.summering}
                 </p>
               </div>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => findCars('better')}
+                  disabled={simLoading}
+                  className={`group rounded-xl border px-3.5 py-2.5 text-left transition-colors ${simMode === 'better' ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-primary/40 hover:bg-primary/5'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-[12.5px] font-medium text-foreground">Hitta samma modell – bättre deal</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Lägre pris eller mil i vår databas</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => findCars('class')}
+                  disabled={simLoading}
+                  className={`group rounded-xl border px-3.5 py-2.5 text-left transition-colors ${simMode === 'class' ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-primary/40 hover:bg-primary/5'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Car className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-[12.5px] font-medium text-foreground">Liknande bilar i samma klass</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Konkurrenter från samma segment</p>
+                </button>
+              </div>
+
+              {simMode && (
+                <div className="mt-3">
+                  {simLoading && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="aspect-[4/3] rounded-lg bg-muted/40 animate-pulse" />
+                      ))}
+                    </div>
+                  )}
+                  {!simLoading && simError && (
+                    <p className="text-[12px] text-muted-foreground">{simError}</p>
+                  )}
+                  {!simLoading && simCars.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {simCars.map((c) => (
+                        <Link
+                          key={c.id}
+                          to={`/bil/${c.id}`}
+                          className="group rounded-lg overflow-hidden border border-border/40 bg-background/40 hover:border-primary/40 transition-colors"
+                        >
+                          {c.image_thumb_url && (
+                            <div className="aspect-[4/3] bg-muted/40 overflow-hidden">
+                              <img
+                                src={c.image_thumb_url}
+                                alt={`${c.make ?? ''} ${c.model ?? ''}`.trim()}
+                                loading="lazy"
+                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          )}
+                          <div className="p-2">
+                            <div className="text-[11.5px] font-medium text-foreground truncate">
+                              {[c.make, c.model].filter(Boolean).join(' ')}
+                            </div>
+                            <div className="text-[10.5px] text-muted-foreground mt-0.5 flex justify-between">
+                              <span>{c.year ?? ''} · {c.mileage ? `${Math.round(c.mileage / 1000)}k km` : ''}</span>
+                              <span className="font-medium text-foreground">
+                                {c.price ? `${c.price.toLocaleString('sv-SE')} kr` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={reset}
