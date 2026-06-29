@@ -32,8 +32,6 @@ const Index = () => {
   const [resultMessage, setResultMessage] = useState(saved?.resultMessage || '');
   const [showResults, setShowResults] = useState(saved?.showResults || false);
   const [language, setLanguage] = useState('sv');
-  const [carCount, setCarCount] = useState<number | null>(null);
-  const [displayCount, setDisplayCount] = useState(0);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
@@ -47,35 +45,6 @@ const Index = () => {
     }
   }, [cars, carReasons, savedCars, resultMessage, showResults]);
 
-  // Live car count for the trust line under the chat
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { count } = await supabase
-        .from('Lovable')
-        .select('id', { count: 'exact', head: true })
-        .not('image_thumb_url', 'is', null);
-      if (!cancelled && typeof count === 'number') setCarCount(count);
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Animate displayCount from 0 → carCount once we have it
-  useEffect(() => {
-    if (carCount === null) return;
-    const target = carCount;
-    const duration = 1400;
-    const start = performance.now();
-    let raf = 0;
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
-      setDisplayCount(Math.floor(target * eased));
-      if (progress < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [carCount]);
 
   const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
     if (append) {
@@ -122,7 +91,7 @@ const Index = () => {
     }
   }, [cars, language]);
 
-  const formatCount = (n: number) => new Intl.NumberFormat('sv-SE').format(n);
+  
 
   return (
     <div className="min-h-screen overflow-x-hidden premium-page-bg">
@@ -147,24 +116,6 @@ const Index = () => {
             <p className="text-muted-foreground mt-6 max-w-md text-base md:text-[17px] leading-relaxed">
               Oberoende bilrådgivning. Vi jämför tusentals annonser utifrån din vardag — utan provision, helt gratis.
             </p>
-            <ul className="mt-8 space-y-2.5 text-[14px] text-muted-foreground">
-              <li className="flex items-center gap-2.5">
-                <span className="w-1 h-1 rounded-full bg-foreground/40" />
-                {carCount !== null ? (
-                  <><span className="tabular-nums text-foreground">{formatCount(displayCount)}</span>&nbsp;bilar, uppdaterade dagligen</>
-                ) : (
-                  <>Tusentals bilar uppdaterade dagligen</>
-                )}
-              </li>
-              <li className="flex items-center gap-2.5">
-                <span className="w-1 h-1 rounded-full bg-foreground/40" />
-                Oberoende — vi tjänar inget på ditt val
-              </li>
-              <li className="flex items-center gap-2.5">
-                <span className="w-1 h-1 rounded-full bg-foreground/40" />
-                0 % provision, alltid gratis
-              </li>
-            </ul>
           </ScrollReveal>
 
           {/* Right: advisor module */}
