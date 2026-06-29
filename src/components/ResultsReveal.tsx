@@ -29,11 +29,12 @@ interface ResultsRevealProps {
   onCompare: () => void;
   onShowMore: () => void;
   loadingMore?: boolean;
+  allLoaded?: boolean;
   getReasonForCar: (carId: number) => string | undefined;
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, allLoaded, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -243,15 +244,21 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               allRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            <Button
-              variant="outline"
-              className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
-              onClick={onShowMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
-              {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
-            </Button>
+            {allLoaded ? (
+              <p className="text-sm text-muted-foreground text-center max-w-sm">
+                Det här var alla bilar som matchar — justera filtren i chatten för fler.
+              </p>
+            ) : (
+              <Button
+                variant="outline"
+                className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
+                onClick={onShowMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
+                {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
+              </Button>
+            )}
           </div>
 
           {/* Skeleton loading placeholders when loading more */}

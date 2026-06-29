@@ -80,6 +80,7 @@ const Index = () => {
   const getReasonForCar = (carId: number) => carReasons.find((r) => r.carId === carId)?.reason;
 
   const [loadingMore, setLoadingMore] = useState(false);
+  const [allLoaded, setAllLoaded] = useState(false);
   const handleLoadMore = useCallback(async () => {
     try {
       const stored = sessionStorage.getItem('findcar-last-filters');
@@ -95,7 +96,8 @@ const Index = () => {
         setCars((prev) => [...prev, ...data.cars]);
         setCarReasons((prev) => [...prev, ...(data.carReasons || [])]);
       } else {
-        toast.info('Inga fler bilar hittades med dina filter. Prova att justera din sökning.');
+        setAllLoaded(true);
+        toast.info('Inga fler bilar hittades med dina filter.');
       }
     } catch (err) {
       console.error('Load more error:', err);
@@ -165,6 +167,7 @@ const Index = () => {
                 onCompare={() => navigate('/compare', { state: { cars: savedCars } })}
                 onShowMore={handleLoadMore}
                 loadingMore={loadingMore}
+                allLoaded={allLoaded}
                 getReasonForCar={getReasonForCar}
               />
             </div>
