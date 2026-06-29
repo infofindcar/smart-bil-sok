@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "service_role full access" ON public.listing_analyses;
