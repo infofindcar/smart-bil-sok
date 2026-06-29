@@ -63,27 +63,27 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
       // Show header after scroll settles
       const headerTimer = setTimeout(() => {
         setHeaderVisible(true);
-      }, 900);
+      }, 400);
 
       // Reveal cards one by one with a pop effect
       const cardTimers: NodeJS.Timeout[] = [];
       cars.forEach((_, i) => {
         const timer = setTimeout(() => {
           setRevealedCount((prev) => prev + 1);
-        }, 1400 + i * 500);
+        }, 600 + i * 200);
         cardTimers.push(timer);
       });
 
       // Show similar section after top cards are revealed
       const similarTimer = setTimeout(() => {
         setShowSimilar(true);
-      }, 1400 + cars.length * 500 + 400);
+      }, 600 + cars.length * 200 + 200);
 
       // Mark as animated
       const doneTimer = setTimeout(() => {
         setHasAnimated(true);
         sessionStorage.setItem('findcar-results-revealed', 'true');
-      }, 1400 + cars.length * 500 + 800);
+      }, 600 + cars.length * 200 + 500);
 
       return () => {
         clearTimeout(scrollTimer);
