@@ -115,7 +115,7 @@ const Index = () => {
               Hitta rätt bil <em className="italic font-normal">för dig</em>.
             </h1>
             <p className="text-muted-foreground mt-6 max-w-md text-base md:text-[17px] leading-relaxed">
-              Oberoende bilrådgivning. Vi jämför tusentals annonser utifrån din vardag — utan provision, helt gratis.
+              Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
             </p>
           </ScrollReveal>
 
