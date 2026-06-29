@@ -43,12 +43,13 @@ const VerdictIcon = ({ v }: { v: Verdict }) => {
   return <AlertTriangle className="h-4 w-4 text-rose-500" />;
 };
 
-const rows: Array<{ key: keyof Omit<Result, 'summering' | 'bil'>; label: string }> = [
+type SectionKey = 'pris' | 'rykte' | 'annonskvalitet' | 'agandekostnad';
+const rows: Array<{ key: SectionKey; label: string }> = [
   { key: 'pris', label: 'Pris vs marknad' },
   { key: 'rykte', label: 'Modellens rykte' },
   { key: 'annonskvalitet', label: 'Annonsens kvalitet' },
   { key: 'agandekostnad', label: 'Ägandekostnad' },
-] as any;
+];
 
 const scoreColor = (s: number) => {
   if (s >= 8) return 'text-emerald-500';
