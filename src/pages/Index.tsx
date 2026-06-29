@@ -17,21 +17,17 @@ const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ 
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 
 const STORAGE_KEY = 'findcar-search-state';
-const loadSearchState = () => {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return null;
-};
 
 const Index = () => {
-  const saved = loadSearchState();
-  const [cars, setCars] = useState<Car[]>(saved?.cars || []);
-  const [carReasons, setCarReasons] = useState<CarReason[]>(saved?.carReasons || []);
-  const [savedCars, setSavedCars] = useState<Car[]>(saved?.savedCars || []);
-  const [resultMessage, setResultMessage] = useState(saved?.resultMessage || '');
-  const [showResults, setShowResults] = useState(saved?.showResults || false);
+  // Refresh = ren start. Tidigare resultat rensas så användaren kan göra en ny sökning.
+  useEffect(() => {
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+  }, []);
+  const [cars, setCars] = useState<Car[]>([]);
+  const [carReasons, setCarReasons] = useState<CarReason[]>([]);
+  const [savedCars, setSavedCars] = useState<Car[]>([]);
+  const [resultMessage, setResultMessage] = useState('');
+  const [showResults, setShowResults] = useState(false);
   const [language, setLanguage] = useState('sv');
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
