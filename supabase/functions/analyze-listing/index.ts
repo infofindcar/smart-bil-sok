@@ -156,6 +156,9 @@ type AnalysisResult = {
   annonskvalitet: { status: 'bra' | 'ok' | 'varning'; text: string };
   agandekostnad: { status: 'bra' | 'ok' | 'varning'; text: string };
   summering: string;
+  score: number;
+  score_label: string;
+  liknande_modeller: string[];
   bil?: {
     make?: string;
     model?: string;
@@ -205,7 +208,11 @@ Bedöm:
 3. annonskvalitet: bildantal, beskrivningens längd, säljartyp, varningstecken ("pris på förfrågan", otydlig historik, leasingrest).
 4. agandekostnad: grov uppskattning kr/år för skatt + försäkring + service baserat på bilen.
 
-summering: en mening som sammanfattar — köpvärd, värd att kolla närmare, eller skippa.`;
+summering: en mening som sammanfattar — köpvärd, värd att kolla närmare, eller skippa.
+
+score: ETT samlat betyg 0.0–10.0 (en decimal) som väger ihop pris, rykte, annonskvalitet och ägandekostnad. 8.0+ = riktigt bra, 6.0–7.9 = okej, under 6.0 = tveksam.
+score_label: kort etikett ("Riktigt bra köp", "Värd att kolla", "Tveksam" osv).
+liknande_modeller: 4 konkurrenter i samma klass/segment (t.ex. BMW 5-serie → ["Mercedes E-Klass","Audi A6","Volvo S90","Jaguar XF"]). Svenska sök-namn, bara märke+modell utan årtal.`;
 
   const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
@@ -265,8 +272,11 @@ summering: en mening som sammanfattar — köpvärd, värd att kolla närmare, e
                 required: ['status', 'text'],
               },
               summering: { type: 'string' },
+              score: { type: 'number' },
+              score_label: { type: 'string' },
+              liknande_modeller: { type: 'array', items: { type: 'string' } },
             },
-            required: ['pris', 'rykte', 'annonskvalitet', 'agandekostnad', 'summering'],
+            required: ['pris', 'rykte', 'annonskvalitet', 'agandekostnad', 'summering', 'score', 'score_label', 'liknande_modeller'],
           },
         },
       },
