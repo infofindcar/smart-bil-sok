@@ -374,6 +374,36 @@ export type Database = {
           },
         ]
       }
+      listing_analyses: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          ip_hash: string
+          result: Json | null
+          status: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          ip_hash: string
+          result?: Json | null
+          status?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          ip_hash?: string
+          result?: Json | null
+          status?: string
+          url?: string
+        }
+        Relationships: []
+      }
       Lovable: {
         Row: {
           body_type: string | null
