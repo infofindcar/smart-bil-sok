@@ -18,16 +18,30 @@ const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => 
 
 const STORAGE_KEY = 'findcar-search-state';
 
+type StoredSearchState = {
+  cars?: Car[];
+  carReasons?: CarReason[];
+  savedCars?: Car[];
+  resultMessage?: string;
+  showResults?: boolean;
+};
+
+const getStoredSearchState = (): StoredSearchState | null => {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
 const Index = () => {
-  // Refresh = ren start. Tidigare resultat rensas så användaren kan göra en ny sökning.
-  useEffect(() => {
-    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
-  }, []);
-  const [cars, setCars] = useState<Car[]>([]);
-  const [carReasons, setCarReasons] = useState<CarReason[]>([]);
-  const [savedCars, setSavedCars] = useState<Car[]>([]);
-  const [resultMessage, setResultMessage] = useState('');
-  const [showResults, setShowResults] = useState(false);
+  const storedSearchStateRef = useRef<StoredSearchState | null>(getStoredSearchState());
+  const [cars, setCars] = useState<Car[]>(() => storedSearchStateRef.current?.cars ?? []);
+  const [carReasons, setCarReasons] = useState<CarReason[]>(() => storedSearchStateRef.current?.carReasons ?? []);
+  const [savedCars, setSavedCars] = useState<Car[]>(() => storedSearchStateRef.current?.savedCars ?? []);
+  const [resultMessage, setResultMessage] = useState(() => storedSearchStateRef.current?.resultMessage ?? '');
+  const [showResults, setShowResults] = useState(() => storedSearchStateRef.current?.showResults ?? false);
   const [language, setLanguage] = useState('sv');
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
@@ -48,6 +62,8 @@ const Index = () => {
       setCars((prev) => [...prev, ...newCars]);
       setCarReasons((prev) => [...prev, ...reasons]);
     } else {
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem('findcar-results-revealed');
       setCars(newCars);
       setCarReasons(reasons);
     }
