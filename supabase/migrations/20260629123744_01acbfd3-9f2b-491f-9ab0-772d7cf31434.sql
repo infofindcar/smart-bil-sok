@@ -1,0 +1,2 @@
+CREATE POLICY "deny anon" ON public.listing_analyses FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "deny authenticated" ON public.listing_analyses FOR ALL TO authenticated USING (false) WITH CHECK (false);
