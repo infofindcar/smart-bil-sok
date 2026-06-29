@@ -54,7 +54,7 @@ const GREETINGS: Record<string, ChatMessage> = {
   sv: {
     id: '1',
     role: 'assistant',
-    content: 'Hej! 👋 Jag är Clutch, din personliga bilrådgivare. Berätta lite om dig och vad du letar efter — så hittar jag bilen som passar just dig.',
+    content: 'Hej! 👋 Jag är Clutch. Berätta vad du letar efter — så fixar jag resten.',
     suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
   },
   en: {

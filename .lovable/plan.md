@@ -1,23 +1,57 @@
-## Plan
+# Plan: små finlir — Clutch-chatten & resultatsidan
 
-Jag ändrar så att matchningarna beter sig exakt så här:
+Fokus: bara små UX/copy/polish-fixar. Inga ombyggen, inga nya flöden.
 
-- Backar man tillbaka från en bilsida ska samma matchningar fortfarande visas.
-- Matchningarna ska inte rensas bara för att startsidan mountas igen.
-- Matchningarna ska bara rensas/ersättas när användaren faktiskt startar en ny sökning.
-- När nya resultat kommer in visas “Bästa matchningar” igen med de nya bilarna.
+## Clutch-chatten (`GuidedSearch.tsx`)
 
-## Teknisk ändring
+1. **Tydligare budgetbekräftelse i bubblan**
+   - När Clutch fångat en budget, visa den som en liten chip ("Budget: 100–150k") överst i chatten så användaren ser att den uppfattats rätt. Just nu försvinner den i texten.
 
-I `src/pages/Index.tsx`:
+2. **Snabbsvar-chips håller bredd bättre på mobil**
+   - Nuvarande suggestion-knappar wrap:ar lite hackigt på 390px. Liten justering: `flex-wrap` + jämnare padding + max 2 per rad, så det känns mer "produkt" och mindre "AI-demo".
 
-1. Ta bort den nuvarande `useEffect` som rensar `findcar-search-state` vid sidladdning/mount.
-2. Återställ `cars`, `carReasons`, `savedCars`, `resultMessage` och `showResults` från `sessionStorage` när sidan öppnas igen.
-3. I `handleResults`, när det är en ny sökning (`append` inte är true), ersätt gamla resultat med nya och uppdatera sparad state.
-4. Rensa `findcar-results-revealed` vid ny sökning så animationen kan spelas om för de nya matchningarna.
+3. **"Skriv om"-knapp får tooltip + ikon-only på mobil**
+   - Spar plats i input-raden, gör mic + send-knappen mer prominenta.
 
-## Resultat
+4. **Auto-scroll till nyaste meddelande**
+   - Säkerställ att chatten alltid scrollar ned när Clutch svarar (verkar ibland stanna vid förra bubblan på mobil).
 
-- Back från bil: matchningarna finns kvar.
-- Ny sökning: gamla matchningar försvinner och nya visas.
-- “Visa fler bilar”: fortsätter lägga till fler bilar utan att rensa allt.
+5. **Mikro-copy**
+   - Greetingen kortas: "Hej! Jag är Clutch. Berätta vad du letar efter — så fixar jag resten." (mindre AI-tonalitet, mer Anyfin-stil).
+   - Loading-text under sökning: rotera mellan 2–3 fraser ("Tittar igenom 60 000 annonser…", "Filtrerar bort skräp…", "Sätter ihop dina topp 3…") istället för en statisk.
+
+## Resultatsidan & bilkorten (`ResultsReveal.tsx`, `CarCard.tsx`)
+
+6. **Snabbare reveal-sekvens**
+   - Just nu: 1400ms innan första kortet + 500ms per kort = nästan 3s innan användaren ser något. Förslag: 600ms + 200ms per kort. Behåller pop-effekten men halverar känsla av väntan.
+
+7. **"Clutch tycker"-rutan får liten polish**
+   - Stramare padding, ikonen vänsterjusterad mot texten istället för ovanför. Idag känns den lite tung och tar nästan halva kortet.
+
+8. **Pris-badge på bild blir tydligare hierarki**
+   - Större font på priset (`text-base font-bold` istället för `text-sm`), så det är första man ser. Idag konkurrerar den med titeln nedanför.
+
+9. **"Visa fler dealers"-knappen blir mindre framträdande**
+   - Nuvarande border-top + full bredd gör den till en CTA. Det är en sekundär funktion. Förslag: liten textlänk längst ned, mindre visuell vikt.
+
+10. **Sparat-hjärtat får micro-feedback**
+    - Liten "pop" + toast ("Sparad — jämför från menyn") första gången användaren sparar en bil. Idag är handlingen helt tyst.
+
+11. **Tomt-state om append ger 0 nya bilar**
+    - Idag visas en toast. Lägg även en liten inline-rad under sista kortet: "Det här var alla bilar som matchar — justera filtren för fler."
+
+## Vad jag INTE rör
+
+- Sökmotorns logik (prisrespekt fixas separat när det blir aktuellt).
+- Hero/landningssidan.
+- Lead-flödet, bildetaljsidan, jämförelsesidan.
+- Färger, typografi, layoutsystem.
+
+## Teknisk omfattning
+
+Filer som rörs:
+- `src/components/GuidedSearch.tsx` (punkt 1–5)
+- `src/components/ResultsReveal.tsx` (punkt 6, 11)
+- `src/components/CarCard.tsx` (punkt 7, 8, 9, 10)
+
+Ingen DB, inga edge functions, inga nya beroenden.

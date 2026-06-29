@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 
 const MESSAGES = [
-  'Söker bland hundratals bilar...',
-  'Analyserar dina preferenser...',
-  'Hittar de bästa matcherna...',
-  'Nästan klart...',
+  'Tittar igenom 60 000 annonser...',
+  'Filtrerar bort skräpet...',
+  'Matchar mot dina preferenser...',
+  'Sätter ihop dina topp 3...',
 ];
 
 export const SearchAnimation = () => {

@@ -29,11 +29,12 @@ interface ResultsRevealProps {
   onCompare: () => void;
   onShowMore: () => void;
   loadingMore?: boolean;
+  allLoaded?: boolean;
   getReasonForCar: (carId: number) => string | undefined;
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, getReasonForCar }, ref) => {
+  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, allLoaded, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -63,27 +64,27 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
       // Show header after scroll settles
       const headerTimer = setTimeout(() => {
         setHeaderVisible(true);
-      }, 900);
+      }, 400);
 
       // Reveal cards one by one with a pop effect
       const cardTimers: NodeJS.Timeout[] = [];
       cars.forEach((_, i) => {
         const timer = setTimeout(() => {
           setRevealedCount((prev) => prev + 1);
-        }, 1400 + i * 500);
+        }, 600 + i * 200);
         cardTimers.push(timer);
       });
 
       // Show similar section after top cards are revealed
       const similarTimer = setTimeout(() => {
         setShowSimilar(true);
-      }, 1400 + cars.length * 500 + 400);
+      }, 600 + cars.length * 200 + 200);
 
       // Mark as animated
       const doneTimer = setTimeout(() => {
         setHasAnimated(true);
         sessionStorage.setItem('findcar-results-revealed', 'true');
-      }, 1400 + cars.length * 500 + 800);
+      }, 600 + cars.length * 200 + 500);
 
       return () => {
         clearTimeout(scrollTimer);
@@ -243,15 +244,21 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               allRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            <Button
-              variant="outline"
-              className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
-              onClick={onShowMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
-              {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
-            </Button>
+            {allLoaded ? (
+              <p className="text-sm text-muted-foreground text-center max-w-sm">
+                Det här var alla bilar som matchar — justera filtren i chatten för fler.
+              </p>
+            ) : (
+              <Button
+                variant="outline"
+                className="rounded-xl px-6 h-12 text-base sm:h-10 sm:text-sm touch-target"
+                onClick={onShowMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Laddar fler bilar...' : t('showMore', language)}
+                {!loadingMore && <ChevronRight className="h-4 w-4 ml-1" />}
+              </Button>
+            )}
           </div>
 
           {/* Skeleton loading placeholders when loading more */}
