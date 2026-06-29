@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.sync-cars]
 verify_jwt = false
+
+[functions.analyze-listing]
+verify_jwt = false
