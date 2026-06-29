@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Heart, Fuel, MapPin, Store, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import type { Car } from './GuidedSearch';
 import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
@@ -80,7 +81,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
 
         {/* Price badge on image */}
         <div className="absolute bottom-2 left-2">
-          <span className="inline-block bg-background/90 backdrop-blur-sm text-primary font-bold text-sm px-3 py-1 rounded-lg shadow-sm">
+          <span className="inline-block bg-background/95 backdrop-blur-sm text-primary font-bold text-base px-3 py-1 rounded-lg shadow-md">
             {formatPrice(car.price)} kr
           </span>
         </div>
@@ -88,12 +89,25 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
         <button
           onClick={(e) => {
             e.stopPropagation();
+            const wasSaved = isSaved;
             onToggleSave?.(car);
+            if (!wasSaved) {
+              try {
+                const seen = sessionStorage.getItem('findcar-saved-toast-seen');
+                if (!seen) {
+                  toast.success('Sparad — jämför från menyn längre ned');
+                  sessionStorage.setItem('findcar-saved-toast-seen', '1');
+                } else {
+                  toast('Sparad', { duration: 1500 });
+                }
+              } catch {}
+              navigator.vibrate?.(10);
+            }
           }}
           className="absolute top-2 right-2 w-12 h-12 md:w-10 md:h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
         >
           <Heart
-            className={`h-5 w-5 transition-colors ${isSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground hover:text-destructive/70'}`}
+            className={`h-5 w-5 transition-all ${isSaved ? 'fill-destructive text-destructive scale-110' : 'text-muted-foreground hover:text-destructive/70'}`}
           />
         </button>
       </div>
@@ -149,20 +163,16 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
 
         {/* Personlig motivering från Clutch */}
         {matchReason && (
-          <div className="mt-3 rounded-lg border border-primary/20 bg-gradient-to-br from-primary/[0.08] to-secondary/[0.04] p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/90">
-                Clutch tycker
-              </span>
-            </div>
+          <div className="mt-3 flex gap-2 rounded-lg border border-primary/20 bg-gradient-to-br from-primary/[0.08] to-secondary/[0.04] px-2.5 py-2">
+            <Sparkles className="h-3 w-3 text-primary mt-0.5 shrink-0" />
             <p className="text-xs text-foreground/85 leading-relaxed">
+              <span className="font-semibold text-primary/90">Clutch tycker: </span>
               {matchReason}
             </p>
           </div>
         )}
 
-        {/* Visa fler dealers — öppnar modal med samma modell hos andra säljare */}
+        {/* Visa fler dealers — sekundär textlänk */}
         <button
           type="button"
           onClick={(e) => {
@@ -172,10 +182,10 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
           }}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary border-t border-border/30 pt-2 -mb-1 transition-colors"
+          className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground/80 hover:text-primary transition-colors self-start"
         >
-          <Store className="h-3.5 w-3.5" />
-          Visa fler dealers med samma bil
+          <Store className="h-3 w-3" />
+          Fler dealers med samma bil
         </button>
       </div>
 
