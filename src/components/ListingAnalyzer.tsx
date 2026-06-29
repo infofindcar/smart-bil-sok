@@ -187,7 +187,7 @@ export const ListingAnalyzer = () => {
                 Hittat en annons någon annanstans?
               </h2>
               <p className="text-[13px] md:text-sm text-muted-foreground mt-1 leading-relaxed">
-                Klistra in länken — vår AI går igenom priset, modellen och annonsen åt dig.
+                Klistra in länken — Clutch går igenom priset, modellen och annonsen åt dig.
               </p>
             </div>
           </div>
