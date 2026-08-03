@@ -24,11 +24,14 @@ const feedbackSchema = z.object({
 type WidgetState = 'open' | 'closed';
 
 export const FeedbackWidget = () => {
-  // Default to open so users discover it; remember user's choice afterwards
+  // Default open on desktop only — on mobile it covers content, so start collapsed
   const [state, setState] = useState<WidgetState>(() => {
     try {
       const saved = sessionStorage.getItem(STORAGE_KEY);
-      return saved === 'closed' ? 'closed' : 'open';
+      if (saved === 'closed' || saved === 'open') return saved;
+      const isMobile =
+        typeof window !== 'undefined' && window.innerWidth < 768;
+      return isMobile ? 'closed' : 'open';
     } catch {
       return 'open';
     }
@@ -93,9 +96,9 @@ export const FeedbackWidget = () => {
           setTimeout(() => textareaRef.current?.focus(), 50);
         }}
         aria-label="Öppna förslagslåda"
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] h-12 w-12 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+        className="fixed bottom-3 right-3 md:bottom-6 md:right-6 z-[60] h-10 w-10 md:h-12 md:w-12 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg opacity-70 hover:opacity-100 md:opacity-100 hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
       >
-        <MessageSquarePlus className="h-5 w-5" />
+        <MessageSquarePlus className="h-4 w-4 md:h-5 md:w-5" />
       </button>
     );
   }
