@@ -63,6 +63,9 @@ export const Footer = () => {
                 <a href="https://linkedin.com/company/findcar-se" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground transition-all" aria-label="LinkedIn">
                   <Linkedin className="h-5 w-5" />
                 </a>
+                <a href="https://tiktok.com/@findcar.se" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground transition-all" aria-label="TikTok">
+                  <TikTokIcon className="h-5 w-5" />
+                </a>
               </div>
             </div>
           </div>
@@ -102,6 +105,7 @@ export const Footer = () => {
                 <div className="flex items-center gap-3 pt-2">
                   <a href="https://instagram.com/findcar.se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="Instagram"><Instagram className="h-4.5 w-4.5" /></a>
                   <a href="https://linkedin.com/company/findcar-se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="LinkedIn"><Linkedin className="h-4.5 w-4.5" /></a>
+                  <a href="https://tiktok.com/@findcar.se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="TikTok"><TikTokIcon className="h-4 w-4" /></a>
                 </div>
               </div>
             </div>
