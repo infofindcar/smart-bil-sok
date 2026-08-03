@@ -207,7 +207,12 @@ serve(async (req) => {
 
     // Parse and validate input
     const body = await req.json();
-    const { messages, language } = body;
+    const { language } = body;
+    const isLoadMore = body.action === "load_more";
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const excludeIds: number[] = Array.isArray(body.excludeIds)
+      ? body.excludeIds.filter((n: unknown) => typeof n === "number").slice(0, 500)
+      : [];
 
     // Language instruction map
     const langInstructions: Record<string, string> = {
@@ -219,12 +224,14 @@ serve(async (req) => {
     };
     const langInstruction = langInstructions[language as string] || langInstructions.sv;
 
-    const validation = validateMessages(messages);
-    if (!validation.valid) {
-      return new Response(
-        JSON.stringify({ action: "error", error: validation.error }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!isLoadMore) {
+      const validation = validateMessages(body.messages);
+      if (!validation.valid) {
+        return new Response(
+          JSON.stringify({ action: "error", error: validation.error }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     console.log("Received", messages.length, "messages");
@@ -233,6 +240,17 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) {
       throw new Error("Required configuration missing");
     }
+
+    let decision: any = null;
+
+    if (isLoadMore) {
+      decision = {
+        action: "search",
+        filters: body.filters || {},
+        reasoning: "",
+        customerProfile: typeof body.customerProfile === "string" ? body.customerProfile : "",
+      };
+    } else {
 
     // Send conversation to AI to decide: ask or search
     const aiResponse = await fetch(
@@ -284,7 +302,6 @@ serve(async (req) => {
       .replace(/```\s*$/, "")
       .trim();
     
-    let decision: any;
     try {
       decision = JSON.parse(cleaned);
     } catch (parseErr) {
@@ -296,6 +313,7 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
     }
 
     // If AI wants to ask a question, return it
@@ -416,6 +434,10 @@ serve(async (req) => {
         }
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
+
+        if (excludeIds.length > 0) {
+          query = query.not("id", "in", `(${excludeIds.join(",")})`);
+        }
 
         return query.order("price", { ascending: true }).limit(30);
       };
