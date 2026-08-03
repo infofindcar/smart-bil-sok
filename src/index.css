@@ -483,7 +483,9 @@ html::-webkit-scrollbar-thumb:hover {
 }
 
 /* Safe area for mobile fixed input */
-.safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+/* Adds safe-area inset on top of the element's own bottom padding.
+   (Using padding-bottom here would override Tailwind's pb-* utilities.) */
+.safe-pb { margin-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* Hero logo shimmer sweep — masked to the FindCar logo silhouette */
 @keyframes findcar-shimmer-sweep {
