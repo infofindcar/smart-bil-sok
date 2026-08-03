@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageSquarePlus, X, Send } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const STORAGE_KEY = 'findcar-feedback-widget-state';
+export const FEEDBACK_OPEN_EVENT = 'findcar:open-feedback';
+export const openFeedback = () =>
+  window.dispatchEvent(new Event(FEEDBACK_OPEN_EVENT));
 
 const feedbackSchema = z.object({
   message: z
@@ -21,19 +23,8 @@ const feedbackSchema = z.object({
     .or(z.literal('')),
 });
 
-type WidgetState = 'open' | 'closed';
-
 export const FeedbackWidget = () => {
-  // Always start collapsed — the panel covers content on every viewport
-  const [state, setState] = useState<WidgetState>(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved === 'closed' || saved === 'open') return saved;
-      return 'closed';
-    } catch {
-      return 'closed';
-    }
-  });
+  const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -41,10 +32,23 @@ export const FeedbackWidget = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, state);
-    } catch {}
-  }, [state]);
+    const onOpen = () => {
+      setOpen(true);
+      setSubmitted(false);
+      setTimeout(() => textareaRef.current?.focus(), 80);
+    };
+    window.addEventListener(FEEDBACK_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(FEEDBACK_OPEN_EVENT, onOpen);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +78,7 @@ export const FeedbackWidget = () => {
       toast.success('Tack för ditt förslag!');
       // Auto-close after a brief moment
       setTimeout(() => {
-        setState('closed');
+        setOpen(false);
         setSubmitted(false);
       }, 2200);
     } catch (err) {
@@ -85,27 +89,19 @@ export const FeedbackWidget = () => {
     }
   };
 
-  if (state === 'closed') {
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          setState('open');
-          setTimeout(() => textareaRef.current?.focus(), 50);
-        }}
-        aria-label="Öppna förslagslåda"
-        className="fixed bottom-3 right-3 md:bottom-5 md:right-5 z-[60] h-10 w-10 md:h-11 md:w-11 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg opacity-70 hover:opacity-100 md:opacity-80 md:hover:opacity-100 hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
-      >
-        <MessageSquarePlus className="h-4 w-4 md:h-[18px] md:w-[18px]" />
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
-    <div
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={() => setOpen(false)}
+      />
+      <div
       role="dialog"
+      aria-modal="true"
       aria-label="Skicka förbättringsförslag"
-      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] w-[calc(100vw-2rem)] max-w-[340px] rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
+      className="relative w-full max-w-[400px] rounded-2xl border border-border/60 bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
     >
       <div className="flex items-start justify-between gap-2 px-4 pt-3 pb-2 border-b border-border/40">
         <div className="min-w-0">
@@ -118,7 +114,7 @@ export const FeedbackWidget = () => {
         </div>
         <button
           type="button"
-          onClick={() => setState('closed')}
+          onClick={() => setOpen(false)}
           aria-label="Stäng"
           className="shrink-0 -mr-1 -mt-1 h-7 w-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors flex items-center justify-center"
         >
@@ -163,6 +159,7 @@ export const FeedbackWidget = () => {
           </button>
         </form>
       )}
+      </div>
     </div>
   );
 };
