@@ -6,6 +6,12 @@ import kthLogo from '@/assets/kth-logo.png';
 export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  const TikTokIcon = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.85-2.48V9.77a5.86 5.86 0 1 0 4.94 5.79V8.9a7.32 7.32 0 0 0 4.28 1.38V7.19a4.29 4.29 0 0 1-3.22-1.37z" />
+    </svg>
+  );
+
   return (
     <footer className="bg-secondary text-secondary-foreground border-t border-secondary-foreground/10">
       <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-6 md:pt-8 pb-6 md:pb-8">
@@ -57,6 +63,9 @@ export const Footer = () => {
                 <a href="https://linkedin.com/company/findcar-se" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground transition-all" aria-label="LinkedIn">
                   <Linkedin className="h-5 w-5" />
                 </a>
+                <a href="https://tiktok.com/@findcar.se" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground transition-all" aria-label="TikTok">
+                  <TikTokIcon className="h-5 w-5" />
+                </a>
               </div>
             </div>
           </div>
@@ -96,6 +105,7 @@ export const Footer = () => {
                 <div className="flex items-center gap-3 pt-2">
                   <a href="https://instagram.com/findcar.se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="Instagram"><Instagram className="h-4.5 w-4.5" /></a>
                   <a href="https://linkedin.com/company/findcar-se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="LinkedIn"><Linkedin className="h-4.5 w-4.5" /></a>
+                  <a href="https://tiktok.com/@findcar.se" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-secondary-foreground/5 border border-secondary-foreground/10 flex items-center justify-center text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all" aria-label="TikTok"><TikTokIcon className="h-4 w-4" /></a>
                 </div>
               </div>
             </div>
