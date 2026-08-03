@@ -443,7 +443,15 @@ serve(async (req) => {
           query = query.not("id", "in", `(${excludeIds.join(",")})`);
         }
 
-        return query.order("price", { ascending: true }).limit(30);
+        // Large candidate pool so we can diversify instead of always returning
+        // the same cheapest cars. Randomized ordering key varies per request.
+        const orderKeys = hiddenGem
+          ? ["horsepower", "year", "mileage"]
+          : ["price", "year", "mileage"];
+        const orderBy = orderKeys[Math.floor(Math.random() * orderKeys.length)];
+        return query
+          .order(orderBy, { ascending: orderBy === "mileage" || (!hiddenGem && orderBy === "price"), nullsFirst: false })
+          .limit(200);
       };
 
       // Fire levels 0 and 1 in parallel
