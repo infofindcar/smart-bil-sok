@@ -182,7 +182,9 @@ Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab
 OBS: "cabriolet", "cab", "roadster", "öppen bil", "convertible", "spyder", "spider" → bodyType: "cab"
 OBS: "budget" ska ALLTID vara ett intervall "MIN-MAX". Om kunden säger "runt 500k" eller "ungefär X" → skapa ett intervall ±20%: t.ex. "400000-600000". Om kunden nämner ett enda belopp → skapa ett rimligt intervall runt det.
 Giltiga drivetrain-värden: awd, fwd, rwd
-Giltiga useCase-värden: pendling, familj, langresa, stad, blandat`;
+Giltiga useCase-värden: pendling, familj, langresa, stad, blandat
+
+VIBE-FÄLT (valfritt): lägg till "vibe":"hiddenGem" i filters om kunden ber om något roligt, ovanligt, unikt, "hidden gem", "dold pärla", "något häftigt", "överraska mig", "sportigt kul" eller liknande. Då letar vi upp ovanliga och roliga bilar istället för de vanligaste. Om kunden vill ha tråkigt/säkert/vanligt, utelämna fältet.`;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
