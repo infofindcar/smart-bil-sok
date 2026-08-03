@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Instagram, Linkedin, ArrowUpRight } from 'lucide-react';
 import logo from '@/assets/findcar-logo.png';
 import kthLogo from '@/assets/kth-logo.png';
+import { openFeedback } from '@/components/FeedbackWidget';
 
 export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -37,6 +38,9 @@ export const Footer = () => {
                 <a href="#how-it-works" onClick={(e) => { e.preventDefault(); document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); }} className="block text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors py-1">
                   Så fungerar det
                 </a>
+                <button type="button" onClick={openFeedback} className="block w-full text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors py-1">
+                  Hjälp oss bli bättre
+                </button>
               </div>
             </div>
             <div>
@@ -89,6 +93,7 @@ export const Footer = () => {
               <ul className="space-y-3.5">
                 <li><Link to="/" onClick={scrollToTop} className="text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors inline-flex items-center gap-1 group">Sök bil<ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all" /></Link></li>
                 <li><a href="#how-it-works" onClick={(e) => { e.preventDefault(); document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors inline-flex items-center gap-1 group">Så fungerar det<ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all" /></a></li>
+                <li><button type="button" onClick={openFeedback} className="text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors inline-flex items-center gap-1 group">Hjälp oss bli bättre<ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all" /></button></li>
               </ul>
             </div>
             <div>
