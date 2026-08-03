@@ -57,11 +57,17 @@ function extractCity(dealer) {
   return dealer.replace(/bilf[öo]rmedlingen\s*/i, '').trim() || null;
 }
 
-// Rensa modellnamn (ta bort hk-suffix och utrustning)
+// Rensa modellnamn – returnerar grundmodellen (t.ex. "XC60", "A3", "Q7")
+// utan motorkod, hk-tal, drivlina eller utrustningsnivå.
 function cleanModel(modelStr) {
   return modelStr
-    .replace(/\s+\d+\s*hk.*/i, '')
-    .replace(/\s+(aut|man|automat|manuell)\s.*/i, '')
+    .replace(/\s+\d+\s*hk.*/i, '')         // ta bort "190hk..." och allt efter
+    .replace(/\s+(aut|man|automat|manuell)(\s|$).*/i, '') // ta bort växellåda
+    .replace(/\s+\d+\.\d+.*/i, '')          // ta bort "1.4 TFSI..." och allt efter
+    .replace(/\s+(TDI|TDCi|TDCI|HDI|BlueHDi|HDi|CDI|CDTI|CRDi|TFSI|TSI|FSI|T-GDi|GDi|SKYACTIV-D|i-DTEC|D-4D|dCi|SCR|HVO)\b.*/i, '')
+    .replace(/\s+([DT][2-9]|D\d{2})\b.*/i, '')           // Volvo D4/D5/T5 etc.
+    .replace(/\s+(AWD|FWD|RWD|4WD|Quattro|quattro|4MATIC|xDrive|4Motion)\b.*/i, '')
+    .replace(/\s+(eDrive|eHybrid|Plug-In|BlueTEC|Duramax)\b.*/i, '')
     .trim();
 }
 

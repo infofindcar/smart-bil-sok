@@ -129,7 +129,7 @@ const CarDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [car, setCar] = useState<CarType | null>((location.state as any)?.car || null);
-  const [carModel, setCarModel] = useState<CarModelData | null>(null);
+
   const [isLoading, setIsLoading] = useState(!car);
   const [modelData, setModelData] = useState<CarModelData | null>(null);
   const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
@@ -164,10 +164,16 @@ const CarDetail = () => {
     if (!car?.make || !car?.model) return;
     const fetchEnriched = async () => {
       const [modelRes, makeRes] = await Promise.all([
-        supabase.from('car_models').select('*').eq('make', car.make!).eq('model', car.model!).maybeSingle(),
+        // Fetch all models for this make and pick the longest prefix match.
+        // Bilförmedlingen stores verbose models like "A3 1.4 TFSI FWD" while
+        // car_models has short base names like "A3" — prefix matching bridges this.
+        supabase.from('car_models').select('*').eq('make', car.make!),
         supabase.from('car_makes').select('*').eq('make', car.make!).maybeSingle(),
       ]);
-      if (modelRes.data) setModelData(modelRes.data as unknown as CarModelData);
+      const modelMatch = (modelRes.data ?? [])
+        .filter((m: { model: string }) => car.model!.toLowerCase().startsWith(m.model.toLowerCase()))
+        .sort((a: { model: string }, b: { model: string }) => b.model.length - a.model.length)[0] ?? null;
+      if (modelMatch) setModelData(modelMatch as unknown as CarModelData);
       if (makeRes.data) setMakeData(makeRes.data as unknown as CarMakeData);
     };
     fetchEnriched();
