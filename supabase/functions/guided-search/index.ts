@@ -481,12 +481,76 @@ serve(async (req) => {
         }
       }
 
-      // Sort by proximity to budget midpoint so cars closest to the user's target price rank first
+      // Score, diversify and randomize the pool so the same cars don't dominate
       if (cars.length > 0) {
         const midPrice = (minPrice + maxPrice) / 2;
-        cars = cars
-          .sort((a: any, b: any) => Math.abs((a.price ?? 0) - midPrice) - Math.abs((b.price ?? 0) - midPrice))
-          .slice(0, 9);
+        const spread = Math.max(1, maxPrice - minPrice);
+
+        // Common/high-volume makes get penalized in hidden-gem mode
+        const commonMakes = new Set([
+          "volvo", "volkswagen", "toyota", "kia", "hyundai", "ford",
+          "peugeot", "renault", "opel", "skoda", "nissan", "citroen", "seat",
+        ]);
+        const funMakes = new Set([
+          "porsche", "jaguar", "alfa romeo", "lotus", "maserati", "mini",
+          "abarth", "subaru", "mazda", "saab", "lancia", "smart", "fiat",
+          "chevrolet", "dodge", "cadillac", "lexus", "honda", "mitsubishi", "suzuki",
+        ]);
+        const funBodies = new Set(["cab", "coupe", "cabriolet", "coupé", "halvkombi"]);
+
+        const score = (c: any) => {
+          let s = 0;
+          // Budget fit (always matters, but softer in hidden-gem mode)
+          const budgetFit = 1 - Math.min(1, Math.abs((c.price ?? 0) - midPrice) / spread);
+          s += budgetFit * (hiddenGem ? 20 : 60);
+
+          if (hiddenGem) {
+            const make = (c.make || "").toLowerCase();
+            const body = (c.body_type || "").toLowerCase();
+            if (funMakes.has(make)) s += 30;
+            if (commonMakes.has(make)) s -= 20;
+            if (funBodies.has(body)) s += 20;
+            if ((c.horsepower ?? 0) >= 200) s += 15;
+            if ((c.horsepower ?? 0) >= 300) s += 15;
+            if ((c.drivetrain || "").toLowerCase() === "rwd") s += 10;
+            if ((c.transmission || "").toLowerCase().includes("manuell")) s += 8;
+            if ((c.mileage ?? 0) > 0 && (c.mileage ?? 0) < 12000) s += 8;
+          } else {
+            if ((c.mileage ?? 0) > 0) s += Math.max(0, 15 - (c.mileage ?? 0) / 2000);
+            if ((c.year ?? 0) > 0) s += Math.min(15, Math.max(0, (c.year - 2010)));
+          }
+
+          // Random jitter so repeated searches surface different cars
+          s += Math.random() * (hiddenGem ? 35 : 22);
+          return s;
+        };
+
+        const ranked = cars
+          .map((c: any) => ({ c, s: score(c) }))
+          .sort((a, b) => b.s - a.s);
+
+        // Diversify: max 1 car per make+model, max 2 per make (relax if too few)
+        const pick = (maxPerModel: number, maxPerMake: number) => {
+          const modelCount = new Map<string, number>();
+          const makeCount = new Map<string, number>();
+          const out: any[] = [];
+          for (const { c } of ranked) {
+            if (out.length >= 9) break;
+            const mk = (c.make || "?").toLowerCase();
+            const md = `${mk}|${(c.model || "?").toLowerCase()}`;
+            if ((modelCount.get(md) ?? 0) >= maxPerModel) continue;
+            if ((makeCount.get(mk) ?? 0) >= maxPerMake) continue;
+            modelCount.set(md, (modelCount.get(md) ?? 0) + 1);
+            makeCount.set(mk, (makeCount.get(mk) ?? 0) + 1);
+            out.push(c);
+          }
+          return out;
+        };
+
+        let selected = pick(1, 2);
+        if (selected.length < 6) selected = pick(2, 3);
+        if (selected.length < 3) selected = ranked.slice(0, 9).map((r) => r.c);
+        cars = selected.slice(0, 9);
       }
 
       // Build context from conversation
