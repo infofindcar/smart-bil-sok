@@ -36,7 +36,7 @@ const getDisplayName = (car: Car) => {
   return `${make} ${model}`.trim() || 'Okänd bil';
 };
 
-const ImageWithFade = ({ src, alt }: { src: string; alt: string }) => {
+const ImageWithFade = ({ src, alt, onError }: { src: string; alt: string; onError?: () => void }) => {
   const [loaded, setLoaded] = useState(false);
   return (
     <img
@@ -45,12 +45,14 @@ const ImageWithFade = ({ src, alt }: { src: string; alt: string }) => {
       className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
       loading="lazy"
       onLoad={() => setLoaded(true)}
+      onError={onError}
     />
   );
 };
 
 export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: CarCardProps) => {
   const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
   const displayName = getDisplayName(car);
   const equipment = topEquipment(car.model_raw, 5);
@@ -66,8 +68,8 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
     >
       {/* Image */}
       <div className="relative w-full h-48 sm:h-48 flex-shrink-0 overflow-hidden bg-muted">
-        {car.image_thumb_url ? (
-          <ImageWithFade src={car.image_thumb_url!} alt={displayName} />
+        {car.image_thumb_url && !imageError ? (
+          <ImageWithFade src={car.image_thumb_url!} alt={displayName} onError={() => setImageError(true)} />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
             <span className="text-3xl font-serif font-bold text-white/80">

@@ -2,16 +2,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // --- CORS: restrict to known origins ---
-const ALLOWED_ORIGIN_PATTERNS = [
-  /^https:\/\/.*\.lovable\.app$/,
-  /^https:\/\/.*\.lovableproject\.com$/,
-  /^http:\/\/localhost(:\d+)?$/,
-  /^https:\/\/(www\.)?findcar\.se$/,
-];
-
 function getAllowedOrigin(req: Request): string {
   const origin = req.headers.get("origin") || "";
-  if (ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(origin))) {
+  if (
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com") ||
+    origin === "https://findcar.se" ||
+    origin === "https://www.findcar.se" ||
+    origin.startsWith("http://localhost")
+  ) {
     return origin;
   }
   return "https://smart-bil-sok.lovable.app";
@@ -209,12 +208,154 @@ serve(async (req) => {
 
     // Parse and validate input
     const body = await req.json();
-    const { language } = body;
-    const isLoadMore = body.action === "load_more";
-    const messages = Array.isArray(body.messages) ? body.messages : [];
-    const excludeIds: number[] = Array.isArray(body.excludeIds)
-      ? body.excludeIds.filter((n: unknown) => typeof n === "number").slice(0, 500)
-      : [];
+    const { messages, language, action: reqAction, filters: reqFilters, excludeIds, customerProfile: reqProfile } = body;
+
+    // ── LOAD MORE: skip AI, reuse filters ──
+    if (reqAction === "load_more" && reqFilters) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(supabaseUrl, supabaseKey);
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+      const f = reqFilters;
+      const budgetResult = sanitizeBudget(f.budget);
+      let minPrice = 0, maxPrice = 99999999;
+      if (budgetResult) { minPrice = budgetResult.min; maxPrice = budgetResult.max; }
+
+      const city = sanitizeStringFilter(f.city);
+      const make = sanitizeStringFilter(f.make);
+      const color = sanitizeStringFilter(f.color);
+      const dt = typeof f.drivetrain === "string" && f.drivetrain in drivetrainPatterns ? f.drivetrain : null;
+      const fuels = Array.isArray(f.fuel) ? f.fuel.filter((x: string) => x in fuelPatterns) : [];
+      const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
+      const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
+      const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
+      const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
+
+      // Progressive relaxation: try with filters, then relax
+      const buildLoadMoreQuery = (level: number) => {
+        const priceMult = [1.3, 1.6, 2.5][level] || 2.5;
+        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
+        let q = sb.from("Lovable").select("*")
+          .not("image_thumb_url", "is", null)
+          .neq("image_thumb_url", "")
+          .gte("price", Math.floor(minPrice * priceMinMult))
+          .lte("price", Math.ceil(maxPrice * priceMult));
+
+        // Level 0: all filters except city
+        // Level 1: drop body type too
+        // Level 2: only price + fuel
+        if (make && level < 2) q = q.ilike("make", `%${make}%`);
+        if (fuels.length > 0 && level < 3) {
+          const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
+          if (ff) q = q.or(ff);
+        }
+        if (bodies.length > 0 && level < 1) {
+          const bf = bodies.map((x: string) => bodyPatterns[x]).filter(Boolean).map((p: string) => `body_type.ilike.${p}`);
+          const mf: string[] = [];
+          for (const bt of bodies) { const ms = modelBodyTypeMap[bt]; if (ms) for (const m of ms) mf.push(`model.ilike.%${m}%`); }
+          const all = [...bf, ...mf, "body_type.eq.Unknown", "body_type.is.null"].join(",");
+          if (all) q = q.or(all);
+        }
+        if (dt && level < 2) {
+          const vals = drivetrainPatterns[dt];
+          if (vals) q = q.or(vals.map(v => `drivetrain.eq.${v}`).join(",") + ",drivetrain.eq.Unknown,drivetrain.is.null");
+        }
+        if (yMin && level < 2) q = q.gte("year", yMin);
+        if (yMax && level < 2) q = q.lte("year", yMax);
+
+        // Exclude already-shown cars
+        for (const eid of exclude) {
+          q = q.neq("id", eid);
+        }
+
+        return q.order("price", { ascending: true }).limit(18);
+      };
+
+      // Sort by proximity to budget midpoint
+      const budgetMid = (minPrice + maxPrice) / 2;
+
+      // Try progressively relaxed queries
+      let cars: any[] = [];
+      for (let level = 0; level <= 2; level++) {
+        const { data: moreCars } = await buildLoadMoreQuery(level);
+        if (moreCars && moreCars.length > 0) {
+          cars = moreCars
+            .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
+            .slice(0, 9);
+          break;
+        }
+      }
+
+      // Generate reasons for new cars
+      let carReasons: { carId: number; reason: string }[] = [];
+      let message = "";
+
+      if (cars.length > 0 && LOVABLE_API_KEY) {
+        const uniqueMakes = [...new Set(cars.map((c: any) => c.make).filter(Boolean))];
+        const uniqueModels = [...new Set(cars.map((c: any) => c.model).filter(Boolean))];
+        const [modelsRes, makesRes] = await Promise.all([
+          sb.from("car_models").select("*").in("make", uniqueMakes).in("model", uniqueModels),
+          sb.from("car_makes").select("*").in("make", uniqueMakes),
+        ]);
+        const modelLookup: Record<string, any> = {};
+        for (const m of modelsRes.data ?? []) modelLookup[`${m.make}|||${m.model}`] = m;
+        const makeLookup: Record<string, any> = {};
+        for (const m of makesRes.data ?? []) makeLookup[m.make] = m;
+
+        const carSummaries = cars.map((c: any) => {
+          const cm = modelLookup[`${c.make}|||${c.model}`];
+          const mk = makeLookup[c.make || ""];
+          const parts = [`ID:${c.id}`, `${c.make} ${c.model_raw || c.model} ${c.year}`, `${c.price?.toLocaleString("sv-SE")} kr`, `${c.mileage?.toLocaleString("sv-SE")} mil`, c.fuel_type, c.body_type, c.city];
+          if (cm?.euro_ncap_stars) parts.push(`NCAP: ${cm.euro_ncap_stars}★`);
+          if (cm?.boot_space_liters) parts.push(`bagageutrymme: ${cm.boot_space_liters}L`);
+          if (mk) parts.push(`garanti: ${mk.warranty_years}år`);
+          return parts.filter(Boolean).join(", ");
+        }).join("\n");
+
+        const langInst = { sv: "\n\nSvara på svenska.", en: "\n\nRespond in English.", no: "\n\nSvar på norsk.", da: "\n\nSvar på dansk.", fi: "\n\nVastaa suomeksi." }[language as string] || "\n\nSvara på svenska.";
+
+        try {
+          const msgResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [{
+                role: "system",
+                content: `Du är Clutch. Ge korta motiveringar (1 mening per bil) för ytterligare bilförslag baserat på kundprofilen. Använd INTE emojis.${langInst}\n\nSvara ENBART med JSON:\n{"message":"Kort intro","carReasons":[{"carId":123,"reason":"Motivering"}]}`
+              }, {
+                role: "user",
+                content: `Kundprofil: "${reqProfile || ""}"\n\nFler bilar:\n${carSummaries}`
+              }],
+            }),
+          });
+          if (msgResp.ok) {
+            const d = await msgResp.json();
+            const c = d.choices?.[0]?.message?.content?.trim();
+            if (c) {
+              try {
+                const p = JSON.parse(c.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim());
+                message = p.message || "";
+                carReasons = p.carReasons || [];
+              } catch { message = c; }
+            }
+          }
+        } catch (e) { console.error("Load more AI reason failed"); }
+      }
+
+      if (!message) message = `Här är ${cars.length} fler bilar som kan passa dig!`;
+
+      return new Response(JSON.stringify({
+        action: "search",
+        message,
+        cars,
+        carReasons,
+        matchCount: cars.length,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Continue with normal conversation flow
 
     // Language instruction map
     const langInstructions: Record<string, string> = {
@@ -381,7 +522,9 @@ serve(async (req) => {
       let relaxLevel = 0;
 
       const buildQuery = (level: number) => {
-        let query = supabase.from("Lovable").select("*");
+        let query = supabase.from("Lovable").select("*")
+          .not("image_thumb_url", "is", null)
+          .neq("image_thumb_url", "");
 
         const priceMult = [1, 1.3, 1.6, 10][level];
         const priceMinMult = [1, 0.7, 0.5, 0][level];

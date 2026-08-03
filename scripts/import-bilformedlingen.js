@@ -17,8 +17,9 @@ function mapFuel(f) {
   if (!f || f === 'Ingen information') return null;
   const lower = f.toLowerCase();
   if (lower.includes('hybrid')) return 'Hybrid'; // före 'el' – "Hybrid el/bensin" innehåller 'el'
+  if (lower.includes('diesel')) return 'Diesel'; // före 'el' – "diesel" slutar på 'el'
   if (lower.includes('el')) return 'El';
-  return f; // Bensin, Diesel
+  return f; // Bensin
 }
 
 // Mappning färg – fuzzy match mot giltiga färger
@@ -118,8 +119,9 @@ async function main() {
     const regNr = carRegNr?.trim();
     if (!regNr) continue;
 
-    // Första bildbild-URL
+    // Hoppa över utan bild
     const firstImage = carImages?.split(',')[0]?.trim() || null;
+    if (!firstImage) continue;
 
     const price = parseInt(carPrice) || null;
     const mileage = parseInt(carIndicatorMil) || null;
