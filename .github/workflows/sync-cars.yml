@@ -2,7 +2,7 @@ name: Daglig bilsynkronisering
 
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 4 */2 * *"
 
   # Manuell körning: GitHub UI > Actions > Daglig bilsynkronisering > Run workflow
   workflow_dispatch:
