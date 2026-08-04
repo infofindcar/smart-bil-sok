@@ -209,6 +209,10 @@ serve(async (req) => {
     // Parse and validate input
     const body = await req.json();
     const { messages, language, action: reqAction, filters: reqFilters, excludeIds, customerProfile: reqProfile } = body;
+    const isLoadMore = reqAction === "load_more";
+    const safeExcludeIds: number[] = Array.isArray(excludeIds)
+      ? excludeIds.filter((x: unknown) => typeof x === "number")
+      : [];
 
     // ── LOAD MORE: skip AI, reuse filters ──
     if (reqAction === "load_more" && reqFilters) {
