@@ -1,9 +1,8 @@
 name: Daglig bilsynkronisering
 
 on:
-  # PAUSAD – avkommentera schedule-blocket nedan för att aktivera nattlig körning igen
-  # schedule:
-  #   - cron: "0 4 * * *"
+  schedule:
+    - cron: "0 4 * * *"
 
   # Manuell körning: GitHub UI > Actions > Daglig bilsynkronisering > Run workflow
   workflow_dispatch:
