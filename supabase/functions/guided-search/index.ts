@@ -586,8 +586,8 @@ serve(async (req) => {
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
 
-        if (excludeIds.length > 0) {
-          query = query.not("id", "in", `(${excludeIds.join(",")})`);
+        if (safeExcludeIds.length > 0) {
+          query = query.not("id", "in", `(${safeExcludeIds.join(",")})`);
         }
 
         // Large candidate pool so we can diversify instead of always returning
