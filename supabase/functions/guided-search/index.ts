@@ -209,6 +209,10 @@ serve(async (req) => {
     // Parse and validate input
     const body = await req.json();
     const { messages, language, action: reqAction, filters: reqFilters, excludeIds, customerProfile: reqProfile } = body;
+    const isLoadMore = reqAction === "load_more";
+    const safeExcludeIds: number[] = Array.isArray(excludeIds)
+      ? excludeIds.filter((x: unknown) => typeof x === "number")
+      : [];
 
     // ── LOAD MORE: skip AI, reuse filters ──
     if (reqAction === "load_more" && reqFilters) {
@@ -582,8 +586,8 @@ serve(async (req) => {
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
 
-        if (excludeIds.length > 0) {
-          query = query.not("id", "in", `(${excludeIds.join(",")})`);
+        if (safeExcludeIds.length > 0) {
+          query = query.not("id", "in", `(${safeExcludeIds.join(",")})`);
         }
 
         // Large candidate pool so we can diversify instead of always returning
@@ -843,7 +847,7 @@ serve(async (req) => {
     );
   } catch (e) {
     const corsHeaders = getCorsHeaders(req);
-    console.error("guided-search error");
+    console.error("guided-search error", (e as Error)?.name, (e as Error)?.message, (e as Error)?.stack);
     return new Response(
       JSON.stringify({
         action: "error",
