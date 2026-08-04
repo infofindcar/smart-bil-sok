@@ -843,7 +843,7 @@ serve(async (req) => {
     );
   } catch (e) {
     const corsHeaders = getCorsHeaders(req);
-    console.error("guided-search error");
+    console.error("guided-search error", (e as Error)?.name, (e as Error)?.message, (e as Error)?.stack);
     return new Response(
       JSON.stringify({
         action: "error",
