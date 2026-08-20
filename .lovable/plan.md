@@ -1,57 +1,34 @@
-# Plan: små finlir — Clutch-chatten & resultatsidan
+# Snabbare och stabilare sökning
 
-Fokus: bara små UX/copy/polish-fixar. Inga ombyggen, inga nya flöden.
+## Vad jag hittade (verifierat)
 
-## Clutch-chatten (`GuidedSearch.tsx`)
+- AI-anropen är **inte** problemet: Lovable AI Gateway-loggarna visar 1,4–2,2 sekunder per anrop (senaste dygnet, hundratals lyckade 200-svar).
+- Flaskhalsen är databasen. `Lovable`-tabellen är ~48 000 rader / 104 MB, och `EXPLAIN` på en typisk sökfråga visar **Seq Scan** (full tabellgenomsökning) — inget index används.
+- Orsaken: alla nyttiga index på tabellen är partiella med villkoret `is_active = true`, men söklogiken filtrerar **aldrig** på `is_active`. Därför faller varje sökning tillbaka på full scan.
+- Varje sökning kör dessutom **fyra** sådana scans parallellt (nivå 0+1, sedan 2+3) och hämtar `select("*")` med 200 rader per fråga — inklusive den stora `description`-kolumnen som frontend inte ens använder. Det blir flera MB JSON per sökning, gånger fyra.
+- Under skrivandet av planen timeoutade till och med ett enkelt `count(*)` mot databasen — ett tecken på att databasen redan är CPU-mättad av just dessa scans. Det förklarar både långsamheten och att sökningar ibland dör helt efter minuter (edge function / klient ger upp).
 
-1. **Tydligare budgetbekräftelse i bubblan**
-   - När Clutch fångat en budget, visa den som en liten chip ("Budget: 100–150k") överst i chatten så användaren ser att den uppfattats rätt. Just nu försvinner den i texten.
+## Vad jag gör
 
-2. **Snabbsvar-chips håller bredd bättre på mobil**
-   - Nuvarande suggestion-knappar wrap:ar lite hackigt på 390px. Liten justering: `flex-wrap` + jämnare padding + max 2 per rad, så det känns mer "produkt" och mindre "AI-demo".
+### 1. Databasen: index + `is_active`-filter
+- Lägg till index som matchar de faktiska sökfrågorna: pris + bild-finns, samt trigram-index (`pg_trgm`) på `make`, `model` och `city` så `ILIKE '%…%'` slutar vara full scan.
+- Lägg till `is_active = true` i sökfrågan så de befintliga partiella indexen faktiskt används (och så inaktuella annonser slutar visas).
 
-3. **"Skriv om"-knapp får tooltip + ikon-only på mobil**
-   - Spar plats i input-raden, gör mic + send-knappen mer prominenta.
+### 2. Söklogiken: hämta mindre data
+- Byt `select("*")` mot en explicit kolumnlista med exakt de fält frontend använder (id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, listing_url, regnr, horsepower, transmission, dealer_name, dealer_url). Tar bort `description` m.fl. tunga kolumner ur svaret.
+- Minska kandidatpoolen från 200 till ~80 rader per nivå — fortfarande gott om utrymme för diversifieringen (max 1 per modell, 2 per märke, 9 resultat).
+- Kör **nivå 0 först**, och gå bara vidare till nivå 1/2/3 om den gav för få träffar. Idag körs alltid två frågor parallellt, vilket dubblar databaslasten även när nivå 0 räcker.
 
-4. **Auto-scroll till nyaste meddelande**
-   - Säkerställ att chatten alltid scrollar ned när Clutch svarar (verkar ibland stanna vid förra bubblan på mobil).
+### 3. Robusthet så inget "hänger" i minuter
+- Sätt ett tak på hur länge sökningen får ta i edge-funktionen och returnera de bilar som hittats (eller ett tydligt felmeddelande) i stället för att låta anropet dö tyst.
+- I chatten: visa tydligt fel-/retry-läge om sökningen misslyckas, i stället för att spinnern fortsätter i evighet.
 
-5. **Mikro-copy**
-   - Greetingen kortas: "Hej! Jag är Clutch. Berätta vad du letar efter — så fixar jag resten." (mindre AI-tonalitet, mer Anyfin-stil).
-   - Loading-text under sökning: rotera mellan 2–3 fraser ("Tittar igenom 60 000 annonser…", "Filtrerar bort skräp…", "Sätter ihop dina topp 3…") istället för en statisk.
+## Teknisk sammanfattning
 
-## Resultatsidan & bilkorten (`ResultsReveal.tsx`, `CarCard.tsx`)
+| Fil | Ändring |
+|---|---|
+| ny migration | `pg_trgm`-index på `make`/`model`/`city`, index `(price)` filtrerat på aktiv + bild |
+| `supabase/functions/guided-search/index.ts` | `is_active`-filter, explicit kolumnlista, pool 200→80, sekventiell relaxering, tidsgräns + garanterat svar |
+| `src/components/GuidedSearch.tsx` | fel-/retry-läge när sökningen misslyckas |
 
-6. **Snabbare reveal-sekvens**
-   - Just nu: 1400ms innan första kortet + 500ms per kort = nästan 3s innan användaren ser något. Förslag: 600ms + 200ms per kort. Behåller pop-effekten men halverar känsla av väntan.
-
-7. **"Clutch tycker"-rutan får liten polish**
-   - Stramare padding, ikonen vänsterjusterad mot texten istället för ovanför. Idag känns den lite tung och tar nästan halva kortet.
-
-8. **Pris-badge på bild blir tydligare hierarki**
-   - Större font på priset (`text-base font-bold` istället för `text-sm`), så det är första man ser. Idag konkurrerar den med titeln nedanför.
-
-9. **"Visa fler dealers"-knappen blir mindre framträdande**
-   - Nuvarande border-top + full bredd gör den till en CTA. Det är en sekundär funktion. Förslag: liten textlänk längst ned, mindre visuell vikt.
-
-10. **Sparat-hjärtat får micro-feedback**
-    - Liten "pop" + toast ("Sparad — jämför från menyn") första gången användaren sparar en bil. Idag är handlingen helt tyst.
-
-11. **Tomt-state om append ger 0 nya bilar**
-    - Idag visas en toast. Lägg även en liten inline-rad under sista kortet: "Det här var alla bilar som matchar — justera filtren för fler."
-
-## Vad jag INTE rör
-
-- Sökmotorns logik (prisrespekt fixas separat när det blir aktuellt).
-- Hero/landningssidan.
-- Lead-flödet, bildetaljsidan, jämförelsesidan.
-- Färger, typografi, layoutsystem.
-
-## Teknisk omfattning
-
-Filer som rörs:
-- `src/components/GuidedSearch.tsx` (punkt 1–5)
-- `src/components/ResultsReveal.tsx` (punkt 6, 11)
-- `src/components/CarCard.tsx` (punkt 7, 8, 9, 10)
-
-Ingen DB, inga edge functions, inga nya beroenden.
+Förväntat resultat: sökningen går från flera minuter (eller timeout) till några sekunder — dominerad av AI-anropens ~2 s — och tål många samtidiga användare.
