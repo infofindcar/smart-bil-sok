@@ -815,6 +815,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
           )}
 
+          {isLoading && slowNotice && (
+            <p className="pl-10 pr-2 text-xs text-muted-foreground bubble-in">
+              Det tar lite längre tid än vanligt just nu – hänger kvar…
+            </p>
+          )}
+
           {/* Scroll-to-bottom button */}
           {showScrollDown && (
             <button
