@@ -114,7 +114,17 @@ const Index = () => {
         title="Vi säljer inte bilar. Vi hittar din. | FindCar"
         description="FindCar ger dig objektiv bilrådgivning med hjälp av AI. Jämför tusentals begagnade bilar utifrån dina villkor. Helt gratis."
         path="/"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'FindCar',
+          url: 'https://findcar.se',
+          email: 'kontakt@findcar.se',
+          description:
+            'Sveriges objektiva bilrådgivare — AI-driven matchning av begagnade bilar, helt utan provision.',
+        }}
       />
+
       <Header />
 
       {/* Advisor first — Anyfin / Wise style split layout, no hero image */}
