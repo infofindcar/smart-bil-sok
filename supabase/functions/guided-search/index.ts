@@ -117,6 +117,11 @@ const drivetrainPatterns: Record<string, string[]> = {
   rwd: ["RWD", '"RWD"'],
 };
 
+// Only fields rendered by the results UI. In particular, omit the large
+// description column from every candidate response.
+const SEARCH_COLUMNS =
+  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,listing_url,regnr,horsepower,transmission,dealer_name,dealer_url";
+
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
   suv: ["XC90", "XC60", "XC40", "EX90", "EX60", "EX40", "EX30", "RAV4", "CR-V", "Tiguan", "Tucson", "Kona", "Sportage", "Niro", "Q3", "Q5", "Q7", "Q8", "X1", "X3", "X5", "X7", "GLC", "GLE", "GLB", "EQA", "EQB", "EQC", "Model Y", "Model X", "ID.4", "ID.5", "Enyaq", "Karoq", "Kodiaq", "Forester", "Outback"],
@@ -234,13 +239,13 @@ serve(async (req) => {
       const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
       const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
-      const exclude: number[] = Array.isArray(excludeIds) ? excludeIds.filter((x: unknown) => typeof x === "number") : [];
 
       // Progressive relaxation: try with filters, then relax
       const buildLoadMoreQuery = (level: number) => {
-        const priceMult = [1.3, 1.6, 2.5][level] || 2.5;
-        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
-        let q = sb.from("Lovable").select("*")
+        const priceMult = [1.3, 1.6][level] || 1.6;
+        const priceMinMult = [0.7, 0.5][level] || 0.5;
+        let q = sb.from("Lovable").select(SEARCH_COLUMNS)
+          .eq("is_active", true)
           .not("image_thumb_url", "is", null)
           .neq("image_thumb_url", "")
           .gte("price", Math.floor(minPrice * priceMinMult))
@@ -268,9 +273,10 @@ serve(async (req) => {
         if (yMin && level < 2) q = q.gte("year", yMin);
         if (yMax && level < 2) q = q.lte("year", yMax);
 
-        // Exclude already-shown cars
-        for (const eid of exclude) {
-          q = q.neq("id", eid);
+        // Exclude already-shown cars in one PostgREST filter instead of
+        // generating a long chain of individual predicates.
+        if (safeExcludeIds.length > 0) {
+          q = q.not("id", "in", `(${safeExcludeIds.join(",")})`);
         }
 
         return q.order("price", { ascending: true }).limit(18);
@@ -281,8 +287,12 @@ serve(async (req) => {
 
       // Try progressively relaxed queries
       let cars: any[] = [];
-      for (let level = 0; level <= 2; level++) {
-        const { data: moreCars } = await buildLoadMoreQuery(level);
+      for (let level = 0; level <= 1; level++) {
+        const { data: moreCars, error: moreCarsError } = await buildLoadMoreQuery(level);
+        if (moreCarsError) {
+          console.error("Load more database query failed", moreCarsError.message);
+          continue;
+        }
         if (moreCars && moreCars.length > 0) {
           cars = moreCars
             .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
@@ -322,6 +332,7 @@ serve(async (req) => {
         try {
           const msgResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
+            signal: AbortSignal.timeout(5000),
             headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: "google/gemini-3-flash-preview",
@@ -345,7 +356,7 @@ serve(async (req) => {
               } catch { message = c; }
             }
           }
-        } catch (e) { console.error("Load more AI reason failed"); }
+        } catch (e) { console.error("Load more AI reason failed or timed out"); }
       }
 
       if (!message) message = `Här är ${cars.length} fler bilar som kan passa dig!`;
@@ -524,11 +535,6 @@ serve(async (req) => {
       // Progressive relaxation search — run levels 0 and 1 in parallel for speed
       let cars: any[] = [];
       let relaxLevel = 0;
-
-      // Only the columns the frontend actually uses — avoids shipping the huge
-      // `description` column for every candidate row.
-      const SEARCH_COLUMNS =
-        "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,listing_url,regnr,horsepower,transmission,dealer_name,dealer_url";
 
       const buildQuery = (level: number) => {
         let query = supabase.from("Lovable").select(SEARCH_COLUMNS as string)

@@ -84,7 +84,10 @@ const Index = () => {
   const handleLoadMore = useCallback(async () => {
     try {
       const stored = sessionStorage.getItem('findcar-last-filters');
-      if (!stored) return;
+      if (!stored) {
+        toast.info('Sök på nytt med Clutch för att kunna visa fler bilar.');
+        return;
+      }
       const { filters, customerProfile } = JSON.parse(stored);
       setLoadingMore(true);
       const excludeIds = cars.map((c) => c.id);
@@ -101,6 +104,7 @@ const Index = () => {
       }
     } catch (err) {
       console.error('Load more error:', err);
+      toast.error('Kunde inte hämta fler bilar – försök igen.');
     } finally {
       setLoadingMore(false);
     }
