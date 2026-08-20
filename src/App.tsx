@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { PasswordGate } from "@/components/PasswordGate";
+
 import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import CarDetail from "./pages/CarDetail";
@@ -25,18 +25,16 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
-          <PasswordGate>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/car/:id" element={<CarDetail />} />
-              <Route path="/compare" element={<CarComparison />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <FeedbackWidget />
-          </PasswordGate>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/car/:id" element={<CarDetail />} />
+            <Route path="/compare" element={<CarComparison />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <FeedbackWidget />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
