@@ -426,6 +426,7 @@ serve(async (req) => {
             ...messages,
           ],
         }),
+        signal: AbortSignal.timeout(20000),
       }
     );
 
@@ -739,6 +740,7 @@ serve(async (req) => {
                   },
                 ],
               }),
+              signal: AbortSignal.timeout(20000),
             }
           );
 
@@ -786,6 +788,7 @@ serve(async (req) => {
                   },
                 ],
               }),
+              signal: AbortSignal.timeout(20000),
             }
           );
 
