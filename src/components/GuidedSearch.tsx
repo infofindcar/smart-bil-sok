@@ -427,6 +427,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     };
   }, [isLoading, phase]);
 
+  // Show a reassuring note if a request takes unusually long (busy periods)
+  const [slowNotice, setSlowNotice] = useState(false);
+  useEffect(() => {
+    if (!isLoading) {
+      setSlowNotice(false);
+      return;
+    }
+    const t = setTimeout(() => setSlowNotice(true), 10000);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
   // Follow the typewriter all the way down so the latest words stay visible.
   useEffect(() => {
     queueScrollToBottom(true);
