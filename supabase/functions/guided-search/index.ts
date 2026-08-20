@@ -597,43 +597,28 @@ serve(async (req) => {
           query = query.not("id", "in", `(${safeExcludeIds.join(",")})`);
         }
 
-        // Large candidate pool so we can diversify instead of always returning
-        // the same cheapest cars. Randomized ordering key varies per request.
+        // Candidate pool big enough to diversify, small enough to stay fast.
         const orderKeys = hiddenGem
           ? ["horsepower", "year", "mileage"]
           : ["price", "year", "mileage"];
         const orderBy = orderKeys[Math.floor(Math.random() * orderKeys.length)];
         return query
           .order(orderBy, { ascending: orderBy === "mileage" || (!hiddenGem && orderBy === "price"), nullsFirst: false })
-          .limit(200);
+          .limit(80);
       };
 
-      // Fire levels 0 and 1 in parallel
-      const [res0, res1] = await Promise.all([
-        buildQuery(0),
-        buildQuery(1),
-      ]);
-
-      if (res0.data && res0.data.length > 0) {
-        cars = res0.data;
-        relaxLevel = 0;
-      } else if (res1.data && res1.data.length > 0) {
-        cars = res1.data;
-        relaxLevel = 1;
-      } else {
-        // Try levels 2 and 3 in parallel
-        const [res2, res3] = await Promise.all([
-          buildQuery(2),
-          buildQuery(3),
-        ]);
-        if (res2.data && res2.data.length > 0) {
-          cars = res2.data;
-          relaxLevel = 2;
-        } else if (res3.data && res3.data.length > 0) {
-          cars = res3.data;
-          relaxLevel = 3;
+      // Run relaxation levels sequentially — stop as soon as one gives enough
+      // candidates. Running them in parallel doubled DB load for nothing.
+      for (const level of [0, 1, 2, 3]) {
+        const res = await buildQuery(level);
+        if (res.error) console.error("Search query error at level", level, res.error.message);
+        if (res.data && res.data.length > 0) {
+          cars = res.data as any[];
+          relaxLevel = level;
+          break;
         }
       }
+
 
       // Score, diversify and randomize the pool so the same cars don't dominate
       if (cars.length > 0) {
