@@ -525,10 +525,17 @@ serve(async (req) => {
       let cars: any[] = [];
       let relaxLevel = 0;
 
+      // Only the columns the frontend actually uses — avoids shipping the huge
+      // `description` column for every candidate row.
+      const SEARCH_COLUMNS =
+        "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,listing_url,regnr,horsepower,transmission,dealer_name,dealer_url";
+
       const buildQuery = (level: number) => {
-        let query = supabase.from("Lovable").select("*")
+        let query = supabase.from("Lovable").select(SEARCH_COLUMNS as string)
+          .eq("is_active", true)
           .not("image_thumb_url", "is", null)
           .neq("image_thumb_url", "");
+
 
         const priceMult = [1, 1.3, 1.6, 10][level];
         const priceMinMult = [1, 0.7, 0.5, 0][level];
