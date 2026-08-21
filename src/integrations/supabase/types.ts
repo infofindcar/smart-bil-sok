@@ -317,6 +317,24 @@ export type Database = {
         }
         Relationships: []
       }
+      guided_search_usage: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           car_id: number | null
