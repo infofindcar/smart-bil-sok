@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://findcar.se",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-sync-secret",
 };
@@ -108,10 +108,12 @@ serve(async (req) => {
       }
     }
 
-    // Ta bort bilar som inte sågs i denna sync
+    // Ta bort blocket-bilar som inte sågs i denna sync.
+    // OBS: filtrera på source='blocket' för att inte radera bilformedlingen-bilar.
     const { count: deleted, error: deleteError } = await supabase
       .from("Lovable")
       .delete({ count: "exact" })
+      .eq("source", "blocket")
       .lt("last_seen_at", syncStartedAt);
 
     if (deleteError) {

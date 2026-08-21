@@ -78,11 +78,9 @@ serve(async (req) => {
       );
     }
 
-    // Use anon key — Lovable table has public SELECT, so RLS is sufficient.
-    // This ensures any future RLS tightening is respected.
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     let query = supabase

@@ -27,7 +27,8 @@ jobs:
         run: |
           for fn in sync-cars guided-search enrich-batch enrich-car-data \
                     track-analytics verify-admin-password verify-password \
-                    add-to-waitlist; do
+                    add-to-waitlist analyze-listing similar-listings \
+                    sync-bilformedlingen list-car-ids; do
             echo "::group::Deploya $fn"
             supabase functions deploy "$fn" \
               --project-ref bvqveqoschdpenvbxygj \
