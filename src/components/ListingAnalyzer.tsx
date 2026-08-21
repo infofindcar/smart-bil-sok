@@ -202,7 +202,7 @@ export const ListingAnalyzer = () => {
                   setUrl(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="https://www.blocket.se/..."
+                placeholder="Klistra in länk till annonsen"
                 maxLength={1000}
                 disabled={loading}
                 className="flex-1 rounded-xl border border-border/50 bg-background/70 px-4 py-2.5 text-[14px] outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/15 disabled:opacity-50"

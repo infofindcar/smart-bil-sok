@@ -7,7 +7,7 @@ const testimonials = [
     rating: 5,
   },
   {
-    text: '"Har kollat Blocket i typ en månad utan att komma vidare. Här fick jag bra alternativ direkt, och slapp scrolla igenom hundratals annonser."',
+    text: '"Har letat bil i typ en månad utan att komma vidare. Här fick jag bra alternativ direkt, och slapp scrolla igenom hundratals annonser."',
     rating: 5,
   },
   {
