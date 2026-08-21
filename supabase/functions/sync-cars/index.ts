@@ -108,10 +108,12 @@ serve(async (req) => {
       }
     }
 
-    // Ta bort bilar som inte sågs i denna sync
+    // Ta bort blocket-bilar som inte sågs i denna sync.
+    // OBS: filtrera på source='blocket' för att inte radera bilformedlingen-bilar.
     const { count: deleted, error: deleteError } = await supabase
       .from("Lovable")
       .delete({ count: "exact" })
+      .eq("source", "blocket")
       .lt("last_seen_at", syncStartedAt);
 
     if (deleteError) {
