@@ -24,7 +24,7 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-// --- Rate limiter per IP ---
+// --- Rate limiter per IP (burst protection) ---
 const ipRequests = new Map<string, { count: number; resetAt: number }>();
 const MAX_REQUESTS = 20;
 const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
@@ -38,6 +38,35 @@ function isRateLimited(ip: string): boolean {
   }
   record.count++;
   return record.count > MAX_REQUESTS;
+}
+
+// --- Daily search limit per IP (DB-backed, new searches only) ---
+const DAILY_SEARCH_LIMIT = 3;
+
+async function sha256(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function checkAndRecordDailyLimit(
+  supabase: ReturnType<typeof createClient>,
+  ip: string
+): Promise<{ limited: boolean }> {
+  const ipHash = await sha256(ip);
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+
+  const { count } = await supabase
+    .from("guided_search_usage")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", ipHash)
+    .gte("created_at", since);
+
+  if ((count ?? 0) >= DAILY_SEARCH_LIMIT) {
+    return { limited: true };
+  }
+
+  await supabase.from("guided_search_usage").insert({ ip_hash: ipHash });
+  return { limited: false };
 }
 
 // Periodic cleanup
@@ -500,6 +529,19 @@ serve(async (req) => {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Daily search limit: max 3 new searches per IP per 24h
+      const { limited } = await checkAndRecordDailyLimit(supabase, clientIp);
+      if (limited) {
+        return new Response(
+          JSON.stringify({
+            action: "ask",
+            message: "Du har gjort dina 3 kostnadsfria sökningar för idag. Kom tillbaka imorgon så hjälper vi dig hitta rätt bil!",
+            suggestions: [],
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       // Parse and validate budget
       let minPrice = 0;

@@ -4,6 +4,14 @@ Projektguide för AI-sessioner (Claude Code, Lovable m.fl.). Skumläs i 1 min,
 sedan är du uppdaterad. Innehåller konventioner som inte är självklara från
 koden.
 
+## Arbetsregel: synka alltid med main innan du ändrar något
+
+**Innan varje uppgift:** kör `git fetch origin main` och läs igenom vad Lovable
+har pushat sedan förra sessionen (`git log origin/main -10 --oneline`). Kontrollera
+att din planerade ändring inte krockar med eller skriver över något Lovable redan
+gjort (t.ex. säkerhetsfixar, refaktoreringar, ny funktionalitet). Rebase mot
+main om din branch är gammal. Fråga om du är osäker.
+
 ## Vad det här är
 
 FindCar — svensk köpfokuserad bilmarknadsplats som aggregerar Blocket-annonser.
