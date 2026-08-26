@@ -146,6 +146,35 @@ const drivetrainPatterns: Record<string, string[]> = {
   rwd: ["RWD", '"RWD"'],
 };
 
+// Feature patterns: match tillval/utrustning i Blockets annonstitel (model_raw)
+// Täckning ~30-50% av bilar som faktiskt har tillvalet. Droppas vid relaxation nivå 2+.
+const featurePatterns: Record<string, string[]> = {
+  dragkrok:       ["%dragkrok%", "%drag%"],
+  panorama:       ["%panorama%", "%panoramatak%", "%glastak%"],
+  bose:           ["%bose%"],
+  harman:         ["%harman%", "%kardon%"],
+  skinn:          ["%skinn%", "%läder%", "%leather%"],
+  elstol:         ["%elstol%", "%elektrisk stol%", "%elavstånd%"],
+  adaptiv:        ["%adaptiv farthållare%", "%acc%", "%distronic%", "%pilot assist%"],
+  backkamera:     ["%backkamera%", "%backup camera%", "%rear cam%"],
+  360:            ["%360%", "%360-kamera%", "%surround%"],
+  luftfjädring:   ["%luftfjädring%", "%air suspension%", "%airmatic%"],
+  massage:        ["%massage%"],
+  ventilerad:     ["%ventilerad%", "%kylda säten%"],
+  headup:         ["%head-up%", "%hud%", "%head up%"],
+  matrix:         ["%matrix%", "%laserljus%", "%pixel%"],
+  nightvision:    ["%night vision%", "%mörkerseende%"],
+  taklucka:       ["%taklucka%"],
+  elbaklucka:     ["%elbaklucka%", "%elektrisk baklucka%", "%hands free%"],
+  v8:             ["%v8%"],
+  v6:             ["%v6%"],
+  amg:            ["%amg%"],
+  rs:             ["%rs %", "% rs%"],
+  m_sport:        ["%m sport%", "%m-sport%", "% mpak%"],
+  r_line:         ["%r-line%", "%r line%"],
+  s_line:         ["%s line%", "%s-line%"],
+};
+
 // Only fields rendered by the results UI. In particular, omit the large
 // description column from every candidate response.
 const SEARCH_COLUMNS =
@@ -170,15 +199,17 @@ MÅSTE alltid fråga (om inte redan besvarat):
 - Användningsområde — pendling, familj, stad, långresor, blandat?
 
 BRA ATT VETA (välj de mest relevanta för just den här kunden):
+- Har de en bil idag, och vad tycker de om den? (guld — lär dig smak, behov och vad som saknas på en gång)
 - Var bor kunden? (stad/region — för bilar i närheten)
 - Hur långt kör de dagligen/veckovis? (påverkar drivlina)
 - Drivlina — el, hybrid, bensin, diesel? (eller hjälp dem välja)
 - Karosstyp — SUV, kombi, sedan? (eller härledd från behov)
+- Specifika tillval/utrustning? (dragkrok, panoramatak, skinnklädsel, Bose, adaptiv farthållare, backkamera, elbaklucka — vi kan faktiskt filtrera på detta!)
 - Ålder på kunden (påverkar försäkring markant för unga)
 - Årsmodell — nyare eller äldre bil?
 - Färg — har de önskemål?
 - Växellåda — automat eller manuell?
-- Specifika önskemål — märke, utrustning?
+- Märkesönskemål?
 
 VARIATION I FRÅGOR — formulera aldrig två samtal likadant. Exempel på hur samma fråga kan ställas olika:
 - Budget: "Vad har du att röra dig med?" / "Hur ser budgeten ut?" / "Vad är du beredd att lägga?"
@@ -214,7 +245,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
@@ -224,6 +255,8 @@ OBS: "cabriolet", "cab", "roadster", "öppen bil", "convertible", "spyder", "spi
 OBS: "budget" ska ALLTID vara ett intervall "MIN-MAX". Om kunden säger "runt 500k" eller "ungefär X" → skapa ett intervall ±20%: t.ex. "400000-600000". Om kunden nämner ett enda belopp → skapa ett rimligt intervall runt det.
 Giltiga drivetrain-värden: awd, fwd, rwd
 Giltiga useCase-värden: pendling, familj, langresa, stad, blandat
+Giltiga features-värden: dragkrok, panorama, bose, harman, skinn, elstol, adaptiv, backkamera, 360, luftfjädring, massage, ventilerad, headup, matrix, nightvision, taklucka, elbaklucka, v8, v6, amg, rs, m_sport, r_line, s_line
+OBS: "features" filtrerar mot annonstexten — täckning ca 30-50%. Inkludera bara om kunden verkligen nämnt det som viktigt.
 
 VIBE-FÄLT (valfritt): lägg till "vibe":"hiddenGem" i filters om kunden ber om något roligt, ovanligt, unikt, "hidden gem", "dold pärla", "något häftigt", "överraska mig", "sportigt kul" eller liknande. Då letar vi upp ovanliga och roliga bilar istället för de vanligaste. Om kunden vill ha tråkigt/säkert/vanligt, utelämna fältet.`;
 
@@ -583,6 +616,11 @@ serve(async (req) => {
 
       const hiddenGem = filters.vibe === "hiddenGem";
 
+      // Validate feature requests against known featurePatterns
+      const validFeatures: string[] = Array.isArray(filters.features)
+        ? filters.features.filter((f: unknown) => typeof f === "string" && f in featurePatterns)
+        : [];
+
       // Progressive relaxation search — run levels 0 and 1 in parallel for speed
       let cars: any[] = [];
       let relaxLevel = 0;
@@ -649,6 +687,18 @@ serve(async (req) => {
         }
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
+
+        // Feature/tillval filtering via model_raw ILIKE (Blockets annonstitel)
+        // Droppas vid level >= 2 (relaxation) för att undvika för få träffar
+        if (validFeatures.length > 0 && level < 2) {
+          for (const feat of validFeatures) {
+            const patterns = featurePatterns[feat];
+            if (patterns) {
+              const orClause = patterns.map(p => `model_raw.ilike.${p}`).join(",");
+              query = query.or(orClause);
+            }
+          }
+        }
 
         if (safeExcludeIds.length > 0) {
           query = query.not("id", "in", `(${safeExcludeIds.join(",")})`);
