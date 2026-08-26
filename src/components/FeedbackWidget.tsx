@@ -68,8 +68,6 @@ export const FeedbackWidget = () => {
           typeof window !== 'undefined'
             ? window.location.pathname + window.location.search
             : null,
-        user_agent:
-          typeof navigator !== 'undefined' ? navigator.userAgent : null,
       });
       if (error) throw error;
       setSubmitted(true);
