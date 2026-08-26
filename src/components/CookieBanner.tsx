@@ -46,8 +46,8 @@ export const CookieBanner = () => {
             <h3 className="text-sm font-semibold mb-1">Vi använder cookies</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Nödvändiga cookies används alltid för att tjänsten ska fungera. Vi använder
-              också anonym statistik för att förbättra Clutch och sökresultaten — du kan
-              välja om du vill tillåta det.
+              också statistik (besökta sidor, webbläsartyp) för att förbättra Clutch och
+              sökresultaten — du kan välja om du vill tillåta det.
             </p>
             <a
               href="/privacy"

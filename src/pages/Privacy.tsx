@@ -24,7 +24,7 @@ const Privacy = () => {
 
           <div>
             <h1 className="text-3xl font-bold">Integritetspolicy</h1>
-            <p className="text-sm text-muted-foreground mt-2">Senast uppdaterad: April 2026</p>
+            <p className="text-sm text-muted-foreground mt-2">Senast uppdaterad: Augusti 2026</p>
             <p className="text-sm leading-relaxed mt-4">
               FindCar (findcar.se) är en gratis sökmotor som hjälper privatpersoner att hitta
               rätt bil med hjälp av AI. Den här policyn beskriver vilka uppgifter vi samlar
@@ -71,11 +71,29 @@ const Privacy = () => {
                 </p>
               </div>
               <div>
-                <strong className="text-foreground">Teknisk information:</strong>
+                <strong className="text-foreground">Teknisk information (om du accepterar statistik-cookies):</strong>
                 <p className="text-muted-foreground mt-1">
-                  IP-adress, webbläsare, enhetstyp, vilka sidor du besöker och hur du klickar.
-                  Används för felsökning och anonym statistik. Loggas automatiskt av vår
-                  plattform (Supabase, EU-baserad).
+                  Besökta sidor, webbläsartyp och klickbeteende. Samlas bara in om du klickar
+                  "Acceptera alla" i cookie-bannern. IP-adress hanteras bara kortvarigt i
+                  serverfunktioner för missbruksskydd — vi sparar den aldrig i klartext i databasen.
+                  För hastighetsbegränsning (max 3 AI-sökningar/dag och max 3 annonsanalyser/dag)
+                  lagrar vi en kryptografisk hash (SHA-256) av IP-adressen — detta är inte möjligt
+                  att återföra till en faktisk IP-adress.
+                </p>
+              </div>
+              <div>
+                <strong className="text-foreground">Intresseanmälan (väntelista):</strong>
+                <p className="text-muted-foreground mt-1">
+                  Förnamn, efternamn och e-postadress som du frivilligt lämnar när du anmäler
+                  intresse för FindCar. Används enbart för att meddela dig när tjänsten lanseras.
+                </p>
+              </div>
+              <div>
+                <strong className="text-foreground">Förbättringsförslag (feedback-formuläret):</strong>
+                <p className="text-muted-foreground mt-1">
+                  Det du skriver i feedback-formuläret samt, om du väljer att uppge det, din
+                  e-postadress. Vi sparar även vilken sida du var på när du skickade förslaget.
+                  E-post är helt frivilligt — du kan skicka feedback anonymt.
                 </p>
               </div>
             </div>
@@ -89,7 +107,10 @@ const Privacy = () => {
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li><strong>Kontaktformulär:</strong> samtycke (art. 6.1.a) + nödvändigt för åtgärd på din begäran (art. 6.1.b).</li>
               <li><strong>Clutch-konversation:</strong> samtycke (du startar chatten frivilligt). Datan lämnar aldrig din enhet i permanent form.</li>
-              <li><strong>Anonym statistik om användning:</strong> berättigat intresse (art. 6.1.f) — att utveckla och förbättra tjänsten.</li>
+              <li><strong>Statistik-cookies (besökta sidor, webbläsartyp):</strong> samtycke (art. 6.1.a) — kräver att du klickar "Acceptera alla".</li>
+              <li><strong>IP-hash för hastighetsbegränsning:</strong> berättigat intresse (art. 6.1.f) — att skydda tjänsten mot missbruk.</li>
+              <li><strong>Intresseanmälan (väntelista):</strong> samtycke (art. 6.1.a) — du anmäler dig frivilligt.</li>
+              <li><strong>Förbättringsförslag:</strong> berättigat intresse (art. 6.1.f) — att kunna förbättra tjänsten baserat på frivillig feedback.</li>
               <li><strong>Tekniska loggar för säkerhet:</strong> berättigat intresse — att förebygga missbruk och fel.</li>
               <li><strong>Indexering av offentliga bilannonser från bilfirmor:</strong> berättigat intresse — att hjälpa konsumenter hitta bilar; ingen personuppgift om privatperson behandlas (se punkt 6).</li>
             </ul>
@@ -100,7 +121,9 @@ const Privacy = () => {
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li>Att leverera Clutch-rekommendationer som matchar dina preferenser.</li>
               <li>Att förmedla din kontaktförfrågan till bilförsäljaren du valt (se punkt 5).</li>
-              <li>Att förbättra tjänsten — anonym statistik om vad som söks och vad som fungerar bra.</li>
+              <li>Att förbättra tjänsten — statistik om vad som söks och vad som fungerar bra (kräver samtycke).</li>
+              <li>Att läsa och agera på frivillig feedback från förbättringsformuläret.</li>
+              <li>Att meddela dig per e-post när tjänsten lanseras (väntelista).</li>
               <li>Att förebygga missbruk och tekniska fel.</li>
             </ul>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -177,9 +200,11 @@ const Privacy = () => {
             <h2 className="text-xl font-bold">7. Hur länge vi sparar data</h2>
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li><strong>Clutch-konversationer:</strong> raderas automatiskt när du stänger webbläsarfliken.</li>
-              <li><strong>Kontaktförfrågningar (leads):</strong> sparas tillsvidare för att kunna besvara
-                eventuella följdfrågor från dig eller säljaren. Du kan när som helst begära radering — se punkt 9.</li>
-              <li><strong>Anonym användarstatistik:</strong> 12 månader, sedan raderas eller anonymiseras.</li>
+              <li><strong>Kontaktförfrågningar (leads):</strong> sparas i 2 år, sedan raderas de automatiskt. Du kan när som helst begära radering dessförinnan — se punkt 11.</li>
+              <li><strong>Statistik-events (besöksdata):</strong> 90 dagar, sedan raderas automatiskt.</li>
+              <li><strong>IP-hash för hastighetsbegränsning:</strong> 90 dagar, sedan raderas automatiskt.</li>
+              <li><strong>Förbättringsförslag:</strong> 90 dagar, sedan raderas automatiskt.</li>
+              <li><strong>Väntelista:</strong> tills tjänsten lanseras och du meddelats, eller tills du begär radering.</li>
               <li><strong>Tekniska loggar:</strong> 30 dagar, sedan rensas automatiskt.</li>
               <li><strong>Bilannonser från bilfirmor:</strong> uppdateras dagligen — annonser som inte längre är aktiva hos källan tas bort vid nästa synkronisering.</li>
             </ul>
@@ -218,10 +243,10 @@ const Privacy = () => {
                     <td className="p-2">Tillsvidare (lokalt)</td>
                   </tr>
                   <tr>
-                    <td className="p-2">Anonym statistik</td>
+                    <td className="p-2">Statistik-events</td>
                     <td className="p-2">Statistik</td>
                     <td className="p-2">Mäter klick och visningar (kräver samtycke)</td>
-                    <td className="p-2">12 månader</td>
+                    <td className="p-2">3 månader</td>
                   </tr>
                 </tbody>
               </table>
@@ -306,10 +331,15 @@ const Privacy = () => {
             <h2 className="text-xl font-bold">13. Säkerhet</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               All data lagras hos Supabase i EU (Irland) över krypterade anslutningar (TLS).
-              Endast den som driver tjänsten har åtkomst till databasen. Edge-funktioner
-              har rate limiting och CORS-begränsningar för att skydda mot missbruk. Vi
-              följer rimliga säkerhetsåtgärder men kan inte garantera 100 % säkerhet — vid
-              en allvarlig incident informerar vi berörda inom 72 timmar enligt GDPR-art. 33.
+              Databastabeller med personuppgifter skyddas av Row Level Security (RLS) —
+              de är inte direkt åtkomliga för webbläsaren, utan endast via serverside
+              edge-funktioner som använder en intern nyckel som aldrig exponeras mot frontend.
+              Endast den som driver tjänsten har åtkomst till databasen via Supabase-kontot.
+              IP-adresser hashas med SHA-256 innan de lagras och kan inte återföras till
+              en faktisk adress. Edge-funktioner har rate limiting, domain-allowlists och
+              CORS-begränsningar för att skydda mot missbruk. Vi följer rimliga säkerhetsåtgärder
+              men kan inte garantera 100 % säkerhet — vid en allvarlig incident informerar vi
+              berörda inom 72 timmar enligt GDPR-art. 33.
             </p>
           </section>
 

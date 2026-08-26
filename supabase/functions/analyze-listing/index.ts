@@ -316,6 +316,30 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const ALLOWED_DOMAINS = [
+      'blocket.se', 'www.blocket.se',
+      'bytbil.com', 'www.bytbil.com',
+      'bilweb.se', 'www.bilweb.se',
+      'wayke.se', 'www.wayke.se',
+      'kvdbil.se', 'www.kvdbil.se',
+      'bilhallen.se', 'www.bilhallen.se',
+      'autoscout24.se', 'www.autoscout24.se',
+      'mobile.de', 'www.mobile.de',
+    ];
+    try {
+      const parsedHostname = new URL(rawUrl).hostname.toLowerCase();
+      if (!ALLOWED_DOMAINS.includes(parsedHostname)) {
+        return new Response(JSON.stringify({ error: 'URL:en tillhör inte en känd bilsajt.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: 'Ogiltig URL.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const url = normalizeUrl(rawUrl);
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);

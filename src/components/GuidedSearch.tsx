@@ -613,8 +613,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         addAssistantMessage(data?.message || 'Något gick fel. Försök igen!');
         setIsLoading(false);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Guided search error:', err);
+      const status = (err as { context?: { status?: number } })?.context?.status;
+      if (status === 429) {
+        addAssistantMessage(
+          'Du har gjort dina 3 kostnadsfria AI-sökningar för idag. Kom tillbaka imorgon så hjälper jag dig hitta rätt bil!',
+          []
+        );
+        setIsLoading(false);
+        return;
+      }
       const errorMessages: Record<string, string> = {
         sv: 'Oj, något gick fel med sökningen. Kontrollera din internetanslutning och försök igen.',
         en: 'Oops, something went wrong. Check your connection and try again.',
