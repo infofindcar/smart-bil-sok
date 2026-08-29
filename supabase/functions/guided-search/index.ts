@@ -381,8 +381,8 @@ serve(async (req) => {
 
       // Progressive relaxation: try with filters, then relax
       const buildLoadMoreQuery = (level: number) => {
-        const priceMult = [1.3, 1.6][level] || 1.6;
-        const priceMinMult = [0.7, 0.5][level] || 0.5;
+        const priceMult = [1.3, 1.6, 2.2][level] || 2.2;
+        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
         let q = sb.from("Lovable").select(SEARCH_COLUMNS)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
