@@ -841,6 +841,27 @@ serve(async (req) => {
       }
 
 
+      // Vilka krav vi faktiskt tummade på — förklaras för kunden i resultatet.
+      const relaxations: string[] = [];
+      if (relaxLevel >= 1) {
+        relaxations.push("Jag vidgade prisintervallet lite för att hitta bilar.");
+        if (sanitizedCity) relaxations.push(`Jag sökte i hela landet istället för bara ${sanitizedCity}.`);
+        if (validBodyTypes.length > 0) relaxations.push("Jag släppte kravet på karosstyp.");
+        if (sanitizedColor) relaxations.push("Jag släppte färgönskemålet.");
+      }
+      if (relaxLevel >= 2) {
+        if (sanitizedMake && !modelOrClause) relaxations.push("Jag tittade även på andra märken.");
+        if (validFuels.length > 0) relaxations.push("Jag släppte kravet på drivmedel.");
+        if (sanitizedDrivetrain) relaxations.push("Jag släppte kravet på drivning (fyrhjulsdrift/framhjulsdrift).");
+        if (yearMin || yearMax) relaxations.push("Jag tillät fler årsmodeller.");
+        if (validFeatures.length > 0) relaxations.push("Jag släppte kravet på specifika tillval.");
+      }
+      if (relaxLevel >= 3) {
+        relaxations.push("Jag tog bort pristaket för att hitta något alls.");
+        if (sanitizedTransmission) relaxations.push(`Jag släppte kravet på ${sanitizedTransmission}.`);
+      }
+
+
       // Score, diversify and randomize the pool so the same cars don't dominate
       if (cars.length > 0) {
         const midPrice = (minPrice + maxPrice) / 2;
