@@ -339,9 +339,13 @@ serve(async (req) => {
     const body = await req.json();
     const { messages, language, action: reqAction, filters: reqFilters, excludeIds, customerProfile: reqProfile } = body;
     const isLoadMore = reqAction === "load_more";
+    // Kunden har godkänt sammanfattningskortet — kör sökningen direkt på de
+    // bekräftade filtren utan ett nytt AI-anrop.
+    const isConfirmedSearch = reqAction === "confirmed_search" && !!reqFilters;
     const safeExcludeIds: number[] = Array.isArray(excludeIds)
       ? excludeIds.filter((x: unknown) => typeof x === "number")
       : [];
+
 
     // ── LOAD MORE: skip AI, reuse filters ──
     if (reqAction === "load_more" && reqFilters) {
