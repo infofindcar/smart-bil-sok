@@ -36,19 +36,32 @@ export type CarReason = {
 
 type Phase = 'chatting' | 'searching' | 'results';
 
+type ConfirmData = {
+  filters: Record<string, unknown>;
+  customerProfile: string;
+};
+
 type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   suggestions?: string[];
   multiSelect?: boolean;
+  confirm?: ConfirmData;
 };
 
 interface GuidedSearchProps {
-  onResults: (cars: Car[], message: string, carReasons: CarReason[]) => void;
+  onResults: (
+    cars: Car[],
+    message: string,
+    carReasons: CarReason[],
+    append?: boolean,
+    relaxations?: string[],
+  ) => void;
   onScrollToResults?: () => void;
   onLanguageChange?: (lang: string) => void;
 }
+
 
 const GREETINGS: Record<string, ChatMessage> = {
   sv: {
