@@ -1023,7 +1023,7 @@ serve(async (req) => {
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxLevel > 0 ? "Sökningen breddades för att hitta resultat." : ""}`,
+                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxations.length > 0 ? `Sökningen breddades. Nämn kort i sammanfattningen vad som släpptes: ${relaxations.join(" ")}` : ""}`,
                   },
                 ],
               }),
