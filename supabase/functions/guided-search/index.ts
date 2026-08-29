@@ -711,9 +711,15 @@ serve(async (req) => {
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
         }
-        if (sanitizedMake && level < 2) {
+        // Märke behålls hela vägen när kunden bett om en specifik modell.
+        if (sanitizedMake && (level < 2 || modelOrClause)) {
           query = query.ilike("make", `%${sanitizedMake}%`);
         }
+        // Specifik modell är ett hårt krav — relaxas aldrig.
+        if (modelOrClause) {
+          query = query.or(modelOrClause);
+        }
+
         if (validFuels.length > 0 && level < 2) {
           const fuelFilters = validFuels
             .map((f: string) => fuelPatterns[f])
