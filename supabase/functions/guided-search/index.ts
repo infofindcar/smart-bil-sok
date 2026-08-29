@@ -114,6 +114,35 @@ function sanitizeStringFilter(value: unknown, maxLen = 50): string | null {
   return trimmed;
 }
 
+// Model names contain digits and dots (V70, 9-5, ID.4, A4 Avant, Model 3).
+function sanitizeModelFilter(value: unknown, maxLen = 40): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().slice(0, maxLen);
+  if (trimmed.length < 2) return null;
+  if (!/^[a-zA-Z0-9åäöÅÄÖéÉüÜ .\-/]+$/.test(trimmed)) return null;
+  return trimmed;
+}
+
+// Buyers write model names loosely: "9-5"/"95", "ID.4"/"ID4", "XC 60"/"XC60".
+// Produce a small set of ILIKE-safe variants so the filter still hits.
+function modelVariants(model: string): string[] {
+  const base = model.trim();
+  const variants = new Set<string>([base]);
+  const compact = base.replace(/[\s.\-]/g, "");
+  if (compact.length >= 2) variants.add(compact);
+  // Split letter/digit boundaries: "XC60" -> "XC 60" and "XC-60"
+  const spaced = compact.replace(/([a-zA-ZåäöÅÄÖ])(\d)/g, "$1 $2");
+  if (spaced !== compact) {
+    variants.add(spaced);
+    variants.add(spaced.replace(" ", "-"));
+  }
+  // Pure digit groups: "95" -> "9-5", "9-5" -> "95" (already covered)
+  const digits = compact.match(/^(\d{2,3})$/);
+  if (digits) variants.add(digits[1].split("").join("-"));
+  return [...variants].filter((v) => v.length >= 2 && !v.includes(",")).slice(0, 6);
+}
+
+
 function sanitizeBudget(value: unknown): { min: number; max: number } | null {
   if (typeof value !== "string") return null;
   const parts = value.split("-").map(Number);
