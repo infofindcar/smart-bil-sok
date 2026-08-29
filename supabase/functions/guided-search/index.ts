@@ -41,7 +41,7 @@ function isRateLimited(ip: string): boolean {
 }
 
 // --- Daily search limit per IP (DB-backed, new searches only) ---
-const DAILY_SEARCH_LIMIT = 3;
+const DAILY_SEARCH_LIMIT = 30;
 
 async function sha256(input: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -225,13 +225,23 @@ const modelBodyTypeMap: Record<string, string[]> = {
 
 const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du har ett naturligt samtal med kunden för att förstå exakt vilken bil som passar dem bäst. Du ska kännas som en riktig människa som bryr sig.
 
-DITT MÅL: Ställ tillräckligt med frågor för att verkligen förstå kundens situation och kunna hitta EXAKT rätt bil. Du ska ställa minst 5 frågor innan du söker.
+DITT MÅL: Förstå kundens situation med SÅ FÅ frågor som möjligt. Du följer INGET fast schema — varje samtal ska börja där kunden är. Läs vad kunden redan skrivit och fråga bara om det som faktiskt saknas för att hitta rätt bil.
 
-INFORMATION DU BEHÖVER SAMLA — dessa är viktiga, men ställ dem i den ORDNING som känns mest naturlig utifrån vad kunden redan sagt. Variera alltid ordning och formulering så varje samtal känns unikt:
+ANPASSNING — VIKTIGAST AV ALLT:
+- Utgå ALLTID från kundens första meddelande. Om de redan gett info (modell, budget, användning, drivlina, plats, familjesituation) ska du aldrig fråga om det igen.
+- Din första fråga ska vara den mest relevanta luckan för just den kunden — inte automatiskt budget.
+- Om kunden nämnt en specifik modell: fråga om det som skiljer exemplaren (årsmodell, miltal, växellåda, plats) — inte generella livsstilsfrågor.
+- Om kunden säger "så billig som möjligt", "billigast", "under X" eller liknande: budgeten är redan besvarad. Fråga INTE om budget. Sätt budget själv (t.ex. "0-<X>" eller ett lågt intervall) och gå vidare.
+- Om kunden beskriver ett behov ("familjebil", "pendlar 100 km/dag", "vinterbil") — härled drivlina/karosstyp själv istället för att fråga.
+- Om kunden är vag och bara skrivit något kort, då först är det rimligt att börja brett (budget/användning).
+- Bättre att söka en fråga för tidigt än att ställa en onödig fråga.
 
-MÅSTE alltid fråga (om inte redan besvarat):
-- Budget — vad är kundens ungefärliga prisbild?
+INFORMATION SOM KAN VARA RELEVANT — ställ dem i den ORDNING som känns mest naturlig utifrån vad kunden redan sagt. Variera alltid ordning och formulering så varje samtal känns unikt:
+
+Ofta viktigt (men bara om det inte redan framgår eller kan härledas):
+- Budget eller prisinriktning
 - Användningsområde — pendling, familj, stad, långresor, blandat?
+
 
 BRA ATT VETA (välj de mest relevanta för just den här kunden):
 - Har de en bil idag, och vad tycker de om den? (guld — lär dig smak, behov och vad som saknas på en gång)
@@ -266,7 +276,7 @@ INTELLIGENTA REGLER:
 - Om kunden ger mycket info på en gång, hoppa över frågor du redan har svar på
 - Blanda inte ihop frågor — ställ en i taget för att det ska kännas personligt
 
-NÄR DU SKA SÖKA: Sök när du har tillräcklig bild för att ge ett bra resultat — typiskt efter 3–5 frågor. Du behöver minst budget och användningsområde. Ställ inte fler frågor än nödvändigt — varje onödig fråga är irriterande. Om kunden har gett dig mycket info tidigt, sök redan efter 3 frågor. Om kunden är kortfattad behöver du kanske 5.
+NÄR DU SKA SÖKA: Sök så fort du har en tillräcklig bild — ofta efter 1–3 frågor. Har kunden redan gett dig modell/budget/behov i första meddelandet kan du söka direkt utan frågor. Ställ aldrig frågor bara för att fylla ett schema. Max 4 frågor totalt.
 
 BEKRÄFTELSEFRÅGA INNAN SÖKNING: Ställ en kort bekräftelsefråga om du känner att du fortfarande saknar viktig info ("Är det något mer du vill ha med i sökningen?"). Hoppa över den om du redan har en tydlig bild — gå direkt till sökning. Om du ställer frågan, ge förslag som "Nej, sök nu!", "Jag vill lägga till något".
 
@@ -630,13 +640,13 @@ serve(async (req) => {
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      // Daily search limit: max 3 new searches per IP per 24h
+      // Daily search limit: max 30 new searches per IP per 24h
       const { limited } = await checkAndRecordDailyLimit(supabase, clientIp);
       if (limited) {
         return new Response(
           JSON.stringify({
             action: "ask",
-            message: "Du har gjort dina 3 kostnadsfria sökningar för idag. Kom tillbaka imorgon så hjälper vi dig hitta rätt bil!",
+            message: "Du har gjort dina 30 kostnadsfria sökningar för idag. Kom tillbaka imorgon så hjälper vi dig hitta rätt bil!",
             suggestions: [],
           }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
