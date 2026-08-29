@@ -239,11 +239,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
           )}
 
           {/* Show more button */}
-          <div
-            className={`flex justify-center mt-12 transition-all duration-500 delay-300 ${
-              allRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
+          <div className="flex justify-center mt-12 transition-all duration-500 opacity-100 translate-y-0">
             {allLoaded ? (
               <p className="text-sm text-muted-foreground text-center max-w-sm">
                 Det här var alla bilar som matchar — justera filtren i chatten för fler.
