@@ -34,12 +34,23 @@ interface ResultsRevealProps {
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, allLoaded, getReasonForCar }, ref) => {
+  ({ cars: rawCars, similarCars: rawSimilarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, allLoaded, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const [showSimilar, setShowSimilar] = useState(false);
     const sectionRef = useRef<HTMLDivElement>(null);
+
+    // Bilar vars bild inte kan laddas tas bort helt så inga tomma luckor uppstår.
+    const [brokenIds, setBrokenIds] = useState<number[]>([]);
+    const markBroken = useCallback((id: number) => {
+      setBrokenIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    }, []);
+    const visible = (list: Car[]) => list.filter((c) => !!c.image_thumb_url && !brokenIds.includes(c.id));
+    const allVisible = [...visible(rawCars), ...visible(rawSimilarCars)];
+    const cars = allVisible.slice(0, 3);
+    const similarCars = allVisible.slice(3);
+
 
     // Check if we already showed these results (e.g. returning from car detail)
     useEffect(() => {
