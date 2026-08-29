@@ -637,7 +637,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           action: "confirm",
-          message: decision.message || "",
+          message: decision.message || decision.reasoning || "",
           filters: decision.filters || {},
           customerProfile: decision.customerProfile || "",
           reasoning: decision.reasoning || "",
