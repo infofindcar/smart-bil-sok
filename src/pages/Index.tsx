@@ -57,7 +57,15 @@ const Index = () => {
   }, [cars, carReasons, savedCars, resultMessage, showResults]);
 
 
-  const handleResults = (newCars: Car[], message: string, reasons: CarReason[], append?: boolean) => {
+  const [relaxations, setRelaxations] = useState<string[]>([]);
+
+  const handleResults = (
+    newCars: Car[],
+    message: string,
+    reasons: CarReason[],
+    append?: boolean,
+    newRelaxations?: string[],
+  ) => {
     if (append) {
       setCars((prev) => [...prev, ...newCars]);
       setCarReasons((prev) => [...prev, ...reasons]);
@@ -66,10 +74,12 @@ const Index = () => {
       sessionStorage.removeItem('findcar-results-revealed');
       setCars(newCars);
       setCarReasons(reasons);
+      setRelaxations(newRelaxations ?? []);
     }
     setResultMessage(message);
     setShowResults(true);
   };
+
 
   const toggleSave = (car: Car) => {
     setSavedCars((prev) =>
