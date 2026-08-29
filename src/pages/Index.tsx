@@ -211,7 +211,7 @@ const Index = () => {
               <ResultsReveal
                 cars={topCars}
                 similarCars={similarCars}
-                totalMatches={cars.length}
+                totalMatches={withImage.length}
                 savedCars={savedCars}
                 carReasons={carReasons}
                 resultMessage={resultMessage}
