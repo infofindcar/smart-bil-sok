@@ -432,7 +432,7 @@ serve(async (req) => {
 
       // Try progressively relaxed queries
       let cars: any[] = [];
-      for (let level = 0; level <= 1; level++) {
+      for (let level = 0; level <= 2; level++) {
         const { data: moreCars, error: moreCarsError } = await buildLoadMoreQuery(level);
         if (moreCarsError) {
           console.error("Load more database query failed", moreCarsError.message);
