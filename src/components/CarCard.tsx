@@ -12,6 +12,8 @@ interface CarCardProps {
   isSaved?: boolean;
   onToggleSave?: (car: Car) => void;
   matchReason?: string;
+  /** Anropas om bilden inte kan laddas så föräldern kan ta bort kortet ur griden (inget tomrum). */
+  onImageUnavailable?: (carId: number) => void;
 }
 
 const formatPrice = (price: number | null) => {
