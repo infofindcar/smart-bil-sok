@@ -34,6 +34,8 @@ Varje artikel skrivs i sin helhet (600–900 ord, svenska, rådgivande och neutr
 7. Samma CTA igen efter FAQ.
 8. "Läs även": 2–3 relaterade guider.
 
+Utöver de två CTA-boxarna får varje guide 1–2 kontextuella sök-länkar mitt i brödtexten, formulerade som naturliga nästa steg — t.ex. "se begagnade elbilar under 200 000 kr". De leder till startsidan med en förifylld fråga så Clutch-sökningen startar direkt från guidens ämne, utan att ändra sökflödets beteende.
+
 **Navigering**
 - Ingen ändring i huvudmenyn.
 - "Guider" läggs till i footern (både mobil- och desktopkolumnen) under "Tjänster".
