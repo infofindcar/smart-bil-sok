@@ -879,7 +879,7 @@ serve(async (req) => {
         // Har kunden bett om en specifik modell vill de se flera exemplar av
         // just den — då stänger vi av modell-/märkesspridningen.
         let selected = modelOrClause ? pick(9, 9) : pick(1, 2);
-        if (selected.length < 6) selected = pick(2, 3);
+        if (!modelOrClause && selected.length < 6) selected = pick(2, 3);
         if (selected.length < 3) selected = ranked.slice(0, 9).map((r) => r.c);
         cars = selected.slice(0, 9);
 
