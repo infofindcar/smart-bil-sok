@@ -655,6 +655,13 @@ serve(async (req) => {
       // Sanitize string filters
       const sanitizedCity = sanitizeStringFilter(filters.city);
       const sanitizedMake = sanitizeStringFilter(filters.make);
+      const sanitizedModel = sanitizeModelFilter(filters.model);
+      const modelOrClause = sanitizedModel
+        ? modelVariants(sanitizedModel)
+            .flatMap((v) => [`model.ilike.%${v}%`, `model_raw.ilike.%${v}%`])
+            .join(",")
+        : null;
+
       const sanitizedColor = sanitizeStringFilter(filters.color);
       const sanitizedDrivetrain = typeof filters.drivetrain === "string" && filters.drivetrain in drivetrainPatterns
         ? filters.drivetrain : null;
