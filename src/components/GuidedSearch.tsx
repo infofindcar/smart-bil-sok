@@ -578,12 +578,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
         if (data.filters?.driverAge) {
           sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
         }
-        if (data.filters || data.customerProfile) {
+        try {
           sessionStorage.setItem('findcar-last-filters', JSON.stringify({
-            filters: data.filters,
+            filters: data.filters ?? {},
             customerProfile: data.customerProfile || '',
           }));
-        }
+        } catch {}
         setPhase('searching');
         addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
