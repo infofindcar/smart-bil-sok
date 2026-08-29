@@ -1,0 +1,1 @@
+DELETE FROM public.analytics_events WHERE event_data->>'visitorId' = 'qa-test';
