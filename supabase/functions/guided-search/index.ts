@@ -348,6 +348,13 @@ serve(async (req) => {
       const city = sanitizeStringFilter(f.city);
       const make = sanitizeStringFilter(f.make);
       const color = sanitizeStringFilter(f.color);
+      const model = sanitizeModelFilter(f.model);
+      const modelOr = model
+        ? modelVariants(model)
+            .flatMap((v) => [`model.ilike.%${v}%`, `model_raw.ilike.%${v}%`])
+            .join(",")
+        : null;
+
       const dt = typeof f.drivetrain === "string" && f.drivetrain in drivetrainPatterns ? f.drivetrain : null;
       const fuels = Array.isArray(f.fuel) ? f.fuel.filter((x: string) => x in fuelPatterns) : [];
       const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
