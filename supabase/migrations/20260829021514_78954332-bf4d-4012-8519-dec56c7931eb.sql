@@ -1,0 +1,1 @@
+GRANT ALL ON public.analytics_events TO service_role;
