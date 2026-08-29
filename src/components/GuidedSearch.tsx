@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -36,19 +36,64 @@ export type CarReason = {
 
 type Phase = 'chatting' | 'searching' | 'results';
 
+type ConfirmData = {
+  filters: Record<string, unknown>;
+  customerProfile: string;
+};
+
 type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   suggestions?: string[];
   multiSelect?: boolean;
+  confirm?: ConfirmData;
 };
 
 interface GuidedSearchProps {
-  onResults: (cars: Car[], message: string, carReasons: CarReason[]) => void;
+  onResults: (
+    cars: Car[],
+    message: string,
+    carReasons: CarReason[],
+    append?: boolean,
+    relaxations?: string[],
+  ) => void;
   onScrollToResults?: () => void;
   onLanguageChange?: (lang: string) => void;
 }
+
+// Svenska etiketter för filtren i sammanfattningskortet
+const FILTER_LABELS: Record<string, string> = {
+  budget: 'Budget',
+  make: 'Märke',
+  model: 'Modell',
+  bodyType: 'Karosstyp',
+  fuel: 'Drivmedel',
+  transmission: 'Växellåda',
+  drivetrain: 'Drivning',
+  city: 'Plats',
+  color: 'Färg',
+  yearMin: 'Från årsmodell',
+  yearMax: 'Till årsmodell',
+  features: 'Tillval',
+  useCase: 'Användning',
+  vibe: 'Känsla',
+};
+
+
+const filterChips = (filters: Record<string, unknown>) =>
+  Object.entries(filters || {})
+    .filter(([key, value]) => {
+      if (!FILTER_LABELS[key]) return false;
+      if (value === null || value === undefined || value === '') return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      return true;
+    })
+    .map(([key, value]) => ({
+      key,
+      label: `${FILTER_LABELS[key]}: ${Array.isArray(value) ? value.join(', ') : String(value)}`,
+    }));
+
 
 const GREETINGS: Record<string, ChatMessage> = {
   sv: {
@@ -558,6 +603,87 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return msg;
   };
 
+  // ---- Sammanfattningskort ----------------------------------------------
+  // Visar de filter Clutch tolkat innan sökningen körs. Kunden kan ta bort
+  // enskilda krav och sedan trycka "Sök nu" — inget nytt AI-anrop behövs.
+  const applySearchResult = (data: any) => {
+    setPhase('results');
+    setIsLoading(false);
+
+    if (data.cars?.length > 0) {
+      const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
+      onResults(data.cars, resultMsg, data.carReasons || [], false, data.relaxations || []);
+      setTimeout(() => {
+        onScrollToResults?.();
+      }, 600);
+    } else {
+      addAssistantMessage(
+        data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
+        data.suggestions || [],
+      );
+    }
+  };
+
+  const runConfirmedSearch = async (msgId: string, confirm: ConfirmData) => {
+    if (isLoading) return;
+    navigator.vibrate?.(10);
+    // Kortet ska inte kunna skickas två gånger
+    setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, confirm: undefined } : m)));
+    setIsLoading(true);
+
+    const filters = confirm.filters || {};
+    try {
+      if ((filters as any).driverAge) {
+        sessionStorage.setItem('findcar-driver-age', JSON.stringify((filters as any).driverAge));
+      }
+      sessionStorage.setItem('findcar-last-filters', JSON.stringify({
+        filters,
+        customerProfile: confirm.customerProfile || '',
+      }));
+    } catch {}
+
+    setPhase('searching');
+    addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('guided-search', {
+        body: {
+          action: 'confirmed_search',
+          filters,
+          customerProfile: confirm.customerProfile || '',
+          language,
+        },
+      });
+      if (error) throw error;
+
+      try {
+        sessionStorage.setItem('findcar-user-profile', JSON.stringify({
+          age: data?.userAge ?? null,
+          city: data?.userCity ?? null,
+        }));
+      } catch {}
+
+      applySearchResult(data || {});
+    } catch (err) {
+      console.error('Confirmed search error:', err);
+      setPhase('chatting');
+      setIsLoading(false);
+      addAssistantMessage('Oj, något gick fel med sökningen. Försök igen!', ['Försök igen']);
+    }
+  };
+
+  const removeConfirmFilter = (msgId: string, key: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId || !m.confirm) return m;
+        const next = { ...m.confirm.filters };
+        delete next[key];
+        return { ...m, confirm: { ...m.confirm, filters: next } };
+      }),
+    );
+  };
+
+
   const handleSendMessage = async (e?: FormEvent, overrideText?: string) => {
     e?.preventDefault();
     const text = (overrideText || inputValue).trim();
@@ -596,6 +722,24 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       if (data?.action === 'ask') {
         addAssistantMessage(data.message, data.suggestions, undefined, data.multiSelect === true);
         setIsLoading(false);
+      } else if (data?.action === 'confirm') {
+        // Visa sammanfattningskort — kunden bekräftar innan vi söker
+        const id = Date.now().toString() + Math.random();
+        const content = data.message || 'Här är vad jag letar efter. Ser det rätt ut?';
+        setMessages((prev) => [
+          ...prev,
+          {
+            id,
+            role: 'assistant',
+            content,
+            confirm: {
+              filters: (data.filters ?? {}) as Record<string, unknown>,
+              customerProfile: data.customerProfile || '',
+            },
+          },
+        ]);
+        typewriteMessage(id, content);
+        setIsLoading(false);
       } else if (data?.action === 'search') {
         if (data.filters?.driverAge) {
           sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
@@ -607,7 +751,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           }));
         } catch {}
         setPhase('searching');
-        addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
         try {
           sessionStorage.setItem('findcar-user-profile', JSON.stringify({
@@ -616,21 +759,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           }));
         } catch {}
 
-        setPhase('results');
-        setIsLoading(false);
+        applySearchResult(data);
 
-        if (data.cars?.length > 0) {
-          const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
-          onResults(data.cars, resultMsg, data.carReasons || []);
-          setTimeout(() => {
-            onScrollToResults?.();
-          }, 600);
-        } else {
-          addAssistantMessage(
-            data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
-            data.suggestions || []
-          );
-        }
       } else {
         addAssistantMessage(data?.message || 'Något gick fel. Försök igen!');
         setIsLoading(false);
@@ -640,7 +770,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const status = (err as { context?: { status?: number } })?.context?.status;
       if (status === 429) {
         addAssistantMessage(
-          'Du har gjort dina 3 kostnadsfria AI-sökningar för idag. Kom tillbaka imorgon så hjälper jag dig hitta rätt bil!',
+          'Du har gjort dina 30 kostnadsfria AI-sökningar för idag. Kom tillbaka imorgon så hjälper jag dig hitta rätt bil!',
           []
         );
         setIsLoading(false);
@@ -804,9 +934,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             const animClass = !alreadyAnimated
               ? msg.role === 'user' ? 'whoosh-in' : 'bubble-in'
               : '';
+            const chips = msg.confirm ? filterChips(msg.confirm.filters) : [];
             return (
+              <div key={msg.id}>
               <div
-                key={msg.id}
                 ref={isLast ? lastMessageRef : undefined}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} ${animClass}`}
               >
@@ -828,7 +959,46 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   )}
                 </div>
               </div>
+
+              {/* Sammanfattningskort innan sökning */}
+              {msg.confirm && (
+                <div className="mt-2 ml-9 max-w-[85%] md:max-w-[78%] rounded-2xl border border-border/60 bg-card/70 p-3.5">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Din sökning</p>
+                  {chips.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {chips.map((chip) => (
+                        <span
+                          key={chip.key}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-foreground"
+                        >
+                          {chip.label}
+                          <button
+                            type="button"
+                            aria-label={`Ta bort ${chip.label}`}
+                            onClick={() => removeConfirmFilter(msg.id, chip.key)}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Inga specifika krav – jag visar ett brett urval.</p>
+                  )}
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => runConfirmedSearch(msg.id, msg.confirm!)}
+                    className="mt-3 w-full rounded-xl bg-gradient-to-br from-primary to-secondary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                  >
+                    Sök nu
+                  </button>
+                </div>
+              )}
+              </div>
             );
+
           })}
 
           {isLoading && phase === 'searching' && <SearchAnimation />}

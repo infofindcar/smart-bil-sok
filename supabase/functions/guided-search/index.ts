@@ -213,7 +213,7 @@ const featurePatterns: Record<string, string[]> = {
 // Only fields rendered by the results UI. In particular, omit the large
 // description column from every candidate response.
 const SEARCH_COLUMNS =
-  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,regnr,horsepower,transmission,dealer_name";
+  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,regnr,horsepower,transmission,dealer_name,seats";
 
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
@@ -339,9 +339,13 @@ serve(async (req) => {
     const body = await req.json();
     const { messages, language, action: reqAction, filters: reqFilters, excludeIds, customerProfile: reqProfile } = body;
     const isLoadMore = reqAction === "load_more";
+    // Kunden har godkänt sammanfattningskortet — kör sökningen direkt på de
+    // bekräftade filtren utan ett nytt AI-anrop.
+    const isConfirmedSearch = reqAction === "confirmed_search" && !!reqFilters;
     const safeExcludeIds: number[] = Array.isArray(excludeIds)
       ? excludeIds.filter((x: unknown) => typeof x === "number")
       : [];
+
 
     // ── LOAD MORE: skip AI, reuse filters ──
     if (reqAction === "load_more" && reqFilters) {
@@ -521,7 +525,7 @@ serve(async (req) => {
     };
     const langInstruction = langInstructions[language as string] || langInstructions.sv;
 
-    if (!isLoadMore) {
+    if (!isLoadMore && !isConfirmedSearch) {
       const validation = validateMessages(body.messages);
       if (!validation.valid) {
         return new Response(
@@ -531,7 +535,8 @@ serve(async (req) => {
       }
     }
 
-    console.log("Received", messages.length, "messages");
+    console.log("Received", Array.isArray(messages) ? messages.length : 0, "messages");
+
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -540,7 +545,7 @@ serve(async (req) => {
 
     let decision: any = null;
 
-    if (isLoadMore) {
+    if (isLoadMore || isConfirmedSearch) {
       decision = {
         action: "search",
         filters: body.filters || {},
@@ -548,6 +553,7 @@ serve(async (req) => {
         customerProfile: typeof body.customerProfile === "string" ? body.customerProfile : "",
       };
     } else {
+
 
     // Send conversation to AI to decide: ask or search
     const aiResponse = await fetch(
@@ -625,6 +631,22 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Sammanfattningskort: innan vi söker får kunden bekräfta de tolkade
+    // filtren. Frontend skickar tillbaka action:"confirmed_search".
+    if (decision.action === "search" && !isLoadMore && !isConfirmedSearch) {
+      return new Response(
+        JSON.stringify({
+          action: "confirm",
+          message: decision.message || decision.reasoning || "",
+          filters: decision.filters || {},
+          customerProfile: decision.customerProfile || "",
+          reasoning: decision.reasoning || "",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
 
     // AI decided to search — run database query
     if (decision.action === "search") {
@@ -820,6 +842,27 @@ serve(async (req) => {
       }
 
 
+      // Vilka krav vi faktiskt tummade på — förklaras för kunden i resultatet.
+      const relaxations: string[] = [];
+      if (relaxLevel >= 1) {
+        relaxations.push("Jag vidgade prisintervallet lite för att hitta bilar.");
+        if (sanitizedCity) relaxations.push(`Jag sökte i hela landet istället för bara ${sanitizedCity}.`);
+        if (validBodyTypes.length > 0) relaxations.push("Jag släppte kravet på karosstyp.");
+        if (sanitizedColor) relaxations.push("Jag släppte färgönskemålet.");
+      }
+      if (relaxLevel >= 2) {
+        if (sanitizedMake && !modelOrClause) relaxations.push("Jag tittade även på andra märken.");
+        if (validFuels.length > 0) relaxations.push("Jag släppte kravet på drivmedel.");
+        if (sanitizedDrivetrain) relaxations.push("Jag släppte kravet på drivning (fyrhjulsdrift/framhjulsdrift).");
+        if (yearMin || yearMax) relaxations.push("Jag tillät fler årsmodeller.");
+        if (validFeatures.length > 0) relaxations.push("Jag släppte kravet på specifika tillval.");
+      }
+      if (relaxLevel >= 3) {
+        relaxations.push("Jag tog bort pristaket för att hitta något alls.");
+        if (sanitizedTransmission) relaxations.push(`Jag släppte kravet på ${sanitizedTransmission}.`);
+      }
+
+
       // Score, diversify and randomize the pool so the same cars don't dominate
       if (cars.length > 0) {
         const midPrice = (minPrice + maxPrice) / 2;
@@ -836,6 +879,11 @@ serve(async (req) => {
           "chevrolet", "dodge", "cadillac", "lexus", "honda", "mitsubishi", "suzuki",
         ]);
         const funBodies = new Set(["cab", "coupe", "cabriolet", "coupé", "halvkombi"]);
+
+        const useCase = typeof filters.useCase === "string" ? filters.useCase.toLowerCase() : null;
+        const currentYear = new Date().getFullYear();
+        // Svenskt snitt: ~1 500 mil per år.
+        const NORMAL_MIL_PER_YEAR = 1500;
 
         const score = (c: any) => {
           let s = 0;
@@ -855,9 +903,53 @@ serve(async (req) => {
             if ((c.transmission || "").toLowerCase().includes("manuell")) s += 8;
             if ((c.mileage ?? 0) > 0 && (c.mileage ?? 0) < 12000) s += 8;
           } else {
-            if ((c.mileage ?? 0) > 0) s += Math.max(0, 15 - (c.mileage ?? 0) / 2000);
-            if ((c.year ?? 0) > 0) s += Math.min(15, Math.max(0, (c.year - 2010)));
+            // Miltal per år jämfört med normalt — låg förslitning belönas,
+            // extremt hög körsträcka straffas.
+            const age = Math.max(1, currentYear - (c.year ?? currentYear) + 1);
+            const milPerYear = (c.mileage ?? 0) > 0 ? (c.mileage as number) / age : null;
+            if (milPerYear !== null) {
+              const ratio = milPerYear / NORMAL_MIL_PER_YEAR;
+              if (ratio <= 0.7) s += 18;
+              else if (ratio <= 1.1) s += 12;
+              else if (ratio <= 1.5) s += 4;
+              else s -= 10;
+            }
+
+            // Nyare bil ger något högre poäng
+            if ((c.year ?? 0) > 0) s += Math.min(18, Math.max(0, (c.year - 2010) * 1.2));
+
+            // Komplett data — annonser med hästkrafter och drivlina känns mer
+            // pålitliga än tomma annonser.
+            if ((c.horsepower ?? 0) > 0) s += 6;
+            const dtv = (c.drivetrain || "").toLowerCase();
+            if (dtv && dtv !== "unknown") s += 5;
+            const bodyVal = (c.body_type || "").toLowerCase();
+            if (bodyVal && !["unknown", "okänd", "personbil", "transportbil"].includes(bodyVal)) s += 4;
+
+            // Passar bilen kundens användningsområde?
+            const fuel = (c.fuel_type || "").toLowerCase();
+            const isElectric = fuel.includes("el") && !fuel.includes("diesel");
+            const isHybrid = fuel.includes("hybrid");
+            const body = (c.body_type || "").toLowerCase();
+            if (useCase === "pendling") {
+              if (isElectric || isHybrid) s += 14;
+              if (fuel.includes("diesel")) s += 6;
+              if ((c.mileage ?? 0) > 0 && (c.mileage as number) < 12000) s += 4;
+            } else if (useCase === "familj") {
+              if (body.includes("kombi") || body.includes("suv")) s += 14;
+              if ((c.seats ?? 0) >= 7) s += 8;
+              if (body.includes("coupe") || body.includes("cab")) s -= 12;
+            } else if (useCase === "stad") {
+              if (body.includes("halvkombi") || body.includes("småbil")) s += 12;
+              if (isElectric) s += 8;
+              if (body.includes("suv")) s -= 4;
+            } else if (useCase === "langresa") {
+              if (body.includes("kombi") || body.includes("sedan") || body.includes("suv")) s += 10;
+              if (fuel.includes("diesel") || isHybrid) s += 8;
+              if ((c.horsepower ?? 0) >= 150) s += 4;
+            }
           }
+
 
           // Random jitter so repeated searches surface different cars
           s += Math.random() * (hiddenGem ? 35 : 22);
@@ -896,10 +988,11 @@ serve(async (req) => {
       }
 
       // Build context from conversation
-      const userMessages = messages
+      const userMessages = (Array.isArray(messages) ? messages : [])
         .filter((m: any) => m.role === "user")
         .map((m: any) => m.content)
-        .join(". ");
+        .join(". ") || customerProfile;
+
 
       // Generate personalized result message + per-car reasons
       let message = "";
@@ -932,7 +1025,7 @@ serve(async (req) => {
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxLevel > 0 ? "Sökningen breddades för att hitta resultat." : ""}`,
+                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxations.length > 0 ? `Sökningen breddades. Nämn kort i sammanfattningen vad som släpptes: ${relaxations.join(" ")}` : ""}`,
                   },
                 ],
               }),
@@ -1027,6 +1120,8 @@ serve(async (req) => {
           matchCount: cars.length,
           relaxed: relaxLevel > 0,
           relaxLevel,
+          relaxations,
+
           userAge,
           userCity: sanitizedCity,
           filters,
