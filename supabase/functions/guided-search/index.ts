@@ -879,6 +879,11 @@ serve(async (req) => {
         ]);
         const funBodies = new Set(["cab", "coupe", "cabriolet", "coupé", "halvkombi"]);
 
+        const useCase = typeof filters.useCase === "string" ? filters.useCase.toLowerCase() : null;
+        const currentYear = new Date().getFullYear();
+        // Svenskt snitt: ~1 500 mil per år.
+        const NORMAL_MIL_PER_YEAR = 1500;
+
         const score = (c: any) => {
           let s = 0;
           // Budget fit (always matters, but softer in hidden-gem mode)
@@ -897,9 +902,53 @@ serve(async (req) => {
             if ((c.transmission || "").toLowerCase().includes("manuell")) s += 8;
             if ((c.mileage ?? 0) > 0 && (c.mileage ?? 0) < 12000) s += 8;
           } else {
-            if ((c.mileage ?? 0) > 0) s += Math.max(0, 15 - (c.mileage ?? 0) / 2000);
-            if ((c.year ?? 0) > 0) s += Math.min(15, Math.max(0, (c.year - 2010)));
+            // Miltal per år jämfört med normalt — låg förslitning belönas,
+            // extremt hög körsträcka straffas.
+            const age = Math.max(1, currentYear - (c.year ?? currentYear) + 1);
+            const milPerYear = (c.mileage ?? 0) > 0 ? (c.mileage as number) / age : null;
+            if (milPerYear !== null) {
+              const ratio = milPerYear / NORMAL_MIL_PER_YEAR;
+              if (ratio <= 0.7) s += 18;
+              else if (ratio <= 1.1) s += 12;
+              else if (ratio <= 1.5) s += 4;
+              else s -= 10;
+            }
+
+            // Nyare bil ger något högre poäng
+            if ((c.year ?? 0) > 0) s += Math.min(18, Math.max(0, (c.year - 2010) * 1.2));
+
+            // Komplett data — annonser med hästkrafter och drivlina känns mer
+            // pålitliga än tomma annonser.
+            if ((c.horsepower ?? 0) > 0) s += 6;
+            const dtv = (c.drivetrain || "").toLowerCase();
+            if (dtv && dtv !== "unknown") s += 5;
+            const bodyVal = (c.body_type || "").toLowerCase();
+            if (bodyVal && !["unknown", "okänd", "personbil", "transportbil"].includes(bodyVal)) s += 4;
+
+            // Passar bilen kundens användningsområde?
+            const fuel = (c.fuel_type || "").toLowerCase();
+            const isElectric = fuel.includes("el") && !fuel.includes("diesel");
+            const isHybrid = fuel.includes("hybrid");
+            const body = (c.body_type || "").toLowerCase();
+            if (useCase === "pendling") {
+              if (isElectric || isHybrid) s += 14;
+              if (fuel.includes("diesel")) s += 6;
+              if ((c.mileage ?? 0) > 0 && (c.mileage as number) < 12000) s += 4;
+            } else if (useCase === "familj") {
+              if (body.includes("kombi") || body.includes("suv")) s += 14;
+              if ((c.seats ?? 0) >= 7) s += 8;
+              if (body.includes("coupe") || body.includes("cab")) s -= 12;
+            } else if (useCase === "stad") {
+              if (body.includes("halvkombi") || body.includes("småbil")) s += 12;
+              if (isElectric) s += 8;
+              if (body.includes("suv")) s -= 4;
+            } else if (useCase === "langresa") {
+              if (body.includes("kombi") || body.includes("sedan") || body.includes("suv")) s += 10;
+              if (fuel.includes("diesel") || isHybrid) s += 8;
+              if ((c.horsepower ?? 0) >= 150) s += 4;
+            }
           }
+
 
           // Random jitter so repeated searches surface different cars
           s += Math.random() * (hiddenGem ? 35 : 22);
