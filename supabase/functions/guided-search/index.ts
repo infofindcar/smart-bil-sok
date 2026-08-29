@@ -1069,11 +1069,11 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en svensk bilrådgivare. Kunden sökte bilar men inga hittades. Du ska:\n1. Kort förklara varför det inte finns matchande bilar (max 2 meningar)\n2. Ge 2-3 konkreta förslag på hur kunden kan ändra sin sökning för att hitta bilar\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Tyvärr hittade jag inga bilar som matchar...","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}\n\nFörslagen ska vara specifika och klickbara, t.ex. "Öka budgeten till 200 000 kr", "Prova hybrid istället för el", "Sök i hela Sverige".\nAnvänd INTE emojis.${langInstruction}`,
+                    content: `Du är Clutch, en svensk bilrådgivare. Du pratar DIREKT med personen — säg "du" och "dig", aldrig "kunden" eller något i tredje person. Sökningen gav inga träffar. Du ska:\n1. Kort och mjukt förklara att inget matchade (max 2 meningar, inga långa utläggningar)\n2. Ge 2-3 konkreta förslag på hur du kan ändra sökningen\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Tyvärr hittade jag inga bilar som matchar...","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}\n\nFörslagen ska vara specifika och klickbara, t.ex. "Öka budgeten till 200 000 kr", "Prova hybrid istället för el", "Sök i hela Sverige".\nAnvänd INTE emojis.${langInstruction}`,
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}". Alla relax-nivåer testades utan resultat.`,
+                    content: `Önskemål: "${userMessages}". Inga träffar hittades trots breddad sökning.`,
                   },
                 ],
               }),
