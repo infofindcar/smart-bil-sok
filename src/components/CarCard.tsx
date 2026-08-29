@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Heart, Fuel, MapPin, Store, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,8 @@ interface CarCardProps {
   isSaved?: boolean;
   onToggleSave?: (car: Car) => void;
   matchReason?: string;
+  /** Anropas om bilden inte kan laddas så föräldern kan ta bort kortet ur griden (inget tomrum). */
+  onImageUnavailable?: (carId: number) => void;
 }
 
 const formatPrice = (price: number | null) => {
@@ -50,7 +52,7 @@ const ImageWithFade = ({ src, alt, onError }: { src: string; alt: string; onErro
   );
 };
 
-export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: CarCardProps) => {
+export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason, onImageUnavailable }: CarCardProps) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   const gradient = BRAND_GRADIENTS[car.make || ''] || 'from-secondary to-primary';
@@ -58,8 +60,15 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
   const equipment = topEquipment(car.model_raw, 5);
   const [similarOpen, setSimilarOpen] = useState(false);
 
+  const unusable = !car.image_thumb_url || imageError;
+
+  // Meddela föräldern så att kortet tas bort ur griden helt (annars blir det tomrum).
+  useEffect(() => {
+    if (unusable) onImageUnavailable?.(car.id);
+  }, [unusable, car.id, onImageUnavailable]);
+
   // Bilar utan användbar bild visas inte alls (ingen bokstavs-platshållare).
-  if (!car.image_thumb_url || imageError) return null;
+  if (unusable) return null;
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect, useRef } from 'react';
+import { forwardRef, useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { CarCard } from '@/components/CarCard';
 import { CarCardSkeleton } from '@/components/CarCardSkeleton';
@@ -34,12 +34,23 @@ interface ResultsRevealProps {
 }
 
 export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
-  ({ cars, similarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, allLoaded, getReasonForCar }, ref) => {
+  ({ cars: rawCars, similarCars: rawSimilarCars, totalMatches, savedCars, resultMessage, language = 'sv', onToggleSave, onCompare, onShowMore, loadingMore, allLoaded, getReasonForCar }, ref) => {
     const [revealedCount, setRevealedCount] = useState(0);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const [showSimilar, setShowSimilar] = useState(false);
     const sectionRef = useRef<HTMLDivElement>(null);
+
+    // Bilar vars bild inte kan laddas tas bort helt så inga tomma luckor uppstår.
+    const [brokenIds, setBrokenIds] = useState<number[]>([]);
+    const markBroken = useCallback((id: number) => {
+      setBrokenIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    }, []);
+    const visible = (list: Car[]) => list.filter((c) => !!c.image_thumb_url && !brokenIds.includes(c.id));
+    const allVisible = [...visible(rawCars), ...visible(rawSimilarCars)];
+    const cars = allVisible.slice(0, 3);
+    const similarCars = allVisible.slice(3);
+
 
     // Check if we already showed these results (e.g. returning from car detail)
     useEffect(() => {
@@ -121,7 +132,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
               <div className="relative inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-card border border-primary/20 shadow-lg shadow-primary/[0.08]">
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" />
                 <span className="text-sm font-semibold text-foreground tracking-wide">
-                  {(totalMatches ?? (cars.length + similarCars.length))} {t('matchesFound', language)}
+                  {allVisible.length} {t('matchesFound', language)}
                 </span>
                 <Sparkles className="h-4 w-4 text-primary card-pop-sparkle" style={{ animationDelay: '200ms' }} />
               </div>
@@ -175,6 +186,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                     isSaved={savedCars.some((c) => c.id === car.id)}
                     onToggleSave={onToggleSave}
                     matchReason={getReasonForCar(car.id)}
+                    onImageUnavailable={markBroken}
                   />
                 </div>
               ))}
@@ -219,6 +231,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                       isSaved={savedCars.some((c) => c.id === car.id)}
                       onToggleSave={onToggleSave}
                       matchReason={getReasonForCar(car.id)}
+                      onImageUnavailable={markBroken}
                     />
                   </div>
                 ))}
@@ -231,6 +244,7 @@ export const ResultsReveal = forwardRef<HTMLDivElement, ResultsRevealProps>(
                       isSaved={savedCars.some((c) => c.id === car.id)}
                       onToggleSave={onToggleSave}
                       matchReason={getReasonForCar(car.id)}
+                      onImageUnavailable={markBroken}
                     />
                   </div>
                 ))}
