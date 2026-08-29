@@ -1118,6 +1118,8 @@ serve(async (req) => {
           matchCount: cars.length,
           relaxed: relaxLevel > 0,
           relaxLevel,
+          relaxations,
+
           userAge,
           userCity: sanitizedCity,
           filters,
