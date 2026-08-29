@@ -84,11 +84,25 @@ const Index = () => {
   const handleLoadMore = useCallback(async () => {
     try {
       const stored = sessionStorage.getItem('findcar-last-filters');
-      if (!stored) {
-        toast.info('Sök på nytt med Clutch för att kunna visa fler bilar.');
-        return;
+      let filters: Record<string, unknown> = {};
+      let customerProfile = '';
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          filters = parsed?.filters ?? {};
+          customerProfile = parsed?.customerProfile ?? '';
+        } catch {}
       }
-      const { filters, customerProfile } = JSON.parse(stored);
+      // Fallback: derive a budget window from the cars already shown so the
+      // button still works in older sessions without stored filters.
+      if (!filters || Object.keys(filters).length === 0) {
+        const prices = cars.map((c) => c.price).filter((p): p is number => typeof p === 'number' && p > 0);
+        if (prices.length > 0) {
+          const min = Math.floor(Math.min(...prices) * 0.85);
+          const max = Math.ceil(Math.max(...prices) * 1.15);
+          filters = { budget: `${min}-${max}` };
+        }
+      }
       setLoadingMore(true);
       const excludeIds = cars.map((c) => c.id);
       const { data, error } = await supabase.functions.invoke('guided-search', {
