@@ -988,10 +988,11 @@ serve(async (req) => {
       }
 
       // Build context from conversation
-      const userMessages = messages
+      const userMessages = (Array.isArray(messages) ? messages : [])
         .filter((m: any) => m.role === "user")
         .map((m: any) => m.content)
-        .join(". ");
+        .join(". ") || customerProfile;
+
 
       // Generate personalized result message + per-car reasons
       let message = "";
