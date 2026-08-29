@@ -140,6 +140,12 @@ const bodyPatterns: Record<string, string> = {
   cab: "%Cab%",
 };
 
+// Växellåda: DB-värden är "Automatisk", "Automat" och "Manuell".
+const transmissionPatterns: Record<string, string> = {
+  automat: "%Automat%",
+  manuell: "%Manuell%",
+};
+
 const drivetrainPatterns: Record<string, string[]> = {
   awd: ["AWD", '"AWD"'],
   fwd: ["FWD", '"FWD"'],
@@ -245,12 +251,13 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab
+Giltiga transmission-värden: automat, manuell. Sätt ALLTID fältet om kunden nämnt växellåda — det filtreras hårt.
 OBS: "cabriolet", "cab", "roadster", "öppen bil", "convertible", "spyder", "spider" → bodyType: "cab"
 OBS: "budget" ska ALLTID vara ett intervall "MIN-MAX". Om kunden säger "runt 500k" eller "ungefär X" → skapa ett intervall ±20%: t.ex. "400000-600000". Om kunden nämner ett enda belopp → skapa ett rimligt intervall runt det.
 Giltiga drivetrain-värden: awd, fwd, rwd
@@ -309,6 +316,8 @@ serve(async (req) => {
       const bodies = Array.isArray(f.bodyType) ? f.bodyType.filter((x: string) => x in bodyPatterns) : [];
       const yMin = typeof f.yearMin === "number" ? f.yearMin : null;
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
+      const trans = typeof f.transmission === "string" && f.transmission.toLowerCase() in transmissionPatterns
+        ? f.transmission.toLowerCase() : null;
 
       // Progressive relaxation: try with filters, then relax
       const buildLoadMoreQuery = (level: number) => {
@@ -342,6 +351,9 @@ serve(async (req) => {
         }
         if (yMin && level < 2) q = q.gte("year", yMin);
         if (yMax && level < 2) q = q.lte("year", yMax);
+        if (trans) q = q.or(`transmission.ilike.${transmissionPatterns[trans]},transmission.is.null`);
+
+
 
         // Exclude already-shown cars in one PostgREST filter instead of
         // generating a long chain of individual predicates.
@@ -616,6 +628,10 @@ serve(async (req) => {
 
       const hiddenGem = filters.vibe === "hiddenGem";
 
+      const sanitizedTransmission = typeof filters.transmission === "string" &&
+        filters.transmission.toLowerCase() in transmissionPatterns
+        ? filters.transmission.toLowerCase() : null;
+
       // Validate feature requests against known featurePatterns
       const validFeatures: string[] = Array.isArray(filters.features)
         ? filters.features.filter((f: unknown) => typeof f === "string" && f in featurePatterns)
@@ -687,6 +703,13 @@ serve(async (req) => {
         }
         if (yearMin && level < 2) query = query.gte("year", yearMin);
         if (yearMax && level < 2) query = query.lte("year", yearMax);
+
+        // Växellåda: hårt krav till och med nivå 2 — kunden som ber om automat
+        // ska aldrig få manuella bilar. Null-värden tillåts (ej berikade).
+        if (sanitizedTransmission && level < 3) {
+          const p = transmissionPatterns[sanitizedTransmission];
+          query = query.or(`transmission.ilike.${p},transmission.is.null`);
+        }
 
         // Feature/tillval filtering via model_raw ILIKE (Blockets annonstitel)
         // Droppas vid level >= 2 (relaxation) för att undvika för få träffar

@@ -25,7 +25,8 @@ const CarComparison = () => {
           path="/compare"
         />
         <Header />
-        <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <div className="flex flex-col items-center justify-center py-32 gap-4 px-4 text-center">
+          <h1 className="text-3xl font-bold">Jämför bilar</h1>
           <p className="text-muted-foreground">Spara minst 2 bilar för att jämföra.</p>
           <Button variant="outline" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />

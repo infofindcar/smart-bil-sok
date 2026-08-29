@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Header } from '@/components/Header';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -175,6 +176,7 @@ const Admin = () => {
   if (!isAuthed) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <SEO title="Admin | FindCar" description="Intern administration." path="/admin" noindex />
         <div className="w-full max-w-sm text-center space-y-6">
           <div>
             <h1 className="text-2xl font-bold">Admin</h1>
@@ -223,6 +225,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Admin | FindCar" description="Intern administration." path="/admin" noindex />
       <Header />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
