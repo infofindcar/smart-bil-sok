@@ -544,7 +544,7 @@ serve(async (req) => {
 
     let decision: any = null;
 
-    if (isLoadMore) {
+    if (isLoadMore || isConfirmedSearch) {
       decision = {
         action: "search",
         filters: body.filters || {},
@@ -552,6 +552,7 @@ serve(async (req) => {
         customerProfile: typeof body.customerProfile === "string" ? body.customerProfile : "",
       };
     } else {
+
 
     // Send conversation to AI to decide: ask or search
     const aiResponse = await fetch(
