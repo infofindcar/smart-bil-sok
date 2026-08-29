@@ -631,6 +631,22 @@ serve(async (req) => {
       );
     }
 
+    // Sammanfattningskort: innan vi söker får kunden bekräfta de tolkade
+    // filtren. Frontend skickar tillbaka action:"confirmed_search".
+    if (decision.action === "search" && !isLoadMore && !isConfirmedSearch) {
+      return new Response(
+        JSON.stringify({
+          action: "confirm",
+          message: decision.message || "",
+          filters: decision.filters || {},
+          customerProfile: decision.customerProfile || "",
+          reasoning: decision.reasoning || "",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+
     // AI decided to search — run database query
     if (decision.action === "search") {
       const filters = decision.filters || {};
