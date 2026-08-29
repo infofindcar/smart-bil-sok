@@ -225,6 +225,8 @@ const modelBodyTypeMap: Record<string, string[]> = {
 
 const CONVERSATION_SYSTEM_PROMPT = `Du är Clutch, en intelligent och objektiv svensk bilrådgivare. Du har ett naturligt samtal med kunden för att förstå exakt vilken bil som passar dem bäst. Du ska kännas som en riktig människa som bryr sig.
 
+TILLTAL (VIKTIGT): Du pratar DIREKT med personen. Säg alltid "du" och "dig". Skriv ALDRIG "kunden", "kunden ville", "kundens behov" eller något annat i tredje person i dina svar — orden "kund"/"kunden" används bara internt i denna instruktion, aldrig i texten du skickar. Upprepa inte tillbaka hela sökningen i detalj; håll det kort och mjukt.
+
 DITT MÅL: Förstå kundens situation med SÅ FÅ frågor som möjligt. Du följer INGET fast schema — varje samtal ska börja där kunden är. Läs vad kunden redan skrivit och fråga bara om det som faktiskt saknas för att hitta rätt bil.
 
 ANPASSNING — VIKTIGAST AV ALLT:
@@ -632,20 +634,7 @@ serve(async (req) => {
       );
     }
 
-    // Sammanfattningskort: innan vi söker får kunden bekräfta de tolkade
-    // filtren. Frontend skickar tillbaka action:"confirmed_search".
-    if (decision.action === "search" && !isLoadMore && !isConfirmedSearch) {
-      return new Response(
-        JSON.stringify({
-          action: "confirm",
-          message: decision.message || decision.reasoning || "",
-          filters: decision.filters || {},
-          customerProfile: decision.customerProfile || "",
-          reasoning: decision.reasoning || "",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Ingen bekräftelse-mellanstopp: när Clutch bestämt sig söker vi direkt.
 
 
     // AI decided to search — run database query
@@ -1021,11 +1010,11 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Du ska göra två saker:\n\n1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar kundens situation.\n2. För VARJE bil, ge en kort personlig motivering (1 mening) om varför just den bilen passar kunden baserat på deras specifika behov.\n\nVar specifik: nämn varför biltypen/drivlinan/färgen/priset passar deras livsstil. Använd INTE emojis.${langInstruction}\n\n${reasoning ? `Din resonering: ${reasoning}` : ""}\n${customerProfile ? `Kundprofil: ${customerProfile}` : ""}\n\nVar varm, professionell och objektiv.\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Din sammanfattning här","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
+                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Du pratar DIREKT med personen som söker — säg "du" och "dig". Skriv ALDRIG "kunden", "kunden ville", "kundens behov" eller något annat i tredje person.\n\nDu ska göra två saker:\n\n1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar dig.\n2. För VARJE bil, ge en kort motivering (1 mening) om varför just den bilen passar.\n\nHåll det lätt och avslappnat — rada inte upp alla filter eller förklara sökningen i detalj. Nämn bara det som faktiskt betyder något. Använd INTE emojis.${langInstruction}\n\n${reasoning ? `Din resonering (internt, upprepa den inte ordagrant): ${reasoning}` : ""}\n${customerProfile ? `Det du vet om personen (internt): ${customerProfile}` : ""}\n\nVar varm, professionell och objektiv.\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Din sammanfattning här","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxations.length > 0 ? `Sökningen breddades. Nämn kort i sammanfattningen vad som släpptes: ${relaxations.join(" ")}` : ""}`,
+                    content: `Önskemål: "${userMessages}"\n\nBilar:\n${carSummaries}\n\n${relaxations.length > 0 ? `Sökningen breddades lite. Nämn det MYCKET kort och mjukt i en bisats (t.ex. "jag tittade lite bredare för att hitta fler alternativ") — lista inte varje släppt krav: ${relaxations.slice(0, 2).join(" ")}` : ""}`,
                   },
                 ],
               }),
@@ -1069,11 +1058,11 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en svensk bilrådgivare. Kunden sökte bilar men inga hittades. Du ska:\n1. Kort förklara varför det inte finns matchande bilar (max 2 meningar)\n2. Ge 2-3 konkreta förslag på hur kunden kan ändra sin sökning för att hitta bilar\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Tyvärr hittade jag inga bilar som matchar...","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}\n\nFörslagen ska vara specifika och klickbara, t.ex. "Öka budgeten till 200 000 kr", "Prova hybrid istället för el", "Sök i hela Sverige".\nAnvänd INTE emojis.${langInstruction}`,
+                    content: `Du är Clutch, en svensk bilrådgivare. Du pratar DIREKT med personen — säg "du" och "dig", aldrig "kunden" eller något i tredje person. Sökningen gav inga träffar. Du ska:\n1. Kort och mjukt förklara att inget matchade (max 2 meningar, inga långa utläggningar)\n2. Ge 2-3 konkreta förslag på hur du kan ändra sökningen\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Tyvärr hittade jag inga bilar som matchar...","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}\n\nFörslagen ska vara specifika och klickbara, t.ex. "Öka budgeten till 200 000 kr", "Prova hybrid istället för el", "Sök i hela Sverige".\nAnvänd INTE emojis.${langInstruction}`,
                   },
                   {
                     role: "user",
-                    content: `Kundens behov: "${userMessages}". Alla relax-nivåer testades utan resultat.`,
+                    content: `Önskemål: "${userMessages}". Inga träffar hittades trots breddad sökning.`,
                   },
                 ],
               }),

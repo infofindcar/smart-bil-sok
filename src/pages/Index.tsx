@@ -196,12 +196,10 @@ const Index = () => {
               {relaxations.length > 0 && (
                 <div className="mx-auto max-w-3xl px-4 pt-8">
                   <div className="rounded-2xl border border-border/60 bg-card/60 p-4">
-                    <p className="text-sm font-medium text-foreground mb-1.5">Jag breddade sökningen lite</p>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {relaxations.map((r, i) => (
-                        <li key={i}>• {r}</li>
-                      ))}
-                    </ul>
+                    <p className="text-sm text-muted-foreground">
+                      Jag tittade lite bredare för att hitta fler alternativ till dig
+                      {relaxations.length > 0 ? ` — ${relaxations.slice(0, 2).join(' ')}` : ''}
+                    </p>
                   </div>
                 </div>
               )}
