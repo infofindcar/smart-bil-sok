@@ -646,7 +646,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             action: "ask",
-            message: "Du har gjort dina 3 kostnadsfria sökningar för idag. Kom tillbaka imorgon så hjälper vi dig hitta rätt bil!",
+            message: "Du har gjort dina 30 kostnadsfria sökningar för idag. Kom tillbaka imorgon så hjälper vi dig hitta rätt bil!",
             suggestions: [],
           }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
