@@ -902,9 +902,10 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             const animClass = !alreadyAnimated
               ? msg.role === 'user' ? 'whoosh-in' : 'bubble-in'
               : '';
+            const chips = msg.confirm ? filterChips(msg.confirm.filters) : [];
             return (
+              <div key={msg.id}>
               <div
-                key={msg.id}
                 ref={isLast ? lastMessageRef : undefined}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'} ${animClass}`}
               >
@@ -926,7 +927,46 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
                   )}
                 </div>
               </div>
+
+              {/* Sammanfattningskort innan sökning */}
+              {msg.confirm && (
+                <div className="mt-2 ml-9 max-w-[85%] md:max-w-[78%] rounded-2xl border border-border/60 bg-card/70 p-3.5">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Din sökning</p>
+                  {chips.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {chips.map((chip) => (
+                        <span
+                          key={chip.key}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-foreground"
+                        >
+                          {chip.label}
+                          <button
+                            type="button"
+                            aria-label={`Ta bort ${chip.label}`}
+                            onClick={() => removeConfirmFilter(msg.id, chip.key)}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Inga specifika krav – jag visar ett brett urval.</p>
+                  )}
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => runConfirmedSearch(msg.id, msg.confirm!)}
+                    className="mt-3 w-full rounded-xl bg-gradient-to-br from-primary to-secondary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                  >
+                    Sök nu
+                  </button>
+                </div>
+              )}
+              </div>
             );
+
           })}
 
           {isLoading && phase === 'searching' && <SearchAnimation />}
