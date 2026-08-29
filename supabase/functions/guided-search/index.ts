@@ -525,7 +525,7 @@ serve(async (req) => {
     };
     const langInstruction = langInstructions[language as string] || langInstructions.sv;
 
-    if (!isLoadMore) {
+    if (!isLoadMore && !isConfirmedSearch) {
       const validation = validateMessages(body.messages);
       if (!validation.valid) {
         return new Response(
@@ -535,7 +535,8 @@ serve(async (req) => {
       }
     }
 
-    console.log("Received", messages.length, "messages");
+    console.log("Received", Array.isArray(messages) ? messages.length : 0, "messages");
+
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
