@@ -128,44 +128,31 @@ export const ListingAnalyzer = () => {
     setSimCars([]);
     try {
       const { make, model, year, mileage_km, price_sek } = result.bil;
-      let query = supabase
-        .from('Lovable')
-        .select('id, make, model, year, price, mileage, image_thumb_url, city')
-        .eq('is_active', true)
-        .not('price', 'is', null)
-        .not('image_thumb_url', 'is', null)
-        .gt('price', 1500);
+      const models = (result.liknande_modeller ?? []).map((m) => m.trim()).filter(Boolean);
 
-      if (mode === 'better' && make && model) {
-        query = query.ilike('make', make).ilike('model', `%${model}%`);
-        if (year) query = query.gte('year', year - 1);
-        if (mileage_km && mileage_km > 0) query = query.lte('mileage', mileage_km);
-        if (price_sek && price_sek > 0) query = query.lte('price', Math.round(price_sek * 1.05));
-        query = query.order('price', { ascending: true });
-      } else if (mode === 'class') {
-        const models = result.liknande_modeller ?? [];
-        if (models.length === 0) {
-          setSimError('Vi hittade inga liknande modeller att jämföra med.');
-          setSimLoading(false);
-          return;
-        }
-        const ors = models
-          .map((m) => m.trim())
-          .filter(Boolean)
-          .map((m) => `model.ilike.%${m.split(/\s+/).slice(-1)[0]}%`)
-          .join(',');
-        if (ors) query = query.or(ors);
-        if (year) query = query.gte('year', year - 2).lte('year', year + 2);
-        if (price_sek && price_sek > 0) {
-          query = query.gte('price', Math.round(price_sek * 0.7)).lte('price', Math.round(price_sek * 1.3));
-        }
-        query = query.order('year', { ascending: false });
+      if (mode === 'class' && models.length === 0) {
+        setSimError('Vi hittade inga liknande modeller att jämföra med.');
+        setSimLoading(false);
+        return;
       }
 
-      const { data, error: qErr } = await query.limit(6);
+      // Tabellen blockerar anon-select via RLS — hämta via edge-funktion.
+      const { data, error: qErr } = await supabase.functions.invoke('cars-public', {
+        body: {
+          action: 'alternatives',
+          mode,
+          make,
+          model,
+          models,
+          year: year ?? null,
+          mileage: mileage_km ?? null,
+          price: price_sek ?? null,
+        },
+      });
       if (qErr) throw qErr;
-      setSimCars((data ?? []) as CarRow[]);
-      if (!data || data.length === 0) setSimError('Inga matchande bilar i vår databas just nu.');
+      const cars = ((data?.cars ?? []) as CarRow[]).slice(0, 6);
+      setSimCars(cars);
+      if (cars.length === 0) setSimError('Inga matchande bilar i vår databas just nu.');
     } catch (e) {
       console.error(e);
       setSimError('Kunde inte hämta bilar just nu.');

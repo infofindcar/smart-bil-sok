@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Header } from '@/components/Header';
+import { SEO } from '@/components/SEO';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Home, Search } from 'lucide-react';
@@ -22,6 +23,12 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Sidan hittades inte | FindCar"
+        description="Sidan du letade efter finns inte. Hitta din nästa bil med FindCar istället."
+        path={location.pathname}
+        noindex
+      />
       <Header />
       <main className="flex-1 flex items-center justify-center px-4 pt-24 pb-16">
         <div className="max-w-md w-full text-center space-y-6">

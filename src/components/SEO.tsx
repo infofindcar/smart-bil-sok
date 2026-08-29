@@ -7,17 +7,19 @@ interface SEOProps {
   type?: "website" | "article" | "product";
   image?: string;
   jsonLd?: object | object[];
+  noindex?: boolean;
 }
 
 const BASE_URL = "https://findcar.se";
 
-export const SEO = ({ title, description, path, type = "website", image, jsonLd }: SEOProps) => {
+export const SEO = ({ title, description, path, type = "website", image, jsonLd, noindex }: SEOProps) => {
   const url = `${BASE_URL}${path}`;
   const ldArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      {noindex && <meta name="robots" content="noindex, follow" />}
       <link rel="canonical" href={url} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
