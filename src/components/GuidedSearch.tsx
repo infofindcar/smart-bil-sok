@@ -269,6 +269,28 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, phase }));
   }, [messages, phase]);
 
+  // Förifylld fråga från guide-sidorna (/?q=...). Fyller bara i fältet — användaren
+  // skickar själv. Parametern rensas ur adressfältet efteråt.
+  useEffect(() => {
+    let prefill: string | null = null;
+    try {
+      prefill = new URLSearchParams(window.location.search).get('q');
+    } catch {}
+    if (!prefill) return;
+    setInputValue(prefill.slice(0, 500));
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('q');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch {}
+    requestAnimationFrame(() => {
+      document
+        .querySelector('[data-search-section]')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, []);
+
+
   // Rotate placeholder examples every 3.5s while idle on first message
   useEffect(() => {
     if (messages.length > 1 || inputFocused || inputValue) return;
