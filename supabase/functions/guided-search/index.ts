@@ -41,7 +41,7 @@ function isRateLimited(ip: string): boolean {
 }
 
 // --- Daily search limit per IP (DB-backed, new searches only) ---
-const DAILY_SEARCH_LIMIT = 3;
+const DAILY_SEARCH_LIMIT = 30;
 
 async function sha256(input: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
