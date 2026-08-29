@@ -634,20 +634,7 @@ serve(async (req) => {
       );
     }
 
-    // Sammanfattningskort: innan vi söker får kunden bekräfta de tolkade
-    // filtren. Frontend skickar tillbaka action:"confirmed_search".
-    if (decision.action === "search" && !isLoadMore && !isConfirmedSearch) {
-      return new Response(
-        JSON.stringify({
-          action: "confirm",
-          message: decision.message || decision.reasoning || "",
-          filters: decision.filters || {},
-          customerProfile: decision.customerProfile || "",
-          reasoning: decision.reasoning || "",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Ingen bekräftelse-mellanstopp: när Clutch bestämt sig söker vi direkt.
 
 
     // AI decided to search — run database query
