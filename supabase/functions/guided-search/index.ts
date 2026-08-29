@@ -280,10 +280,18 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
+
+SPECIFIK BILMODELL — VIKTIGT:
+Om kunden nämner en specifik modell (t.ex. "Volvo V70", "BMW 320d", "Golf GTI", "Tesla Model 3", "Saab 9-5", "XC60") ska du:
+- ALLTID sätta både "make" (märket) och "model" (modellbeteckningen, utan märkesnamn: "V70", "320", "Golf", "Model 3", "9-5", "XC60")
+- Söka snabbt: kunden vet redan vad de vill ha. Fråga då bara om budget (och ev. plats) och sök sedan — ställ inte fem frågor.
+- Inte byta modell åt kunden. Modellfiltret är hårt: kunden får bara den modellen. Nämn i "reasoning" om utbudet är litet.
+- Sätt bara "model" när kunden faktiskt bett om en specifik modell — annars utelämna fältet helt.
+
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab
 Giltiga transmission-värden: automat, manuell. Sätt ALLTID fältet om kunden nämnt växellåda — det filtreras hårt.
