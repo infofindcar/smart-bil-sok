@@ -690,6 +690,24 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       if (data?.action === 'ask') {
         addAssistantMessage(data.message, data.suggestions, undefined, data.multiSelect === true);
         setIsLoading(false);
+      } else if (data?.action === 'confirm') {
+        // Visa sammanfattningskort — kunden bekräftar innan vi söker
+        const id = Date.now().toString() + Math.random();
+        const content = data.message || 'Här är vad jag letar efter. Ser det rätt ut?';
+        setMessages((prev) => [
+          ...prev,
+          {
+            id,
+            role: 'assistant',
+            content,
+            confirm: {
+              filters: (data.filters ?? {}) as Record<string, unknown>,
+              customerProfile: data.customerProfile || '',
+            },
+          },
+        ]);
+        typewriteMessage(id, content);
+        setIsLoading(false);
       } else if (data?.action === 'search') {
         if (data.filters?.driverAge) {
           sessionStorage.setItem('findcar-driver-age', JSON.stringify(data.filters.driverAge));
@@ -701,7 +719,6 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           }));
         } catch {}
         setPhase('searching');
-        addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
         try {
           sessionStorage.setItem('findcar-user-profile', JSON.stringify({
@@ -710,21 +727,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           }));
         } catch {}
 
-        setPhase('results');
-        setIsLoading(false);
+        applySearchResult(data);
 
-        if (data.cars?.length > 0) {
-          const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
-          onResults(data.cars, resultMsg, data.carReasons || []);
-          setTimeout(() => {
-            onScrollToResults?.();
-          }, 600);
-        } else {
-          addAssistantMessage(
-            data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
-            data.suggestions || []
-          );
-        }
       } else {
         addAssistantMessage(data?.message || 'Något gick fel. Försök igen!');
         setIsLoading(false);
