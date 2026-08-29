@@ -68,20 +68,18 @@ const FILTER_LABELS: Record<string, string> = {
   make: 'Märke',
   model: 'Modell',
   bodyType: 'Karosstyp',
-  fuelType: 'Drivmedel',
+  fuel: 'Drivmedel',
   transmission: 'Växellåda',
   drivetrain: 'Drivning',
   city: 'Plats',
   color: 'Färg',
   yearMin: 'Från årsmodell',
   yearMax: 'Till årsmodell',
-  maxMileage: 'Max miltal',
-  seats: 'Antal sittplatser',
   features: 'Tillval',
   useCase: 'Användning',
-  dealers: 'Bilfirma',
-  excludeDealers: 'Undvik bilfirma',
+  vibe: 'Känsla',
 };
+
 
 const filterChips = (filters: Record<string, unknown>) =>
   Object.entries(filters || {})
