@@ -62,8 +62,26 @@ async function main() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Guide-slugs speglar src/content/guides/index.ts. Uppdatera båda när en guide läggs till.
+  const guideSlugs = [
+    'prisvard-begagnad-bil',
+    'checklista-innan-bilkop',
+    'elbil-eller-bensinbil-begagnad',
+    'leasing-vs-kopa-begagnad-bil',
+    'bilens-vardeminskning-vad-paverkar',
+    'finansiera-bilkop-kontant-lan-leasing',
+    'vanliga-fallgropar-privatkop-bil',
+    'besiktningsprotokoll-vad-betyder-det',
+  ];
+
   const staticUrls = [
     { loc: `${SITE_URL}/`, changefreq: 'weekly', priority: '1.0' },
+    { loc: `${SITE_URL}/guider`, changefreq: 'monthly', priority: '0.8' },
+    ...guideSlugs.map((slug) => ({
+      loc: `${SITE_URL}/guider/${slug}`,
+      changefreq: 'monthly',
+      priority: '0.7',
+    })),
     { loc: `${SITE_URL}/compare`, changefreq: 'monthly', priority: '0.4' },
     { loc: `${SITE_URL}/privacy`, changefreq: 'monthly', priority: '0.3' },
     { loc: `${SITE_URL}/terms`, changefreq: 'monthly', priority: '0.3' },
