@@ -190,8 +190,10 @@ const Index = () => {
 
       {/* Results */}
       {showResults && cars.length > 0 && (() => {
-        const topCars = cars.slice(0, 3);
-        const similarCars = cars.slice(3);
+        // Visa bara bilar som faktiskt har en bild.
+        const withImage = cars.filter((c) => !!c.image_thumb_url);
+        const topCars = withImage.slice(0, 3);
+        const similarCars = withImage.slice(3);
         return (
           <Suspense fallback={null}>
             <div ref={(el) => { resultsRef.current = el; }}>
@@ -209,7 +211,7 @@ const Index = () => {
               <ResultsReveal
                 cars={topCars}
                 similarCars={similarCars}
-                totalMatches={cars.length}
+                totalMatches={withImage.length}
                 savedCars={savedCars}
                 carReasons={carReasons}
                 resultMessage={resultMessage}
