@@ -933,6 +933,8 @@ serve(async (req) => {
           relaxLevel,
           userAge,
           userCity: sanitizedCity,
+          filters,
+          customerProfile,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
