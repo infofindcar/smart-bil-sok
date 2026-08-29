@@ -640,7 +640,7 @@ serve(async (req) => {
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      // Daily search limit: max 3 new searches per IP per 24h
+      // Daily search limit: max 30 new searches per IP per 24h
       const { limited } = await checkAndRecordDailyLimit(supabase, clientIp);
       if (limited) {
         return new Response(
