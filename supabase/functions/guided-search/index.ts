@@ -378,6 +378,9 @@ serve(async (req) => {
         // Level 1: drop body type too
         // Level 2: only price + fuel
         if (make && level < 2) q = q.ilike("make", `%${make}%`);
+        // Specifik modell är ett hårt krav — relaxas aldrig.
+        if (modelOr) q = q.or(modelOr);
+
         if (fuels.length > 0 && level < 3) {
           const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
           if (ff) q = q.or(ff);
