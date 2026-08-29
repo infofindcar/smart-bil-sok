@@ -738,7 +738,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       const status = (err as { context?: { status?: number } })?.context?.status;
       if (status === 429) {
         addAssistantMessage(
-          'Du har gjort dina 3 kostnadsfria AI-sökningar för idag. Kom tillbaka imorgon så hjälper jag dig hitta rätt bil!',
+          'Du har gjort dina 30 kostnadsfria AI-sökningar för idag. Kom tillbaka imorgon så hjälper jag dig hitta rätt bil!',
           []
         );
         setIsLoading(false);
