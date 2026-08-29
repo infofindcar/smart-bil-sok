@@ -75,6 +75,8 @@ const Index = () => {
       setCars(newCars);
       setCarReasons(reasons);
       setRelaxations(newRelaxations ?? []);
+      // Ny sökning: "Visa fler" ska vara aktiv igen även om förra sökningen tog slut.
+      setAllLoaded(false);
     }
     setResultMessage(message);
     setShowResults(true);
