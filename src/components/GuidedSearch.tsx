@@ -62,6 +62,40 @@ interface GuidedSearchProps {
   onLanguageChange?: (lang: string) => void;
 }
 
+// Svenska etiketter för filtren i sammanfattningskortet
+const FILTER_LABELS: Record<string, string> = {
+  budget: 'Budget',
+  make: 'Märke',
+  model: 'Modell',
+  bodyType: 'Karosstyp',
+  fuelType: 'Drivmedel',
+  transmission: 'Växellåda',
+  drivetrain: 'Drivning',
+  city: 'Plats',
+  color: 'Färg',
+  yearMin: 'Från årsmodell',
+  yearMax: 'Till årsmodell',
+  maxMileage: 'Max miltal',
+  seats: 'Antal sittplatser',
+  features: 'Tillval',
+  useCase: 'Användning',
+  dealers: 'Bilfirma',
+  excludeDealers: 'Undvik bilfirma',
+};
+
+const filterChips = (filters: Record<string, unknown>) =>
+  Object.entries(filters || {})
+    .filter(([key, value]) => {
+      if (!FILTER_LABELS[key]) return false;
+      if (value === null || value === undefined || value === '') return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      return true;
+    })
+    .map(([key, value]) => ({
+      key,
+      label: `${FILTER_LABELS[key]}: ${Array.isArray(value) ? value.join(', ') : String(value)}`,
+    }));
+
 
 const GREETINGS: Record<string, ChatMessage> = {
   sv: {
