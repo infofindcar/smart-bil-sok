@@ -571,6 +571,87 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     return msg;
   };
 
+  // ---- Sammanfattningskort ----------------------------------------------
+  // Visar de filter Clutch tolkat innan sökningen körs. Kunden kan ta bort
+  // enskilda krav och sedan trycka "Sök nu" — inget nytt AI-anrop behövs.
+  const applySearchResult = (data: any) => {
+    setPhase('results');
+    setIsLoading(false);
+
+    if (data.cars?.length > 0) {
+      const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
+      onResults(data.cars, resultMsg, data.carReasons || [], false, data.relaxations || []);
+      setTimeout(() => {
+        onScrollToResults?.();
+      }, 600);
+    } else {
+      addAssistantMessage(
+        data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
+        data.suggestions || [],
+      );
+    }
+  };
+
+  const runConfirmedSearch = async (msgId: string, confirm: ConfirmData) => {
+    if (isLoading) return;
+    navigator.vibrate?.(10);
+    // Kortet ska inte kunna skickas två gånger
+    setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, confirm: undefined } : m)));
+    setIsLoading(true);
+
+    const filters = confirm.filters || {};
+    try {
+      if ((filters as any).driverAge) {
+        sessionStorage.setItem('findcar-driver-age', JSON.stringify((filters as any).driverAge));
+      }
+      sessionStorage.setItem('findcar-last-filters', JSON.stringify({
+        filters,
+        customerProfile: confirm.customerProfile || '',
+      }));
+    } catch {}
+
+    setPhase('searching');
+    addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('guided-search', {
+        body: {
+          action: 'confirmed_search',
+          filters,
+          customerProfile: confirm.customerProfile || '',
+          language,
+        },
+      });
+      if (error) throw error;
+
+      try {
+        sessionStorage.setItem('findcar-user-profile', JSON.stringify({
+          age: data?.userAge ?? null,
+          city: data?.userCity ?? null,
+        }));
+      } catch {}
+
+      applySearchResult(data || {});
+    } catch (err) {
+      console.error('Confirmed search error:', err);
+      setPhase('chatting');
+      setIsLoading(false);
+      addAssistantMessage('Oj, något gick fel med sökningen. Försök igen!', ['Försök igen']);
+    }
+  };
+
+  const removeConfirmFilter = (msgId: string, key: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId || !m.confirm) return m;
+        const next = { ...m.confirm.filters };
+        delete next[key];
+        return { ...m, confirm: { ...m.confirm, filters: next } };
+      }),
+    );
+  };
+
+
   const handleSendMessage = async (e?: FormEvent, overrideText?: string) => {
     e?.preventDefault();
     const text = (overrideText || inputValue).trim();
