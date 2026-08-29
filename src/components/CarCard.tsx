@@ -58,6 +58,9 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason }: Car
   const equipment = topEquipment(car.model_raw, 5);
   const [similarOpen, setSimilarOpen] = useState(false);
 
+  // Bilar utan användbar bild visas inte alls (ingen bokstavs-platshållare).
+  if (!car.image_thumb_url || imageError) return null;
+
   return (
     <div
       className="group relative flex flex-col bg-card rounded-xl overflow-hidden border border-border/60 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/8 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
