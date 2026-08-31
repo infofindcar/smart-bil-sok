@@ -26,8 +26,24 @@ type StoredSearchState = {
   showResults?: boolean;
 };
 
+const isPageReload = (): boolean => {
+  try {
+    const entries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+    return entries[0]?.type === 'reload';
+  } catch {
+    return false;
+  }
+};
+
 const getStoredSearchState = (): StoredSearchState | null => {
   try {
+    // Vid sidomladdning ska sökresultaten nollställas – man ska söka på nytt.
+    if (isPageReload()) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem('findcar-results-revealed');
+      sessionStorage.removeItem('findcar-last-filters');
+      return null;
+    }
     const stored = sessionStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch {
