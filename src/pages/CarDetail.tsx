@@ -17,8 +17,9 @@ import {
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
   calcAnnualTax, getWarranty, getActiveWarranty, formatActiveWarranty, formatNcapStars,
-  formatZeroHundred, formatBootSpace,
+  formatZeroHundred, formatBootSpace, classifyFuel, estimateOwnershipCosts,
 } from '@/lib/carData';
+
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 
@@ -87,17 +88,17 @@ function estimateMonthlyFuel(
   consumptionL100km: number | null,
   electricRangeKm: number | null
 ): { amount: number; label: string; detail: string } {
-  const fuel = (fuelType ?? '').toLowerCase();
+  const kind = classifyFuel(fuelType);
   const kmPerMonth = 1250; // 15 000 km/år
 
-  if (fuel.includes('el') || fuel.includes('electric')) {
+  if (kind === 'el') {
     const kwh = 0.20; // kWh/km
     const priceKwh = 2; // kr/kWh
     const amount = Math.round(kmPerMonth * kwh * priceKwh);
     return { amount, label: 'Drivmedel', detail: `Laddning: ~${kwh * 100} kWh/100km × ${priceKwh} kr/kWh` };
   }
 
-  if (fuel.includes('hybrid') && electricRangeKm && electricRangeKm > 30) {
+  if ((kind === 'plugin' || kind === 'hybrid') && electricRangeKm && electricRangeKm > 30) {
     const elCost = (kmPerMonth * 0.5) * 0.20 * 2;
     const fuelCost = consumptionL100km
       ? (kmPerMonth * 0.5 / 100) * consumptionL100km * 17.5
@@ -107,21 +108,22 @@ function estimateMonthlyFuel(
   }
 
   if (consumptionL100km && consumptionL100km > 0) {
-    const pricePerL = fuel.includes('diesel')
+    const pricePerL = kind === 'diesel'
       ? fuelPricePerLiter.diesel
-      : fuel.includes('e85')
+      : kind === 'e85'
         ? fuelPricePerLiter.e85
         : fuelPricePerLiter.bensin;
-    const fuelName = fuel.includes('diesel') ? 'Diesel' : fuel.includes('e85') ? 'E85' : 'Bensin';
+    const fuelName = kind === 'diesel' ? 'Diesel' : kind === 'e85' ? 'E85' : 'Bensin';
     const amount = Math.round((kmPerMonth / 100) * consumptionL100km * pricePerL);
     return { amount, label: 'Drivmedel', detail: `${fuelName}: ${String(consumptionL100km).replace('.', ',')} l/100km × ${pricePerL} kr/l` };
   }
 
   // Fallback
-  if (fuel.includes('diesel')) return { amount: 2000, label: 'Drivmedel', detail: 'Diesel, uppskattat genomsnitt' };
-  if (fuel.includes('hybrid')) return { amount: 1500, label: 'Drivmedel', detail: 'Hybrid, uppskattat genomsnitt' };
+  if (kind === 'diesel') return { amount: 2000, label: 'Drivmedel', detail: 'Diesel, uppskattat genomsnitt' };
+  if (kind === 'hybrid' || kind === 'plugin') return { amount: 1500, label: 'Drivmedel', detail: 'Hybrid, uppskattat genomsnitt' };
   return { amount: 2500, label: 'Drivmedel', detail: 'Bensin, uppskattat genomsnitt' };
 }
+
 
 /* ── Component ── */
 const CarDetail = () => {
@@ -219,7 +221,8 @@ const CarDetail = () => {
   // är el/hybrid/plug-in. car_models-cachen är per make+model och inkluderar
   // ibland el-räckvidd för modeller som finns i flera versioner — vi vill
   // inte att en BMW 320i bensin får hybrid-versionens räckvidd.
-  const isEvOrHybrid = !!(car.fuel_type && /el|hybrid|plug/i.test(car.fuel_type));
+  const fuelKind = classifyFuel(car.fuel_type);
+  const isEvOrHybrid = fuelKind === 'el' || fuelKind === 'hybrid' || fuelKind === 'plugin';
   const fuelEst = estimateMonthlyFuel(
     car.fuel_type,
     modelData?.fuel_consumption_l100km ?? null,
@@ -235,36 +238,41 @@ const CarDetail = () => {
     return null;
   })();
 
-  const insuranceLow = modelData?.estimated_monthly_insurance_low ?? null;
-  const insuranceHigh = modelData?.estimated_monthly_insurance_high ?? null;
+  // Prisankrad ägandekostnad. Modelldatan (AI-uppskattad) används men klipps
+  // mot ett ankare som utgår från bilens pris — annars får en Ferrari för
+  // 2,5 Mkr samma försäkring som en Golf.
+  const own = estimateOwnershipCosts({
+    price: car.price ?? null,
+    year: car.year ?? null,
+    make: car.make ?? null,
+    fuelType: car.fuel_type ?? null,
+    horsepower: car.horsepower ?? null,
+    insuranceLow: modelData?.estimated_monthly_insurance_low ?? null,
+    insuranceHigh: modelData?.estimated_monthly_insurance_high ?? null,
+    annualService: modelData?.estimated_annual_service_sek ?? null,
+    driverAge,
+  });
 
-  // Adjust insurance based on age: under 25 = +40%, over 50 = -15%
-  const ageMultiplier = driverAge
-    ? driverAge < 25 ? 1.4 : driverAge > 50 ? 0.85 : 1.0
-    : 1.0;
-
-  const adjInsLow = insuranceLow ? Math.round(insuranceLow * ageMultiplier) : null;
-  const adjInsHigh = insuranceHigh ? Math.round(insuranceHigh * ageMultiplier) : null;
-
-  const insuranceLabel = adjInsLow && adjInsHigh
-    ? `${fmt(adjInsLow)}–${fmt(adjInsHigh)} kr/mån`
-    : adjInsLow
-      ? `~${fmt(adjInsLow)} kr/mån`
-      : '~800 kr/mån';
+  const insuranceLabel = `${fmt(own.insuranceLow)}–${fmt(own.insuranceHigh)} kr/mån`;
 
   const insuranceExplain = (() => {
-    const base = adjInsLow && adjInsHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning';
+    const base = own.insuranceAdjusted
+      ? 'Uppskattad utifrån bilens värde och klass'
+      : 'Baserat på modelldata för denna biltyp';
     if (driverAge && driverAge < 25) return `${base}. Justerat uppåt för förare under 25 år`;
     if (driverAge && driverAge > 50) return `${base}. Justerat nedåt för erfaren förare (50+)`;
     if (driverAge) return `${base}. Baserat på din ålder (${driverAge} år)`;
     return `${base} — din ålder, ort och körsträcka påverkar priset`;
   })();
 
-  const annualService = modelData?.estimated_annual_service_sek ?? null;
-  const monthlyService = annualService ? Math.round(annualService / 12) : null;
+  const monthlyService = own.service;
+  const annualService = own.serviceAnnual;
 
-  const avgInsurance = adjInsLow && adjInsHigh ? Math.round((adjInsLow + adjInsHigh) / 2) : 800;
-  const totalMonthly = fuelEst.amount + monthlyTax + avgInsurance + (monthlyService ?? 400);
+  // Två nivåer: löpande drift, och total ägandekostnad inkl. värdeminskning
+  // och kapitalkostnad (den största posten för dyra bilar).
+  const runningMonthly = fuelEst.amount + monthlyTax + own.insuranceAvg + own.service + own.misc;
+  const totalMonthly = runningMonthly + own.depreciation + own.capital;
+
 
   /* ── Spec cards ── */
   const specs = [
@@ -281,7 +289,7 @@ const CarDetail = () => {
     { icon: Weight, label: 'Max dragvikt', value: modelData?.max_towing_kg ? `${fmt(modelData.max_towing_kg)} kg` : null },
     { icon: Car, label: 'Antal säten', value: modelData?.seats ? String(modelData.seats) : null },
     { icon: Droplets, label: 'Förbrukning', value: modelData?.fuel_consumption_l100km ? `${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : null },
-    { icon: BatteryCharging, label: 'Elräckvidd', value: (car.fuel_type && /el|hybrid|plug/i.test(car.fuel_type)) && modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
+    { icon: BatteryCharging, label: 'Elräckvidd', value: isEvOrHybrid && modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
     { icon: Leaf, label: 'CO₂-utsläpp', value: co2 ? `${co2} g/km` : null },
   ].filter(s => s.value);
 
@@ -457,27 +465,49 @@ const CarDetail = () => {
           <div className="bg-card rounded-2xl border border-border p-6 mb-6">
             <h2 className="text-xl font-bold mb-1">Uppskattad månadskostnad</h2>
             <p className="text-xs text-muted-foreground mb-4">Baserat på 15 000 km/år</p>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-5">
               {[
                 { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
                 { label: 'Fordonsskatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Svensk fordonsskatt baserad på ${co2} g CO₂/km (${fmt(annualTax)} kr/år)` : `Uppskattad svensk fordonsskatt (${fmt(annualTax)} kr/år)` },
                 { label: 'Försäkring', value: insuranceLabel, explain: insuranceExplain },
-                { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
-                { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },
+                { label: 'Service & reparation', value: `~${fmt(monthlyService)} kr`, explain: `Motsvarar ~${fmt(annualService)} kr/år för en bil i denna klass och prisnivå` },
+                { label: 'Däck, besiktning m.m.', value: `~${fmt(own.misc)} kr`, explain: 'Däckbyte, besiktning, tvätt och småreparationer' },
               ].map((cost) => (
                 <div key={cost.label} className="group relative">
                   <p className="text-xs text-muted-foreground">{cost.label}</p>
-                  <p className={`font-semibold ${(cost as any).bold ? 'text-primary text-lg' : ''}`}>{cost.value}</p>
-                  {(cost as any).explain && (
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{(cost as any).explain}</p>
+                  <p className="font-semibold">{cost.value}</p>
+                  {cost.explain && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{cost.explain}</p>
                   )}
                 </div>
               ))}
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <p className="text-xs text-muted-foreground">Löpande kostnad</p>
+                <p className="text-2xl font-bold text-primary">~{fmt(runningMonthly)} kr/mån</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
+                  Det du faktiskt betalar ut varje månad: drivmedel, skatt, försäkring, service och slitage.
+                </p>
+              </div>
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <p className="text-xs text-muted-foreground">Total ägandekostnad</p>
+                <p className="text-2xl font-bold">~{fmt(totalMonthly)} kr/mån</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
+                  Inklusive värdeminskning ~{fmt(own.depreciation)} kr ({Math.round(own.depreciationPct * 100)} %/år)
+                  och kapitalkostnad ~{fmt(own.capital)} kr på bundet kapital.
+                </p>
+              </div>
+            </div>
+
             <p className="text-[11px] text-muted-foreground/60 italic">
-              * Uppskattade siffror. Faktisk kostnad varierar beroende på din ålder, körvanor, försäkringsbolag och region.
+              * Uppskattade siffror baserade på bilens pris, ålder, drivmedel och modellklass. Faktisk kostnad varierar
+              beroende på din ålder, körvanor, försäkringsbolag och region.
             </p>
           </div>
+
 
           {/* Dealer info */}
           {car.dealer_name && (

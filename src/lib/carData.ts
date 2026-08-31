@@ -33,6 +33,25 @@ const ELECTRIC_PRICE_PER_KWH = 2.5; // kr/kWh
 const MONTHLY_KM = 1500;
 
 /**
+ * Klassificerar drivmedel robust.
+ *
+ * VIKTIGT: naiva tester som `fuel.includes('el')` är buggiga — strängen
+ * "diesel" innehåller "el". Diesel testas därför FÖRST, och el-testet
+ * använder ordgräns. Använd alltid denna funktion istället för includes().
+ */
+export type FuelKind = 'el' | 'plugin' | 'hybrid' | 'diesel' | 'e85' | 'bensin';
+
+export function classifyFuel(fuelType: string | null | undefined): FuelKind {
+  const f = (fuelType ?? '').toLowerCase();
+  if (f.includes('diesel')) return 'diesel';
+  if (f.includes('plug') || f.includes('laddhybrid')) return 'plugin';
+  if (f.includes('hybrid')) return 'hybrid';
+  if (/(^|[^a-zåäö])el([^a-zåäö]|$)/.test(f) || f.includes('elbil') || f.includes('eldrift') || f.includes('electric') || f.includes('vätgas') || f.includes('hydrogen')) return 'el';
+  if (f.includes('e85') || f.includes('etanol')) return 'e85';
+  return 'bensin';
+}
+
+/**
  * Beräknar månadskostnad för bränsle/laddning.
  * isExact=true = beräknat från verklig förbrukningsdata, false = uppskattning.
  */
@@ -43,23 +62,23 @@ export function calcMonthlyFuelCost(
 ): { cost: number; label: string; isExact: boolean } {
   const PETROL_PRICE_PER_L = livePrices?.petrol ?? PETROL_PRICE_FALLBACK;
   const DIESEL_PRICE_PER_L = livePrices?.diesel ?? DIESEL_PRICE_FALLBACK;
-  const fuel = (fuelType ?? '').toLowerCase();
+  const kind = classifyFuel(fuelType);
 
-  if (fuel.includes('el') || fuel.includes('electric')) {
+  if (kind === 'el') {
     // Typisk elförbrukning ~20 kWh/100 km
     const cost = Math.round(20 * (MONTHLY_KM / 100) * ELECTRIC_PRICE_PER_KWH);
     return { cost, label: 'Laddning', isExact: false };
   }
 
   if (consumptionL100 && consumptionL100 > 0) {
-    const pricePerL = fuel.includes('diesel') ? DIESEL_PRICE_PER_L : PETROL_PRICE_PER_L;
+    const pricePerL = kind === 'diesel' ? DIESEL_PRICE_PER_L : PETROL_PRICE_PER_L;
     const cost = Math.round(consumptionL100 * (MONTHLY_KM / 100) * pricePerL);
-    return { cost, label: fuel.includes('diesel') ? 'Diesel' : 'Bensin', isExact: true };
+    return { cost, label: kind === 'diesel' ? 'Diesel' : 'Bensin', isExact: true };
   }
 
   // Fallback utan förbrukningsdata
-  if (fuel.includes('diesel')) return { cost: 2000, label: 'Diesel', isExact: false };
-  if (fuel.includes('hybrid') || fuel.includes('laddhybrid')) return { cost: 1200, label: 'Hybrid', isExact: false };
+  if (kind === 'diesel') return { cost: 2000, label: 'Diesel', isExact: false };
+  if (kind === 'hybrid' || kind === 'plugin') return { cost: 1200, label: 'Hybrid', isExact: false };
   return { cost: 2200, label: 'Bensin', isExact: false };
 }
 
@@ -68,16 +87,15 @@ export function calcMonthlyFuelCost(
 // Källa: Lag (2006:228) §4-7, gäller bilar reg. fr.o.m. 2018-07-01
 // ─────────────────────────────────────────────────────────────
 export function calcAnnualTax(co2GPerKm: number | null, fuelType: string | null): number {
-  const fuel = (fuelType ?? "").toLowerCase();
-  if (fuel.includes("el") || fuel.includes("vätgas") || fuel.includes("hydrogen") || fuel.includes("electric")) {
-    return 360;
-  }
+  const kind = classifyFuel(fuelType);
+  if (kind === 'el') return 360;
   const co2 = co2GPerKm ?? 0;
   if (co2 <= 0) return 360;
   const base = 360 + Math.max(0, co2 - 111) * 22;
-  if (fuel.includes("diesel")) return Math.round(base * 2.37);
+  if (kind === 'diesel') return Math.round(base * 2.37);
   return Math.round(base);
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Garantidata per märke – statisk tabell, noll API-anrop
@@ -249,4 +267,156 @@ export function formatZeroHundred(sec: number | null): string | null {
 export function formatBootSpace(liters: number | null): string | null {
   if (!liters || liters <= 0) return null;
   return `${liters} l`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Ägandekostnad – prisankrad modell
+//
+// Problem vi löser: car_models-datan (försäkring/service) är AI-uppskattad
+// per modell och därför inkonsekvent. Samma bilklass kunde ge 1 000 kr eller
+// 20 000 kr/mån i försäkring. Dessutom saknades värdeminskning och
+// kapitalkostnad helt, vilket gjorde exotbilar absurt billiga.
+//
+// Lösning: bilens PRIS är den bästa proxyn för både premie och verkstads-
+// kostnad. Vi räknar ett ankare ur priset (sub-linjärt – premien växer
+// långsammare än priset) och klipper modelldatan mot ankaret (±50 %).
+// Ligger AI-värdet rimligt används det, annars justeras det. Vanliga bilar
+// påverkas därför marginellt.
+// ─────────────────────────────────────────────────────────────
+
+/** [försäkringsfaktor, servicefaktor] per märke. 1.0 = normal volymbil. */
+const BRAND_COST_FACTOR: Record<string, [number, number]> = {
+  'Ferrari': [1.45, 2.2],
+  'Lamborghini': [1.5, 2.3],
+  'McLaren': [1.5, 2.3],
+  'Rolls-Royce': [1.5, 2.4],
+  'Bentley': [1.4, 2.0],
+  'Aston Martin': [1.4, 2.1],
+  'Maserati': [1.25, 1.8],
+  'Porsche': [1.2, 1.5],
+  'Alpine': [1.2, 1.4],
+  'Lotus': [1.25, 1.6],
+  'Land Rover': [1.05, 1.35],
+  'Jaguar': [1.05, 1.3],
+  'Range Rover': [1.05, 1.35],
+  'Tesla': [1.1, 0.8],
+  'Dacia': [0.9, 0.8],
+  'Toyota': [0.95, 0.85],
+  'Kia': [0.95, 0.85],
+  'Hyundai': [0.95, 0.85],
+  'Suzuki': [0.9, 0.85],
+};
+
+const INSURANCE_ANCHOR_PRICE = 150000;
+const INSURANCE_ANCHOR_MONTHLY = 1000;
+const SERVICE_ANCHOR_PRICE = 130000;
+const SERVICE_ANCHOR_ANNUAL = 5000;
+const CAPITAL_RATE = 0.045;   // ränta / alternativkostnad på bundet kapital
+const CLAMP = 0.5;            // modelldata får avvika max ±50 % från ankaret
+
+function clampToAnchor(value: number | null, anchor: number): number {
+  if (!value || value <= 0) return anchor;
+  return Math.round(Math.min(Math.max(value, anchor * (1 - CLAMP)), anchor * (1 + CLAMP)));
+}
+
+/** Årlig värdeminskning i procent – ung bil tappar mest, exotbil minst. */
+function depreciationRate(price: number, year: number | null, make: string | null): number {
+  const age = year ? Math.max(0, new Date().getFullYear() - year) : 8;
+  const exotic = !!(make && BRAND_COST_FACTOR[make]?.[1] >= 1.8);
+
+  // Samlarbilar/exotbilar tappar lite eller ingenting
+  if (exotic && price > 1000000) return age > 15 ? 0.01 : 0.035;
+  if (price > 1500000) return 0.05;
+
+  if (age <= 1) return 0.15;
+  if (age <= 3) return 0.12;
+  if (age <= 6) return 0.09;
+  if (age <= 10) return 0.06;
+  if (age <= 15) return 0.04;
+  return 0.025;
+}
+
+export interface OwnershipCostInput {
+  price: number | null;
+  year: number | null;
+  make: string | null;
+  fuelType: string | null;
+  horsepower?: number | null;
+  /** Månatlig försäkring lågt/högt ur car_models (AI-uppskattat). */
+  insuranceLow?: number | null;
+  insuranceHigh?: number | null;
+  /** Årlig servicekostnad ur car_models (AI-uppskattat). */
+  annualService?: number | null;
+  /** Förarens ålder om känd (påverkar premien). */
+  driverAge?: number | null;
+}
+
+export interface OwnershipCosts {
+  /** Försäkring per månad, intervall. */
+  insuranceLow: number;
+  insuranceHigh: number;
+  insuranceAvg: number;
+  /** Service/reparation per månad + underlag per år. */
+  service: number;
+  serviceAnnual: number;
+  /** Däck, besiktning, tvätt, småsaker per månad. */
+  misc: number;
+  /** Värdeminskning per månad + använd procentsats. */
+  depreciation: number;
+  depreciationPct: number;
+  /** Kapitalkostnad (ränta på bundet kapital) per månad. */
+  capital: number;
+  /** Om AI-värdet fick justeras för att vara orimligt. */
+  insuranceAdjusted: boolean;
+  serviceAdjusted: boolean;
+}
+
+/**
+ * Räknar ut ägandekostnadens delposter. Bränsle och fordonsskatt räknas
+ * separat (calcMonthlyFuelCost / calcAnnualTax) eftersom de har egna källor.
+ */
+export function estimateOwnershipCosts(input: OwnershipCostInput): OwnershipCosts {
+  const price = input.price && input.price > 10000 ? input.price : 100000;
+  const [insFactor, svcFactor] = BRAND_COST_FACTOR[input.make ?? ''] ?? [1, 1];
+
+  // Sub-linjära ankare: premie/service växer långsammare än priset.
+  const insAnchor = INSURANCE_ANCHOR_MONTHLY * Math.pow(price / INSURANCE_ANCHOR_PRICE, 0.55) * insFactor;
+  const svcAnchor = SERVICE_ANCHOR_ANNUAL * Math.pow(price / SERVICE_ANCHOR_PRICE, 0.45) * svcFactor;
+
+  const rawInsAvg = input.insuranceLow && input.insuranceHigh
+    ? (input.insuranceLow + input.insuranceHigh) / 2
+    : (input.insuranceLow || input.insuranceHigh || null);
+
+  const insBase = clampToAnchor(rawInsAvg, Math.round(insAnchor));
+  const insuranceAdjusted = !!rawInsAvg && Math.abs(rawInsAvg - insBase) > 1;
+
+  // Åldersjustering av premien
+  const ageMult = input.driverAge
+    ? input.driverAge < 25 ? 1.4 : input.driverAge > 50 ? 0.85 : 1.0
+    : 1.0;
+
+  const insuranceAvg = Math.max(400, Math.round(insBase * ageMult));
+
+  const serviceAnnual = clampToAnchor(input.annualService ?? null, Math.round(svcAnchor));
+  const serviceAdjusted = !!input.annualService && Math.abs(input.annualService - serviceAnnual) > 1;
+
+  // Däck/besiktning/övrigt – skalar med pris och effekt
+  const hp = input.horsepower && input.horsepower > 0 ? input.horsepower : 140;
+  const misc = Math.round(200 + (price / 1000) * 0.3 + Math.max(0, hp - 150) * 0.8);
+
+  const depreciationPct = depreciationRate(price, input.year, input.make);
+
+  return {
+    insuranceLow: Math.round(insuranceAvg * 0.8),
+    insuranceHigh: Math.round(insuranceAvg * 1.25),
+    insuranceAvg,
+    service: Math.round(serviceAnnual / 12),
+    serviceAnnual,
+    misc,
+    depreciation: Math.round((price * depreciationPct) / 12),
+    depreciationPct,
+    capital: Math.round((price * CAPITAL_RATE) / 12),
+    insuranceAdjusted,
+    serviceAdjusted,
+  };
 }
