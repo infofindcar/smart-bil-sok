@@ -289,7 +289,7 @@ const CarDetail = () => {
     { icon: Weight, label: 'Max dragvikt', value: modelData?.max_towing_kg ? `${fmt(modelData.max_towing_kg)} kg` : null },
     { icon: Car, label: 'Antal säten', value: modelData?.seats ? String(modelData.seats) : null },
     { icon: Droplets, label: 'Förbrukning', value: modelData?.fuel_consumption_l100km ? `${String(modelData.fuel_consumption_l100km).replace('.', ',')} l/100km` : null },
-    { icon: BatteryCharging, label: 'Elräckvidd', value: (car.fuel_type && /el|hybrid|plug/i.test(car.fuel_type)) && modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
+    { icon: BatteryCharging, label: 'Elräckvidd', value: isEvOrHybrid && modelData?.electric_range_km ? `${modelData.electric_range_km} km` : null },
     { icon: Leaf, label: 'CO₂-utsläpp', value: co2 ? `${co2} g/km` : null },
   ].filter(s => s.value);
 
