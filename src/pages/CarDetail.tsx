@@ -197,6 +197,8 @@ const CarDetail = () => {
           action: 'price_benchmark',
           make: car.make,
           model: car.model,
+          bodyType: car.body_type ?? null,
+          fuelType: car.fuel_type ?? null,
           year: car.year,
           mileage: car.mileage,
           price: car.price,
@@ -206,7 +208,7 @@ const CarDetail = () => {
       if (!cancelled && (error || !data?.benchmark)) setBenchmark(null);
     })();
     return () => { cancelled = true; };
-  }, [car?.make, car?.model, car?.year, car?.mileage, car?.price]);
+  }, [car?.make, car?.model, car?.body_type, car?.fuel_type, car?.year, car?.mileage, car?.price]);
 
   if (isLoading) {
     return (
@@ -440,6 +442,7 @@ const CarDetail = () => {
                     </span>
                     <span className="text-[11px] text-muted-foreground/70 leading-tight">
                       Jämfört med {benchmark.count} liknande {car.make} {String(car.model || '').split(' ')[0]}
+                      {benchmark.basis && benchmark.basis.length > 0 ? ` ${benchmark.basis.join(' ')}` : ''}
                       {benchmark.yearFrom ? `, ${benchmark.yearFrom}–${benchmark.yearTo}` : ''}
                     </span>
                   </div>
