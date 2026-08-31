@@ -465,27 +465,49 @@ const CarDetail = () => {
           <div className="bg-card rounded-2xl border border-border p-6 mb-6">
             <h2 className="text-xl font-bold mb-1">Uppskattad månadskostnad</h2>
             <p className="text-xs text-muted-foreground mb-4">Baserat på 15 000 km/år</p>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-5">
               {[
                 { label: fuelEst.label, value: `${fmt(fuelEst.amount)} kr`, explain: fuelEst.detail },
                 { label: 'Fordonsskatt', value: `${fmt(monthlyTax)} kr`, explain: co2 ? `Svensk fordonsskatt baserad på ${co2} g CO₂/km (${fmt(annualTax)} kr/år)` : `Uppskattad svensk fordonsskatt (${fmt(annualTax)} kr/år)` },
                 { label: 'Försäkring', value: insuranceLabel, explain: insuranceExplain },
-                { label: 'Service', value: monthlyService ? `~${fmt(monthlyService)} kr` : '~400 kr', explain: annualService ? `Baserat på uppskattat ${fmt(annualService)} kr/år för denna modell` : 'Genomsnittlig servicekostnad för bilar i denna klass' },
-                { label: 'Totalt/mån', value: `~${fmt(totalMonthly)} kr`, bold: true, explain: 'Summan av bränsle, skatt, försäkring och service' },
+                { label: 'Service & reparation', value: `~${fmt(monthlyService)} kr`, explain: `Motsvarar ~${fmt(annualService)} kr/år för en bil i denna klass och prisnivå` },
+                { label: 'Däck, besiktning m.m.', value: `~${fmt(own.misc)} kr`, explain: 'Däckbyte, besiktning, tvätt och småreparationer' },
               ].map((cost) => (
                 <div key={cost.label} className="group relative">
                   <p className="text-xs text-muted-foreground">{cost.label}</p>
-                  <p className={`font-semibold ${(cost as any).bold ? 'text-primary text-lg' : ''}`}>{cost.value}</p>
-                  {(cost as any).explain && (
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{(cost as any).explain}</p>
+                  <p className="font-semibold">{cost.value}</p>
+                  {cost.explain && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{cost.explain}</p>
                   )}
                 </div>
               ))}
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <p className="text-xs text-muted-foreground">Löpande kostnad</p>
+                <p className="text-2xl font-bold text-primary">~{fmt(runningMonthly)} kr/mån</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
+                  Det du faktiskt betalar ut varje månad: drivmedel, skatt, försäkring, service och slitage.
+                </p>
+              </div>
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <p className="text-xs text-muted-foreground">Total ägandekostnad</p>
+                <p className="text-2xl font-bold">~{fmt(totalMonthly)} kr/mån</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
+                  Inklusive värdeminskning ~{fmt(own.depreciation)} kr ({Math.round(own.depreciationPct * 100)} %/år)
+                  och kapitalkostnad ~{fmt(own.capital)} kr på bundet kapital.
+                </p>
+              </div>
+            </div>
+
             <p className="text-[11px] text-muted-foreground/60 italic">
-              * Uppskattade siffror. Faktisk kostnad varierar beroende på din ålder, körvanor, försäkringsbolag och region.
+              * Uppskattade siffror baserade på bilens pris, ålder, drivmedel och modellklass. Faktisk kostnad varierar
+              beroende på din ålder, körvanor, försäkringsbolag och region.
             </p>
           </div>
+
 
           {/* Dealer info */}
           {car.dealer_name && (
