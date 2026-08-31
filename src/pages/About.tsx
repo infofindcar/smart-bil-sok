@@ -17,7 +17,7 @@ import {
   Star,
   Wallet,
 } from 'lucide-react';
-import gokart from '@/assets/founders-gokart.jpeg.asset.json';
+import gokart from '@/assets/founders-gokart.webp';
 
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
@@ -93,7 +93,7 @@ const About = () => {
         title="Om oss — bilnördarna bakom FindCar"
         description="FindCar byggs av Kim och Marko, två bilintresserade KTH-studenter i KTH Launch. Vi ville ha en bilrådgivare utan säljmotiv — så vi byggde den. Helt gratis."
         path="/om-oss"
-        image={gokart.url}
+        image={`https://findcar.se${gokart}`}
         jsonLd={jsonLd}
       />
       <Header />
@@ -117,7 +117,7 @@ const About = () => {
             </div>
             <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 shadow-lg">
               <img
-                src={gokart.url}
+                src={gokart}
                 alt="FindCars grundare skakar hand i depån före ett gokart-race"
                 loading="eager"
                 className="w-full h-full object-cover aspect-[3/4] md:aspect-[4/5]"
