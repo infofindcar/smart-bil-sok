@@ -433,21 +433,35 @@ serve(async (req) => {
       // Sort by proximity to budget midpoint
       const budgetMid = (minPrice + maxPrice) / 2;
 
-      // Try progressively relaxed queries
-      let cars: any[] = [];
-      for (let level = 0; level <= 2; level++) {
+      // Hämta både "mer av samma modell" och liknande alternativ, och blanda
+      // dem så att listan inte blir 9 exemplar av samma bil.
+      const cars: any[] = [];
+      const seenIds = new Set<number>();
+      const perModel: Record<string, number> = {};
+      const MAX_PER_MODEL = 2;
+
+      for (let level = 0; level <= 2 && cars.length < 9; level++) {
         const { data: moreCars, error: moreCarsError } = await buildLoadMoreQuery(level);
         if (moreCarsError) {
           console.error("Load more database query failed", moreCarsError.message);
           continue;
         }
-        if (moreCars && moreCars.length > 0) {
-          cars = moreCars
-            .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
-            .slice(0, 9);
-          break;
+        if (!moreCars || moreCars.length === 0) continue;
+
+        const ranked = [...moreCars].sort(
+          (a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid)
+        );
+        for (const c of ranked) {
+          if (cars.length >= 9) break;
+          if (seenIds.has(c.id)) continue;
+          const key = `${(c.make || "").toLowerCase()}|${(c.model || "").toLowerCase()}`;
+          if ((perModel[key] || 0) >= MAX_PER_MODEL) continue;
+          perModel[key] = (perModel[key] || 0) + 1;
+          seenIds.add(c.id);
+          cars.push(c);
         }
       }
+
 
       // Generate reasons for new cars
       let carReasons: { carId: number; reason: string }[] = [];
