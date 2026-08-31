@@ -454,6 +454,15 @@ serve(async (req) => {
         if (yMax) q = q.lte("year", yMax);
         if (trans) q = q.or(`transmission.ilike.${transmissionPatterns[trans]},transmission.is.null`);
 
+        // Bilfirma är hårt på alla nivåer — bad kunden om en firma ska "Visa
+        // fler" aldrig blanda in andra firmors bilar.
+        if (dealerInclude.length > 0) {
+          q = q.or(dealerInclude.map((d) => `dealer_name.ilike.%${d}%`).join(","));
+        }
+        for (const d of dealerExclude) {
+          q = q.not("dealer_name", "ilike", `%${d}%`);
+        }
+
         // Exclude already-shown cars in one PostgREST filter instead of
         // generating a long chain of individual predicates.
         if (safeExcludeIds.length > 0) {
