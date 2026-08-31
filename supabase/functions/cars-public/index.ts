@@ -140,7 +140,7 @@ serve(async (req) => {
 
       const { data, error } = await supabase
         .from("Lovable")
-        .select("price, mileage, body_type, fuel_type")
+        .select("price, mileage, year, body_type, fuel_type")
         .eq("is_active", true)
         .ilike("make", make)
         .ilike("model", `${baseModel}%`)
@@ -158,7 +158,7 @@ serve(async (req) => {
         });
       }
 
-      type Row = { price: number | null; body_type: string | null; fuel_type: string | null };
+      type Row = { price: number | null; mileage: number | null; year: number | null; body_type: string | null; fuel_type: string | null };
       const rows = (data ?? []).filter(
         (r: Row) => typeof r.price === "number" && r.price > 1500,
       ) as Row[];
@@ -199,7 +199,28 @@ serve(async (req) => {
         });
       }
 
-      const prices = chosen.rows.map((r) => r.price as number).sort((a, b) => a - b);
+      // Normalisera varje jämförelsebil till den aktuella bilens årsmodell och
+      // mätarställning innan medianen räknas ut. Utan detta blir en 2021-bil
+      // "överprisad" bara för att gruppen domineras av 2018-2019-bilar.
+      const YEAR_DEPRECIATION = 0.10; // ~10 % värdefall per år
+      const MILEAGE_PER_1000 = 0.015; // ~1,5 % per 1 000 mil
+      const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+      const adjusted = chosen.rows.map((r) => {
+        const p = r.price as number;
+        let factor = 1;
+        if (typeof r.year === "number" && r.year > 1900) {
+          const yearDiff = year - r.year; // >0 = jämförelsebilen är äldre
+          factor *= clamp(Math.pow(1 / (1 - YEAR_DEPRECIATION), yearDiff), 0.7, 1.4);
+        }
+        if (typeof r.mileage === "number" && r.mileage > 0) {
+          const mileDiff = r.mileage - mileage; // >0 = jämförelsebilen har gått längre
+          factor *= clamp(1 + (mileDiff / 1000) * MILEAGE_PER_1000, 0.85, 1.15);
+        }
+        return Math.round(p * factor);
+      }).sort((a, b) => a - b);
+
+      const prices = adjusted;
       const mid = Math.floor(prices.length / 2);
       const median = prices.length % 2 === 0
         ? Math.round((prices[mid - 1] + prices[mid]) / 2)
@@ -208,6 +229,7 @@ serve(async (req) => {
       const diff = price - median;
       const diffPct = diff / median;
       const level = diffPct <= -0.08 ? "good" : diffPct >= 0.08 ? "high" : "fair";
+
 
       return new Response(JSON.stringify({
         success: true,
