@@ -386,7 +386,7 @@ serve(async (req) => {
       //          årsintervall istället för gamla exemplar av samma modell.
       const buildLoadMoreQuery = (level: number) => {
         const priceMult = [1.3, 1.6, 1.8][level] || 1.8;
-        const priceMinMult = [0.7, 0.5, 0.6][level] || 0.6;
+        const priceMinMult = [0.7, 0.5, 0.85][level] || 0.85;
         let q = sb.from("Lovable").select(SEARCH_COLUMNS)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
