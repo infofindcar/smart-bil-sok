@@ -380,9 +380,13 @@ serve(async (req) => {
         ? f.transmission.toLowerCase() : null;
 
       // Progressive relaxation: try with filters, then relax
+      // Level 0: samma modell, samma årsintervall (strikt)
+      // Level 1: samma modell, lite bredare pris/kaross
+      // Level 2: släpp modell/märke — visa LIKNANDE bilar i samma
+      //          årsintervall istället för gamla exemplar av samma modell.
       const buildLoadMoreQuery = (level: number) => {
-        const priceMult = [1.3, 1.6, 2.2][level] || 2.2;
-        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
+        const priceMult = [1.3, 1.6, 1.8][level] || 1.8;
+        const priceMinMult = [0.7, 0.5, 0.6][level] || 0.6;
         let q = sb.from("Lovable").select(SEARCH_COLUMNS)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
@@ -390,12 +394,10 @@ serve(async (req) => {
           .gte("price", Math.floor(minPrice * priceMinMult))
           .lte("price", Math.ceil(maxPrice * priceMult));
 
-        // Level 0: all filters except city
-        // Level 1: drop body type too
-        // Level 2: only price + fuel
         if (make && level < 2) q = q.ilike("make", `%${make}%`);
-        // Specifik modell är ett hårt krav — relaxas aldrig.
-        if (modelOr) q = q.or(modelOr);
+        // Modellen behålls så länge vi letar fler av samma bil. På nivå 2
+        // letar vi istället liknande alternativ från andra märken/modeller.
+        if (modelOr && level < 2) q = q.or(modelOr);
 
         if (fuels.length > 0 && level < 3) {
           const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
@@ -412,11 +414,11 @@ serve(async (req) => {
           const vals = drivetrainPatterns[dt];
           if (vals) q = q.or(vals.map(v => `drivetrain.eq.${v}`).join(",") + ",drivetrain.eq.Unknown,drivetrain.is.null");
         }
-        if (yMin && level < 2) q = q.gte("year", yMin);
-        if (yMax && level < 2) q = q.lte("year", yMax);
+        // Årsmodell är ett hårt krav i "Visa fler" — kunden vill inte få
+        // 10 år äldre bilar bara för att modellen matchar.
+        if (yMin) q = q.gte("year", yMin);
+        if (yMax) q = q.lte("year", yMax);
         if (trans) q = q.or(`transmission.ilike.${transmissionPatterns[trans]},transmission.is.null`);
-
-
 
         // Exclude already-shown cars in one PostgREST filter instead of
         // generating a long chain of individual predicates.
@@ -426,6 +428,7 @@ serve(async (req) => {
 
         return q.order("price", { ascending: true }).limit(18);
       };
+
 
       // Sort by proximity to budget midpoint
       const budgetMid = (minPrice + maxPrice) / 2;
