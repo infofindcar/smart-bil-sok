@@ -405,6 +405,10 @@ serve(async (req) => {
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
       const trans = typeof f.transmission === "string" && f.transmission.toLowerCase() in transmissionPatterns
         ? f.transmission.toLowerCase() : null;
+      const dealerInclude = sanitizeDealerList(f.dealerInclude);
+      const dealerExclude = sanitizeDealerList(f.dealerExclude);
+
+
 
       // Progressive relaxation: try with filters, then relax.
       // Explicit body type and year are hard constraints in "Visa fler".
