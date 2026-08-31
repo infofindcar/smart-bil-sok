@@ -23,6 +23,8 @@ import {
 import { calcCarRating, benchmarkLabel, type PriceBenchmark, type CarRating } from '@/lib/carRating';
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
+import { ShareCar } from '@/components/ShareCar';
+
 
 /* ── Types ── */
 interface CarModelData {
