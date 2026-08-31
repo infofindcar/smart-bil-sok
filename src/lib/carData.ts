@@ -33,6 +33,25 @@ const ELECTRIC_PRICE_PER_KWH = 2.5; // kr/kWh
 const MONTHLY_KM = 1500;
 
 /**
+ * Klassificerar drivmedel robust.
+ *
+ * VIKTIGT: naiva tester som `fuel.includes('el')` är buggiga — strängen
+ * "diesel" innehåller "el". Diesel testas därför FÖRST, och el-testet
+ * använder ordgräns. Använd alltid denna funktion istället för includes().
+ */
+export type FuelKind = 'el' | 'plugin' | 'hybrid' | 'diesel' | 'e85' | 'bensin';
+
+export function classifyFuel(fuelType: string | null | undefined): FuelKind {
+  const f = (fuelType ?? '').toLowerCase();
+  if (f.includes('diesel')) return 'diesel';
+  if (f.includes('plug') || f.includes('laddhybrid')) return 'plugin';
+  if (f.includes('hybrid')) return 'hybrid';
+  if (/(^|[^a-zåäö])el([^a-zåäö]|$)/.test(f) || f.includes('elbil') || f.includes('eldrift') || f.includes('electric') || f.includes('vätgas') || f.includes('hydrogen')) return 'el';
+  if (f.includes('e85') || f.includes('etanol')) return 'e85';
+  return 'bensin';
+}
+
+/**
  * Beräknar månadskostnad för bränsle/laddning.
  * isExact=true = beräknat från verklig förbrukningsdata, false = uppskattning.
  */
@@ -43,23 +62,23 @@ export function calcMonthlyFuelCost(
 ): { cost: number; label: string; isExact: boolean } {
   const PETROL_PRICE_PER_L = livePrices?.petrol ?? PETROL_PRICE_FALLBACK;
   const DIESEL_PRICE_PER_L = livePrices?.diesel ?? DIESEL_PRICE_FALLBACK;
-  const fuel = (fuelType ?? '').toLowerCase();
+  const kind = classifyFuel(fuelType);
 
-  if (fuel.includes('el') || fuel.includes('electric')) {
+  if (kind === 'el') {
     // Typisk elförbrukning ~20 kWh/100 km
     const cost = Math.round(20 * (MONTHLY_KM / 100) * ELECTRIC_PRICE_PER_KWH);
     return { cost, label: 'Laddning', isExact: false };
   }
 
   if (consumptionL100 && consumptionL100 > 0) {
-    const pricePerL = fuel.includes('diesel') ? DIESEL_PRICE_PER_L : PETROL_PRICE_PER_L;
+    const pricePerL = kind === 'diesel' ? DIESEL_PRICE_PER_L : PETROL_PRICE_PER_L;
     const cost = Math.round(consumptionL100 * (MONTHLY_KM / 100) * pricePerL);
-    return { cost, label: fuel.includes('diesel') ? 'Diesel' : 'Bensin', isExact: true };
+    return { cost, label: kind === 'diesel' ? 'Diesel' : 'Bensin', isExact: true };
   }
 
   // Fallback utan förbrukningsdata
-  if (fuel.includes('diesel')) return { cost: 2000, label: 'Diesel', isExact: false };
-  if (fuel.includes('hybrid') || fuel.includes('laddhybrid')) return { cost: 1200, label: 'Hybrid', isExact: false };
+  if (kind === 'diesel') return { cost: 2000, label: 'Diesel', isExact: false };
+  if (kind === 'hybrid' || kind === 'plugin') return { cost: 1200, label: 'Hybrid', isExact: false };
   return { cost: 2200, label: 'Bensin', isExact: false };
 }
 
@@ -68,16 +87,15 @@ export function calcMonthlyFuelCost(
 // Källa: Lag (2006:228) §4-7, gäller bilar reg. fr.o.m. 2018-07-01
 // ─────────────────────────────────────────────────────────────
 export function calcAnnualTax(co2GPerKm: number | null, fuelType: string | null): number {
-  const fuel = (fuelType ?? "").toLowerCase();
-  if (fuel.includes("el") || fuel.includes("vätgas") || fuel.includes("hydrogen") || fuel.includes("electric")) {
-    return 360;
-  }
+  const kind = classifyFuel(fuelType);
+  if (kind === 'el') return 360;
   const co2 = co2GPerKm ?? 0;
   if (co2 <= 0) return 360;
   const base = 360 + Math.max(0, co2 - 111) * 22;
-  if (fuel.includes("diesel")) return Math.round(base * 2.37);
+  if (kind === 'diesel') return Math.round(base * 2.37);
   return Math.round(base);
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Garantidata per märke – statisk tabell, noll API-anrop
