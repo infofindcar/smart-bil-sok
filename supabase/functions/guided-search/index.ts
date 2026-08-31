@@ -309,7 +309,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"],"dealerInclude":["Bilfirma"],"dealerExclude":["Annan firma"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
