@@ -105,14 +105,19 @@ const Index = () => {
           customerProfile = parsed?.customerProfile ?? '';
         } catch {}
       }
-      // Fallback: derive a budget window from the cars already shown so the
-      // button still works in older sessions without stored filters.
-      if (!filters || Object.keys(filters).length === 0) {
+      // If the user did not state a budget, derive a price band from the
+      // original matches. Otherwise relaxed results would only share year and
+      // fuel, allowing unrelated cheap vehicles into "Visa fler".
+      if (!filters) filters = {};
+      if (!filters.budget) {
         const prices = cars.map((c) => c.price).filter((p): p is number => typeof p === 'number' && p > 0);
         if (prices.length > 0) {
-          const min = Math.floor(Math.min(...prices) * 0.85);
-          const max = Math.ceil(Math.max(...prices) * 1.15);
-          filters = { budget: `${min}-${max}` };
+          const sortedPrices = [...prices].sort((a, b) => a - b);
+          const medianPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
+          filters = {
+            ...filters,
+            budget: `${Math.floor(medianPrice * 0.75)}-${Math.ceil(medianPrice * 1.25)}`,
+          };
         }
       }
       setLoadingMore(true);

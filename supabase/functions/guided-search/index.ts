@@ -379,11 +379,12 @@ serve(async (req) => {
       const trans = typeof f.transmission === "string" && f.transmission.toLowerCase() in transmissionPatterns
         ? f.transmission.toLowerCase() : null;
 
-      // Progressive relaxation: try with filters, then relax
-      // Level 0: samma modell, samma årsintervall (strikt)
-      // Level 1: samma modell, lite bredare pris/kaross
-      // Level 2: släpp modell/märke — visa LIKNANDE bilar i samma
-      //          årsintervall istället för gamla exemplar av samma modell.
+      // Progressive relaxation: try with filters, then relax.
+      // Explicit body type and year are hard constraints in "Visa fler".
+      // Level 0: samma modell, samma årsintervall och karosstyp (strikt)
+      // Level 1: samma modell och karosstyp, lite bredare pris
+      // Level 2: släpp modell/märke — visa LIKNANDE bilar med samma
+      //          karosstyp och årsintervall istället för irrelevanta fordon.
       const buildLoadMoreQuery = (level: number) => {
         const priceMult = [1.3, 1.6, 1.8][level] || 1.8;
         const priceMinMult = [0.7, 0.5, 0.85][level] || 0.85;
@@ -403,11 +404,13 @@ serve(async (req) => {
           const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
           if (ff) q = q.or(ff);
         }
-        if (bodies.length > 0 && level < 1) {
+        if (bodies.length > 0) {
           const bf = bodies.map((x: string) => bodyPatterns[x]).filter(Boolean).map((p: string) => `body_type.ilike.${p}`);
           const mf: string[] = [];
           for (const bt of bodies) { const ms = modelBodyTypeMap[bt]; if (ms) for (const m of ms) mf.push(`model.ilike.%${m}%`); }
-          const all = [...bf, ...mf, "body_type.eq.Unknown", "body_type.is.null"].join(",");
+          // Do not admit Unknown/null here: that previously allowed vans and
+          // other unrelated vehicles into an explicit sedan/wagon/SUV search.
+          const all = [...bf, ...mf].join(",");
           if (all) q = q.or(all);
         }
         if (dt && level < 2) {
