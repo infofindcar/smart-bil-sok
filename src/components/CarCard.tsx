@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import type { Car } from './GuidedSearch';
 import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
+import { ShareCar } from './ShareCar';
+
 
 interface CarCardProps {
   car: Car;
