@@ -112,7 +112,7 @@ export const Header = () => {
       {/* Mobile menu — elegant slide-down */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-out ${
-          mobileOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
         } bg-background border-b border-border/30`}
       >
         <nav className="flex flex-col px-6 py-6 gap-1">
