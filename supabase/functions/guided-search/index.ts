@@ -321,6 +321,16 @@ Om kunden nämner en specifik modell (t.ex. "Volvo V70", "BMW 320d", "Golf GTI",
 - Inte byta modell åt kunden. Modellfiltret är hårt: kunden får bara den modellen. Nämn i "reasoning" om utbudet är litet.
 - Sätt bara "model" när kunden faktiskt bett om en specifik modell — annars utelämna fältet helt.
 
+BILFIRMA / HANDLARE — VIKTIGT:
+Vi kan filtrera på vilken bilfirma som säljer bilen. Använd fälten "dealerInclude" (bara dessa firmor) och "dealerExclude" (aldrig dessa firmor) — båda är listor med strängar, max 3 namn.
+- "visa bara Riddermarks bilar", "vad har Toveks Bil?", "jag vill se Carlas sortiment" → {"dealerInclude":["Riddermark"]} / ["Toveks"] / ["Carla"]
+- "inget från Riddermark", "helst inte Carla" → {"dealerExclude":["Riddermark"]}
+- Skriv firmanamnet KORT och utan ort/butik: "Riddermark", inte "Riddermark Bil Uppsala" — vi matchar på delnamn så alla butiker i kedjan träffas. Vill kunden ha en specifik butik, ta med orten.
+- Firmafiltret är hårt: nämner kunden en firma får de aldrig bilar från andra firmor.
+- Fråga aldrig rutinmässigt om bilfirma. Ta bara med fälten när kunden själv nämnt en firma. Har kunden nämnt en firma men inget mer, ställ bara de frågor som fortfarande saknas (t.ex. budget eller karosstyp) och sök sedan.
+
+
+
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab
 Giltiga transmission-värden: automat, manuell. Sätt ALLTID fältet om kunden nämnt växellåda — det filtreras hårt.
