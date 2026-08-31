@@ -380,10 +380,14 @@ const CarDetail = () => {
       <Header />
       <main className="pt-20 pb-16">
         <div className="max-w-4xl mx-auto px-4">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Tillbaka
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Tillbaka
+            </Button>
+            <ShareCar car={car} />
+          </div>
+
 
           {/* Hero image */}
           <div className="rounded-2xl overflow-hidden bg-card shadow-warm mb-6">
