@@ -83,12 +83,16 @@ export const Header = () => {
           >
             Vanliga frågor
           </a>
+          <Link to="/om-oss" className={navLinkClass}>
+            Om oss
+          </Link>
           <button
             onClick={() => setContactOpen(true)}
             className={navLinkClass}
           >
             Kontakta oss
           </button>
+
           <ThemeToggle />
           <Button size="sm" variant="default" onClick={scrollToSearch} className="rounded-full px-5">
             Hitta din bil
@@ -108,7 +112,7 @@ export const Header = () => {
       {/* Mobile menu — elegant slide-down */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-out ${
-          mobileOpen ? 'max-h-[320px] opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
         } bg-background border-b border-border/30`}
       >
         <nav className="flex flex-col px-6 py-6 gap-1">
@@ -134,6 +138,13 @@ export const Header = () => {
           >
             Vanliga frågor
           </a>
+          <Link
+            to="/om-oss"
+            onClick={() => setMobileOpen(false)}
+            className="text-[15px] font-medium text-foreground/80 hover:text-foreground py-3 px-2 rounded-lg hover:bg-accent/40 transition-colors"
+          >
+            Om oss
+          </Link>
           <button
             onClick={() => {
               setMobileOpen(false);
@@ -143,6 +154,7 @@ export const Header = () => {
           >
             Kontakta oss
           </button>
+
           <div className="flex items-center gap-3 pt-3 border-t border-border/20">
             <ThemeToggle className="text-foreground" />
             <Button size="sm" variant="default" onClick={scrollToSearch} className="flex-1 rounded-full text-sm h-11">
