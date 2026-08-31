@@ -78,6 +78,8 @@ const FILTER_LABELS: Record<string, string> = {
   features: 'Tillval',
   useCase: 'Användning',
   vibe: 'Känsla',
+  dealerInclude: 'Bilfirma',
+  dealerExclude: 'Ej bilfirma',
 };
 
 

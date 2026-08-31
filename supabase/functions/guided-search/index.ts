@@ -123,6 +123,23 @@ function sanitizeModelFilter(value: unknown, maxLen = 40): string | null {
   return trimmed;
 }
 
+// Bilfirmor: namnen i databasen är på butiksnivå ("Riddermark Bil Uppsala"),
+// så vi matchar på delnamn. Sanera bort ILIKE-/PostgREST-tecken.
+function sanitizeDealerList(value: unknown, max = 3): string[] {
+  const arr = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+  const out: string[] = [];
+  for (const raw of arr) {
+    if (typeof raw !== "string") continue;
+    const clean = raw.replace(/[%,()"'*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    if (clean.length < 2) continue;
+    if (!out.includes(clean)) out.push(clean);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+
+
 // Buyers write model names loosely: "9-5"/"95", "ID.4"/"ID4", "XC 60"/"XC60".
 // Produce a small set of ILIKE-safe variants so the filter still hits.
 function modelVariants(model: string): string[] {
@@ -292,7 +309,7 @@ Om du behöver mer info:
 {"action":"ask","message":"Din fråga här","suggestions":["Förslag 1","Förslag 2","Förslag 3"]}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"],"dealerInclude":["Bilfirma"],"dealerExclude":["Annan firma"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
@@ -303,6 +320,16 @@ Om kunden nämner en specifik modell (t.ex. "Volvo V70", "BMW 320d", "Golf GTI",
 - Söka snabbt: kunden vet redan vad de vill ha. Fråga då bara om budget (och ev. plats) och sök sedan — ställ inte fem frågor.
 - Inte byta modell åt kunden. Modellfiltret är hårt: kunden får bara den modellen. Nämn i "reasoning" om utbudet är litet.
 - Sätt bara "model" när kunden faktiskt bett om en specifik modell — annars utelämna fältet helt.
+
+BILFIRMA / HANDLARE — VIKTIGT:
+Vi kan filtrera på vilken bilfirma som säljer bilen. Använd fälten "dealerInclude" (bara dessa firmor) och "dealerExclude" (aldrig dessa firmor) — båda är listor med strängar, max 3 namn.
+- "visa bara Riddermarks bilar", "vad har Toveks Bil?", "jag vill se Carlas sortiment" → {"dealerInclude":["Riddermark"]} / ["Toveks"] / ["Carla"]
+- "inget från Riddermark", "helst inte Carla" → {"dealerExclude":["Riddermark"]}
+- Skriv firmanamnet KORT och utan ort/butik: "Riddermark", inte "Riddermark Bil Uppsala" — vi matchar på delnamn så alla butiker i kedjan träffas. Vill kunden ha en specifik butik, ta med orten.
+- Firmafiltret är hårt: nämner kunden en firma får de aldrig bilar från andra firmor.
+- Fråga aldrig rutinmässigt om bilfirma. Ta bara med fälten när kunden själv nämnt en firma. Har kunden nämnt en firma men inget mer, ställ bara de frågor som fortfarande saknas (t.ex. budget eller karosstyp) och sök sedan.
+
+
 
 Giltiga fuel-värden: el, laddhybrid, hybrid, bensin, diesel
 Giltiga bodyType-värden: suv, kombi, sedan, halvkombi, coupe, cab
@@ -378,6 +405,10 @@ serve(async (req) => {
       const yMax = typeof f.yearMax === "number" ? f.yearMax : null;
       const trans = typeof f.transmission === "string" && f.transmission.toLowerCase() in transmissionPatterns
         ? f.transmission.toLowerCase() : null;
+      const dealerInclude = sanitizeDealerList(f.dealerInclude);
+      const dealerExclude = sanitizeDealerList(f.dealerExclude);
+
+
 
       // Progressive relaxation: try with filters, then relax.
       // Explicit body type and year are hard constraints in "Visa fler".
@@ -422,6 +453,15 @@ serve(async (req) => {
         if (yMin) q = q.gte("year", yMin);
         if (yMax) q = q.lte("year", yMax);
         if (trans) q = q.or(`transmission.ilike.${transmissionPatterns[trans]},transmission.is.null`);
+
+        // Bilfirma är hårt på alla nivåer — bad kunden om en firma ska "Visa
+        // fler" aldrig blanda in andra firmors bilar.
+        if (dealerInclude.length > 0) {
+          q = q.or(dealerInclude.map((d) => `dealer_name.ilike.%${d}%`).join(","));
+        }
+        for (const d of dealerExclude) {
+          q = q.not("dealer_name", "ilike", `%${d}%`);
+        }
 
         // Exclude already-shown cars in one PostgREST filter instead of
         // generating a long chain of individual predicates.
@@ -732,6 +772,12 @@ serve(async (req) => {
         ? filters.features.filter((f: unknown) => typeof f === "string" && f in featurePatterns)
         : [];
 
+      // Bilfirma-filter: hårda krav som aldrig relaxas.
+      const dealerInclude = sanitizeDealerList(filters.dealerInclude);
+      const dealerExclude = sanitizeDealerList(filters.dealerExclude);
+
+
+
       // Progressive relaxation search — run levels 0 and 1 in parallel for speed
       let cars: any[] = [];
       let relaxLevel = 0;
@@ -811,6 +857,17 @@ serve(async (req) => {
           const p = transmissionPatterns[sanitizedTransmission];
           query = query.or(`transmission.ilike.${p},transmission.is.null`);
         }
+
+        // Bilfirma: hårt krav på alla relaxeringsnivåer. Ber kunden om en
+        // specifik firma får de bara bilar från den firman.
+        if (dealerInclude.length > 0) {
+          query = query.or(dealerInclude.map((d) => `dealer_name.ilike.%${d}%`).join(","));
+        }
+        for (const d of dealerExclude) {
+          query = query.not("dealer_name", "ilike", `%${d}%`);
+        }
+
+
 
         // Feature/tillval filtering via model_raw ILIKE (Blockets annonstitel)
         // Droppas vid level >= 2 (relaxation) för att undvika för få träffar
