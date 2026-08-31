@@ -17,8 +17,9 @@ import {
 import type { Car as CarType } from '@/components/GuidedSearch';
 import {
   calcAnnualTax, getWarranty, getActiveWarranty, formatActiveWarranty, formatNcapStars,
-  formatZeroHundred, formatBootSpace,
+  formatZeroHundred, formatBootSpace, classifyFuel, estimateOwnershipCosts,
 } from '@/lib/carData';
+
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 
