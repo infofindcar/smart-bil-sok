@@ -108,11 +108,8 @@ export const Footer = () => {
         {/* DESKTOP: original multi-column layout */}
         <div className="hidden md:grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-6">
           <div className="lg:col-span-5 space-y-6">
-            <img
-              src={logo}
-              alt="FindCar logotyp"
-              className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
-            />
+            <MaskedLogo src={logo} label="FindCar logotyp" className="h-28 sm:h-32 md:h-36 lg:h-40" />
+
             <p className="text-secondary-foreground/60 leading-relaxed max-w-sm text-base">
               Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
             </p>
