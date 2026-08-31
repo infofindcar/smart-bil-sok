@@ -858,6 +858,17 @@ serve(async (req) => {
           query = query.or(`transmission.ilike.${p},transmission.is.null`);
         }
 
+        // Bilfirma: hårt krav på alla relaxeringsnivåer. Ber kunden om en
+        // specifik firma får de bara bilar från den firman.
+        if (dealerInclude.length > 0) {
+          query = query.or(dealerInclude.map((d) => `dealer_name.ilike.%${d}%`).join(","));
+        }
+        for (const d of dealerExclude) {
+          query = query.not("dealer_name", "ilike", `%${d}%`);
+        }
+
+
+
         // Feature/tillval filtering via model_raw ILIKE (Blockets annonstitel)
         // Droppas vid level >= 2 (relaxation) för att undvika för få träffar
         if (validFeatures.length > 0 && level < 2) {
