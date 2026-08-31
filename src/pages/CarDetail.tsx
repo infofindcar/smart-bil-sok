@@ -221,7 +221,8 @@ const CarDetail = () => {
   // är el/hybrid/plug-in. car_models-cachen är per make+model och inkluderar
   // ibland el-räckvidd för modeller som finns i flera versioner — vi vill
   // inte att en BMW 320i bensin får hybrid-versionens räckvidd.
-  const isEvOrHybrid = !!(car.fuel_type && /el|hybrid|plug/i.test(car.fuel_type));
+  const fuelKind = classifyFuel(car.fuel_type);
+  const isEvOrHybrid = fuelKind === 'el' || fuelKind === 'hybrid' || fuelKind === 'plugin';
   const fuelEst = estimateMonthlyFuel(
     car.fuel_type,
     modelData?.fuel_consumption_l100km ?? null,
@@ -237,36 +238,41 @@ const CarDetail = () => {
     return null;
   })();
 
-  const insuranceLow = modelData?.estimated_monthly_insurance_low ?? null;
-  const insuranceHigh = modelData?.estimated_monthly_insurance_high ?? null;
+  // Prisankrad ägandekostnad. Modelldatan (AI-uppskattad) används men klipps
+  // mot ett ankare som utgår från bilens pris — annars får en Ferrari för
+  // 2,5 Mkr samma försäkring som en Golf.
+  const own = estimateOwnershipCosts({
+    price: car.price ?? null,
+    year: car.year ?? null,
+    make: car.make ?? null,
+    fuelType: car.fuel_type ?? null,
+    horsepower: car.horsepower ?? null,
+    insuranceLow: modelData?.estimated_monthly_insurance_low ?? null,
+    insuranceHigh: modelData?.estimated_monthly_insurance_high ?? null,
+    annualService: modelData?.estimated_annual_service_sek ?? null,
+    driverAge,
+  });
 
-  // Adjust insurance based on age: under 25 = +40%, over 50 = -15%
-  const ageMultiplier = driverAge
-    ? driverAge < 25 ? 1.4 : driverAge > 50 ? 0.85 : 1.0
-    : 1.0;
-
-  const adjInsLow = insuranceLow ? Math.round(insuranceLow * ageMultiplier) : null;
-  const adjInsHigh = insuranceHigh ? Math.round(insuranceHigh * ageMultiplier) : null;
-
-  const insuranceLabel = adjInsLow && adjInsHigh
-    ? `${fmt(adjInsLow)}–${fmt(adjInsHigh)} kr/mån`
-    : adjInsLow
-      ? `~${fmt(adjInsLow)} kr/mån`
-      : '~800 kr/mån';
+  const insuranceLabel = `${fmt(own.insuranceLow)}–${fmt(own.insuranceHigh)} kr/mån`;
 
   const insuranceExplain = (() => {
-    const base = adjInsLow && adjInsHigh ? 'Baserat på modelldata för denna biltyp' : 'Genomsnittlig uppskattning';
+    const base = own.insuranceAdjusted
+      ? 'Uppskattad utifrån bilens värde och klass'
+      : 'Baserat på modelldata för denna biltyp';
     if (driverAge && driverAge < 25) return `${base}. Justerat uppåt för förare under 25 år`;
     if (driverAge && driverAge > 50) return `${base}. Justerat nedåt för erfaren förare (50+)`;
     if (driverAge) return `${base}. Baserat på din ålder (${driverAge} år)`;
     return `${base} — din ålder, ort och körsträcka påverkar priset`;
   })();
 
-  const annualService = modelData?.estimated_annual_service_sek ?? null;
-  const monthlyService = annualService ? Math.round(annualService / 12) : null;
+  const monthlyService = own.service;
+  const annualService = own.serviceAnnual;
 
-  const avgInsurance = adjInsLow && adjInsHigh ? Math.round((adjInsLow + adjInsHigh) / 2) : 800;
-  const totalMonthly = fuelEst.amount + monthlyTax + avgInsurance + (monthlyService ?? 400);
+  // Två nivåer: löpande drift, och total ägandekostnad inkl. värdeminskning
+  // och kapitalkostnad (den största posten för dyra bilar).
+  const runningMonthly = fuelEst.amount + monthlyTax + own.insuranceAvg + own.service + own.misc;
+  const totalMonthly = runningMonthly + own.depreciation + own.capital;
+
 
   /* ── Spec cards ── */
   const specs = [
