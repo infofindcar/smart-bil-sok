@@ -5,7 +5,9 @@ import { SEO } from '@/components/SEO';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import {
+  ArrowLeft,
   ArrowRight,
+
   Flag,
   GraduationCap,
   Instagram,
@@ -100,8 +102,18 @@ const About = () => {
 
       <main className="pt-24 md:pt-28 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto space-y-16 md:space-y-24">
+          {/* Tillbaka */}
+          <Link
+            to="/"
+            className="!mt-0 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Tillbaka till startsidan
+          </Link>
+
           {/* Hero */}
-          <section className="grid gap-8 md:gap-12 md:grid-cols-2 md:items-center">
+          <section className="grid gap-8 md:gap-12 md:grid-cols-2 md:items-center !mt-6">
+
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground">
                 <Flag className="h-3.5 w-3.5 text-primary" />
