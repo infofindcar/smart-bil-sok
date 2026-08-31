@@ -380,9 +380,13 @@ serve(async (req) => {
         ? f.transmission.toLowerCase() : null;
 
       // Progressive relaxation: try with filters, then relax
+      // Level 0: samma modell, samma årsintervall (strikt)
+      // Level 1: samma modell, lite bredare pris/kaross
+      // Level 2: släpp modell/märke — visa LIKNANDE bilar i samma
+      //          årsintervall istället för gamla exemplar av samma modell.
       const buildLoadMoreQuery = (level: number) => {
-        const priceMult = [1.3, 1.6, 2.2][level] || 2.2;
-        const priceMinMult = [0.7, 0.5, 0.3][level] || 0.3;
+        const priceMult = [1.3, 1.6, 1.8][level] || 1.8;
+        const priceMinMult = [0.7, 0.5, 0.85][level] || 0.85;
         let q = sb.from("Lovable").select(SEARCH_COLUMNS)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
@@ -390,12 +394,10 @@ serve(async (req) => {
           .gte("price", Math.floor(minPrice * priceMinMult))
           .lte("price", Math.ceil(maxPrice * priceMult));
 
-        // Level 0: all filters except city
-        // Level 1: drop body type too
-        // Level 2: only price + fuel
         if (make && level < 2) q = q.ilike("make", `%${make}%`);
-        // Specifik modell är ett hårt krav — relaxas aldrig.
-        if (modelOr) q = q.or(modelOr);
+        // Modellen behålls så länge vi letar fler av samma bil. På nivå 2
+        // letar vi istället liknande alternativ från andra märken/modeller.
+        if (modelOr && level < 2) q = q.or(modelOr);
 
         if (fuels.length > 0 && level < 3) {
           const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
@@ -412,11 +414,11 @@ serve(async (req) => {
           const vals = drivetrainPatterns[dt];
           if (vals) q = q.or(vals.map(v => `drivetrain.eq.${v}`).join(",") + ",drivetrain.eq.Unknown,drivetrain.is.null");
         }
-        if (yMin && level < 2) q = q.gte("year", yMin);
-        if (yMax && level < 2) q = q.lte("year", yMax);
+        // Årsmodell är ett hårt krav i "Visa fler" — kunden vill inte få
+        // 10 år äldre bilar bara för att modellen matchar.
+        if (yMin) q = q.gte("year", yMin);
+        if (yMax) q = q.lte("year", yMax);
         if (trans) q = q.or(`transmission.ilike.${transmissionPatterns[trans]},transmission.is.null`);
-
-
 
         // Exclude already-shown cars in one PostgREST filter instead of
         // generating a long chain of individual predicates.
@@ -427,24 +429,39 @@ serve(async (req) => {
         return q.order("price", { ascending: true }).limit(18);
       };
 
+
       // Sort by proximity to budget midpoint
       const budgetMid = (minPrice + maxPrice) / 2;
 
-      // Try progressively relaxed queries
-      let cars: any[] = [];
-      for (let level = 0; level <= 2; level++) {
+      // Hämta både "mer av samma modell" och liknande alternativ, och blanda
+      // dem så att listan inte blir 9 exemplar av samma bil.
+      const cars: any[] = [];
+      const seenIds = new Set<number>();
+      const perModel: Record<string, number> = {};
+      const MAX_PER_MODEL = 2;
+
+      for (let level = 0; level <= 2 && cars.length < 9; level++) {
         const { data: moreCars, error: moreCarsError } = await buildLoadMoreQuery(level);
         if (moreCarsError) {
           console.error("Load more database query failed", moreCarsError.message);
           continue;
         }
-        if (moreCars && moreCars.length > 0) {
-          cars = moreCars
-            .sort((a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid))
-            .slice(0, 9);
-          break;
+        if (!moreCars || moreCars.length === 0) continue;
+
+        const ranked = [...moreCars].sort(
+          (a: any, b: any) => Math.abs((a.price || 0) - budgetMid) - Math.abs((b.price || 0) - budgetMid)
+        );
+        for (const c of ranked) {
+          if (cars.length >= 9) break;
+          if (seenIds.has(c.id)) continue;
+          const key = `${(c.make || "").toLowerCase()}|${(c.model || "").toLowerCase()}`;
+          if ((perModel[key] || 0) >= MAX_PER_MODEL) continue;
+          perModel[key] = (perModel[key] || 0) + 1;
+          seenIds.add(c.id);
+          cars.push(c);
         }
       }
+
 
       // Generate reasons for new cars
       let carReasons: { carId: number; reason: string }[] = [];
