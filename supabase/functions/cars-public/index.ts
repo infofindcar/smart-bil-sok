@@ -75,7 +75,11 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const action = body?.action === "alternatives" ? "alternatives" : "get";
+    const action = body?.action === "alternatives"
+      ? "alternatives"
+      : body?.action === "price_benchmark"
+        ? "price_benchmark"
+        : "get";
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -107,6 +111,85 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ success: true, car: data ?? null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "price_benchmark") {
+      const make = sanitizeText(body?.make);
+      const model = sanitizeText(body?.model, 80);
+      const year = typeof body?.year === "number" ? body.year : null;
+      const mileage = typeof body?.mileage === "number" && body.mileage > 0 ? body.mileage : null;
+      const price = typeof body?.price === "number" && body.price > 0 ? body.price : null;
+
+      if (!make || !model || !year || !mileage || !price) {
+        return new Response(JSON.stringify({ success: true, benchmark: null }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Basmodellnamn: "V70 2.4 D5 AWD" -> "V70". Ger bredare, mer robusta
+      // jämförelsegrupper än hela den ostädade modellsträngen.
+      const baseModel = model.split(/\s+/)[0];
+      const yearFrom = year - 2;
+      const yearTo = year + 2;
+      const mileageFrom = Math.round(mileage * 0.6);
+      const mileageTo = Math.round(mileage * 1.4);
+
+      const { data, error } = await supabase
+        .from("Lovable")
+        .select("price, mileage")
+        .eq("is_active", true)
+        .ilike("make", make)
+        .ilike("model", `${baseModel}%`)
+        .gte("year", yearFrom)
+        .lte("year", yearTo)
+        .gte("mileage", mileageFrom)
+        .lte("mileage", mileageTo)
+        .gt("price", 1500)
+        .limit(400);
+
+      if (error) {
+        console.error("cars-public price_benchmark error:", error);
+        return new Response(JSON.stringify({ success: true, benchmark: null }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const prices = (data ?? [])
+        .map((r: { price: number | null }) => r.price)
+        .filter((p): p is number => typeof p === "number" && p > 1500)
+        .sort((a, b) => a - b);
+
+      if (prices.length < 5) {
+        return new Response(JSON.stringify({ success: true, benchmark: null }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const mid = Math.floor(prices.length / 2);
+      const median = prices.length % 2 === 0
+        ? Math.round((prices[mid - 1] + prices[mid]) / 2)
+        : prices[mid];
+
+      const diff = price - median;
+      const diffPct = diff / median;
+      const level = diffPct <= -0.08 ? "good" : diffPct >= 0.08 ? "high" : "fair";
+
+      return new Response(JSON.stringify({
+        success: true,
+        benchmark: {
+          median,
+          count: prices.length,
+          diff,
+          diffPct,
+          level,
+          yearFrom,
+          yearTo,
+          mileageFrom,
+          mileageTo,
+        },
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
