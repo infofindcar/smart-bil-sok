@@ -123,6 +123,23 @@ function sanitizeModelFilter(value: unknown, maxLen = 40): string | null {
   return trimmed;
 }
 
+// Bilfirmor: namnen i databasen är på butiksnivå ("Riddermark Bil Uppsala"),
+// så vi matchar på delnamn. Sanera bort ILIKE-/PostgREST-tecken.
+function sanitizeDealerList(value: unknown, max = 3): string[] {
+  const arr = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+  const out: string[] = [];
+  for (const raw of arr) {
+    if (typeof raw !== "string") continue;
+    const clean = raw.replace(/[%,()"'*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    if (clean.length < 2) continue;
+    if (!out.includes(clean)) out.push(clean);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+
+
 // Buyers write model names loosely: "9-5"/"95", "ID.4"/"ID4", "XC 60"/"XC60".
 // Produce a small set of ILIKE-safe variants so the filter still hits.
 function modelVariants(model: string): string[] {
