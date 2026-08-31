@@ -20,6 +20,7 @@ import {
   formatZeroHundred, formatBootSpace, classifyFuel, estimateOwnershipCosts,
 } from '@/lib/carData';
 
+import { calcCarRating, benchmarkLabel, type PriceBenchmark, type CarRating } from '@/lib/carRating';
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 
@@ -135,6 +136,8 @@ const CarDetail = () => {
   const [isLoading, setIsLoading] = useState(!car);
   const [modelData, setModelData] = useState<CarModelData | null>(null);
   const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
+  const [benchmark, setBenchmark] = useState<PriceBenchmark | null>(null);
+  const [showFactors, setShowFactors] = useState(false);
 
   // Contact form state
   const [formName, setFormName] = useState('');
@@ -179,6 +182,31 @@ const CarDetail = () => {
     };
     fetchEnriched();
   }, [car?.make, car?.model]);
+
+  // Prisjämförelse mot liknande bilar i vår egen databas (via edge-funktion,
+  // eftersom anon-select på tabellen är blockerad av RLS).
+  useEffect(() => {
+    if (!car?.make || !car?.model || !car?.year || !car?.mileage || !car?.price) {
+      setBenchmark(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke('cars-public', {
+        body: {
+          action: 'price_benchmark',
+          make: car.make,
+          model: car.model,
+          year: car.year,
+          mileage: car.mileage,
+          price: car.price,
+        },
+      });
+      if (!cancelled && !error && data?.benchmark) setBenchmark(data.benchmark as PriceBenchmark);
+      if (!cancelled && (error || !data?.benchmark)) setBenchmark(null);
+    })();
+    return () => { cancelled = true; };
+  }, [car?.make, car?.model, car?.year, car?.mileage, car?.price]);
 
   if (isLoading) {
     return (
@@ -272,6 +300,15 @@ const CarDetail = () => {
   // och kapitalkostnad (den största posten för dyra bilar).
   const runningMonthly = fuelEst.amount + monthlyTax + own.insuranceAvg + own.service + own.misc;
   const totalMonthly = runningMonthly + own.depreciation + own.capital;
+
+  const rating: CarRating | null = calcCarRating({
+    price: car.price ?? null,
+    year: car.year ?? null,
+    mileage: car.mileage ?? null,
+    ncapStars: modelData?.euro_ncap_stars ?? null,
+    benchmark,
+    runningMonthly,
+  });
 
 
   /* ── Spec cards ── */
@@ -379,8 +416,89 @@ const CarDetail = () => {
                 </div>
               )}
             </div>
-            <p className="text-3xl font-bold text-primary">{formatPrice(car.price)}</p>
+            <div className="md:text-right">
+              <p className="text-3xl font-bold text-primary">{formatPrice(car.price)}</p>
+              {benchmark && (
+                <div className="mt-2 md:flex md:justify-end">
+                  <div
+                    className={`inline-flex flex-col rounded-lg border px-3 py-2 text-left ${
+                      benchmark.level === 'good'
+                        ? 'border-primary/40 bg-primary/5'
+                        : benchmark.level === 'high'
+                          ? 'border-destructive/30 bg-destructive/5'
+                          : 'border-border bg-muted/40'
+                    }`}
+                  >
+                    <span className="text-sm font-semibold">
+                      {benchmarkLabel(benchmark.level)}
+                      {Math.abs(benchmark.diffPct) >= 0.03 && (
+                        <span className="font-normal text-muted-foreground">
+                          {' · '}
+                          {fmt(Math.abs(benchmark.diff))} kr {benchmark.diff < 0 ? 'under' : 'över'} snittet
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground/70 leading-tight">
+                      Jämfört med {benchmark.count} liknande {car.make} {String(car.model || '').split(' ')[0]}
+                      {benchmark.yearFrom ? `, ${benchmark.yearFrom}–${benchmark.yearTo}` : ''}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* FindCar-betyg */}
+          {rating && (
+            <div className="bg-card rounded-2xl border border-border p-5 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+                  <span className="text-xl font-bold text-primary leading-none">
+                    {rating.score.toFixed(1).replace('.', ',')}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">/ 10</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">FindCar-betyg</p>
+                  <p className="text-lg font-bold">{rating.label}</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowFactors((v) => !v)}
+                    className="text-xs text-primary hover:underline mt-0.5"
+                  >
+                    {showFactors ? 'Dölj detaljer' : 'Se hur betyget räknats'}
+                  </button>
+                </div>
+              </div>
+
+              {showFactors && (
+                <div className="mt-4 space-y-3">
+                  {rating.factors.map((f) => (
+                    <div key={f.key}>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-sm font-medium">{f.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {f.score.toFixed(1).replace('.', ',')} / 10 · vikt {f.weight} %
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${Math.round(f.score * 10)}%` }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">{f.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground/60 italic mt-3 leading-tight">
+                Betyget gäller den här annonsen — pris, miltal, ålder, ägandekostnad och säkerhet — inte bilmodellen
+                i sig. Det bygger på annonsens uppgifter och ersätter inte en besiktning eller provkörning.
+              </p>
+            </div>
+          )}
 
           {/* NCAP + Warranty badges */}
           {(ncapStars || warrantyDisplay) && (
