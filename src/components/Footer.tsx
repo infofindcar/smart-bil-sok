@@ -4,6 +4,35 @@ import logo from '@/assets/findcar-logo.png';
 import kthLogo from '@/assets/kth-logo.png';
 import { openFeedback } from '@/components/FeedbackWidget';
 
+/**
+ * Vit logga via CSS-mask istället för `brightness-0 invert` på en <img>.
+ * Filter-kedjor (invert + drop-shadow) tvingar webbläsaren att rita om
+ * bilden när footern kommer in i vyn, vilket gav en svart→vit blinkning.
+ * En mask är en ren målad yta och blinkar inte.
+ */
+const MaskedLogo = ({
+  src,
+  label,
+  className,
+  opacity,
+}: { src: string; label: string; className?: string; opacity?: string }) => (
+  <div
+    role="img"
+    aria-label={label}
+    className={`bg-secondary-foreground ${opacity ?? 'opacity-90'} aspect-square transform-gpu [backface-visibility:hidden] ${className ?? ''}`}
+    style={{
+      WebkitMaskImage: `url(${src})`,
+      maskImage: `url(${src})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+    }}
+  />
+);
+
 export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -13,16 +42,14 @@ export const Footer = () => {
     </svg>
   );
 
+
   return (
     <footer className="bg-secondary text-secondary-foreground border-t border-secondary-foreground/10">
       <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-6 md:pt-8 pb-6 md:pb-8">
         {/* MOBILE: single column centered layout */}
         <div className="md:hidden flex flex-col items-center text-center space-y-8 mb-8">
-          <img
-            src={logo}
-            alt="FindCar logotyp"
-            className="h-20 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
-          />
+          <MaskedLogo src={logo} label="FindCar logotyp" className="h-20" />
+
           <p className="text-secondary-foreground/60 leading-relaxed text-sm max-w-xs">
             Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
           </p>
@@ -81,11 +108,8 @@ export const Footer = () => {
         {/* DESKTOP: original multi-column layout */}
         <div className="hidden md:grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-6">
           <div className="lg:col-span-5 space-y-6">
-            <img
-              src={logo}
-              alt="FindCar logotyp"
-              className="h-28 sm:h-32 md:h-36 lg:h-40 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
-            />
+            <MaskedLogo src={logo} label="FindCar logotyp" className="h-28 sm:h-32 md:h-36 lg:h-40" />
+
             <p className="text-secondary-foreground/60 leading-relaxed max-w-sm text-base">
               Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
             </p>
@@ -128,7 +152,7 @@ export const Footer = () => {
           </p>
           <div className="flex items-center gap-1 text-xs italic text-secondary-foreground/50 tracking-wide leading-none">
             <span>Framtagen på KTH</span>
-            <img src={kthLogo} alt="KTH Royal Institute of Technology" className="h-16 w-auto brightness-0 invert object-contain" loading="lazy" />
+            <MaskedLogo src={kthLogo} label="KTH Royal Institute of Technology" className="h-16" opacity="opacity-100" />
           </div>
         </div>
       </div>
