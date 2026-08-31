@@ -68,6 +68,9 @@ export const Footer = () => {
                 <Link to="/guider" className="block text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors py-1">
                   Guider
                 </Link>
+                <Link to="/om-oss" className="block text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors py-1">
+                  Om oss
+                </Link>
                 <button type="button" onClick={openFeedback} className="block w-full text-sm text-secondary-foreground/70 hover:text-secondary-foreground transition-colors py-1">
                   Hjälp oss bli bättre
                 </button>
