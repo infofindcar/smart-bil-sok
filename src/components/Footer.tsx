@@ -4,6 +4,35 @@ import logo from '@/assets/findcar-logo.png';
 import kthLogo from '@/assets/kth-logo.png';
 import { openFeedback } from '@/components/FeedbackWidget';
 
+/**
+ * Vit logga via CSS-mask istället för `brightness-0 invert` på en <img>.
+ * Filter-kedjor (invert + drop-shadow) tvingar webbläsaren att rita om
+ * bilden när footern kommer in i vyn, vilket gav en svart→vit blinkning.
+ * En mask är en ren målad yta och blinkar inte.
+ */
+const MaskedLogo = ({
+  src,
+  label,
+  className,
+  opacity,
+}: { src: string; label: string; className?: string; opacity?: string }) => (
+  <div
+    role="img"
+    aria-label={label}
+    className={`bg-secondary-foreground ${opacity ?? 'opacity-90'} aspect-square transform-gpu [backface-visibility:hidden] ${className ?? ''}`}
+    style={{
+      WebkitMaskImage: `url(${src})`,
+      maskImage: `url(${src})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+    }}
+  />
+);
+
 export const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -12,6 +41,7 @@ export const Footer = () => {
       <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.85-2.48V9.77a5.86 5.86 0 1 0 4.94 5.79V8.9a7.32 7.32 0 0 0 4.28 1.38V7.19a4.29 4.29 0 0 1-3.22-1.37z" />
     </svg>
   );
+
 
   return (
     <footer className="bg-secondary text-secondary-foreground border-t border-secondary-foreground/10">
