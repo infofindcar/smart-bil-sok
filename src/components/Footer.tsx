@@ -48,11 +48,8 @@ export const Footer = () => {
       <div className="w-full px-6 md:px-8 sm:px-12 lg:px-20 xl:px-32 2xl:px-40 pt-6 md:pt-8 pb-6 md:pb-8">
         {/* MOBILE: single column centered layout */}
         <div className="md:hidden flex flex-col items-center text-center space-y-8 mb-8">
-          <img
-            src={logo}
-            alt="FindCar logotyp"
-            className="h-20 w-auto brightness-0 invert opacity-90 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
-          />
+          <MaskedLogo src={logo} label="FindCar logotyp" className="h-20" />
+
           <p className="text-secondary-foreground/60 leading-relaxed text-sm max-w-xs">
             Sveriges objektiva bilrådgivare — vi säljer inte bilar, vi hittar din.
           </p>
