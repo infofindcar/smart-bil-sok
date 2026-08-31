@@ -87,17 +87,17 @@ function estimateMonthlyFuel(
   consumptionL100km: number | null,
   electricRangeKm: number | null
 ): { amount: number; label: string; detail: string } {
-  const fuel = (fuelType ?? '').toLowerCase();
+  const kind = classifyFuel(fuelType);
   const kmPerMonth = 1250; // 15 000 km/år
 
-  if (fuel.includes('el') || fuel.includes('electric')) {
+  if (kind === 'el') {
     const kwh = 0.20; // kWh/km
     const priceKwh = 2; // kr/kWh
     const amount = Math.round(kmPerMonth * kwh * priceKwh);
     return { amount, label: 'Drivmedel', detail: `Laddning: ~${kwh * 100} kWh/100km × ${priceKwh} kr/kWh` };
   }
 
-  if (fuel.includes('hybrid') && electricRangeKm && electricRangeKm > 30) {
+  if ((kind === 'plugin' || kind === 'hybrid') && electricRangeKm && electricRangeKm > 30) {
     const elCost = (kmPerMonth * 0.5) * 0.20 * 2;
     const fuelCost = consumptionL100km
       ? (kmPerMonth * 0.5 / 100) * consumptionL100km * 17.5
@@ -107,21 +107,22 @@ function estimateMonthlyFuel(
   }
 
   if (consumptionL100km && consumptionL100km > 0) {
-    const pricePerL = fuel.includes('diesel')
+    const pricePerL = kind === 'diesel'
       ? fuelPricePerLiter.diesel
-      : fuel.includes('e85')
+      : kind === 'e85'
         ? fuelPricePerLiter.e85
         : fuelPricePerLiter.bensin;
-    const fuelName = fuel.includes('diesel') ? 'Diesel' : fuel.includes('e85') ? 'E85' : 'Bensin';
+    const fuelName = kind === 'diesel' ? 'Diesel' : kind === 'e85' ? 'E85' : 'Bensin';
     const amount = Math.round((kmPerMonth / 100) * consumptionL100km * pricePerL);
     return { amount, label: 'Drivmedel', detail: `${fuelName}: ${String(consumptionL100km).replace('.', ',')} l/100km × ${pricePerL} kr/l` };
   }
 
   // Fallback
-  if (fuel.includes('diesel')) return { amount: 2000, label: 'Drivmedel', detail: 'Diesel, uppskattat genomsnitt' };
-  if (fuel.includes('hybrid')) return { amount: 1500, label: 'Drivmedel', detail: 'Hybrid, uppskattat genomsnitt' };
+  if (kind === 'diesel') return { amount: 2000, label: 'Drivmedel', detail: 'Diesel, uppskattat genomsnitt' };
+  if (kind === 'hybrid' || kind === 'plugin') return { amount: 1500, label: 'Drivmedel', detail: 'Hybrid, uppskattat genomsnitt' };
   return { amount: 2500, label: 'Drivmedel', detail: 'Bensin, uppskattat genomsnitt' };
 }
+
 
 /* ── Component ── */
 const CarDetail = () => {
