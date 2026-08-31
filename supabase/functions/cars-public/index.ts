@@ -118,6 +118,8 @@ serve(async (req) => {
     if (action === "price_benchmark") {
       const make = sanitizeText(body?.make);
       const model = sanitizeText(body?.model, 80);
+      const bodyType = sanitizeText(body?.bodyType, 40);
+      const fuelType = sanitizeText(body?.fuelType, 40);
       const year = typeof body?.year === "number" ? body.year : null;
       const mileage = typeof body?.mileage === "number" && body.mileage > 0 ? body.mileage : null;
       const price = typeof body?.price === "number" && body.price > 0 ? body.price : null;
@@ -138,7 +140,7 @@ serve(async (req) => {
 
       const { data, error } = await supabase
         .from("Lovable")
-        .select("price, mileage")
+        .select("price, mileage, body_type, fuel_type")
         .eq("is_active", true)
         .ilike("make", make)
         .ilike("model", `${baseModel}%`)
@@ -147,7 +149,7 @@ serve(async (req) => {
         .gte("mileage", mileageFrom)
         .lte("mileage", mileageTo)
         .gt("price", 1500)
-        .limit(400);
+        .limit(600);
 
       if (error) {
         console.error("cars-public price_benchmark error:", error);
@@ -156,17 +158,48 @@ serve(async (req) => {
         });
       }
 
-      const prices = (data ?? [])
-        .map((r: { price: number | null }) => r.price)
-        .filter((p): p is number => typeof p === "number" && p > 1500)
-        .sort((a, b) => a - b);
+      type Row = { price: number | null; body_type: string | null; fuel_type: string | null };
+      const rows = (data ?? []).filter(
+        (r: Row) => typeof r.price === "number" && r.price > 1500,
+      ) as Row[];
 
-      if (prices.length < 5) {
+      const norm = (v: string | null | undefined) =>
+        (v ?? "").toLowerCase().trim();
+      const knownBody = bodyType && !["okänd", "unknown", "personbil", "transportbil"].includes(norm(bodyType));
+
+      // Trappa: helst samma karosstyp OCH drivmedel (en sedan ska inte jämföras
+      // med kombiversionen — prisskillnaden kan vara 40 000 kr). Räcker inte
+      // antalet bilar backar vi till en bredare grupp istället för att visa fel.
+      const tiers: { rows: Row[]; basis: string[] }[] = [];
+      if (knownBody && fuelType) {
+        tiers.push({
+          rows: rows.filter((r) => norm(r.body_type) === norm(bodyType) && norm(r.fuel_type) === norm(fuelType)),
+          basis: [bodyType!, fuelType!],
+        });
+      }
+      if (knownBody) {
+        tiers.push({
+          rows: rows.filter((r) => norm(r.body_type) === norm(bodyType)),
+          basis: [bodyType!],
+        });
+      }
+      if (fuelType) {
+        tiers.push({
+          rows: rows.filter((r) => norm(r.fuel_type) === norm(fuelType)),
+          basis: [fuelType!],
+        });
+      }
+      tiers.push({ rows, basis: [] });
+
+      const chosen = tiers.find((t) => t.rows.length >= 5);
+
+      if (!chosen) {
         return new Response(JSON.stringify({ success: true, benchmark: null }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      const prices = chosen.rows.map((r) => r.price as number).sort((a, b) => a - b);
       const mid = Math.floor(prices.length / 2);
       const median = prices.length % 2 === 0
         ? Math.round((prices[mid - 1] + prices[mid]) / 2)
@@ -188,11 +221,13 @@ serve(async (req) => {
           yearTo,
           mileageFrom,
           mileageTo,
+          basis: chosen.basis,
         },
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // action === "alternatives"
     const make = sanitizeText(body?.make);

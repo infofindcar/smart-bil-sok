@@ -20,6 +20,7 @@ export interface PriceBenchmark {
   yearTo: number | null;
   mileageFrom: number | null;
   mileageTo: number | null;
+  basis?: string[];   // t.ex. ["Sedan", "Diesel"] — vad jämförelsen gäller
 }
 
 export interface RatingInput {
