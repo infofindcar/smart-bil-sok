@@ -772,6 +772,12 @@ serve(async (req) => {
         ? filters.features.filter((f: unknown) => typeof f === "string" && f in featurePatterns)
         : [];
 
+      // Bilfirma-filter: hårda krav som aldrig relaxas.
+      const dealerInclude = sanitizeDealerList(filters.dealerInclude);
+      const dealerExclude = sanitizeDealerList(filters.dealerExclude);
+
+
+
       // Progressive relaxation search — run levels 0 and 1 in parallel for speed
       let cars: any[] = [];
       let relaxLevel = 0;
