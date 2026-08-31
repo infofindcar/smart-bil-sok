@@ -14,6 +14,7 @@ import Terms from "./pages/Terms";
 import Admin from "./pages/Admin";
 import Guides from "./pages/Guides";
 import GuideArticle from "./pages/GuideArticle";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 
