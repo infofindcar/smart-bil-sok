@@ -484,23 +484,29 @@ const CarDetail = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              <div className="rounded-xl border border-border bg-background/50 p-4">
-                <p className="text-xs text-muted-foreground">Löpande kostnad</p>
-                <p className="text-2xl font-bold text-primary">~{fmt(runningMonthly)} kr/mån</p>
-                <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
-                  Det du faktiskt betalar ut varje månad: drivmedel, skatt, försäkring, service och slitage.
-                </p>
-              </div>
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-                <p className="text-xs text-muted-foreground">Total ägandekostnad</p>
-                <p className="text-2xl font-bold">~{fmt(totalMonthly)} kr/mån</p>
-                <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
-                  Inklusive värdeminskning ~{fmt(own.depreciation)} kr ({Math.round(own.depreciationPct * 100)} %/år)
-                  och kapitalkostnad ~{fmt(own.capital)} kr på bundet kapital.
-                </p>
-              </div>
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 mb-3">
+              <p className="text-xs text-muted-foreground">Detta betalar du varje månad</p>
+              <p className="text-2xl font-bold text-primary">~{fmt(runningMonthly)} kr/mån</p>
+              <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
+                Drivmedel, fordonsskatt, försäkring, service och slitage — pengar som faktiskt lämnar kontot.
+              </p>
             </div>
+
+            <div className="rounded-xl border border-dashed border-border bg-background/40 p-4 mb-4">
+              <p className="text-xs text-muted-foreground">
+                Bra att veta: bilen tappar också i värde
+              </p>
+              <p className="text-sm font-semibold mt-0.5">
+                ~{fmt(own.depreciation + own.capital)} kr/mån i värdeminskning och bundet kapital
+              </p>
+              <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">
+                Ingen räkning du betalar — men bilen sjunker ~{Math.round(own.depreciationPct * 100)} % i värde per år
+                (~{fmt(own.depreciation)} kr/mån) och pengarna du lagt i bilen kunde gjort nytta någon annanstans
+                (~{fmt(own.capital)} kr/mån). Räknar man in det blir den verkliga kostnaden att äga bilen
+                ~{fmt(totalMonthly)} kr/mån.
+              </p>
+            </div>
+
 
             <p className="text-[11px] text-muted-foreground/60 italic">
               * Uppskattade siffror baserade på bilens pris, ålder, drivmedel och modellklass. Faktisk kostnad varierar
