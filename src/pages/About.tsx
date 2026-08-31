@@ -120,7 +120,7 @@ const About = () => {
                 src={gokart}
                 alt="FindCars grundare skakar hand i depån före ett gokart-race"
                 loading="eager"
-                className="w-full h-full object-cover aspect-[3/4] md:aspect-[4/5]"
+                className="w-full object-cover aspect-[3/4] md:aspect-[4/5] md:max-h-[520px]"
               />
             </div>
           </section>
