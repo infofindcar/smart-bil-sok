@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import type { Car } from './GuidedSearch';
 import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
+import { ShareCar } from './ShareCar';
+
 
 interface CarCardProps {
   car: Car;
@@ -100,30 +102,35 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason, onIma
           </span>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            const wasSaved = isSaved;
-            onToggleSave?.(car);
-            if (!wasSaved) {
-              try {
-                const seen = sessionStorage.getItem('findcar-saved-toast-seen');
-                if (!seen) {
-                  toast.success('Sparad — jämför från menyn längre ned');
-                  sessionStorage.setItem('findcar-saved-toast-seen', '1');
-                } else {
-                  toast('Sparad', { duration: 1500 });
-                }
-              } catch {}
-              navigator.vibrate?.(10);
-            }
-          }}
-          className="absolute top-2 right-2 w-12 h-12 md:w-10 md:h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
-        >
-          <Heart
-            className={`h-5 w-5 transition-all ${isSaved ? 'fill-destructive text-destructive scale-110' : 'text-muted-foreground hover:text-destructive/70'}`}
-          />
-        </button>
+        <div className="absolute top-2 right-2 flex items-center gap-1">
+          <ShareCar car={car} variant="icon" />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const wasSaved = isSaved;
+              onToggleSave?.(car);
+              if (!wasSaved) {
+                try {
+                  const seen = sessionStorage.getItem('findcar-saved-toast-seen');
+                  if (!seen) {
+                    toast.success('Sparad — jämför från menyn längre ned');
+                    sessionStorage.setItem('findcar-saved-toast-seen', '1');
+                  } else {
+                    toast('Sparad', { duration: 1500 });
+                  }
+                } catch {}
+                navigator.vibrate?.(10);
+              }
+            }}
+            className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background active:scale-95 transition-all touch-target"
+            aria-label={isSaved ? 'Ta bort från sparade' : 'Spara bilen'}
+          >
+            <Heart
+              className={`h-5 w-5 transition-all ${isSaved ? 'fill-destructive text-destructive scale-110' : 'text-muted-foreground hover:text-destructive/70'}`}
+            />
+          </button>
+        </div>
+
       </div>
 
       {/* Info */}

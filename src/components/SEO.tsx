@@ -25,10 +25,15 @@ export const SEO = ({ title, description, path, type = "website", image, jsonLd,
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
       <meta property="og:type" content={type} />
+      <meta property="og:site_name" content="FindCar" />
+      <meta property="og:locale" content="sv_SE" />
       {image && <meta property="og:image" content={image} />}
+      {image && <meta property="og:image:alt" content={title} />}
+      <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       {image && <meta name="twitter:image" content={image} />}
+
       {ldArray.map((ld, i) => (
         <script key={i} type="application/ld+json">{JSON.stringify(ld)}</script>
       ))}
