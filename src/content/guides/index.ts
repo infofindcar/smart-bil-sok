@@ -15,6 +15,9 @@ import { guide as vilkenBil } from './vilken-bil-ska-jag-kopa';
 import { guide as billigasteAtAga } from './billigaste-bilen-att-aga';
 import { guide as xc60 } from './volvo-xc60-begagnad-kop-guide';
 import { guide as model3 } from './tesla-model-3-begagnad';
+import { guide as golf } from './volkswagen-golf-begagnad-kop-guide';
+import { guide as v60 } from './volvo-v60-begagnad-kop-guide';
+import { guide as bmw3 } from './bmw-3-serie-begagnad-kop-guide';
 
 export type { Guide, GuideBlock, GuideCategory, GuideFaqItem } from './types';
 
@@ -30,6 +33,9 @@ export const guides: Guide[] = [
   bastaSmabilen,
   xc60,
   model3,
+  golf,
+  v60,
+  bmw3,
   leasing,
   vardeminskning,
   finansiering,

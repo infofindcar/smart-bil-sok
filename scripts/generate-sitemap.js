@@ -80,6 +80,9 @@ async function main() {
     'billigaste-bilen-att-aga',
     'volvo-xc60-begagnad-kop-guide',
     'tesla-model-3-begagnad',
+    'volkswagen-golf-begagnad-kop-guide',
+    'volvo-v60-begagnad-kop-guide',
+    'bmw-3-serie-begagnad-kop-guide',
   ];
 
   const staticUrls = [
