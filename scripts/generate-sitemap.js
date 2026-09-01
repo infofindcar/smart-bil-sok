@@ -72,6 +72,14 @@ async function main() {
     'finansiera-bilkop-kontant-lan-leasing',
     'vanliga-fallgropar-privatkop-bil',
     'besiktningsprotokoll-vad-betyder-det',
+    'basta-begagnade-elbilen',
+    'basta-begagnade-suv',
+    'basta-laddhybriden-begagnad',
+    'basta-smabilen-begagnad',
+    'vilken-bil-ska-jag-kopa',
+    'billigaste-bilen-att-aga',
+    'volvo-xc60-begagnad-kop-guide',
+    'tesla-model-3-begagnad',
   ];
 
   const staticUrls = [
