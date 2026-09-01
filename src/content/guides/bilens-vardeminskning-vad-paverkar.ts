@@ -102,7 +102,7 @@ export const guide: Guide = {
     {
       question: 'Hur mycket tappar en ny bil i värde första året?',
       answer:
-        'Det varierar kraftigt mellan modeller, men första året är alltid det dyraste. Att köpa en bil som är två till tre år gammal är därför ett vanligt sätt att undvika den största delen av fallet.',
+        'Det varierar kraftigt mellan modeller, men första året är normalt det dyraste. Att köpa en bil som är två till tre år gammal är därför ett vanligt sätt att undvika den största delen av fallet.',
     },
     {
       question: 'Tappar elbilar mer i värde än bensinbilar?',

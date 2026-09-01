@@ -179,6 +179,14 @@ const GuideArticle = () => {
               </div>
             </section>
           )}
+
+          {/* Ansvarsfriskrivning */}
+          <p className="mt-12 border-t border-border/40 pt-6 text-xs leading-relaxed text-muted-foreground/70">
+            Innehållet är allmän information och vägledning, inte juridisk, ekonomisk eller teknisk
+            rådgivning i det enskilda fallet. Priser, skatteregler och garantivillkor ändras över tid —
+            kontrollera alltid uppgifterna för det specifika fordonet hos säljaren, Transportstyrelsen,
+            ditt försäkringsbolag eller en verkstad innan du fattar beslut.
+          </p>
         </article>
       </main>
 
