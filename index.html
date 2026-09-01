@@ -59,6 +59,37 @@
       }
     }
     </script>
+    <!-- Organization + SearchAction schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "FindCar",
+      "url": "https://findcar.se",
+      "logo": "https://findcar.se/favicon-512.png",
+      "email": "info@findcar.se",
+      "description": "Sveriges objektiva AI-drivna bilplattform — vi hjälper privatpersoner hitta rätt begagnad bil utan provision eller säljintressen.",
+      "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "FindCar",
+      "url": "https://findcar.se",
+      "description": "Sveriges objektiva AI-drivna bilplattform för begagnade bilar",
+      "inLanguage": "sv",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://findcar.se/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
     <!-- Favicons -->
     <link rel="icon" href="/favicon.ico?v=3" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3" />

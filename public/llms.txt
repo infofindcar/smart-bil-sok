@@ -1,25 +1,71 @@
 # FindCar
 
-> FindCar är Sveriges objektiva AI-drivna bilplattform. Vi hjälper privatpersoner hitta rätt bil utifrån deras villkor – pris, miltal, drivmedel och budget – utan säljsnack.
+> FindCar (findcar.se) is Sweden's objective, AI-powered used-car platform. We help private buyers find the right car based on their actual needs — price, mileage, fuel type, body type, transmission, and budget — without sales pressure or commission.
 
-## Om FindCar
+## What FindCar does
 
-- Aggregerar tusentals billistningar från svenska återförsäljare
-- AI-driven rådgivning som matchar köpare med rätt bil
-- Objektiv jämförelse utan provision eller säljintressen
-- Leadgenerering mellan bilköpare och återförsäljare
+- Aggregates thousands of used-car listings from Swedish dealerships daily (sourced from Blocket and Bilförmedlingen)
+- Offers Clutch: a conversational AI car advisor that asks the right questions and returns personally matched results with written motivations for each car
+- Provides objective comparison — FindCar earns no commission, takes no referral fees, and never promotes any specific dealer
+- Lets users analyze individual listings (by URL) for price fairness, model reputation, ad quality, and estimated ownership cost
+- Publishes buying guides covering: which car to buy, best used EVs, best used SUVs, best city cars, best plug-in hybrids, Volvo XC60 guide, Tesla Model 3 guide, depreciation, financing, leasing vs buying, pre-purchase checklists, inspection reports, and common pitfalls in private purchases
 
-## Tillgängliga sidor
+## Who it is for
 
-- https://findcar.se/ - Startsida med AI-bilsök
-- https://findcar.se/car/[id] - Individuella bilsidor med detaljer
-- https://findcar.se/sitemap.xml - Komplett lista över alla bilsidor
+Swedish private car buyers who want an unbiased second opinion before making a purchase decision. FindCar is free to use. No account required.
 
-## Data
+## Clutch — the AI car advisor
 
-FindCar innehåller begägnade bilar från svenska återförsäljare med information om pris, miltal, drivmedel, årsmodell, karosstyp och mer.
+Clutch is FindCar's conversational AI built on Google Gemini. It conducts a short natural-language conversation in Swedish (and English, Norwegian, Danish, Finnish) to understand the buyer's situation: budget, intended use, family size, preferred fuel type, drivetrain, body type, transmission, specific model interests, desired features (towbar, panoramic roof, Bose audio, leather seats, adaptive cruise control, heated seats, etc.), and current car if any. It then searches FindCar's live inventory and returns up to 9 matched cars with individual written motivations.
 
-## Kontakt
+Clutch does not store conversation history permanently. All chat stays in the user's browser session only.
 
-- Webb: https://findcar.se
-- E-post: info@findcar.se
+## Buying guides (at /guider)
+
+FindCar publishes in-depth Swedish car-buying guides:
+
+- Hur vet jag att en begagnad bil är prisvärd? (/guider/prisvard-begagnad-bil)
+- 5 saker att kolla innan du köper en begagnad bil (/guider/checklista-innan-bilkop)
+- Elbil eller bensinbil — vad ska man välja som begagnad bil? (/guider/elbil-eller-bensinbil-begagnad)
+- Vilken bil ska jag köpa? (/guider/vilken-bil-ska-jag-kopa)
+- Vilken är den bästa begagnade elbilen? (/guider/basta-begagnade-elbilen)
+- Vilken är den bästa begagnade SUV:en? (/guider/basta-begagnade-suv)
+- Vilken är den bästa begagnade laddhybriden? (/guider/basta-laddhybriden-begagnad)
+- Vilken är den bästa begagnade småbilen? (/guider/basta-smabilen-begagnad)
+- Volvo XC60 begagnad — vad ska man kolla? (/guider/volvo-xc60-begagnad-kop-guide)
+- Är en begagnad Tesla Model 3 ett bra köp? (/guider/tesla-model-3-begagnad)
+- Leasing eller köpa begagnad bil — vad passar dig? (/guider/leasing-vs-kopa-begagnad-bil)
+- Vad påverkar en bils värdeminskning? (/guider/bilens-vardeminskning-vad-paverkar)
+- Så finansierar du ditt bilköp — kontant, lån eller leasing (/guider/finansiera-bilkop-kontant-lan-leasing)
+- Vilken är den billigaste bilen att äga? (/guider/billigaste-bilen-att-aga)
+- Vanliga fallgropar vid privatköp av bil (/guider/vanliga-fallgropar-privatkop-bil)
+- Besiktningsprotokoll — vad betyder det egentligen? (/guider/besiktningsprotokoll-vad-betyder-det)
+
+## Key pages
+
+- https://findcar.se/ — Home: Clutch AI search + car results
+- https://findcar.se/guider — All buying guides
+- https://findcar.se/om-oss — About FindCar
+- https://findcar.se/compare — Side-by-side car comparison tool
+- https://findcar.se/privacy — Privacy policy (GDPR)
+- https://findcar.se/sitemap.xml — Full sitemap including all individual car pages
+
+## Data and inventory
+
+- Source: Swedish dealerships only (never private sellers)
+- Updated: daily automatic sync
+- Car data includes: make, model, year, price (SEK), mileage (mil), fuel type, body type, drivetrain, transmission, color, horsepower, city/location, dealer name, registration number
+- Individual car pages at /car/[id] with full details and AI-powered listing analysis
+
+## Technology
+
+- Frontend: React + Vite, hosted via Lovable
+- Backend: Supabase (EU/Ireland), Deno edge functions
+- AI: Google Gemini (via Lovable AI Gateway)
+- All user data stays in EU. No tracking pixels. No Google Analytics.
+
+## Contact
+
+- Website: https://findcar.se
+- Email: info@findcar.se
+- Privacy policy: https://findcar.se/privacy
