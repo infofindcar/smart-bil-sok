@@ -16,7 +16,7 @@ export const guide: Guide = {
   blocks: [
     {
       type: 'p',
-      text: 'Besiktningsprotokollet är det enda dokumentet om bilen som är skrivet av en oberoende part utan intresse i affären. Det är därför ett av de mest värdefulla underlagen du kan begära före ett köp — och ett av de mest missförstådda.',
+      text: 'Besiktningsprotokollet är ett av få dokument om bilen som är skrivet av en oberoende part utan intresse i affären. Det är därför ett av de mest värdefulla underlagen du kan begära före ett köp — och ett av de mest missförstådda.',
     },
     { type: 'h2', text: 'Vad kontrolleras vid en besiktning?' },
     {
