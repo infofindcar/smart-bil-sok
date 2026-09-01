@@ -101,13 +101,13 @@ const GREETINGS: Record<string, ChatMessage> = {
   sv: {
     id: '1',
     role: 'assistant',
-    content: 'Hej! 👋 Jag är Clutch. Berätta vad du letar efter — så fixar jag resten.',
-    suggestions: ['Jag pendlar till jobbet', 'Behöver en familjebil', 'Vill ha en rolig bil', 'Vet inte riktigt'],
+    content: 'Hej! Jag är Clutch. Berätta vad du letar efter — så fixar jag resten.',
+    suggestions: ['Pendlar till jobbet', 'Familjebil', 'Entusiastbil/sportbil', 'Vet inte riktigt'],
   },
   en: {
     id: '1',
     role: 'assistant',
-    content: 'Hi! 👋 I\'m Clutch, your personal car advisor. Tell me a bit about yourself and what you\'re looking for — and I\'ll find the perfect car for you.',
+    content: 'Hi! I\'m Clutch, your personal car advisor. Tell me a bit about yourself and what you\'re looking for — and I\'ll find the perfect car for you.',
     suggestions: ['I commute to work', 'Need a family car', 'Want a fun car', 'Not sure yet'],
   },
   no: {
@@ -609,16 +609,17 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   // Visar de filter Clutch tolkat innan sökningen körs. Kunden kan ta bort
   // enskilda krav och sedan trycka "Sök nu" — inget nytt AI-anrop behövs.
   const applySearchResult = (data: any) => {
-    setPhase('results');
     setIsLoading(false);
 
     if (data.cars?.length > 0) {
+      setPhase('results');
       const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
       onResults(data.cars, resultMsg, data.carReasons || [], false, data.relaxations || []);
       setTimeout(() => {
         onScrollToResults?.();
       }, 600);
     } else {
+      setPhase('chatting');
       addAssistantMessage(
         data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
         data.suggestions || [],
