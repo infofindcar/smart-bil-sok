@@ -47,7 +47,7 @@ export const guide: Guide = {
       type: 'ol',
       items: [
         '**Kategori 1 — mindre brist.** Bilen är godkänd, men bristen ska åtgärdas. Exempel: en trasig lampa, lätt oljeläckage eller slitna torkarblad. Ingen efterkontroll krävs.',
-        '**Kategori 2 — fel som kräver efterkontroll.** Bilen är inte godkänd och måste åtgärdas och kontrolleras igen inom en månad, annars uppstår körförbud. Exempel: dåliga bromsar, glapp i styrning eller rost i bärande delar.',
+        '**Kategori 2 — fel som kräver efterkontroll.** Bilen är inte godkänd. Bristen ska åtgärdas och fordonet efterkontrolleras inom en månad från besiktningen — annars krävs en ny fullständig kontrollbesiktning, och bilen får körförbud om besiktningsperioden löper ut. Exempel: dåliga bromsar, glapp i styrning eller rost i bärande delar.',
         '**Kategori 3 — trafikfarligt fel.** Körförbud gäller omedelbart. Bilen får inte köras vidare från besiktningen förutom direkt till verkstad.',
       ],
     },
