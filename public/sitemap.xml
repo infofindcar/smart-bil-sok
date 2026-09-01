@@ -51,6 +51,46 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://findcar.se/guider/basta-begagnade-elbilen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/basta-begagnade-suv</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/basta-laddhybriden-begagnad</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/basta-smabilen-begagnad</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/vilken-bil-ska-jag-kopa</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/billigaste-bilen-att-aga</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/volvo-xc60-begagnad-kop-guide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://findcar.se/guider/tesla-model-3-begagnad</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://findcar.se/om-oss</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

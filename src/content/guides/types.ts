@@ -1,7 +1,12 @@
 // Typer för guide-innehållet. Allt innehåll är statisk, typad data — inga
 // nätverksanrop krävs för att rendera en guide-sida.
 
-export type GuideCategory = 'Innan köpet' | 'Ekonomi & ägande' | 'Praktiska tips';
+export type GuideCategory =
+  | 'Innan köpet'
+  | 'Vilken bil ska du välja?'
+  | 'Modellguider'
+  | 'Ekonomi & ägande'
+  | 'Praktiska tips';
 
 export type GuideBlock =
   /** Underrubrik (renderas som h2), formulerad som fråga eller tydligt delämne. */
@@ -12,8 +17,11 @@ export type GuideBlock =
   | { type: 'ul'; items: string[] }
   /** Numrerad lista. Varje rad stödjer **fet text** inline. */
   | { type: 'ol'; items: string[] }
+  /** Jämförelsetabell. Renderas responsivt med horisontell scroll på mobil. */
+  | { type: 'table'; headers: string[]; rows: string[][]; caption?: string }
   /** Kontextuell sök-CTA mitt i brödtexten — länkar till startsidan med förifylld fråga. */
   | { type: 'search'; label: string; query: string };
+
 
 export interface GuideFaqItem {
   question: string;

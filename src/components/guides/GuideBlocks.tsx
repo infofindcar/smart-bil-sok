@@ -72,8 +72,48 @@ export const GuideBlocks = ({ blocks }: { blocks: GuideBlock[] }) => (
               ))}
             </ol>
           );
+        case 'table':
+          return (
+            <div key={i} className="not-prose -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+                {block.caption && (
+                  <caption className="mb-2 text-left text-xs text-muted-foreground/80">
+                    {block.caption}
+                  </caption>
+                )}
+                <thead>
+                  <tr className="border-b border-border/60">
+                    {block.headers.map((h, j) => (
+                      <th key={j} className="py-2.5 pr-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {block.rows.map((row, j) => (
+                    <tr key={j} className="border-b border-border/40 align-top">
+                      {row.map((cell, k) => (
+                        <td
+                          key={k}
+                          className={
+                            k === 0
+                              ? 'py-3 pr-4 font-medium text-foreground'
+                              : 'py-3 pr-4 leading-relaxed text-muted-foreground'
+                          }
+                        >
+                          <RichText text={cell} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
         case 'search':
           return <InlineSearchCta key={i} label={block.label} query={block.query} />;
+
         default:
           return null;
       }
