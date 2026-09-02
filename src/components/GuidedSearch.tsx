@@ -1339,7 +1339,9 @@ const SuggestionsRow = memo(function SuggestionsRow({
               {sendLabel} ({selected.length})
             </button>
           )}
+          {priceSliderBlock}
         </div>
+
       </div>
     );
   }
