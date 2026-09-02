@@ -38,12 +38,16 @@ export interface RatingFactor {
   score: number;   // 0–10
   weight: number;  // relativ vikt
   detail: string;
+  /** Visas i listan men påverkar inte betyget (t.ex. årsmodell). */
+  informational?: boolean;
 }
 
 export interface CarRating {
   score: number;          // 1–10, en decimal
   label: string;
   factors: RatingFactor[];
+  /** 20 år eller äldre — bedöms på skick och pris, inte ålder. */
+  isClassic: boolean;
 }
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
