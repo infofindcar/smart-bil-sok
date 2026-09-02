@@ -5,6 +5,7 @@ import { MapPin, ChevronRight, Crown, Gauge, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { topEquipment } from '@/lib/equipment';
+import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
 import type { Car } from './GuidedSearch';
 
 interface Props {
