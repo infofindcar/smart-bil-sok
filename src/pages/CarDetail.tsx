@@ -24,6 +24,7 @@ import { calcCarRating, benchmarkLabel, type PriceBenchmark, type CarRating } fr
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
+import { carImageUrl, carImageSrcSet, carShareImageUrl } from '@/lib/carImage';
 
 
 /* ── Types ── */
