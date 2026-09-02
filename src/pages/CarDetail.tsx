@@ -359,7 +359,7 @@ const CarDetail = () => {
     vehicleTransmission: car.transmission || undefined,
     mileageFromOdometer: car.mileage ? { '@type': 'QuantitativeValue', value: car.mileage * 10, unitCode: 'KMT' } : undefined,
     color: car.color && car.color !== 'Okänd' ? car.color : undefined,
-    image: car.image_thumb_url || undefined,
+    image: carShareImageUrl(car.image_thumb_url) || undefined,
     offers: car.price ? {
       '@type': 'Offer',
       price: car.price,
