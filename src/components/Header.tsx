@@ -214,6 +214,20 @@ export const Header = () => {
                 <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">@findcar.se</p>
               </div>
             </a>
+            <a
+              href="https://tiktok.com/@findcar.se"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent/50 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <TikTokIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">TikTok</p>
+                <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">@findcar.se</p>
+              </div>
+            </a>
           </div>
         </DialogContent>
       </Dialog>
