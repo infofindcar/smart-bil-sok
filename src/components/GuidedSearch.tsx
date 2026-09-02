@@ -1367,7 +1367,9 @@ const SuggestionsRow = memo(function SuggestionsRow({
           <PenLine className="h-3.5 w-3.5" />
           {writeOwnLabel}
         </button>
+        {priceSliderBlock}
       </div>
     </div>
+
   );
 });
