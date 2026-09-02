@@ -24,6 +24,7 @@ import { calcCarRating, benchmarkLabel, type PriceBenchmark, type CarRating } fr
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
+import { carImageUrl, carImageSrcSet, carShareImageUrl } from '@/lib/carImage';
 
 
 /* ── Types ── */
@@ -359,7 +360,7 @@ const CarDetail = () => {
     vehicleTransmission: car.transmission || undefined,
     mileageFromOdometer: car.mileage ? { '@type': 'QuantitativeValue', value: car.mileage * 10, unitCode: 'KMT' } : undefined,
     color: car.color && car.color !== 'Okänd' ? car.color : undefined,
-    image: car.image_thumb_url || undefined,
+    image: carShareImageUrl(car.image_thumb_url) || undefined,
     offers: car.price ? {
       '@type': 'Offer',
       price: car.price,
@@ -376,7 +377,7 @@ const CarDetail = () => {
         description={seoDesc}
         path={`/car/${car.id}`}
         type="product"
-        image={car.image_thumb_url || undefined}
+        image={carShareImageUrl(car.image_thumb_url) || undefined}
         jsonLd={carJsonLd}
       />
       <Header />
@@ -394,7 +395,13 @@ const CarDetail = () => {
           {/* Hero image */}
           <div className="rounded-2xl overflow-hidden bg-card shadow-warm mb-6">
             {car.image_thumb_url ? (
-              <img src={car.image_thumb_url} alt={`${car.make} ${displayTitle}`} className="w-full h-64 md:h-96 object-cover" />
+              <img
+                src={carImageUrl(car.image_thumb_url, 960)}
+                srcSet={carImageSrcSet(car.image_thumb_url, 960)}
+                sizes="(max-width: 896px) 100vw, 896px"
+                alt={`${car.make} ${displayTitle}`}
+                className="w-full h-64 md:h-96 object-cover"
+              />
             ) : (
               <div className="w-full h-64 md:h-96 bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
                 <Car className="h-24 w-24 text-primary-foreground/40" />

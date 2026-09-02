@@ -7,6 +7,7 @@ import type { Car } from './GuidedSearch';
 import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
 import { ShareCar } from './ShareCar';
+import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
 
 
 interface CarCardProps {
@@ -44,7 +45,9 @@ const ImageWithFade = ({ src, alt, onError }: { src: string; alt: string; onErro
   const [loaded, setLoaded] = useState(false);
   return (
     <img
-      src={src}
+      src={carImageUrl(src, 480)}
+      srcSet={carImageSrcSet(src, 480)}
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
       alt={alt}
       className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
       loading="lazy"

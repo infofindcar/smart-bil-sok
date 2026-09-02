@@ -5,6 +5,7 @@ import { MapPin, ChevronRight, Crown, Gauge, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { topEquipment } from '@/lib/equipment';
+import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
 import type { Car } from './GuidedSearch';
 
 interface Props {
@@ -123,8 +124,10 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
               {car.image_thumb_url && (
                 <img
-                  src={car.image_thumb_url}
+                  src={carImageUrl(car.image_thumb_url, 320)}
+                  srcSet={carImageSrcSet(car.image_thumb_url, 320)}
                   alt=""
+                  loading="lazy"
                   className="w-16 h-16 object-cover rounded-md flex-shrink-0"
                 />
               )}
@@ -173,8 +176,10 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
                 >
                   {l.image_thumb_url ? (
                     <img
-                      src={l.image_thumb_url}
+                      src={carImageUrl(l.image_thumb_url, 320)}
+                      srcSet={carImageSrcSet(l.image_thumb_url, 320)}
                       alt=""
+                      loading="lazy"
                       className="w-20 h-20 object-cover rounded-md flex-shrink-0"
                     />
                   ) : (

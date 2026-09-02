@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { Car } from '@/components/GuidedSearch';
 import { SEO } from '@/components/SEO';
+import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
 
 const formatPrice = (price: number | null) => {
   if (!price) return '–';
@@ -77,8 +78,10 @@ const CarComparison = () => {
                       <div className="space-y-2">
                         {car.image_thumb_url && (
                           <img
-                            src={car.image_thumb_url}
+                            src={carImageUrl(car.image_thumb_url, 360)}
+                            srcSet={carImageSrcSet(car.image_thumb_url, 360)}
                             alt=""
+                            loading="lazy"
                             className="w-full h-28 object-cover rounded-lg"
                           />
                         )}
