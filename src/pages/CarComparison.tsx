@@ -78,8 +78,10 @@ const CarComparison = () => {
                       <div className="space-y-2">
                         {car.image_thumb_url && (
                           <img
-                            src={car.image_thumb_url}
+                            src={carImageUrl(car.image_thumb_url, 360)}
+                            srcSet={carImageSrcSet(car.image_thumb_url, 360)}
                             alt=""
+                            loading="lazy"
                             className="w-full h-28 object-cover rounded-lg"
                           />
                         )}
