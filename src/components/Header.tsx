@@ -6,6 +6,13 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import logo from '@/assets/findcar-logo.png';
 
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+    <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.85-2.48V9.77a5.86 5.86 0 1 0 4.94 5.79V8.9a7.32 7.32 0 0 0 4.28 1.38V7.19a4.29 4.29 0 0 1-3.22-1.37z" />
+  </svg>
+);
+
+
 export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
