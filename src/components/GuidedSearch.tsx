@@ -6,6 +6,30 @@ import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Slider } from '@/components/ui/slider';
+
+/**
+ * Vissa frågor rymmer flera svar samtidigt (utrustning, växellåda, drivlina,
+ * karosstyp). Om AI:n glömmer sätta multiSelect gissar vi det från frågans text
+ * så att kunden alltid kan markera flera chips.
+ */
+const MULTI_HINT =
+  /(utrustning|krav|växellåda|vaxellada|automatl|dragkrok|drivlina|bränsl|bransl|karosstyp|biltyp|måste ha|maste ha|tillval|flera)/i;
+
+const inferMultiSelect = (message?: string, suggestions?: string[]): boolean => {
+  if (!suggestions || suggestions.length < 2) return false;
+  return MULTI_HINT.test(message || '');
+};
+
+/** Är detta en budget-/prisfråga? Då visar vi även en prisreglage-möjlighet. */
+const isPriceQuestion = (message?: string, suggestions?: string[]): boolean => {
+  if (!message) return false;
+  if (!/(budget|pris|kosta|betala|spendera)/i.test(message)) return false;
+  return (suggestions || []).some((s) => /kr|000/i.test(s)) || /budget/i.test(message);
+};
+
+const formatSek = (v: number) => `${v.toLocaleString('sv-SE')} kr`;
+
 
 export type Car = {
   id: number;
