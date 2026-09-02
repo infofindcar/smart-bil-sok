@@ -176,8 +176,10 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
                 >
                   {l.image_thumb_url ? (
                     <img
-                      src={l.image_thumb_url}
+                      src={carImageUrl(l.image_thumb_url, 320)}
+                      srcSet={carImageSrcSet(l.image_thumb_url, 320)}
                       alt=""
+                      loading="lazy"
                       className="w-20 h-20 object-cover rounded-md flex-shrink-0"
                     />
                   ) : (
