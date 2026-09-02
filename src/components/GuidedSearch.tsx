@@ -1208,6 +1208,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 type SuggestionsRowProps = {
   suggestions?: string[];
   multiSelect?: boolean;
+  priceMode?: boolean;
   onPick: (s: string) => void;
   onWriteOwn: () => void;
   writeOwnLabel: string;
@@ -1218,6 +1219,7 @@ type SuggestionsRowProps = {
 const SuggestionsRow = memo(function SuggestionsRow({
   suggestions,
   multiSelect,
+  priceMode,
   onPick,
   onWriteOwn,
   writeOwnLabel,
@@ -1225,6 +1227,8 @@ const SuggestionsRow = memo(function SuggestionsRow({
   andWord,
 }: SuggestionsRowProps) {
   const [selected, setSelected] = useState<string[]>([]);
+  const [showSlider, setShowSlider] = useState(false);
+  const [range, setRange] = useState<[number, number]>([100000, 250000]);
 
   const toggle = (s: string) => {
     navigator.vibrate?.(10);
@@ -1242,6 +1246,59 @@ const SuggestionsRow = memo(function SuggestionsRow({
     setSelected([]);
     onPick(text);
   };
+
+  /** Prisreglage — visas som alternativ vid budgetfrågor. */
+  const priceSliderBlock = priceMode ? (
+    showSlider ? (
+      <div className="mt-2 w-full rounded-2xl border border-border/60 bg-card/60 p-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <span className="text-xs text-muted-foreground">Dra för att välja budget</span>
+          <span className="text-sm font-semibold text-foreground">
+            {formatSek(range[0])} – {formatSek(range[1])}
+          </span>
+        </div>
+        <Slider
+          value={range}
+          min={20000}
+          max={1000000}
+          step={10000}
+          onValueChange={(v) => setRange([v[0], v[1]] as [number, number])}
+          aria-label="Prisintervall"
+        />
+        <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+          <span>20 000 kr</span>
+          <span>1 000 000 kr</span>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => {
+              navigator.vibrate?.(10);
+              setShowSlider(false);
+              onPick(`Min budget är ${formatSek(range[0])} till ${formatSek(range[1])}`);
+            }}
+            className="flex-1 rounded-xl bg-gradient-to-br from-primary to-secondary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          >
+            {sendLabel}
+          </button>
+          <button
+            onClick={() => setShowSlider(false)}
+            className="rounded-xl border border-border/60 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Avbryt
+          </button>
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={() => { navigator.vibrate?.(10); setShowSlider(true); }}
+        className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-border/60 bg-gradient-to-b from-background to-muted/40 hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 text-foreground/90 hover:text-foreground transition-all duration-200 active:scale-[0.97] shadow-sm"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" />
+        Välj pris själv
+      </button>
+    )
+  ) : null;
+
 
   if (multiSelect) {
     return (
