@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X, SlidersHorizontal } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
