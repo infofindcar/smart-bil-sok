@@ -377,7 +377,7 @@ const CarDetail = () => {
         description={seoDesc}
         path={`/car/${car.id}`}
         type="product"
-        image={car.image_thumb_url || undefined}
+        image={carShareImageUrl(car.image_thumb_url) || undefined}
         jsonLd={carJsonLd}
       />
       <Header />
