@@ -37,3 +37,20 @@ export function carImageSrcSet(url: string | null | undefined, width: number): s
   if (one === two) return undefined;
   return `${one} 1x, ${two} 2x`;
 }
+
+/**
+ * Stor variant för delning/SEO (Open Graph, JSON-LD). JPEG istället för WebP
+ * eftersom vissa länkförhandsvisningar inte hanterar WebP.
+ */
+export function carShareImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    if (!OPTIMIZABLE_HOSTS.includes(u.hostname)) return url;
+    u.searchParams.set('width', '1200');
+    u.searchParams.set('height', '900');
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
