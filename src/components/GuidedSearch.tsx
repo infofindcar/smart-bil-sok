@@ -2,10 +2,34 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X, SlidersHorizontal } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Slider } from '@/components/ui/slider';
+
+/**
+ * Vissa frågor rymmer flera svar samtidigt (utrustning, växellåda, drivlina,
+ * karosstyp). Om AI:n glömmer sätta multiSelect gissar vi det från frågans text
+ * så att kunden alltid kan markera flera chips.
+ */
+const MULTI_HINT =
+  /(utrustning|krav|växellåda|vaxellada|automatl|dragkrok|drivlina|bränsl|bransl|karosstyp|biltyp|måste ha|maste ha|tillval|flera)/i;
+
+const inferMultiSelect = (message?: string, suggestions?: string[]): boolean => {
+  if (!suggestions || suggestions.length < 2) return false;
+  return MULTI_HINT.test(message || '');
+};
+
+/** Är detta en budget-/prisfråga? Då visar vi även en prisreglage-möjlighet. */
+const isPriceQuestion = (message?: string, suggestions?: string[]): boolean => {
+  if (!message) return false;
+  if (!/(budget|pris|kosta|betala|spendera)/i.test(message)) return false;
+  return (suggestions || []).some((s) => /kr|000/i.test(s)) || /budget/i.test(message);
+};
+
+const formatSek = (v: number) => `${v.toLocaleString('sv-SE')} kr`;
+
 
 export type Car = {
   id: number;
@@ -742,7 +766,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       if (error) throw error;
 
       if (data?.action === 'ask') {
-        addAssistantMessage(data.message, data.suggestions, undefined, data.multiSelect === true);
+        addAssistantMessage(
+          data.message,
+          data.suggestions,
+          undefined,
+          data.multiSelect === true || inferMultiSelect(data.message, data.suggestions),
+        );
+
         setIsLoading(false);
       } else if (data?.action === 'confirm') {
         // Visa sammanfattningskort — kunden bekräftar innan vi söker
@@ -1067,6 +1097,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             key={lastAssistantMsg?.id}
             suggestions={lastAssistantMsg?.suggestions}
             multiSelect={lastAssistantMsg?.multiSelect}
+            priceMode={isPriceQuestion(lastAssistantMsg?.content, lastAssistantMsg?.suggestions)}
+
             onPick={handleSuggestionClick}
             onWriteOwn={() => inputRef.current?.focus()}
             writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
@@ -1176,6 +1208,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 type SuggestionsRowProps = {
   suggestions?: string[];
   multiSelect?: boolean;
+  priceMode?: boolean;
   onPick: (s: string) => void;
   onWriteOwn: () => void;
   writeOwnLabel: string;
@@ -1186,6 +1219,7 @@ type SuggestionsRowProps = {
 const SuggestionsRow = memo(function SuggestionsRow({
   suggestions,
   multiSelect,
+  priceMode,
   onPick,
   onWriteOwn,
   writeOwnLabel,
@@ -1193,6 +1227,8 @@ const SuggestionsRow = memo(function SuggestionsRow({
   andWord,
 }: SuggestionsRowProps) {
   const [selected, setSelected] = useState<string[]>([]);
+  const [showSlider, setShowSlider] = useState(false);
+  const [range, setRange] = useState<[number, number]>([100000, 250000]);
 
   const toggle = (s: string) => {
     navigator.vibrate?.(10);
@@ -1210,6 +1246,59 @@ const SuggestionsRow = memo(function SuggestionsRow({
     setSelected([]);
     onPick(text);
   };
+
+  /** Prisreglage — visas som alternativ vid budgetfrågor. */
+  const priceSliderBlock = priceMode ? (
+    showSlider ? (
+      <div className="mt-2 w-full rounded-2xl border border-border/60 bg-card/60 p-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <span className="text-xs text-muted-foreground">Dra för att välja budget</span>
+          <span className="text-sm font-semibold text-foreground">
+            {formatSek(range[0])} – {formatSek(range[1])}
+          </span>
+        </div>
+        <Slider
+          value={range}
+          min={20000}
+          max={1000000}
+          step={10000}
+          onValueChange={(v) => setRange([v[0], v[1]] as [number, number])}
+          aria-label="Prisintervall"
+        />
+        <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+          <span>20 000 kr</span>
+          <span>1 000 000 kr</span>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => {
+              navigator.vibrate?.(10);
+              setShowSlider(false);
+              onPick(`Min budget är ${formatSek(range[0])} till ${formatSek(range[1])}`);
+            }}
+            className="flex-1 rounded-xl bg-gradient-to-br from-primary to-secondary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          >
+            {sendLabel}
+          </button>
+          <button
+            onClick={() => setShowSlider(false)}
+            className="rounded-xl border border-border/60 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Avbryt
+          </button>
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={() => { navigator.vibrate?.(10); setShowSlider(true); }}
+        className="chip-in inline-flex items-center gap-1.5 text-[13px] md:text-sm font-medium px-3.5 md:px-4 py-2 md:py-2.5 rounded-full border border-border/60 bg-gradient-to-b from-background to-muted/40 hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 text-foreground/90 hover:text-foreground transition-all duration-200 active:scale-[0.97] shadow-sm"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" />
+        Välj pris själv
+      </button>
+    )
+  ) : null;
+
 
   if (multiSelect) {
     return (
@@ -1250,7 +1339,9 @@ const SuggestionsRow = memo(function SuggestionsRow({
               {sendLabel} ({selected.length})
             </button>
           )}
+          {priceSliderBlock}
         </div>
+
       </div>
     );
   }
@@ -1276,7 +1367,9 @@ const SuggestionsRow = memo(function SuggestionsRow({
           <PenLine className="h-3.5 w-3.5" />
           {writeOwnLabel}
         </button>
+        {priceSliderBlock}
       </div>
     </div>
+
   );
 });
