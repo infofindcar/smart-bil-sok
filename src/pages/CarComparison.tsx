@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { Car } from '@/components/GuidedSearch';
 import { SEO } from '@/components/SEO';
+import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
 
 const formatPrice = (price: number | null) => {
   if (!price) return '–';
