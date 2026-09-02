@@ -31,6 +31,7 @@ const GuideArticle = () => {
       '@type': 'Article',
       headline: guide.title,
       description: guide.metaDescription,
+      datePublished: guide.updated,
       dateModified: guide.updated,
       inLanguage: 'sv-SE',
       mainEntityOfPage: { '@type': 'WebPage', '@id': url },
