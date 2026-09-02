@@ -59,6 +59,10 @@ function scale(value: number, worst: number, best: number): number {
 }
 
 const NORMAL_MIL_PER_YEAR = 1500; // ~15 000 km/år
+/** 20 år eller äldre bedöms som klassiker — åldern drar inte ner betyget. */
+export const CLASSIC_AGE_YEARS = 20;
+/** Tak för hur många år av "förväntat" slitage vi räknar med. */
+const MAX_EXPECTED_YEARS = 25;
 
 export function ratingLabel(score: number): string {
   if (score >= 8) return 'Riktigt bra köp';
@@ -69,6 +73,8 @@ export function ratingLabel(score: number): string {
 export function calcCarRating(input: RatingInput): CarRating | null {
   const factors: RatingFactor[] = [];
   const currentYear = new Date().getFullYear();
+  const age = input.year ? Math.max(0, currentYear - input.year) : null;
+  const isClassic = age != null && age >= CLASSIC_AGE_YEARS;
 
   /* 1. Pris mot marknaden (40 %) */
   if (input.benchmark) {
