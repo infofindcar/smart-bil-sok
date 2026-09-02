@@ -90,45 +90,35 @@ export function calcCarRating(input: RatingInput): CarRating | null {
     factors.push({ key: 'price', label: 'Pris mot marknaden', score, weight: 40, detail });
   }
 
-  /* 2. Miltal mot åldern (20 %) */
-  if (input.mileage != null && input.mileage > 0 && input.year) {
-    const age = Math.max(1, currentYear - input.year);
-    const expected = age * NORMAL_MIL_PER_YEAR;
+  /* 2. Skick & slitage — miltal per år (30 %) */
+  if (input.mileage != null && input.mileage > 0 && age != null) {
+    const ageForRate = Math.max(1, age);
+    // Taket gör att en 40-årig bil inte automatiskt får full poäng bara
+    // för att "förväntat" miltal blivit orimligt högt.
+    const expected = Math.min(ageForRate, MAX_EXPECTED_YEARS) * NORMAL_MIL_PER_YEAR;
     const ratio = input.mileage / expected;
     // 0,5× förväntat = 10, 1,8× = 0
     const score = scale(-ratio, -1.8, -0.5);
-    const perYear = Math.round(input.mileage / age);
+    const perYear = Math.round(input.mileage / ageForRate);
     const detail = ratio <= 0.8
-      ? `Lågt miltal — ~${perYear.toLocaleString('sv-SE')} mil/år`
+      ? `Lågt slitage — ~${perYear.toLocaleString('sv-SE')} mil/år`
       : ratio >= 1.25
-        ? `Högt miltal — ~${perYear.toLocaleString('sv-SE')} mil/år`
-        : `Normalt miltal — ~${perYear.toLocaleString('sv-SE')} mil/år`;
-    factors.push({ key: 'mileage', label: 'Miltal mot åldern', score, weight: 20, detail });
+        ? `Högt slitage — ~${perYear.toLocaleString('sv-SE')} mil/år`
+        : `Normalt slitage — ~${perYear.toLocaleString('sv-SE')} mil/år`;
+    factors.push({ key: 'mileage', label: 'Skick & slitage', score, weight: 30, detail });
   }
 
-  /* 3. Ålder (15 %) */
-  if (input.year) {
-    const age = currentYear - input.year;
-    const score = scale(-age, -18, 0);
-    const detail = age <= 3
-      ? `Ny bil (${input.year}) — mycket livslängd kvar`
-      : age <= 8
-        ? `${age} år gammal — normal ålder på marknaden`
-        : `${age} år gammal — räkna med mer underhåll`;
-    factors.push({ key: 'age', label: 'Ålder', score, weight: 15, detail });
-  }
-
-  /* 4. Ägandekostnad i förhållande till prisklassen (15 %) */
+  /* 3. Ägandekostnad i förhållande till prisklassen (20 %) */
   if (input.runningMonthly && input.price && input.price > 0) {
     // Löpande kostnad som andel av bilens pris per år.
     const yearlyShare = (input.runningMonthly * 12) / input.price;
     // 8 % av priset per år = bra, 35 % = dyrt att äga
     const score = scale(-yearlyShare, -0.35, -0.08);
     const detail = `~${Math.round(input.runningMonthly).toLocaleString('sv-SE')} kr/mån i löpande kostnad`;
-    factors.push({ key: 'cost', label: 'Ägandekostnad', score, weight: 15, detail });
+    factors.push({ key: 'cost', label: 'Ägandekostnad', score, weight: 20, detail });
   }
 
-  /* 5. Säkerhet (10 %) */
+  /* 4. Säkerhet (10 %) */
   if (input.ncapStars && input.ncapStars > 0) {
     const score = scale(input.ncapStars, 1, 5);
     factors.push({
@@ -148,7 +138,19 @@ export function calcCarRating(input: RatingInput): CarRating | null {
   const weighted = factors.reduce((s, f) => s + f.score * f.weight, 0) / totalWeight;
   const score = Math.round(clamp(weighted, 1, 10) * 10) / 10;
 
-  return { score, label: ratingLabel(score), factors };
+  /* Årsmodell redovisas som information — den påverkar inte betyget. */
+  if (input.year && age != null) {
+    const detail = isClassic
+      ? `${input.year} · ${age} år — klassiker, bedöms på skick och pris`
+      : age <= 3
+        ? `${input.year} · ny bil — mycket livslängd kvar`
+        : age <= 8
+          ? `${input.year} · ${age} år — normal ålder på marknaden`
+          : `${input.year} · ${age} år — räkna med mer underhåll`;
+    factors.push({ key: 'age', label: 'Årsmodell', score: 0, weight: 0, detail, informational: true });
+  }
+
+  return { score, label: ratingLabel(score), factors, isClassic };
 }
 
 export function benchmarkLabel(level: BenchmarkLevel): string {
