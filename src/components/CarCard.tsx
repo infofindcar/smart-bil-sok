@@ -7,6 +7,7 @@ import type { Car } from './GuidedSearch';
 import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
 import { ShareCar } from './ShareCar';
+import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
 
 
 interface CarCardProps {
