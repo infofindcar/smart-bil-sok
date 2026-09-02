@@ -123,8 +123,10 @@ export function SimilarListingsModal({ car, open, onOpenChange }: Props) {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
               {car.image_thumb_url && (
                 <img
-                  src={car.image_thumb_url}
+                  src={carImageUrl(car.image_thumb_url, 320)}
+                  srcSet={carImageSrcSet(car.image_thumb_url, 320)}
                   alt=""
+                  loading="lazy"
                   className="w-16 h-16 object-cover rounded-md flex-shrink-0"
                 />
               )}
