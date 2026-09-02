@@ -1097,6 +1097,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             key={lastAssistantMsg?.id}
             suggestions={lastAssistantMsg?.suggestions}
             multiSelect={lastAssistantMsg?.multiSelect}
+            priceMode={isPriceQuestion(lastAssistantMsg?.content, lastAssistantMsg?.suggestions)}
+
             onPick={handleSuggestionClick}
             onWriteOwn={() => inputRef.current?.focus()}
             writeOwnLabel={WRITE_OWN[language] || WRITE_OWN.sv}
