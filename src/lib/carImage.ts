@@ -14,13 +14,17 @@ const OPTIMIZABLE_HOSTS = ['images.blocketcdn.se'];
 /** 4:3 är annonsbildernas naturliga format hos Blocket. */
 const ASPECT = 3 / 4;
 
+/** CDN:en levererar aldrig mer än 1280 px bred — begär inte mer. */
+const MAX_WIDTH = 1280;
+
 export function carImageUrl(url: string | null | undefined, width: number): string {
   if (!url) return '';
   try {
     const u = new URL(url);
     if (!OPTIMIZABLE_HOSTS.includes(u.hostname)) return url;
-    u.searchParams.set('width', String(Math.round(width)));
-    u.searchParams.set('height', String(Math.round(width * ASPECT)));
+    const w = Math.min(Math.round(width), MAX_WIDTH);
+    u.searchParams.set('width', String(w));
+    u.searchParams.set('height', String(Math.round(w * ASPECT)));
     u.searchParams.set('format', 'webp');
     u.searchParams.set('quality', '80');
     return u.toString();
