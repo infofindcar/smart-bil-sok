@@ -97,37 +97,56 @@ const filterChips = (filters: Record<string, unknown>) =>
     }));
 
 
-const GREETINGS: Record<string, ChatMessage> = {
-  sv: {
-    id: '1',
-    role: 'assistant',
+const SV_GREETING_VARIANTS: Array<{ content: string; suggestions: string[] }> = [
+  {
     content: 'Hej! Jag är Clutch. Berätta vad du letar efter — så fixar jag resten.',
-    suggestions: ['Pendlar till jobbet', 'Familjebil', 'Entusiastbil/sportbil', 'Vet inte riktigt'],
+    suggestions: ['Pendlar till jobbet', 'Vi behöver familjebil', 'Vill ha något roligt att köra', 'Vet inte riktigt'],
   },
-  en: {
+  {
+    content: 'Hallå! Jag är Clutch. Vad ska bilen användas till, ungefär?',
+    suggestions: ['Jobbet, kör dagligen', 'Familjebil med plats', 'Sportig och rolig', 'Inte helt säker'],
+  },
+  {
+    content: 'Hej! Kul att du hörde av dig. Jag hjälper dig hitta rätt bil. Vad har du för situation?',
+    suggestions: ['Pendlar till jobbet', 'Behöver familjebil', 'Vill ha något kul', 'Vet inte än'],
+  },
+  {
+    content: 'Hej! Jag är Clutch — din objektiva bilrådgivare. Vad letar du efter?',
+    suggestions: ['Pendlarbil för jobbet', 'Familjebil', 'Rolig/sportig bil', 'Hjälp mig välja'],
+  },
+];
+
+const getRandomGreeting = (): ChatMessage => {
+  const v = SV_GREETING_VARIANTS[Math.floor(Math.random() * SV_GREETING_VARIANTS.length)];
+  return { id: '1', role: 'assistant', ...v };
+};
+
+const GREETINGS: Record<string, () => ChatMessage> = {
+  sv: getRandomGreeting,
+  en: () => ({
     id: '1',
     role: 'assistant',
-    content: 'Hi! I\'m Clutch, your personal car advisor. Tell me a bit about yourself and what you\'re looking for — and I\'ll find the perfect car for you.',
-    suggestions: ['I commute to work', 'Need a family car', 'Want a fun car', 'Not sure yet'],
-  },
-  no: {
+    content: "Hi! I'm Clutch, your personal car advisor. Tell me a bit about what you're looking for.",
+    suggestions: ['I commute to work', 'Need a family car', 'Want something fun to drive', 'Not sure yet'],
+  }),
+  no: () => ({
     id: '1',
     role: 'assistant',
-    content: 'Hei! 👋 Jeg er Clutch, din personlige bilrådgiver. Fortell litt om deg og hva du leter etter — så finner jeg bilen som passer deg.',
-    suggestions: ['Jeg pendler til jobb', 'Trenger en familiebil', 'Vil ha en morsom bil', 'Vet ikke helt'],
-  },
-  da: {
+    content: 'Hei! Jeg er Clutch. Hva slags bil leter du etter?',
+    suggestions: ['Jeg pendler til jobb', 'Trenger familiebil', 'Vil ha noe gøy å kjøre', 'Vet ikke helt'],
+  }),
+  da: () => ({
     id: '1',
     role: 'assistant',
-    content: 'Hej! 👋 Jeg er Clutch, din personlige bilrådgiver. Fortæl lidt om dig selv og hvad du leder efter — så finder jeg bilen der passer dig.',
-    suggestions: ['Jeg pendler til arbejde', 'Har brug for en familiebil', 'Vil have en sjov bil', 'Ved ikke rigtig'],
-  },
-  fi: {
+    content: 'Hej! Jeg er Clutch. Hvad leder du efter?',
+    suggestions: ['Jeg pendler til arbejde', 'Har brug for familiebil', 'Vil have noget sjovt', 'Ved ikke rigtig'],
+  }),
+  fi: () => ({
     id: '1',
     role: 'assistant',
-    content: 'Hei! 👋 Olen Clutch, henkilökohtainen autoneuvonantajasi. Kerro hieman itsestäsi ja mitä etsit — niin löydän sinulle täydellisen auton.',
-    suggestions: ['Pendelöin töihin', 'Tarvitsen perheauton', 'Haluan hauskan auton', 'En ole varma'],
-  },
+    content: 'Hei! Olen Clutch. Mitä olet etsimässä?',
+    suggestions: ['Pendelöin töihin', 'Tarvitsen perheauton', 'Haluan jotain hauskaa', 'En ole varma'],
+  }),
 };
 
 const PLACEHOLDERS: Record<string, string> = {
@@ -225,7 +244,7 @@ const loadChatState = (): { messages: ChatMessage[]; phase: Phase } | null => {
 
 export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }: GuidedSearchProps) => {
   const savedChat = loadChatState();
-  const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETINGS.sv]);
+  const [messages, setMessages] = useState<ChatMessage[]>(savedChat?.messages || [GREETINGS.sv()]);
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
@@ -800,7 +819,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
   const handleReset = (lang?: string) => {
     const l = lang || language;
-    setMessages([GREETINGS[l] || GREETINGS.sv]);
+    setMessages([(GREETINGS[l] || GREETINGS.sv)()]);
     setPhase('chatting');
     setInputValue('');
     setVisibleText({});
