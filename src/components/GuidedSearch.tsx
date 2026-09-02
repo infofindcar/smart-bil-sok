@@ -766,7 +766,13 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       if (error) throw error;
 
       if (data?.action === 'ask') {
-        addAssistantMessage(data.message, data.suggestions, undefined, data.multiSelect === true);
+        addAssistantMessage(
+          data.message,
+          data.suggestions,
+          undefined,
+          data.multiSelect === true || inferMultiSelect(data.message, data.suggestions),
+        );
+
         setIsLoading(false);
       } else if (data?.action === 'confirm') {
         // Visa sammanfattningskort — kunden bekräftar innan vi söker
