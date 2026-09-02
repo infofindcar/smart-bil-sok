@@ -230,7 +230,7 @@ const featurePatterns: Record<string, string[]> = {
 // Only fields rendered by the results UI. In particular, omit the large
 // description column from every candidate response.
 const SEARCH_COLUMNS =
-  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,regnr,horsepower,transmission,dealer_name,seats";
+  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,regnr,horsepower,transmission,dealer_name,seats,listing_url,dealer_url";
 
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
@@ -466,8 +466,8 @@ serve(async (req) => {
       // Level 2: släpp modell/märke — visa LIKNANDE bilar med samma
       //          karosstyp och årsintervall istället för irrelevanta fordon.
       const buildLoadMoreQuery = (level: number) => {
-        const priceMult = [1.3, 1.6, 1.8][level] || 1.8;
-        const priceMinMult = [0.7, 0.5, 0.85][level] || 0.85;
+        const priceMult = [1.0, 1.3, 1.6][level] ?? 1.6;
+        const priceMinMult = [1.0, 0.7, 0.5][level] ?? 0.5;
         let q = sb.from("Lovable").select(SEARCH_COLUMNS)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
@@ -483,6 +483,9 @@ serve(async (req) => {
         if (fuels.length > 0 && level < 3) {
           const ff = fuels.map((x: string) => fuelPatterns[x]).filter(Boolean).map((p: string) => `fuel_type.ilike.${p}`).join(",");
           if (ff) q = q.or(ff);
+          if (fuels.includes("hybrid") && !fuels.includes("laddhybrid")) {
+            q = q.not("fuel_type", "ilike", "%Laddhybrid%");
+          }
         }
         if (bodies.length > 0) {
           const bf = bodies.map((x: string) => bodyPatterns[x]).filter(Boolean).map((p: string) => `body_type.ilike.${p}`);
@@ -501,7 +504,14 @@ serve(async (req) => {
         // 10 år äldre bilar bara för att modellen matchar.
         if (yMin) q = q.gte("year", yMin);
         if (yMax) q = q.lte("year", yMax);
-        if (trans) q = q.or(`transmission.ilike.${transmissionPatterns[trans]},transmission.is.null`);
+        if (trans) {
+          const tp = transmissionPatterns[trans];
+          if (level === 0) {
+            q = q.ilike("transmission", tp);
+          } else {
+            q = q.or(`transmission.ilike.${tp},transmission.is.null`);
+          }
+        }
 
         // Bilfirma är hårt på alla nivåer — bad kunden om en firma ska "Visa
         // fler" aldrig blanda in andra firmors bilar.
@@ -863,6 +873,10 @@ serve(async (req) => {
             .map((p: string) => `fuel_type.ilike.${p}`)
             .join(",");
           if (fuelFilters) query = query.or(fuelFilters);
+          // Prevent %Hybrid% from matching Laddhybrid when user only asked for hybrid
+          if (validFuels.includes("hybrid") && !validFuels.includes("laddhybrid")) {
+            query = query.not("fuel_type", "ilike", "%Laddhybrid%");
+          }
         }
         if (validBodyTypes.length > 0 && level < 1) {
           // Match by body_type field, Unknown body_type, OR by model name
@@ -901,10 +915,15 @@ serve(async (req) => {
         if (yearMax && level < 2) query = query.lte("year", yearMax);
 
         // Växellåda: hårt krav till och med nivå 2 — kunden som ber om automat
-        // ska aldrig få manuella bilar. Null-värden tillåts (ej berikade).
+        // ska aldrig få manuella bilar. Null-värden (ej berikade) tillåts
+        // bara från nivå 1+ för att undvika falska träffar på strikt nivå 0.
         if (sanitizedTransmission && level < 3) {
           const p = transmissionPatterns[sanitizedTransmission];
-          query = query.or(`transmission.ilike.${p},transmission.is.null`);
+          if (level === 0) {
+            query = query.ilike("transmission", p);
+          } else {
+            query = query.or(`transmission.ilike.${p},transmission.is.null`);
+          }
         }
 
         // Bilfirma: hårt krav på alla relaxeringsnivåer. Ber kunden om en

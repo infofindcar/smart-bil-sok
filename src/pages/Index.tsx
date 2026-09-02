@@ -145,9 +145,10 @@ const Index = () => {
       if (data?.cars?.length > 0) {
         setCars((prev) => [...prev, ...data.cars]);
         setCarReasons((prev) => [...prev, ...(data.carReasons || [])]);
+        if (data.message) setResultMessage(data.message);
       } else {
         setAllLoaded(true);
-        toast.info('Inga fler bilar hittades med dina filter.');
+        toast.info(data?.message || 'Inga fler bilar hittades med dina filter.');
       }
     } catch (err) {
       console.error('Load more error:', err);
