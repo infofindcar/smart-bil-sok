@@ -198,7 +198,7 @@ async function main() {
         model_clean:   car.model ?? null,
         year:          car.year ?? null,
         price:         car.price?.amount ?? null,
-        mileage:       car.mileage ? Math.round(car.mileage / 10) : null, // Blocket skickar km, vi lagrar mil
+        mileage:       car.mileage ?? null, // Blocket skickar redan MIL (verifierat mot annonssida)
         city:          car.location ?? null,
         fuel_type:     car.fuel ?? null,
         transmission:  car.transmission ?? null,
