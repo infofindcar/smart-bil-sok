@@ -470,6 +470,11 @@ const CarDetail = () => {
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">FindCar-betyg</p>
                   <p className="text-lg font-bold">{rating.label}</p>
+                  {rating.isClassic && (
+                    <p className="text-[11px] text-primary font-medium mt-0.5">
+                      Klassiker — bedöms på skick och pris, inte ålder
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowFactors((v) => !v)}
@@ -487,15 +492,19 @@ const CarDetail = () => {
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="text-sm font-medium">{f.label}</span>
                         <span className="text-xs text-muted-foreground">
-                          {f.score.toFixed(1).replace('.', ',')} / 10 · vikt {f.weight} %
+                          {f.informational
+                            ? 'påverkar inte betyget'
+                            : `${f.score.toFixed(1).replace('.', ',')} / 10 · vikt ${f.weight} %`}
                         </span>
                       </div>
-                      <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${Math.round(f.score * 10)}%` }}
-                        />
-                      </div>
+                      {!f.informational && (
+                        <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${Math.round(f.score * 10)}%` }}
+                          />
+                        </div>
+                      )}
                       <p className="text-[11px] text-muted-foreground/70 mt-1 leading-tight">{f.detail}</p>
                     </div>
                   ))}
@@ -503,8 +512,9 @@ const CarDetail = () => {
               )}
 
               <p className="text-[11px] text-muted-foreground/60 italic mt-3 leading-tight">
-                Betyget gäller den här annonsen — pris, miltal, ålder, ägandekostnad och säkerhet — inte bilmodellen
-                i sig. Det bygger på annonsens uppgifter och ersätter inte en besiktning eller provkörning.
+                Betyget gäller den här annonsen — pris, skick, ägandekostnad och säkerhet — inte bilmodellen
+                i sig. Åldern i sig sänker inte betyget. Det bygger på annonsens uppgifter och ersätter inte en
+                besiktning eller provkörning.
               </p>
             </div>
           )}
