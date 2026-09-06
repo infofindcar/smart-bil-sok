@@ -1,23 +1,21 @@
 /**
  * Motoretikett per annons — t.ex. "2.0 l I4", "3.9 l V8", "2.0 l", "El".
  *
- * Grundregel: vi visar BARA sådant som kommer från den enskilda annonsen
- * (annonsens engine_volume_cc och/eller volym i annonstiteln). Vi gissar
- * aldrig utifrån modellen, eftersom nästan identiska bilar ofta skiljer sig
- * just i motorstorlek. Är något osäkert returnerar vi null och inget visas.
+ * Grundregel: vi visar BARA sådant som står i den enskilda annonsen
+ * (säljarens annonstitel). Vi gissar aldrig utifrån modellen, eftersom nästan
+ * identiska bilar ofta skiljer sig just i motorstorlek. Är något osäkert
+ * returneras null och inget visas.
+ *
+ * OBS: kolumnen engine_volume_cc i databasen innehåller volymen avrundad till
+ * hela liter (2.0 och 2.9 lagras båda som 2) och används därför INTE.
  */
 
-const CC_MIN = 600;
-const CC_MAX = 8500;
 const L_MIN = 0.6;
 const L_MAX = 8.0;
-/** Max tillåten skillnad mellan annonsens cc-värde och titelns volym. */
-const L_TOLERANCE = 0.15;
 
 const LAYOUTS = ['V6', 'V8', 'V10', 'V12', 'W12', 'I3', 'I4', 'I5', 'I6', 'R4', 'B4', 'B6'] as const;
 
 export interface EngineLabelInput {
-  engine_volume_cc?: number | null;
   model_raw?: string | null;
   fuel_type?: string | null;
 }
@@ -25,11 +23,6 @@ export interface EngineLabelInput {
 const round1 = (liters: number) => Math.round(liters * 10) / 10;
 const fmtLiters = (liters: number) => round1(liters).toFixed(1).replace('.', ',');
 
-/** Volym från annonsens eget cc-fält. */
-function volumeFromCc(cc: number | null | undefined): number | null {
-  if (!cc || cc < CC_MIN || cc > CC_MAX) return null;
-  return round1(cc / 1000);
-}
 
 /**
  * Volym ur annonstiteln. Godtar "2.0", "1,6" osv, men bara när talet
