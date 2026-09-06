@@ -230,7 +230,7 @@ const featurePatterns: Record<string, string[]> = {
 // Only fields rendered by the results UI. In particular, omit the large
 // description column from every candidate response.
 const SEARCH_COLUMNS =
-  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,regnr,horsepower,transmission,dealer_name,seats,listing_url,dealer_url";
+  "id,make,model,model_raw,year,price,mileage,fuel_type,body_type,drivetrain,city,color,image_thumb_url,regnr,horsepower,transmission,engine_volume_cc,dealer_name,seats,listing_url,dealer_url";
 
 // Model names that imply a body type (used when body_type is Unknown/null)
 const modelBodyTypeMap: Record<string, string[]> = {
