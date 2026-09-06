@@ -32,7 +32,7 @@ Krock mellan källorna hanteras strikt: om annonsens `engine_volume_cc` och tite
    - Ren elbil utan volym → "El". Laddhybrid/hybrid med volym → suffix "hybrid".
    - Returnerar `null` när något är osäkert.
 2. `src/pages/CarDetail.tsx`: en post i `specs`-listan med rubrik "Motor"; befintlig `.filter(s => s.value)` gör att kortet försvinner när värdet är `null`.
-3. `src/components/CarCard.tsx`: samma text som etikett i nyckelfakta-raden när värdet finns.
+
 
 Inga databasändringar, inga AI-anrop, ingen påverkan på sök, priser eller leasingfilter.
 
