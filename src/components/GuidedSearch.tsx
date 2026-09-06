@@ -49,7 +49,6 @@ export type Car = {
   regnr: string | null;
   horsepower: number | null;
   transmission: string | null;
-  engine_volume_cc?: number | null;
   dealer_name: string | null;
   dealer_url: string | null;
 };
