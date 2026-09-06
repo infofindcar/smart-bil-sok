@@ -44,7 +44,7 @@ function volumeFromTitle(raw: string | null | undefined): number | null {
     const after = title.slice(m.index + m[0].length, m.index + m[0].length + 8).toLowerCase();
 
     // Uteslut kända icke-motorvolymer i närheten av talet.
-    if (/(0-100|0–100|kwh|kw\b|sek|kr|mil\b|km\b|l\/100|s\b)\s*$/.test(before)) continue;
+    if (/(0-100|0–100|kwh|kw\b|sek|kr|mil\b|km\b|l\/100)\s*$/.test(before)) continue;
     if (/^\s*(kwh|kw\b|s\b|sek|kr|mil\b|km|l\/100|%)/.test(after)) continue;
 
     found.add(round1(value));
