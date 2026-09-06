@@ -212,9 +212,32 @@ async function enrichModel(
 // ─────────────────────────────────────────────
 // Bildanalys för färg – unik per bil
 // ─────────────────────────────────────────────
+async function fetchImageDataUrl(url: string | null | undefined): Promise<string | null> {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return null;
+    const type = res.headers.get("content-type") ?? "";
+    if (!type.startsWith("image/")) return null;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.byteLength < 512 || buf.byteLength > 6_000_000) return null;
+    let bin = "";
+    for (let i = 0; i < buf.length; i += 0x8000) {
+      bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    }
+    return `data:${type.split(";")[0]};base64,${btoa(bin)}`;
+  } catch {
+    return null;
+  }
+}
+
 async function detectColor(apiKey: string, imageUrl: string, make: string, model: string): Promise<string> {
-  // Skicka URL:en direkt till Gemini – Gemini når Blockets CDN bättre än edge functions gör
-  const imageContent = { type: "image_url", image_url: { url: imageUrl } };
+  // Hämta bilden själva och skicka inline – Vertex/Gemini kan inte hämta Blockets CDN
+  // och döda länkar ger 400 som aldrig lyckas vid retry.
+  const dataUrl = await fetchImageDataUrl(imageUrl);
+  if (!dataUrl) return "Okänd";
+  const imageContent = { type: "image_url", image_url: { url: dataUrl } };
+
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
