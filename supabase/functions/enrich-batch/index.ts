@@ -137,6 +137,30 @@ async function enrichModel(
 }
 
 // ─────────────────────────────────────────────
+// Bildhämtning – Vertex/Gemini kan inte hämta Blockets CDN-länkar
+// (döda länkar → 400 "Cannot fetch content from the provided URL").
+// Vi hämtar bytes själva och skickar dem inline som base64.
+// ─────────────────────────────────────────────
+async function fetchImageDataUrl(url: string | null | undefined): Promise<string | null> {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return null;
+    const type = res.headers.get("content-type") ?? "";
+    if (!type.startsWith("image/")) return null;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.byteLength < 512 || buf.byteLength > 6_000_000) return null;
+    let bin = "";
+    for (let i = 0; i < buf.length; i += 0x8000) {
+      bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    }
+    return `data:${type.split(";")[0]};base64,${btoa(bin)}`;
+  } catch {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────
 // Batch-färgdetektering – 10 bilar per Gemini-anrop
 // ─────────────────────────────────────────────
 async function detectColorsBatch(
@@ -146,13 +170,25 @@ async function detectColorsBatch(
   const results: Record<number, string> = {};
 
   for (let i = 0; i < cars.length; i += 10) {
-    const batch = cars.slice(i, i + 10);
+    const rawBatch = cars.slice(i, i + 10);
+
+    // Hämta bilderna själva; döda länkar hoppas över (sentinel "Okänd" så de inte loopar)
+    const fetched = await Promise.all(rawBatch.map((car) => fetchImageDataUrl(car.image_thumb_url)));
+    const batch: typeof rawBatch = [];
+    const dataUrls: string[] = [];
+    rawBatch.forEach((car, idx) => {
+      const dataUrl = fetched[idx];
+      if (dataUrl) { batch.push(car); dataUrls.push(dataUrl); }
+      else { results[car.id] = "Okänd"; }
+    });
+    if (batch.length === 0) continue;
 
     try {
       const imageContents = batch.flatMap((car, idx) => [
         { type: "text", text: `Bil ${idx + 1} (${car.make} ${car.model}):` },
-        { type: "image_url", image_url: { url: car.image_thumb_url } },
+        { type: "image_url", image_url: { url: dataUrls[idx] } },
       ]);
+
 
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
