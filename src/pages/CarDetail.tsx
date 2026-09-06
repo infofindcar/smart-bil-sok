@@ -21,6 +21,7 @@ import {
 } from '@/lib/carData';
 
 import { calcCarRating, benchmarkLabel, type PriceBenchmark, type CarRating } from '@/lib/carRating';
+import { engineLabel } from '@/lib/engineLabel';
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
