@@ -77,22 +77,13 @@ function fuelKind(fuel: string | null | undefined): 'el' | 'hybrid' | 'other' {
 }
 
 export function engineLabel(input: EngineLabelInput): string | null {
-  const fromCc = volumeFromCc(input.engine_volume_cc);
-  const fromTitle = volumeFromTitle(input.model_raw);
+  const liters = volumeFromTitle(input.model_raw);
   const kind = fuelKind(input.fuel_type);
-
-  let liters: number | null = null;
-  if (fromCc !== null && fromTitle !== null) {
-    // Krock mellan källorna → vi vet inte vilken som stämmer.
-    if (Math.abs(fromCc - fromTitle) > L_TOLERANCE) return null;
-    liters = fromCc;
-  } else {
-    liters = fromCc ?? fromTitle;
-  }
 
   if (liters === null) {
     return kind === 'el' ? 'El' : null;
   }
+
 
   const layout = layoutFromTitle(input.model_raw);
   let label = `${fmtLiters(liters)} l`;
