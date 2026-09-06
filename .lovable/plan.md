@@ -1,41 +1,41 @@
 # Motorruta på bilsidan: "2.0 l I4", "3.9 l V8"
 
-Visa motorstorlek och cylinderuppsättning på bilsidan (och som liten etikett på bilkortet), t.ex. "2.0 l I4", "3.9 l V8", "1.5 l I3 hybrid" eller "El" för elbilar.
+Visa motorstorlek (och cylinderuppsättning när den är känd) på bilsidan och som liten etikett på bilkortet. Grundregel: **bara data som kommer från den specifika annonsen** — aldrig ett typvärde för modellen.
 
-## Vad vi har idag
+## Varför ingen AI-gissning per modell
 
-Kontrollerat mot databasen (74 484 aktiva annonser):
+Nästan identiska bilar skiljer sig ofta just i motorn (t.ex. 1.5 mot 2.0, V6 mot V8 i samma modell). Ett värde som gäller "modellen i snitt" skulle därför bli fel på precis de bilar där uppgiften spelar mest roll. Vi låter alltså inte AI:n fylla i motorstorlek per modell, och vi visar hellre inget än något osäkert.
 
-- Motorvolym som riktigt värde: 26 077 bilar (35 %).
-- Volym utläsbar ur annonstiteln ("2.0", "1,6"): 24 355 bilar.
-- Tillsammans: 42 580 bilar (57 %).
-- Cylinderuppsättning (V6, V8, I4 …) lagras inte någonstans och syns i titeln på bara 2 750 bilar (4 %).
+## Datakällor vi litar på (kontrollerat mot databasen, 74 484 aktiva annonser)
 
-## Lösning i två steg
+1. `engine_volume_cc` på annonsen — annonsens eget värde. Riktigt värde på 26 077 bilar (35 %).
+2. Volymen i annonstiteln (`model_raw`), t.ex. "320d 2.0" — finns på 24 355 bilar.
+3. Cylinderuppsättning i annonstiteln (V6, V8, I4 …) — bara 2 750 bilar (4 %).
 
-### Steg 1 — visa det vi redan vet (direkt effekt, 57 %)
+Tillsammans ger källa 1 + 2 en motorvolym för 42 580 bilar (57 %). Övriga bilar får ingen motorrad alls.
 
-- Ny hjälpfunktion `src/lib/engineLabel.ts` med `engineLabel({ engine_volume_cc, model_raw, fuel_type })`:
-  - Volym: `engine_volume_cc > 0` avrundas till en decimal (1998 → "2.0"); annars matchas `\b\d[.,]\d\b` i `model_raw` med rimlighetsspann 0.6–8.0.
-  - Cylindrar: matchar `\b(V6|V8|V10|V12|W12|I3|I4|I5|I6|R4|B4|B6)\b` i `model_raw` (R4 normaliseras till I4).
-  - Ren elbil utan volym → "El". Hybrid med volym → suffix "hybrid".
-  - Returnerar `null` när inget säkert kan sägas.
-- `src/pages/CarDetail.tsx`: ny post i `specs`-listan, rubrik "Motor". Följer befintlig `.filter(s => s.value)` så inget kort visas när data saknas.
-- `src/components/CarCard.tsx`: samma korta text som liten etikett bland nyckelfakta när den finns.
+Krock mellan källorna hanteras strikt: om annonsens `engine_volume_cc` och titelns volym skiljer sig mer än 0,15 liter visar vi ingenting, eftersom vi då inte kan avgöra vilken som stämmer.
 
-### Steg 2 — fyll luckorna via modell-cachen (mot ~95 % täckning)
+## Så här visas det
 
-Samma mönster som övriga specifikationer: AI:n svarar en gång per modell och värdet cachas i `car_models`, så kostnaden blir låg.
+- Bilsidan: nytt kort i specifikationslistan, rubrik "Motor", värde t.ex. "2.0 l I4", "3.9 l V8", "2.0 l" (när cylindrar inte är kända) eller "El" för rena elbilar.
+- Bilkortet i sökresultatet: samma korta text som liten etikett bland nyckelfakta, när den finns.
+- Saknas underlag visas inget — samma princip som övriga specifikationer idag.
 
-- SQL-migration: lägg till `typical_engine_volume_l numeric` och `engine_layout text` i `car_models`.
-- `supabase/functions/enrich-batch/index.ts` → `enrichModel()`: två nya `askAI`-frågor i den befintliga `Promise.all`-listan:
-  - "Reply ONLY a decimal (typical engine displacement in liters for the base variant). EVs: 0."
-  - "Reply ONLY one of: I3, I4, I5, I6, V6, V8, V10, V12, W12, B4, B6, EV, UNKNOWN."
-  - Värden valideras mot en whitelist; ogiltiga svar sparas som sentinel (`0` respektive `'Okänd'`) så bilar inte loopar i berikningskön.
-- Visningslagret använder ordningen: annonsens egen volym → titeln → modell-cachen. Cylinderuppsättningen kommer från titeln när den finns, annars modell-cachen, och märks då som typvärde för modellen (visas t.ex. som "2.0 l I4" utan att påstå exakt variant).
+## Teknisk plan
 
-Ingen påverkan på sök, priser eller leasingfilter.
+1. Ny fil `src/lib/engineLabel.ts` med `engineLabel({ engine_volume_cc, model_raw, fuel_type })`:
+   - Volym från `engine_volume_cc > 0`, avrundad till en decimal (1998 → "2.0"). Godtas bara inom 600–8 500 cc.
+   - Volym från titeln via `\b\d[.,]\d\b`, godtas bara inom 0,6–8,0 l och bara när talet inte är ett hästkrafts-/versionstal (kontroll att det inte följs av "T", "TDI"-siffror eller står direkt efter "0-100" o.dyl.).
+   - Finns båda: används bara om de stämmer inom 0,15 l, annars `null`.
+   - Cylindrar: matchar `\b(V6|V8|V10|V12|W12|I3|I4|I5|I6|R4|B4|B6)\b` i titeln (R4 → I4). Ingen gissning från volym eller modell.
+   - Ren elbil utan volym → "El". Laddhybrid/hybrid med volym → suffix "hybrid".
+   - Returnerar `null` när något är osäkert.
+2. `src/pages/CarDetail.tsx`: en post i `specs`-listan med rubrik "Motor"; befintlig `.filter(s => s.value)` gör att kortet försvinner när värdet är `null`.
+3. `src/components/CarCard.tsx`: samma text som etikett i nyckelfakta-raden när värdet finns.
 
-## Vad du ser
+Inga databasändringar, inga AI-anrop, ingen påverkan på sök, priser eller leasingfilter.
 
-Direkt efter steg 1: en "Motor"-rad på drygt hälften av bilarna. När berikningsjobbet har betat av modellerna (några dygn med nuvarande takt) syns motorn på nästan alla bilar.
+## Kontroll innan vi är klara
+
+Jag stickprovar ett urval annonser (bl.a. modeller som finns i flera motoralternativ) och jämför det som visas mot annonstiteln, så att ingen bil får en motor den inte har.
