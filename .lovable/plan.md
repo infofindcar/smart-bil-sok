@@ -1,33 +1,37 @@
-# Skarpare bilder — sista steget
+# Motorruta på bilsidan: "2.0 l I4", "3.9 l V8"
 
-Jag har testat bildtjänsten igen med riktiga annonsbilder. Resultatet:
+Visa en liten motorspecifikation på bilsidan (och som liten etikett på bilkortet) som talar om motorstorlek och cylinderuppsättning, t.ex. "2.0 l I4", "3.9 l V8", "1.5 l I3 hybrid" eller "El" för elbilar.
 
-| Begäran | Levererad upplösning | Filstorlek |
-|---|---|---|
-| Idag (kvalitet 80) | 1280 × 960 | ~130 kB |
-| Kvalitet 90 | 1280 × 960 | ~408 kB* |
-| Kvalitet 95 | 1280 × 960 | ~511 kB* |
-| Begäran 1600/1920/2048 px | fortfarande 1280 × 960 | — |
+## Vad vi faktiskt har i datan idag
 
-*Mätt på en bild vars original bara är 1070 × 913 px, alltså värsta fallet.
+Kontrollerat mot databasen (74 484 aktiva annonser):
 
-Slutsatsen: **upplösningen är maxad** — 1280 × 960 är taket bildtjänsten ger, oavsett vad vi ber om, och en del annonser har inte ens så stora original. Det som återstår att hämta är komprimeringen: idag ber vi om kvalitet 80, och en del av den kvarvarande mjukheten kommer därifrån.
+- Motorvolym finns som riktigt värde på 26 077 bilar (35 %).
+- Annonstiteln innehåller en volym som "2.0" / "1,6" på 24 355 bilar.
+- Slår man ihop de två källorna får vi motorvolym för 42 580 bilar (57 %).
+- Cylinderuppsättning (V6, V8, I4 …) finns inte lagrad någonstans; den syns i titeln på bara 2 750 bilar (4 %).
 
-## Vad vi gör
+Slutsats: volymen kan vi visa på drygt hälften av bilarna. "V8"/"I4"-delen kan vi bara visa när den står i annonstiteln — annars visar vi bara volymen. Ingen gissning, inget påhittat.
 
-1. **Höj kvaliteten till 88** på bilsidans stora bild och på delningsbilden. Tydligt renare kanter och mindre "grus" i lackytor, till en måttlig storleksökning.
-2. **Behåll kvalitet 80 i resultatgriden** där bilderna visas små — där syns skillnaden inte, och griden ska förbli snabb.
-3. **Be om full bredd direkt på bilsidan** (1280 px istället för 960 px som bas), så att även skärmar utan hög pixeltäthet får den skarpa varianten.
-4. **Höj resultatkortens basbredd** från 480 till 560 px, så 2x-varianten landar på taket istället för strax under.
-5. Lazy loading, fade-in och att bilar med trasig bild döljs — allt oförändrat.
+## Så här visas det
 
-## Vad du inte kommer märka
+- Bilsidan: ett nytt kort i specifikationslistan med rubrik "Motor" och värde t.ex. "2.0 l I4", "3.9 l V8", "2.0 l" (när cylindrar saknas) eller "El" för rena elbilar.
+- Bilkortet i sökresultatet: samma korta text som liten etikett vid hästkrafter, om den finns.
+- Saknas underlag visas inget kort alls (samma regel som övriga specifikationer idag).
 
-Bilder från annonser vars original är mindre än 1280 px blir inte skarpare hur vi än ber — de är redan uppskalade av bildtjänsten. Det gäller en minoritet av annonserna.
+## Teknisk plan
 
-## Tekniska detaljer
+1. Ny hjälpfunktion `src/lib/engineLabel.ts`:
+   - `engineLabel({ engine_volume_cc, model_raw, fuel_type, horsepower })`.
+   - Volym: `engine_volume_cc > 0` → avrunda till en decimal (1998 → "2.0"); annars matcha `\b\d[.,]\d\b` i `model_raw` (rimlighetsspann 0.6–8.0).
+   - Cylindrar: matcha `\b(V6|V8|V10|V12|W12|I3|I4|I5|I6|R4|B4|B6)\b` i `model_raw`, normalisera R4→I4, B4→B4 (boxer behålls).
+   - Elbil (`fuel_type` = El) utan volym → "El". Hybrid med volym → suffix "hybrid".
+   - Returnerar `null` när inget säkert kan sägas.
+2. `src/pages/CarDetail.tsx`: lägg till en post i `specs`-listan (ikon `Cog`/`Settings2`) som använder funktionen; följer befintlig `.filter(s => s.value)`-logik.
+3. `src/components/CarCard.tsx`: visa etiketten i den befintliga rad med nyckelfakta när värdet finns.
 
-- `src/lib/carImage.ts`: `carImageUrl(url, width, quality = 80)` — nytt valfritt kvalitetsargument; `carImageSrcSet` skickar vidare det. `carShareImageUrl` sätter `quality=88`. `MAX_WIDTH` stannar på 1280 (verifierat tak).
-- `src/pages/CarDetail.tsx`: huvudbild → bas 1280 px, kvalitet 88.
-- `src/components/CarCard.tsx`: bas 560 px (2x → 1120/1280), kvalitet oförändrad.
-- Inga ändringar i databas, import-skript eller edge-funktioner.
+Inga databasändringar, inga AI-anrop och ingen påverkan på sök eller enrichment.
+
+## Möjlig senare utökning
+
+Vill vi täcka de återstående 43 % kan motorvolym och cylinderantal läggas till som fält i modell-cachen (`car_models`) och berikas en gång per modell — större jobb, tas separat om du vill.
