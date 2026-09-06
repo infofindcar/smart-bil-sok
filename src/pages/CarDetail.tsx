@@ -21,6 +21,7 @@ import {
 } from '@/lib/carData';
 
 import { calcCarRating, benchmarkLabel, type PriceBenchmark, type CarRating } from '@/lib/carRating';
+import { engineLabel } from '@/lib/engineLabel';
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
@@ -321,6 +322,7 @@ const CarDetail = () => {
     { icon: Calendar, label: 'Årsmodell', value: car.year ? String(car.year) : null },
     { icon: Gauge, label: 'Mätarställning', value: car.mileage ? `${fmt(car.mileage)} mil` : null },
     { icon: Fuel, label: 'Drivmedel', value: car.fuel_type },
+    { icon: Settings2, label: 'Motor', value: engineLabel({ model_raw: car.model_raw, fuel_type: car.fuel_type }) },
     { icon: MapPin, label: 'Plats', value: car.city },
     { icon: Palette, label: 'Färg', value: car.color && car.color !== 'Okänd' ? car.color : null },
     { icon: Settings2, label: 'Drivlina', value: drivetrainLabel(realDrivetrain(car.drivetrain) || modelData?.drivetrain_default) },
