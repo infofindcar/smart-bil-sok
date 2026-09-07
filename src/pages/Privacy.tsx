@@ -71,9 +71,20 @@ const Privacy = () => {
                 </p>
               </div>
               <div>
-                <strong className="text-foreground">Teknisk information (om du accepterar statistik-cookies):</strong>
+                <strong className="text-foreground">Anonym besöksstatistik (utan cookies):</strong>
                 <p className="text-muted-foreground mt-1">
-                  Besökta sidor, webbläsartyp och klickbeteende. Samlas bara in om du klickar
+                  För att veta hur många som använder tjänsten räknar vi sidvisningar, sökningar,
+                  visade bilar och kontaktförfrågningar. Ingen cookie används och inget sparas i din
+                  webbläsare. Istället skapas en engångskod (SHA-256-hash av IP-adress, webbläsartyp
+                  och dagens datum) som byts varje dygn och inte kan återföras till dig eller följa
+                  dig mellan dagar. Vi registrerar även enhetstyp (mobil/dator/tablet) och varifrån
+                  besöket kom på gruppnivå (t.ex. "Google"), aldrig en exakt person.
+                </p>
+              </div>
+              <div>
+                <strong className="text-foreground">Övrig teknisk information (om du accepterar statistik-cookies):</strong>
+                <p className="text-muted-foreground mt-1">
+                  Mer detaljerat klickbeteende samlas bara in om du klickar
                   "Acceptera alla" i cookie-bannern. IP-adress hanteras bara kortvarigt i
                   serverfunktioner för missbruksskydd — vi sparar den aldrig i klartext i databasen.
                   För hastighetsbegränsning (max 3 AI-sökningar/dag och max 3 annonsanalyser/dag)
