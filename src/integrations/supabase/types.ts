@@ -69,6 +69,7 @@ export type Database = {
           horsepower: number | null
           id: number
           image_thumb_url: string | null
+          image_urls: string[] | null
           is_active: boolean | null
           last_seen_at: string | null
           make: string | null
@@ -90,6 +91,7 @@ export type Database = {
           horsepower?: number | null
           id?: number
           image_thumb_url?: string | null
+          image_urls?: string[] | null
           is_active?: boolean | null
           last_seen_at?: string | null
           make?: string | null
@@ -111,6 +113,7 @@ export type Database = {
           horsepower?: number | null
           id?: number
           image_thumb_url?: string | null
+          image_urls?: string[] | null
           is_active?: boolean | null
           last_seen_at?: string | null
           make?: string | null
@@ -440,6 +443,7 @@ export type Database = {
           horsepower: number | null
           id: number
           image_thumb_url: string | null
+          image_urls: string[] | null
           is_active: boolean | null
           last_seen_at: string | null
           listing_url: string | null
@@ -476,6 +480,7 @@ export type Database = {
           horsepower?: number | null
           id?: number
           image_thumb_url?: string | null
+          image_urls?: string[] | null
           is_active?: boolean | null
           last_seen_at?: string | null
           listing_url?: string | null
@@ -512,6 +517,7 @@ export type Database = {
           horsepower?: number | null
           id?: number
           image_thumb_url?: string | null
+          image_urls?: string[] | null
           is_active?: boolean | null
           last_seen_at?: string | null
           listing_url?: string | null
