@@ -30,10 +30,6 @@ type Stats = {
     no_results_7d: number; results_7d: number; car_views_7d: number; shares_30d: number;
   } | null;
   searchPreferences: { budget: Entry[]; makes: Entry[]; bodies: Entry[]; fuels: Entry[]; sampled: number };
-  waitlist: {
-    total: number; approved: number; today: number; last7: number;
-    recent: { first_name: string | null; last_name: string | null; email: string; approved: boolean | null; created_at: string }[];
-  };
   leads: {
     last7: number;
     recent: { id: string; car_id: number | null; customer_name: string; customer_email: string; customer_phone: string | null; dealer_name: string | null; status: string | null; created_at: string }[];
