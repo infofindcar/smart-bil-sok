@@ -726,6 +726,8 @@ export type Database = {
       }
     }
     Functions: {
+      admin_car_stats: { Args: never; Returns: Json }
+      admin_traffic_stats: { Args: never; Returns: Json }
       apply_car_model_data_from_cache: { Args: never; Returns: Json }
       delete_unenrichable_cars: { Args: never; Returns: number }
       show_limit: { Args: never; Returns: number }
