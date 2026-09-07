@@ -26,6 +26,7 @@ import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
 import { carImageUrl, carImageSrcSet, carShareImageUrl } from '@/lib/carImage';
+import { CarGallery } from '@/components/CarGallery';
 
 
 /* ── Types ── */
