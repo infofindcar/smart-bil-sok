@@ -11,6 +11,26 @@
 const BLOCKET_API_BASE = "https://blocket-api.se/v1/search/car";
 const PAGES_PER_INTERVAL = 50;
 
+/** Max antal bilder vi sparar per bil. */
+const MAX_GALLERY_IMAGES = 15;
+
+/**
+ * Väljer vilka annonsbilder som ska sparas.
+ * VIKTIGT: sista bilden tas ALLTID bort när det finns fler än en — bilfirmor
+ * lägger ofta en avslutande bild med logga och kontaktuppgifter där.
+ */
+function pickGalleryImages(list, fallback) {
+  const urls = (Array.isArray(list) ? list : [])
+    .map((u) => (typeof u === "string" ? u.trim() : ""))
+    .filter(Boolean);
+  if (urls.length === 0) {
+    const f = typeof fallback === "string" ? fallback.trim() : "";
+    return f ? [f] : [];
+  }
+  if (urls.length > 1) urls.pop();
+  return urls.slice(0, MAX_GALLERY_IMAGES);
+}
+
 // 30 prisintervall som täcker hela prisskalan (SEK)
 // Varje intervall kan ge upp till 2 500 unika bilar (50 sidor × 50 bilar)
 const PRICE_INTERVALS = [
