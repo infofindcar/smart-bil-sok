@@ -298,38 +298,7 @@ const Admin = () => {
 
               {/* 4. Kunder */}
               <div className="grid md:grid-cols-2 gap-4">
-                <Card title="Väntelista">
-                  <div className="flex gap-6 mb-4">
-                    <div>
-                      <p className="text-2xl font-bold">{nf.format(stats.waitlist.total)}</p>
-                      <p className="text-xs text-muted-foreground">totalt</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{nf.format(stats.waitlist.approved)}</p>
-                      <p className="text-xs text-muted-foreground">godkända</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{nf.format(stats.waitlist.last7)}</p>
-                      <p className="text-xs text-muted-foreground">nya 7 dagar</p>
-                    </div>
-                  </div>
-                  <ul className="divide-y divide-border">
-                    {stats.waitlist.recent.map((w) => (
-                      <li key={w.email + w.created_at} className="py-2 flex items-start justify-between gap-3 text-sm">
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">
-                            {[w.first_name, w.last_name].filter(Boolean).join(' ') || 'Utan namn'}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                            <Mail className="h-3 w-3" /> {w.email}
-                          </p>
-                        </div>
-                        <span className="text-[11px] text-muted-foreground shrink-0">{fmtDate(w.created_at)}</span>
-                      </li>
-                    ))}
-                    {stats.waitlist.recent.length === 0 && <li className="py-2 text-sm text-muted-foreground">Inga anmälningar än.</li>}
-                  </ul>
-                </Card>
+
 
                 <Card title="Kontaktförfrågningar">
                   <p className="text-2xl font-bold mb-4">
