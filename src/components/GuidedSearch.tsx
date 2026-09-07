@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Slider } from '@/components/ui/slider';
+import { trackEvent } from '@/hooks/useAnalytics';
 
 /**
  * Vissa frågor rymmer flera svar samtidigt (utrustning, växellåda, drivlina,
@@ -657,6 +658,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
     if (data.cars?.length > 0) {
       setPhase('results');
+      trackEvent('search_results', { count: data.cars.length });
       const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
       onResults(data.cars, resultMsg, data.carReasons || [], false, data.relaxations || []);
       setTimeout(() => {
@@ -664,6 +666,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       }, 600);
     } else {
       setPhase('chatting');
+      trackEvent('search_no_results');
       addAssistantMessage(
         data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
         data.suggestions || [],
@@ -690,6 +693,19 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     } catch {}
 
     setPhase('searching');
+    // Anonym statistik: bara vad kunden letar efter, inget om personen.
+    trackEvent('search_started', {
+      maxPrice: (() => {
+        const b: any = (filters as any).budget;
+        if (typeof b === 'number') return b;
+        if (b && typeof b === 'object') return b.max ?? b.min ?? null;
+        return null;
+      })(),
+      make: (filters as any).make ?? null,
+      bodyType: (filters as any).bodyType ?? null,
+      fuelType: (filters as any).fuel ?? null,
+      city: (filters as any).city ?? null,
+    });
     addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
     try {

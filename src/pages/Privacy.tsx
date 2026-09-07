@@ -71,9 +71,20 @@ const Privacy = () => {
                 </p>
               </div>
               <div>
-                <strong className="text-foreground">Teknisk information (om du accepterar statistik-cookies):</strong>
+                <strong className="text-foreground">Anonym besöksstatistik (utan cookies):</strong>
                 <p className="text-muted-foreground mt-1">
-                  Besökta sidor, webbläsartyp och klickbeteende. Samlas bara in om du klickar
+                  För att veta hur många som använder tjänsten räknar vi sidvisningar, sökningar,
+                  visade bilar och kontaktförfrågningar. Ingen cookie används och inget sparas i din
+                  webbläsare. Istället skapas en engångskod (SHA-256-hash av IP-adress, webbläsartyp
+                  och dagens datum) som byts varje dygn och inte kan återföras till dig eller följa
+                  dig mellan dagar. Vi registrerar även enhetstyp (mobil/dator/tablet) och varifrån
+                  besöket kom på gruppnivå (t.ex. "Google"), aldrig en exakt person.
+                </p>
+              </div>
+              <div>
+                <strong className="text-foreground">Övrig teknisk information (om du accepterar statistik-cookies):</strong>
+                <p className="text-muted-foreground mt-1">
+                  Mer detaljerat klickbeteende samlas bara in om du klickar
                   "Acceptera alla" i cookie-bannern. IP-adress hanteras bara kortvarigt i
                   serverfunktioner för missbruksskydd — vi sparar den aldrig i klartext i databasen.
                   För hastighetsbegränsning (max 3 AI-sökningar/dag och max 3 annonsanalyser/dag)
@@ -107,7 +118,8 @@ const Privacy = () => {
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li><strong>Kontaktformulär:</strong> samtycke (art. 6.1.a) + nödvändigt för åtgärd på din begäran (art. 6.1.b).</li>
               <li><strong>Clutch-konversation:</strong> samtycke (du startar chatten frivilligt). Datan lämnar aldrig din enhet i permanent form.</li>
-              <li><strong>Statistik-cookies (besökta sidor, webbläsartyp):</strong> samtycke (art. 6.1.a) — kräver att du klickar "Acceptera alla".</li>
+              <li><strong>Anonym besöksstatistik (utan cookies, dygnsvis engångskod):</strong> berättigat intresse (art. 6.1.f) — att kunna se hur många som använder tjänsten. Ingen enskild person kan identifieras.</li>
+              <li><strong>Statistik-cookies (detaljerat klickbeteende):</strong> samtycke (art. 6.1.a) — kräver att du klickar "Acceptera alla".</li>
               <li><strong>IP-hash för hastighetsbegränsning:</strong> berättigat intresse (art. 6.1.f) — att skydda tjänsten mot missbruk.</li>
               <li><strong>Intresseanmälan (väntelista):</strong> samtycke (art. 6.1.a) — du anmäler dig frivilligt.</li>
               <li><strong>Förbättringsförslag:</strong> berättigat intresse (art. 6.1.f) — att kunna förbättra tjänsten baserat på frivillig feedback.</li>

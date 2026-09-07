@@ -27,6 +27,7 @@ import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
 import { carShareImageUrl } from '@/lib/carImage';
 import { CarGallery } from '@/components/CarGallery';
+import { trackEvent } from '@/hooks/useAnalytics';
 
 
 /* ── Types ── */
@@ -153,6 +154,11 @@ const CarDetail = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
+  // Anonym statistik: hur många bilar som öppnas
+  useEffect(() => {
+    if (id) trackEvent('car_view', { carId: Number(id) });
+  }, [id]);
 
   // Fetch car if not passed via state
   useEffect(() => {
@@ -736,6 +742,7 @@ const CarDetail = () => {
                       toast.error('Något gick fel. Försök igen.');
                     } else {
                       setFormSubmitted(true);
+                      trackEvent('lead_submitted', { carId: car.id });
                       toast.success('Din förfrågan har skickats!');
                     }
                   }}
