@@ -25,7 +25,8 @@ import { engineLabel } from '@/lib/engineLabel';
 import { parseEquipment } from '@/lib/equipment';
 import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
-import { carImageUrl, carImageSrcSet, carShareImageUrl } from '@/lib/carImage';
+import { carShareImageUrl } from '@/lib/carImage';
+import { CarGallery } from '@/components/CarGallery';
 
 
 /* ── Types ── */
@@ -394,22 +395,12 @@ const CarDetail = () => {
           </div>
 
 
-          {/* Hero image */}
-          <div className="rounded-2xl overflow-hidden bg-card shadow-warm mb-6">
-            {car.image_thumb_url ? (
-              <img
-                src={carImageUrl(car.image_thumb_url, 960)}
-                srcSet={carImageSrcSet(car.image_thumb_url, 960)}
-                sizes="(max-width: 896px) 100vw, 896px"
-                alt={`${car.make} ${displayTitle}`}
-                className="w-full h-64 md:h-96 object-cover"
-              />
-            ) : (
-              <div className="w-full h-64 md:h-96 bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
-                <Car className="h-24 w-24 text-primary-foreground/40" />
-              </div>
-            )}
-          </div>
+          {/* Bildgalleri */}
+          <CarGallery
+            images={car.image_urls}
+            fallback={car.image_thumb_url}
+            alt={`${car.make} ${displayTitle}`}
+          />
 
           {/* Title + price */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">

@@ -120,7 +120,14 @@ async function main() {
     if (!regNr) continue;
 
     // Hoppa över utan bild
-    const firstImage = carImages?.split(',')[0]?.trim() || null;
+    // VIKTIGT: sista bilden tas ALLTID bort när det finns fler än en — den är
+    // ofta bilfirmans logga/kontaktbild och ska aldrig visas för kunden.
+    const galleryImages = (carImages?.split(',') ?? [])
+      .map((u) => u.trim())
+      .filter(Boolean);
+    if (galleryImages.length > 1) galleryImages.pop();
+    const images = galleryImages.slice(0, 15);
+    const firstImage = images[0] || null;
     if (!firstImage) continue;
 
     const price = parseInt(carPrice) || null;
@@ -144,6 +151,7 @@ async function main() {
       color: mapColor(carColour?.trim()),
       city: extractCity(dealer?.trim() || ''),
       image_thumb_url: firstImage,
+      image_urls: images.length > 0 ? images : null,
       horsepower: hp,
       is_active: true,
       last_seen_at: new Date().toISOString(),

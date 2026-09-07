@@ -45,6 +45,7 @@ export type Car = {
   city: string | null;
   color: string | null;
   image_thumb_url: string | null;
+  image_urls?: string[] | null;
   listing_url: string | null;
   regnr: string | null;
   horsepower: number | null;
