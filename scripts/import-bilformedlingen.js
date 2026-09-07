@@ -151,6 +151,7 @@ async function main() {
       color: mapColor(carColour?.trim()),
       city: extractCity(dealer?.trim() || ''),
       image_thumb_url: firstImage,
+      image_urls: images.length > 0 ? images : null,
       horsepower: hp,
       is_active: true,
       last_seen_at: new Date().toISOString(),
