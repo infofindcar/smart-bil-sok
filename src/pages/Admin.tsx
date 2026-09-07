@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Lock, Car, Users, Search, TrendingUp, RefreshCw, MapPin, BarChart3,
-  Smartphone, Monitor, MessageSquare, Mail, Loader2, AlertTriangle, Link2,
+  Smartphone, Monitor, MessageSquare, Loader2, AlertTriangle, Link2,
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
