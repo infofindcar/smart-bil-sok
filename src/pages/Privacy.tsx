@@ -118,7 +118,8 @@ const Privacy = () => {
             <ul className="list-disc list-outside text-muted-foreground text-sm leading-relaxed space-y-1.5 pl-5">
               <li><strong>Kontaktformulär:</strong> samtycke (art. 6.1.a) + nödvändigt för åtgärd på din begäran (art. 6.1.b).</li>
               <li><strong>Clutch-konversation:</strong> samtycke (du startar chatten frivilligt). Datan lämnar aldrig din enhet i permanent form.</li>
-              <li><strong>Statistik-cookies (besökta sidor, webbläsartyp):</strong> samtycke (art. 6.1.a) — kräver att du klickar "Acceptera alla".</li>
+              <li><strong>Anonym besöksstatistik (utan cookies, dygnsvis engångskod):</strong> berättigat intresse (art. 6.1.f) — att kunna se hur många som använder tjänsten. Ingen enskild person kan identifieras.</li>
+              <li><strong>Statistik-cookies (detaljerat klickbeteende):</strong> samtycke (art. 6.1.a) — kräver att du klickar "Acceptera alla".</li>
               <li><strong>IP-hash för hastighetsbegränsning:</strong> berättigat intresse (art. 6.1.f) — att skydda tjänsten mot missbruk.</li>
               <li><strong>Intresseanmälan (väntelista):</strong> samtycke (art. 6.1.a) — du anmäler dig frivilligt.</li>
               <li><strong>Förbättringsförslag:</strong> berättigat intresse (art. 6.1.f) — att kunna förbättra tjänsten baserat på frivillig feedback.</li>
