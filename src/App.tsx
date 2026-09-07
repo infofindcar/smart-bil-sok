@@ -17,8 +17,15 @@ import GuideArticle from "./pages/GuideArticle";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import { usePageViewTracking } from "@/hooks/useAnalytics";
 
 const queryClient = new QueryClient();
+
+/** Räknar anonyma sidvisningar (ingen cookie, inget som pekar ut en person). */
+const PageViewTracker = () => {
+  usePageViewTracking();
+  return null;
+};
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
