@@ -10,6 +10,7 @@ Så ingen ny datakälla, inga extra AI-kostnader — bilderna finns redan, vi ka
 ## Vad vi bygger
 
 1. **Spara alla bilder** vid importen (både Blocket och Bilförmedlingen), max 15 per bil för att hålla datamängden nere. Den första bilden fortsätter vara huvudbilden, precis som idag.
+2. **Sista bilden tas alltid bort** — bilfirmor lägger ofta en avslutande bild med logga och kontaktuppgifter, och den ska aldrig visas. Vi kapar den sista bilden på alla annonser med minst två bilder. Har annonsen bara en bild behålls den (det är bilbilden).
 2. **Galleri på bilsidan**: stor huvudbild som idag, med en rad små miniatyrer under. Klick/svep byter bild. Klick på stora bilden öppnar helskärmsläge med vänster/höger-pilar och svep på mobil.
 3. **Bara första bilden laddas direkt** — övriga laddas när man börjar bläddra, så sidan blir inte tyngre att öppna.
 4. **Sökresultatens bilkort ändras inte** — samma en bild som idag, ingen påverkan på laddtid i griden.
