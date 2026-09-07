@@ -10,10 +10,11 @@ Så ingen ny datakälla, inga extra AI-kostnader — bilderna finns redan, vi ka
 ## Vad vi bygger
 
 1. **Spara alla bilder** vid importen (både Blocket och Bilförmedlingen), max 15 per bil för att hålla datamängden nere. Den första bilden fortsätter vara huvudbilden, precis som idag.
-2. **Galleri på bilsidan**: stor huvudbild som idag, med en rad små miniatyrer under. Klick/svep byter bild. Klick på stora bilden öppnar helskärmsläge med vänster/höger-pilar och svep på mobil.
-3. **Bara första bilden laddas direkt** — övriga laddas när man börjar bläddra, så sidan blir inte tyngre att öppna.
-4. **Sökresultatens bilkort ändras inte** — samma en bild som idag, ingen påverkan på laddtid i griden.
-5. **Bilar som redan finns i databasen** får sina extra bilder vid nästa nattliga uppdatering (varannan natt). Bilar utan extra bilder visar bara huvudbilden, utan miniatyrrad.
+2. **Sista bilden tas alltid bort** — bilfirmor lägger ofta en avslutande bild med logga och kontaktuppgifter, och den ska aldrig visas. Vi kapar den sista bilden på alla annonser med minst två bilder. Har annonsen bara en bild behålls den (det är bilbilden).
+3. **Galleri på bilsidan**: stor huvudbild som idag, med en rad små miniatyrer under. Klick/svep byter bild. Klick på stora bilden öppnar helskärmsläge med vänster/höger-pilar och svep på mobil.
+4. **Bara första bilden laddas direkt** — övriga laddas när man börjar bläddra, så sidan blir inte tyngre att öppna.
+5. **Sökresultatens bilkort ändras inte** — samma en bild som idag, ingen påverkan på laddtid i griden.
+6. **Bilar som redan finns i databasen** får sina extra bilder vid nästa nattliga uppdatering (varannan natt). Bilar utan extra bilder visar bara huvudbilden, utan miniatyrrad.
 
 ## Att tänka på
 
@@ -23,8 +24,9 @@ Så ingen ny datakälla, inga extra AI-kostnader — bilderna finns redan, vi ka
 ## Tekniska detaljer
 
 - **Migration**: `ALTER TABLE public."Lovable" ADD COLUMN image_urls text[]` samt samma kolumn på `avtal_bilar`. Inga nya tabeller, inga RLS-ändringar (befintliga policyer täcker kolumnen).
-- `scripts/import-cars.js`: mappa `car.image_urls` → `image_urls: car.image_urls.slice(0, 15)`, behåll `image_thumb_url = image_urls[0] ?? car.image.url`.
-- `scripts/import-bilformedlingen.js`: `carImages.split(',').map(s => s.trim()).filter(Boolean).slice(0, 15)`.
+- Gemensam regel i båda importskripten: rensa tomma länkar, `if (list.length > 1) list.pop()` (bort med firmans avslutande logga/kontaktbild), sedan `slice(0, 15)`.
+- `scripts/import-cars.js`: mappa `car.image_urls` genom regeln ovan, behåll `image_thumb_url = image_urls[0] ?? car.image.url`.
+- `scripts/import-bilformedlingen.js`: `carImages.split(',')` genom samma regel.
 - `supabase/functions/sync-cars/index.ts` och `sync-bilformedlingen/index.ts`: fältet följer med i upserten automatiskt; verifiera bara att inget whitelist-filter tar bort det.
 - Selektlistorna i `supabase/functions/cars-public/index.ts` (rad 54) och `guided-search/index.ts` (rad 233) utökas med `image_urls` — enbart cars-public behövs för bilsidan; guided-search lämnas orörd för att inte öka svarsstorleken.
 - Ny `src/components/CarGallery.tsx` (huvudbild + miniatyrer + helskärmsdialog via befintlig `Dialog`), används i `src/pages/CarDetail.tsx` där dagens `<img>` på rad 399–405 ligger. Använder `carImageUrl`/`carImageSrcSet` från `src/lib/carImage.ts` (960 px huvudbild, 160 px miniatyrer).
