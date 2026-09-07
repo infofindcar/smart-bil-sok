@@ -693,6 +693,14 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     } catch {}
 
     setPhase('searching');
+    // Anonym statistik: bara vad kunden letar efter, inget om personen.
+    trackEvent('search_started', {
+      maxPrice: (filters as any).budget ?? null,
+      make: (filters as any).make ?? null,
+      bodyType: (filters as any).bodyType ?? null,
+      fuelType: (filters as any).fuel ?? null,
+      city: (filters as any).city ?? null,
+    });
     addAssistantMessage('Perfekt, nu söker jag igenom tusentals bilar åt dig...');
 
     try {
