@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Slider } from '@/components/ui/slider';
+import { trackEvent } from '@/hooks/useAnalytics';
 
 /**
  * Vissa frågor rymmer flera svar samtidigt (utrustning, växellåda, drivlina,
