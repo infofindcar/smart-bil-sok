@@ -658,6 +658,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
 
     if (data.cars?.length > 0) {
       setPhase('results');
+      trackEvent('search_results', { count: data.cars.length });
       const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
       onResults(data.cars, resultMsg, data.carReasons || [], false, data.relaxations || []);
       setTimeout(() => {
@@ -665,6 +666,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       }, 600);
     } else {
       setPhase('chatting');
+      trackEvent('search_no_results');
       addAssistantMessage(
         data.message || 'Tyvärr hittade jag inga bilar som matchar just nu.',
         data.suggestions || [],
