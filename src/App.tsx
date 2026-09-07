@@ -35,6 +35,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <PageViewTracker />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/car/:id" element={<CarDetail />} />
