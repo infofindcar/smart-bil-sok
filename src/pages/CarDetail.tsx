@@ -742,6 +742,7 @@ const CarDetail = () => {
                       toast.error('Något gick fel. Försök igen.');
                     } else {
                       setFormSubmitted(true);
+                      trackEvent('lead_submitted', { carId: car.id });
                       toast.success('Din förfrågan har skickats!');
                     }
                   }}
