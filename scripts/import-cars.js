@@ -190,6 +190,8 @@ async function main() {
 
       const { horsepower, drivetrain } = parseModelRaw(car.model_specification, car.make);
 
+      const imageUrls = pickGalleryImages(car.image_urls, car.image?.url);
+
       allMapped.push({
         source_listing_id: sid,
         make:          car.make ?? null,
@@ -205,7 +207,8 @@ async function main() {
         drivetrain,
         horsepower,
         dealer_name:   car.organisation_name ?? null,
-        image_thumb_url: car.image?.url ?? null,
+        image_thumb_url: imageUrls[0] ?? car.image?.url ?? null,
+        image_urls:    imageUrls.length > 0 ? imageUrls : null,
         listing_url:   car.canonical_url ?? null,
         regnr:         car.regno ?? null,
         source:        "blocket",
