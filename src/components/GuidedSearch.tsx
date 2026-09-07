@@ -695,7 +695,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     setPhase('searching');
     // Anonym statistik: bara vad kunden letar efter, inget om personen.
     trackEvent('search_started', {
-      maxPrice: (filters as any).budget ?? null,
+      maxPrice: (() => {
+        const b: any = (filters as any).budget;
+        if (typeof b === 'number') return b;
+        if (b && typeof b === 'object') return b.max ?? b.min ?? null;
+        return null;
+      })(),
       make: (filters as any).make ?? null,
       bodyType: (filters as any).bodyType ?? null,
       fuelType: (filters as any).fuel ?? null,
