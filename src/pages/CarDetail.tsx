@@ -155,6 +155,11 @@ const CarDetail = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
+  // Anonym statistik: hur många bilar som öppnas
+  useEffect(() => {
+    if (id) trackEvent('car_view', { carId: Number(id) });
+  }, [id]);
+
   // Fetch car if not passed via state
   useEffect(() => {
     if (!car && id) {
