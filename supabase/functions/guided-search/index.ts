@@ -874,7 +874,15 @@ serve(async (req) => {
       let cars: any[] = [];
       let relaxLevel = 0;
 
-      const buildQuery = (level: number) => {
+      type PoolSlice = {
+        /** Andel av prisintervallet: 0 = botten, 1 = toppen. */
+        from: number;
+        to: number;
+        orderBy: string;
+        ascending: boolean;
+      };
+
+      const buildQuery = (level: number, slice?: PoolSlice) => {
         let query = supabase.from("Lovable").select(SEARCH_COLUMNS as string)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
@@ -883,9 +891,17 @@ serve(async (req) => {
 
         const priceMult = [1, 1.3, 1.6, 10][level];
         const priceMinMult = [1, 0.7, 0.5, 0][level];
+        const lowPrice = Math.floor(minPrice * priceMinMult);
+        const highPrice = Math.ceil(maxPrice * priceMult);
+        // Delintervall så kandidaterna sprids över hela prisspannet i stället
+        // för att bara bli de billigaste bilarna som matchar.
+        const span = Math.max(0, highPrice - lowPrice);
+        const sliceMin = slice ? Math.floor(lowPrice + span * slice.from) : lowPrice;
+        const sliceMax = slice ? Math.ceil(lowPrice + span * slice.to) : highPrice;
         query = query
-          .gte("price", Math.floor(minPrice * priceMinMult))
-          .lte("price", Math.ceil(maxPrice * priceMult));
+          .gte("price", sliceMin)
+          .lte("price", sliceMax);
+
 
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
