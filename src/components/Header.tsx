@@ -149,6 +149,13 @@ export const Header = () => {
             Vanliga frågor
           </a>
           <Link
+            to="/community"
+            onClick={() => setMobileOpen(false)}
+            className="text-[15px] font-medium text-foreground/80 hover:text-foreground py-3 px-2 rounded-lg hover:bg-accent/40 transition-colors"
+          >
+            Community
+          </Link>
+          <Link
             to="/om-oss"
             onClick={() => setMobileOpen(false)}
             className="text-[15px] font-medium text-foreground/80 hover:text-foreground py-3 px-2 rounded-lg hover:bg-accent/40 transition-colors"
