@@ -1293,7 +1293,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   // transform) kan begränsa positioneringen.
   if (isFullscreen) {
     return createPortal(
-      <div className="fixed inset-0 z-[100] bg-background p-3 md:p-5 flex">{shell}</div>,
+      <div
+        className="fixed left-0 top-0 w-full z-[100] bg-background p-2 md:p-5 flex overscroll-none"
+        style={{ height: viewportHeight ? `${viewportHeight}px` : '100dvh' }}
+      >
+        {shell}
+      </div>,
       document.body,
     );
   }
