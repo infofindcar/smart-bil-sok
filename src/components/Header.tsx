@@ -90,6 +90,9 @@ export const Header = () => {
           >
             Vanliga frågor
           </a>
+          <Link to="/community" className={navLinkClass}>
+            Community
+          </Link>
           <Link to="/om-oss" className={navLinkClass}>
             Om oss
           </Link>
