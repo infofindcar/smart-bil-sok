@@ -910,16 +910,30 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     !isTypingMsg(lastAssistantMsg);
 
   return (
-    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">
+    <div
+      className={
+        isFullscreen
+          ? 'fixed inset-0 z-50 bg-background p-3 md:p-6 flex'
+          : 'w-full max-w-4xl lg:max-w-5xl mx-auto'
+      }
+    >
       <div
         className={`clutch-shell overflow-hidden border border-border/50 flex flex-col ${
           inputFocused ? 'is-focused' : ''
         } ${
-          isMobile && mobileExpanded
+          isFullscreen
+            ? 'rounded-2xl md:rounded-3xl w-full'
+            : isMobile && mobileExpanded
             ? 'rounded-2xl'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={{ height: isMobile ? 'min(82svh, calc(100dvh - 110px))' : '500px' }}
+        style={{
+          height: isFullscreen
+            ? '100%'
+            : isMobile
+            ? 'min(82svh, calc(100dvh - 110px))'
+            : '500px',
+        }}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
