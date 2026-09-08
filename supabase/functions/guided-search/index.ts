@@ -332,13 +332,25 @@ Hoppa över steg 4 om:
 - Det är uppenbart att kunden inte är kräsen (t.ex. "billigast möjligt")
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NÄR DU SKA SÖKA
+NÄR DU SKA SÖKA — CHECKLISTA (VIKTIGAST I HELA INSTRUKTIONEN)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Sök först när steg 1+2+3 (minst två kontextfrågor) och steg 4 är klara.
+Gå igenom denna checklista internt före VARJE sökning. Är någon punkt okänd eller luddig: ställ frågan i stället för att söka. Att söka på tunn information är det värsta du kan göra — då blir bilarna generella och personen känner sig inte förstådd.
+
+1. Vad bilen ska användas till (pendling/familj/stad/långresa/rolig bil)
+2. Budget (prisintervall)
+3. Kategorifrågan för användningen (pendlingssträcka, familjestorlek, vad "rolig" betyder osv.)
+4. Drivlina — el/laddhybrid/hybrid/bensin/diesel, eller uttalat "spelar ingen roll"
+5. Karosstyp ELLER antal platser som behövs
+6. Hur nytt/lite kört (årsmodell och miltal)
+7. Krav på utrustning/växellåda, eller uttalat "inga specifika krav"
+
+ADAPTIVT ANTAL FRÅGOR: är personen tydlig räcker 5–6 frågor. Har personen svarat "vet inte" eller "spelar ingen roll" på två eller fler punkter är bilden fortfarande tunn — ställ då EN till riktad fråga (t.ex. "Äger du bil idag, och vad gillar/ogillar du med den?", "Vad är viktigast: lågt pris, låg körsträcka eller så ny bil som möjligt?", "Hur många behöver få plats en vanlig dag?") innan du söker. Max 9 frågor totalt.
+
+SAMMANFATTNING FÖRE SÖKNING: i samma svar som du söker (fältet "reasoning" och "customerProfile") ska du sammanfatta det du förstått. Har personen sagt "sök nu", "kör" eller "visa bilar" — respektera det direkt, men sätt då bara de filter du faktiskt har stöd för.
+
 Undantag: specifik modell + budget → ställ ändå minst en fråga om årsmodell/miltal eller utrustning, sök sedan.
-Sikta på 5–7 frågor totalt (max 8). Sök aldrig utan budget, och sök inte om du fortfarande gissar om drivlina eller karosstyp.
-Om kunden själv säger "sök nu", "kör", "visa bilar" eller liknande — respektera det direkt och sök.
+Sök aldrig utan budget.
 
 INTELLIGENTA SLUTLEDNINGAR — härled dessa utan att fråga:
 - Lång pendling (15+ mil) → el eller hybrid/diesel; sätt useCase:pendling
@@ -379,9 +391,15 @@ Flerval (kunden kan välja flera alternativ):
 {"action":"ask","message":"Din fråga här","suggestions":["Alt 1","Alt 2","Alt 3","Alt 4"],"multiSelect":true}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"],"dealerInclude":["Bilfirma"],"dealerExclude":["Annan firma"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"seatsMin":7,"mileageMax":12000,"commuteKmPerDay":80,"priority":"skick","features":["dragkrok","panorama"],"dealerInclude":["Bilfirma"],"dealerExclude":["Annan firma"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
+
+NYA FÄLT — ANVÄND DEM, ANNARS TAPPAS DET PERSONEN SAGT:
+- "seatsMin": antal platser som behövs. Sätt 7 när personen behöver 7-sits, 5 när 5-sits räcker.
+- "mileageMax": högsta miltal i MIL (svenska mil, inte km). "Låg mil viktigast" → ca 10000. "Bryr mig mest om pris" → utelämna.
+- "commuteKmPerDay": daglig pendling i kilometer. "Under 5 mil" → 40, "5–15 mil" → 100, "mer än 15 mil" → 180.
+- "priority": vad som väger tyngst — "pris", "skick" (låg körsträcka/gott skick), "nytt" (så ny årsmodell som möjligt) eller "narhet" (nära hemorten). Sätt det så fort personen antytt en prioritet.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 
 SPECIFIK BILMODELL — VIKTIGT:
@@ -856,13 +874,33 @@ serve(async (req) => {
       const dealerInclude = sanitizeDealerList(filters.dealerInclude);
       const dealerExclude = sanitizeDealerList(filters.dealerExclude);
 
+      // Nya, personliga krav som tidigare stannade i samtalet.
+      const seatsMin = typeof filters.seatsMin === "number" && filters.seatsMin >= 2 && filters.seatsMin <= 9
+        ? Math.round(filters.seatsMin) : null;
+      const mileageMax = typeof filters.mileageMax === "number" && filters.mileageMax > 0 && filters.mileageMax <= 100000
+        ? Math.round(filters.mileageMax) : null;
+      const commuteKmPerDay = typeof filters.commuteKmPerDay === "number" && filters.commuteKmPerDay > 0 && filters.commuteKmPerDay < 1000
+        ? Math.round(filters.commuteKmPerDay) : null;
+      const priority = typeof filters.priority === "string" &&
+        ["pris", "skick", "narhet", "nytt"].includes(filters.priority.toLowerCase())
+        ? filters.priority.toLowerCase() : null;
+
+
 
 
       // Progressive relaxation search — run levels 0 and 1 in parallel for speed
       let cars: any[] = [];
       let relaxLevel = 0;
 
-      const buildQuery = (level: number) => {
+      type PoolSlice = {
+        /** Andel av prisintervallet: 0 = botten, 1 = toppen. */
+        from: number;
+        to: number;
+        orderBy: string;
+        ascending: boolean;
+      };
+
+      const buildQuery = (level: number, slice?: PoolSlice) => {
         let query = supabase.from("Lovable").select(SEARCH_COLUMNS as string)
           .eq("is_active", true)
           .not("image_thumb_url", "is", null)
@@ -871,9 +909,17 @@ serve(async (req) => {
 
         const priceMult = [1, 1.3, 1.6, 10][level];
         const priceMinMult = [1, 0.7, 0.5, 0][level];
+        const lowPrice = Math.floor(minPrice * priceMinMult);
+        const highPrice = Math.ceil(maxPrice * priceMult);
+        // Delintervall så kandidaterna sprids över hela prisspannet i stället
+        // för att bara bli de billigaste bilarna som matchar.
+        const span = Math.max(0, highPrice - lowPrice);
+        const sliceMin = slice ? Math.floor(lowPrice + span * slice.from) : lowPrice;
+        const sliceMax = slice ? Math.ceil(lowPrice + span * slice.to) : highPrice;
         query = query
-          .gte("price", Math.floor(minPrice * priceMinMult))
-          .lte("price", Math.ceil(maxPrice * priceMult));
+          .gte("price", sliceMin)
+          .lte("price", sliceMax);
+
 
         if (sanitizedCity && level < 1) {
           query = query.ilike("city", `%${sanitizedCity}%`);
@@ -970,31 +1016,61 @@ serve(async (req) => {
           }
         }
 
+        // Platsbehov (7-sits m.m.) — hårt krav till och med nivå 1. Bilar utan
+        // registrerat platsantal släpps igenom för att inte tappa hela utbudet.
+        if (seatsMin && seatsMin > 5 && level < 2) {
+          query = query.or(`seats.gte.${seatsMin},seats.is.null`);
+        }
+        // Miltalstak från frågan om hur lite kört bilen ska vara.
+        if (mileageMax && level < 2) {
+          const cap = level === 0 ? mileageMax : Math.round(mileageMax * 1.4);
+          query = query.or(`mileage.lte.${cap},mileage.is.null`);
+        }
+
         if (safeExcludeIds.length > 0) {
           query = query.not("id", "in", `(${safeExcludeIds.join(",")})`);
         }
 
-        // Candidate pool big enough to diversify, small enough to stay fast.
-        const orderKeys = hiddenGem
-          ? ["horsepower", "year", "mileage"]
-          : ["price", "year", "mileage"];
-        const orderBy = orderKeys[Math.floor(Math.random() * orderKeys.length)];
+        const orderBy = slice?.orderBy ?? (hiddenGem ? "horsepower" : "price");
+        const ascending = slice?.ascending ?? !hiddenGem;
         return query
-          .order(orderBy, { ascending: orderBy === "mileage" || (!hiddenGem && orderBy === "price"), nullsFirst: false })
-          .limit(80);
+          .order(orderBy, { ascending, nullsFirst: false })
+          .limit(60);
+      };
+
+      // Kandidatpoolen hämtas i tre delar över prisintervallet och med olika
+      // sorteringar, så urvalet speglar bredden i lagret i stället för en
+      // slumpad skiva av de billigaste (eller mest körda) bilarna.
+      const poolSlices = (): PoolSlice[] => {
+        const key = hiddenGem ? "horsepower" : "year";
+        return [
+          { from: 0, to: 0.4, orderBy: "price", ascending: true },
+          { from: 0.25, to: 0.75, orderBy: key, ascending: false },
+          { from: 0.55, to: 1, orderBy: "mileage", ascending: true },
+        ];
       };
 
       // Run relaxation levels sequentially — stop as soon as one gives enough
-      // candidates. Running them in parallel doubled DB load for nothing.
+      // candidates.
       for (const level of [0, 1, 2, 3]) {
-        const res = await buildQuery(level);
-        if (res.error) console.error("Search query error at level", level, res.error.message);
-        if (res.data && res.data.length > 0) {
-          cars = res.data as any[];
+        const results = await Promise.all(poolSlices().map((s) => buildQuery(level, s)));
+        const seen = new Set<number>();
+        const merged: any[] = [];
+        for (const res of results) {
+          if (res.error) console.error("Search query error at level", level, res.error.message);
+          for (const row of (res.data ?? []) as any[]) {
+            if (seen.has(row.id)) continue;
+            seen.add(row.id);
+            merged.push(row);
+          }
+        }
+        if (merged.length > 0) {
+          cars = merged.slice(0, 180);
           relaxLevel = level;
           break;
         }
       }
+
 
 
       // Vilka krav vi faktiskt tummade på — förklaras för kunden i resultatet.
@@ -1087,27 +1163,47 @@ serve(async (req) => {
             const isHybrid = fuel.includes("hybrid");
             const body = (c.body_type || "").toLowerCase();
             if (useCase === "pendling") {
-              if (isElectric || isHybrid) s += 14;
-              if (fuel.includes("diesel")) s += 6;
-              if ((c.mileage ?? 0) > 0 && (c.mileage as number) < 12000) s += 4;
+              if (isElectric || isHybrid) s += 26;
+              if (fuel.includes("diesel")) s += 12;
+              if ((c.mileage ?? 0) > 0 && (c.mileage as number) < 12000) s += 6;
+              // Lång daglig pendling kräver räckvidd/ekonomi.
+              if (commuteKmPerDay && commuteKmPerDay >= 100 && (isHybrid || fuel.includes("diesel"))) s += 10;
             } else if (useCase === "familj") {
-              if (body.includes("kombi") || body.includes("suv")) s += 14;
-              if ((c.seats ?? 0) >= 7) s += 8;
-              if (body.includes("coupe") || body.includes("cab")) s -= 12;
+              if (body.includes("kombi") || body.includes("suv")) s += 26;
+              if ((c.seats ?? 0) >= 7) s += 12;
+              if (body.includes("coupe") || body.includes("cab")) s -= 25;
             } else if (useCase === "stad") {
-              if (body.includes("halvkombi") || body.includes("småbil")) s += 12;
-              if (isElectric) s += 8;
-              if (body.includes("suv")) s -= 4;
+              if (body.includes("halvkombi") || body.includes("småbil")) s += 22;
+              if (isElectric) s += 14;
+              if (body.includes("suv")) s -= 8;
             } else if (useCase === "langresa") {
-              if (body.includes("kombi") || body.includes("sedan") || body.includes("suv")) s += 10;
-              if (fuel.includes("diesel") || isHybrid) s += 8;
-              if ((c.horsepower ?? 0) >= 150) s += 4;
+              if (body.includes("kombi") || body.includes("sedan") || body.includes("suv")) s += 20;
+              if (fuel.includes("diesel") || isHybrid) s += 14;
+              if ((c.horsepower ?? 0) >= 150) s += 6;
+            }
+
+            // Uttalade krav ur samtalet väger tungt.
+            if (seatsMin) {
+              if ((c.seats ?? 0) >= seatsMin) s += 18;
+              else if ((c.seats ?? 0) > 0) s -= 25;
+            }
+            if (mileageMax && (c.mileage ?? 0) > 0) {
+              if ((c.mileage as number) <= mileageMax) s += 16;
+              else s -= 18;
+            }
+            // Vad personen sagt väger tyngst för dem.
+            if (priority === "pris") s += (1 - Math.min(1, (c.price ?? 0) / Math.max(1, maxPrice))) * 25;
+            else if (priority === "skick" && milPerYear !== null) s += milPerYear <= NORMAL_MIL_PER_YEAR ? 20 : -10;
+            else if (priority === "nytt" && (c.year ?? 0) > 0) s += Math.min(25, Math.max(0, (c.year - 2015) * 3));
+            else if (priority === "narhet" && sanitizedCity) {
+              s += (c.city || "").toLowerCase().includes(sanitizedCity.toLowerCase()) ? 22 : -8;
             }
           }
 
 
-          // Random jitter so repeated searches surface different cars
-          s += Math.random() * (hiddenGem ? 35 : 22);
+          // Litet slumpinslag — skiljer bara mellan i praktiken likvärdiga bilar.
+          s += Math.random() * (hiddenGem ? 20 : 8);
+
           return s;
         };
 
@@ -1156,12 +1252,31 @@ serve(async (req) => {
 
       if (cars.length > 0) {
         try {
+          const nowYear = new Date().getFullYear();
           const carSummaries = cars
-            .map(
-              (c: any) =>
-                `ID:${c.id} — ${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}, färg: ${c.color || "okänd"}`
-            )
+            .map((c: any) => {
+              const age = Math.max(1, nowYear - (c.year ?? nowYear) + 1);
+              const perYear = (c.mileage ?? 0) > 0 ? Math.round((c.mileage as number) / age) : null;
+              const equip = typeof c.model_raw === "string" ? c.model_raw.slice(0, 90) : "";
+              return [
+                `ID:${c.id} — ${c.make} ${c.model} ${c.year}`,
+                `${c.price?.toLocaleString("sv-SE")} kr`,
+                `${c.fuel_type}`,
+                `${c.body_type}`,
+                `${c.mileage?.toLocaleString("sv-SE")} mil${perYear ? ` (~${perYear.toLocaleString("sv-SE")} mil/år)` : ""}`,
+                c.horsepower ? `${c.horsepower} hk` : null,
+                c.drivetrain && c.drivetrain !== "Unknown" ? `${c.drivetrain}` : null,
+                c.transmission ? `${c.transmission}` : null,
+                c.seats ? `${c.seats} platser` : null,
+                `${c.city}`,
+                `färg: ${c.color || "okänd"}`,
+                equip ? `annonstitel: ${equip}` : null,
+              ]
+                .filter(Boolean)
+                .join(", ");
+            })
             .join("\n");
+
 
           const msgResponse = await fetch(
             "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -1176,7 +1291,7 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Du pratar DIREKT med personen som söker — säg "du" och "dig". Skriv ALDRIG "kunden", "kunden ville", "kundens behov" eller något annat i tredje person.\n\nDu ska göra två saker:\n\n1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar dig.\n2. För VARJE bil, ge en kort motivering (1 mening) om varför just den bilen passar.\n\nHåll det lätt och avslappnat — rada inte upp alla filter eller förklara sökningen i detalj. Nämn bara det som faktiskt betyder något. Använd INTE emojis.${langInstruction}\n\n${reasoning ? `Din resonering (internt, upprepa den inte ordagrant): ${reasoning}` : ""}\n${customerProfile ? `Det du vet om personen (internt): ${customerProfile}` : ""}\n\nVar varm, professionell och objektiv.\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Din sammanfattning här","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
+                    content: `Du är Clutch, en objektiv och kunnig svensk bilrådgivare. Du pratar DIREKT med personen som söker — säg "du" och "dig". Skriv ALDRIG "kunden", "kunden ville", "kundens behov" eller något annat i tredje person.\n\nDu ska göra två saker:\n\n1. Ge en kort personlig sammanfattning (max 2 meningar) om varför dessa bilar passar dig.\n2. För VARJE bil, ge en kort motivering (1 mening) om varför just den bilen passar.\n\nMOTIVERINGARNA MÅSTE VARA KONKRETA: varje motivering ska innehålla MINST ETT faktum ur bilens rad (miltal per år, effekt, drivning, växellåda, platser, utrustning ur annonstiteln, pris eller ort) och koppla det till något personen sagt. Skriv aldrig generiska fraser som "passar dina behov", "ett tryggt val" eller "bra allround" utan sifferstöd. Två bilar får inte ha snarlika motiveringar.\n\nHåll det lätt och avslappnat — rada inte upp alla filter eller förklara sökningen i detalj. Använd INTE emojis.${langInstruction}\n\n${reasoning ? `Din resonering (internt, upprepa den inte ordagrant): ${reasoning}` : ""}\n${customerProfile ? `Det du vet om personen (internt): ${customerProfile}` : ""}\n\nVar varm, professionell och objektiv.\n\nSvara ENBART med JSON (ingen markdown, inga code fences):\n{"message":"Din sammanfattning här","carReasons":[{"carId":123,"reason":"Motivering för denna bil"}]}`,
                   },
                   {
                     role: "user",
