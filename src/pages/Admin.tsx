@@ -9,6 +9,7 @@ import {
   Smartphone, Monitor, MessageSquare, Loader2, AlertTriangle, Link2,
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { CommunityModeration } from '@/components/admin/CommunityModeration';
 
 type Entry = { label: string; count: number };
 
