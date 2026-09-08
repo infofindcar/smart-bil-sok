@@ -976,8 +976,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             : '500px',
         }}
       >
-        {/* Header */}
-        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
+        {/* Header — utan blur i helskärm, blur gör mobilen trög. */}
+        <div
+          className={`px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 ${
+            isFullscreen ? 'bg-card' : 'bg-card/85 backdrop-blur-md'
+          }`}
+        >
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="clutch-avatar w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center">
