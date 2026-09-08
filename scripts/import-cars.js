@@ -31,6 +31,90 @@ function pickGalleryImages(list, fallback) {
   return urls.slice(0, MAX_GALLERY_IMAGES);
 }
 
+// ─────────────────────────────────────────────
+// Rensa bort reklam- och logobilder (image_urls_clean)
+//
+// Bilfirmor lägger ofta in banners ("vi köper din bil", garantiskyltar,
+// logotyper) bland annonsbilderna — de får ALDRIG visas för kund.
+// Blockets bild-CDN (Fastly) svarar på HEAD med originalstorlek och
+// originalmått, vilket ger ett fingeravtryck per bild utan att ladda ner den.
+// Samma fingeravtryck i mer än en annons = återanvänd banner.
+// Bilder med onormalt bildformat (kvadratiska/stående/extremt breda) samt
+// bilder vi inte kan bedöma tas också bort — hellre för få bilder än en
+// enda främmande annons.
+// ─────────────────────────────────────────────
+const IMAGE_HEAD_CONCURRENCY = 100;
+
+async function imageFingerprint(url) {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, { method: "HEAD", signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const info = res.headers.get("fastly-io-info") ?? "";
+    const size = /ifsz=(\d+)/.exec(info)?.[1];
+    const dim = /idim=(\d+)x(\d+)/.exec(info);
+    if (!size || !dim) return null;
+    return { fp: `${size}:${dim[1]}x${dim[2]}`, w: Number(dim[1]), h: Number(dim[2]) };
+  } catch {
+    return null;
+  }
+}
+
+function isCarPhotoShape(f) {
+  const ratio = f.w / f.h;
+  return ratio >= 1.15 && ratio <= 2.2 && f.w >= 400;
+}
+
+async function annotateCleanImages(cars) {
+  const urls = [...new Set(cars.flatMap((c) => c.image_urls ?? []))];
+  console.log(`Granskar ${urls.length} bilder för reklam/logo...`);
+
+  const fps = new Map();
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: IMAGE_HEAD_CONCURRENCY }, async () => {
+      for (;;) {
+        const idx = cursor++;
+        if (idx >= urls.length) return;
+        const f = await imageFingerprint(urls[idx]);
+        if (f) fps.set(urls[idx], f);
+      }
+    }),
+  );
+
+  // Räkna antal annonser per fingeravtryck (globalt räcker: en riktig bilbild
+  // förekommer bara i en annons).
+  const seenIn = new Map();
+  for (const car of cars) {
+    for (const url of new Set(car.image_urls ?? [])) {
+      const f = fps.get(url);
+      if (!f) continue;
+      if (!seenIn.has(f.fp)) seenIn.set(f.fp, new Set());
+      seenIn.get(f.fp).add(car.source_listing_id);
+    }
+  }
+
+  let dropped = 0;
+  for (const car of cars) {
+    const main = car.image_thumb_url;
+    const clean = [];
+    for (const url of car.image_urls ?? []) {
+      const isMain = url === main;
+      const f = fps.get(url);
+      if (!f) { if (isMain) clean.push(url); else dropped++; continue; }
+      if (!isMain && (seenIn.get(f.fp)?.size ?? 0) > 1) { dropped++; continue; }
+      if (!isMain && !isCarPhotoShape(f)) { dropped++; continue; }
+      clean.push(url);
+    }
+    if (main && !clean.includes(main)) clean.unshift(main);
+    car.image_urls_clean = clean.slice(0, MAX_GALLERY_IMAGES);
+  }
+
+  console.log(`  Tog bort ${dropped} reklam-/osäkra bilder.`);
+}
+
 // 30 prisintervall som täcker hela prisskalan (SEK)
 // Varje intervall kan ge upp till 2 500 unika bilar (50 sidor × 50 bilar)
 const PRICE_INTERVALS = [
@@ -254,6 +338,9 @@ async function main() {
     console.error("Inga bilar hittades. Kontrollera API:et.");
     process.exit(1);
   }
+
+  // Granska bilderna innan de skickas — reklam/logo får aldrig nå kund.
+  await annotateCleanImages(allMapped);
 
   const syncResponse = await fetch(SUPABASE_SYNC_URL, {
     method: "POST",

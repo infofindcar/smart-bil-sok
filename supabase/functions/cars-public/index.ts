@@ -51,7 +51,7 @@ setInterval(() => {
 }, WINDOW_MS);
 
 const CAR_COLUMNS =
-  "id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, image_urls, regnr, horsepower, transmission, dealer_name";
+  "id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, image_urls, image_urls_clean, regnr, horsepower, transmission, dealer_name";
 
 function sanitizeText(v: unknown, max = 60): string | null {
   if (typeof v !== "string") return null;
