@@ -269,6 +269,66 @@ export type Database = {
         }
         Relationships: []
       }
+      car_reviews: {
+        Row: {
+          body: string
+          cons: string[]
+          created_at: string
+          id: string
+          make: string
+          mileage_km: number | null
+          model: string
+          model_normalized: string
+          moderation_note: string | null
+          ownership_months: number | null
+          pros: string[]
+          rating: number
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          body: string
+          cons?: string[]
+          created_at?: string
+          id?: string
+          make: string
+          mileage_km?: number | null
+          model: string
+          model_normalized?: string
+          moderation_note?: string | null
+          ownership_months?: number | null
+          pros?: string[]
+          rating: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Update: {
+          body?: string
+          cons?: string[]
+          created_at?: string
+          id?: string
+          make?: string
+          mileage_km?: number | null
+          model?: string
+          model_normalized?: string
+          moderation_note?: string | null
+          ownership_months?: number | null
+          pros?: string[]
+          rating?: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       dealers: {
         Row: {
           created_at: string | null
@@ -632,6 +692,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sync_logs: {
         Row: {
           batches_completed: number | null
@@ -756,7 +837,19 @@ export type Database = {
       admin_car_stats: { Args: never; Returns: Json }
       admin_traffic_stats: { Args: never; Returns: Json }
       apply_car_model_data_from_cache: { Args: never; Returns: Json }
+      car_review_summary: {
+        Args: { _keys: string[] }
+        Returns: {
+          avg_rating: number
+          model_normalized: string
+          review_count: number
+        }[]
+      }
       delete_unenrichable_cars: { Args: never; Returns: number }
+      normalize_model_key: {
+        Args: { _make: string; _model: string }
+        Returns: string
+      }
       set_car_clean_images: { Args: { payload: Json }; Returns: number }
       set_car_image_urls: { Args: { payload: Json }; Returns: number }
       show_limit: { Args: never; Returns: number }

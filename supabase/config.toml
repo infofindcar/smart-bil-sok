@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.analyze-listing]
 verify_jwt = false
+
+[functions.community-moderate]
+verify_jwt = false

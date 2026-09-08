@@ -8,6 +8,8 @@ import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
 import { ShareCar } from './ShareCar';
 import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
+import { useReviewSummary } from '@/hooks/useReviewSummary';
+import { StarRating } from '@/components/community/StarRating';
 
 
 interface CarCardProps {
@@ -64,6 +66,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason, onIma
   const displayName = getDisplayName(car);
   const equipment = topEquipment(car.model_raw, 5);
   const [similarOpen, setSimilarOpen] = useState(false);
+  const reviewSummary = useReviewSummary(car.make, car.model);
 
   const unusable = !car.image_thumb_url || imageError;
 
@@ -141,6 +144,14 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason, onIma
         <h3 className="font-semibold text-base truncate text-foreground">
           {displayName}
         </h3>
+        {reviewSummary && reviewSummary.count > 0 && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <StarRating value={reviewSummary.average} size="sm" />
+            <span className="text-[11px] text-muted-foreground">
+              {reviewSummary.average} · {reviewSummary.count} ägare
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
           <span>{car.year || '–'}</span>
           <span className="text-border">•</span>

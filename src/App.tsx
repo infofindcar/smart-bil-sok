@@ -15,6 +15,9 @@ import Admin from "./pages/Admin";
 import Guides from "./pages/Guides";
 import GuideArticle from "./pages/GuideArticle";
 import About from "./pages/About";
+import Community from "./pages/Community";
+import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
@@ -45,6 +48,9 @@ const App = () => (
             <Route path="/guider" element={<Guides />} />
             <Route path="/guider/:slug" element={<GuideArticle />} />
             <Route path="/om-oss" element={<About />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/logga-in" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<Admin />} />
 
             <Route path="*" element={<NotFound />} />

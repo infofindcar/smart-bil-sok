@@ -27,6 +27,7 @@ import { SEO } from '@/components/SEO';
 import { ShareCar } from '@/components/ShareCar';
 import { carShareImageUrl } from '@/lib/carImage';
 import { CarGallery } from '@/components/CarGallery';
+import { ModelReviews } from '@/components/community/ModelReviews';
 import { trackEvent } from '@/hooks/useAnalytics';
 
 
@@ -805,6 +806,10 @@ const CarDetail = () => {
               </>
             )}
           </div>
+        </div>
+
+        <div className="mt-6">
+          <ModelReviews make={car?.make} model={car?.model} />
         </div>
       </main>
       <Footer />
