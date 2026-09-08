@@ -144,6 +144,14 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason, onIma
         <h3 className="font-semibold text-base truncate text-foreground">
           {displayName}
         </h3>
+        {reviewSummary && reviewSummary.count > 0 && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <StarRating value={reviewSummary.average} size="sm" />
+            <span className="text-[11px] text-muted-foreground">
+              {reviewSummary.average} · {reviewSummary.count} ägare
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
           <span>{car.year || '–'}</span>
           <span className="text-border">•</span>
