@@ -856,6 +856,18 @@ serve(async (req) => {
       const dealerInclude = sanitizeDealerList(filters.dealerInclude);
       const dealerExclude = sanitizeDealerList(filters.dealerExclude);
 
+      // Nya, personliga krav som tidigare stannade i samtalet.
+      const seatsMin = typeof filters.seatsMin === "number" && filters.seatsMin >= 2 && filters.seatsMin <= 9
+        ? Math.round(filters.seatsMin) : null;
+      const mileageMax = typeof filters.mileageMax === "number" && filters.mileageMax > 0 && filters.mileageMax <= 100000
+        ? Math.round(filters.mileageMax) : null;
+      const commuteKmPerDay = typeof filters.commuteKmPerDay === "number" && filters.commuteKmPerDay > 0 && filters.commuteKmPerDay < 1000
+        ? Math.round(filters.commuteKmPerDay) : null;
+      const priority = typeof filters.priority === "string" &&
+        ["pris", "skick", "narhet", "nytt"].includes(filters.priority.toLowerCase())
+        ? filters.priority.toLowerCase() : null;
+
+
 
 
       // Progressive relaxation search — run levels 0 and 1 in parallel for speed
