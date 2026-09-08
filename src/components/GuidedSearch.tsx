@@ -1023,12 +1023,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {/* Helskärm bara på större skärmar — på mobil tappade tangentbordet fokus. */}
-            {!isMobile && (
+            {/* Helskärm på alla enheter, även iPhone. */}
+            {true && (
               <button
                 type="button"
                 onClick={() => setIsFullscreen((v) => !v)}
-                className="h-[30px] w-[30px] flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                className="h-8 w-8 flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors touch-target"
                 title={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
                 aria-label={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
               >
