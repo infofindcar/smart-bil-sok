@@ -730,6 +730,7 @@ export type Database = {
       admin_traffic_stats: { Args: never; Returns: Json }
       apply_car_model_data_from_cache: { Args: never; Returns: Json }
       delete_unenrichable_cars: { Args: never; Returns: number }
+      set_car_image_urls: { Args: { payload: Json }; Returns: number }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
