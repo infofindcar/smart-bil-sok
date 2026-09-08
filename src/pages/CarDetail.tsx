@@ -160,19 +160,22 @@ const CarDetail = () => {
     if (id) trackEvent('car_view', { carId: Number(id) });
   }, [id]);
 
-  // Fetch car if not passed via state — eller om bildgalleriet saknas i state
+  // Hämta alltid den aktuella bilen. Sökresultatet används för omedelbar
+  // rendering, men kan bara innehålla huvudbilden eller en äldre bildlista.
   useEffect(() => {
-    const needsFetch = !car || !car.image_urls;
-    if (needsFetch && id) {
-      (async () => {
-        // Tabellen blockerar anon-select via RLS — hämta via edge-funktion.
-        const { data, error } = await supabase.functions.invoke('cars-public', {
-          body: { action: 'get', id: Number(id) },
-        });
-        if (!error && data?.car) setCar(data.car as CarType);
-        setIsLoading(false);
-      })();
-    }
+    if (!id) return;
+
+    let cancelled = false;
+    (async () => {
+      // Tabellen blockerar anon-select via RLS — hämta via edge-funktion.
+      const { data, error } = await supabase.functions.invoke('cars-public', {
+        body: { action: 'get', id: Number(id) },
+      });
+      if (!cancelled && !error && data?.car) setCar(data.car as CarType);
+      if (!cancelled) setIsLoading(false);
+    })();
+
+    return () => { cancelled = true; };
   }, [id]);
 
   // Fetch enriched model + make data
