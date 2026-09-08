@@ -679,6 +679,8 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
       setPhase('results');
       trackEvent('search_results', { count: data.cars.length });
       const resultMsg = data.message || `Jag hittade ${data.cars.length} perfekta matchningar!`;
+      // Helskärm ska stängas automatiskt så kunden ser resultaten direkt.
+      setIsFullscreen(false);
       onResults(data.cars, resultMsg, data.carReasons || [], false, data.relaxations || []);
       setTimeout(() => {
         onScrollToResults?.();
