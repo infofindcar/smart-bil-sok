@@ -28,6 +28,8 @@ import { ShareCar } from '@/components/ShareCar';
 import { carShareImageUrl } from '@/lib/carImage';
 import { CarGallery } from '@/components/CarGallery';
 import { ModelReviews } from '@/components/community/ModelReviews';
+import { StarRating } from '@/components/community/StarRating';
+import { useReviewSummary } from '@/hooks/useReviewSummary';
 import { trackEvent } from '@/hooks/useAnalytics';
 
 
@@ -145,6 +147,7 @@ const CarDetail = () => {
   const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
   const [benchmark, setBenchmark] = useState<PriceBenchmark | null>(null);
   const [showFactors, setShowFactors] = useState(false);
+  const ownerSummary = useReviewSummary(car?.make, car?.model);
 
   // Contact form state
   const [formName, setFormName] = useState('');
@@ -471,29 +474,52 @@ const CarDetail = () => {
           {/* FindCar-betyg */}
           {rating && (
             <div className="bg-card rounded-2xl border border-border p-5 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
-                  <span className="text-xl font-bold text-primary leading-none">
-                    {rating.score.toFixed(1).replace('.', ',')}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">/ 10</span>
+              <div className="flex flex-wrap items-stretch gap-4 sm:gap-6">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+                    <span className="text-xl font-bold text-primary leading-none">
+                      {rating.score.toFixed(1).replace('.', ',')}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">/ 10</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">FindCar-betyg</p>
+                    <p className="text-lg font-bold">{rating.label}</p>
+                    {rating.isClassic && (
+                      <p className="text-[11px] text-primary font-medium mt-0.5">
+                        Klassiker — bedöms på skick och pris, inte ålder
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowFactors((v) => !v)}
+                      className="text-xs text-primary hover:underline mt-0.5"
+                    >
+                      {showFactors ? 'Dölj detaljer' : 'Se hur betyget räknats'}
+                    </button>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">FindCar-betyg</p>
-                  <p className="text-lg font-bold">{rating.label}</p>
-                  {rating.isClassic && (
-                    <p className="text-[11px] text-primary font-medium mt-0.5">
-                      Klassiker — bedöms på skick och pris, inte ålder
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowFactors((v) => !v)}
-                    className="text-xs text-primary hover:underline mt-0.5"
-                  >
-                    {showFactors ? 'Dölj detaljer' : 'Se hur betyget räknats'}
-                  </button>
-                </div>
+
+                {ownerSummary && ownerSummary.count > 0 && (
+                  <div className="flex items-center gap-4 min-w-0 sm:border-l sm:border-border sm:pl-6">
+                    <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-muted/40 border border-border">
+                      <span className="text-xl font-bold leading-none">
+                        {ownerSummary.average.toFixed(1).replace('.', ',')}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">/ 5</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Vad ägare tycker</p>
+                      <StarRating value={ownerSummary.average} size="sm" />
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {ownerSummary.count} {ownerSummary.count === 1 ? 'omdöme' : 'omdömen'} om {car.make} {String(car.model || '').split(' ')[0]}
+                      </p>
+                      <a href="#agaromdomen" className="text-xs text-primary hover:underline">
+                        Läs omdömen
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {showFactors && (
@@ -808,7 +834,7 @@ const CarDetail = () => {
           </div>
         </div>
 
-        <div className="mt-6">
+        <div id="agaromdomen" className="mt-6 scroll-mt-24">
           <ModelReviews make={car?.make} model={car?.model} />
         </div>
       </main>
