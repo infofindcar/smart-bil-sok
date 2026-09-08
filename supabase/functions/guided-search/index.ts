@@ -391,9 +391,15 @@ Flerval (kunden kan välja flera alternativ):
 {"action":"ask","message":"Din fråga här","suggestions":["Alt 1","Alt 2","Alt 3","Alt 4"],"multiSelect":true}
 
 Om du har tillräckligt med info för att söka:
-{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"features":["dragkrok","panorama"],"dealerInclude":["Bilfirma"],"dealerExclude":["Annan firma"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
+{"action":"search","filters":{"budget":"MIN-MAX","fuel":["diesel","el"],"bodyType":["kombi","suv"],"transmission":"automat","drivetrain":"awd","city":"Stad","make":"Märke","model":"Modell","color":"Färg","yearMin":2018,"yearMax":2024,"useCase":"pendling","age":28,"seatsMin":7,"mileageMax":12000,"commuteKmPerDay":80,"priority":"skick","features":["dragkrok","panorama"],"dealerInclude":["Bilfirma"],"dealerExclude":["Annan firma"]},"reasoning":"Kort förklaring av varför dessa filter valdes","customerProfile":"Sammanfattning av kundens behov och preferenser i 2 meningar"}
 
 Alla filter-fält är valfria — inkludera bara det du har information om.
+
+NYA FÄLT — ANVÄND DEM, ANNARS TAPPAS DET PERSONEN SAGT:
+- "seatsMin": antal platser som behövs. Sätt 7 när personen behöver 7-sits, 5 när 5-sits räcker.
+- "mileageMax": högsta miltal i MIL (svenska mil, inte km). "Låg mil viktigast" → ca 10000. "Bryr mig mest om pris" → utelämna.
+- "commuteKmPerDay": daglig pendling i kilometer. "Under 5 mil" → 40, "5–15 mil" → 100, "mer än 15 mil" → 180.
+- "priority": vad som väger tyngst — "pris", "skick" (låg körsträcka/gott skick), "nytt" (så ny årsmodell som möjligt) eller "narhet" (nära hemorten). Sätt det så fort personen antytt en prioritet.
 "age" ska vara ett heltal (antal år). Inkludera det om kunden uppgett sin ålder.
 
 SPECIFIK BILMODELL — VIKTIGT:
