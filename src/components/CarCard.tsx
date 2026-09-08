@@ -8,6 +8,8 @@ import { topEquipment } from '@/lib/equipment';
 import { SimilarListingsModal } from './SimilarListingsModal';
 import { ShareCar } from './ShareCar';
 import { carImageUrl, carImageSrcSet } from '@/lib/carImage';
+import { useReviewSummary } from '@/hooks/useReviewSummary';
+import { StarRating } from '@/components/community/StarRating';
 
 
 interface CarCardProps {
