@@ -998,31 +998,61 @@ serve(async (req) => {
           }
         }
 
+        // Platsbehov (7-sits m.m.) — hårt krav till och med nivå 1. Bilar utan
+        // registrerat platsantal släpps igenom för att inte tappa hela utbudet.
+        if (seatsMin && seatsMin > 5 && level < 2) {
+          query = query.or(`seats.gte.${seatsMin},seats.is.null`);
+        }
+        // Miltalstak från frågan om hur lite kört bilen ska vara.
+        if (mileageMax && level < 2) {
+          const cap = level === 0 ? mileageMax : Math.round(mileageMax * 1.4);
+          query = query.or(`mileage.lte.${cap},mileage.is.null`);
+        }
+
         if (safeExcludeIds.length > 0) {
           query = query.not("id", "in", `(${safeExcludeIds.join(",")})`);
         }
 
-        // Candidate pool big enough to diversify, small enough to stay fast.
-        const orderKeys = hiddenGem
-          ? ["horsepower", "year", "mileage"]
-          : ["price", "year", "mileage"];
-        const orderBy = orderKeys[Math.floor(Math.random() * orderKeys.length)];
+        const orderBy = slice?.orderBy ?? (hiddenGem ? "horsepower" : "price");
+        const ascending = slice?.ascending ?? !hiddenGem;
         return query
-          .order(orderBy, { ascending: orderBy === "mileage" || (!hiddenGem && orderBy === "price"), nullsFirst: false })
-          .limit(80);
+          .order(orderBy, { ascending, nullsFirst: false })
+          .limit(60);
+      };
+
+      // Kandidatpoolen hämtas i tre delar över prisintervallet och med olika
+      // sorteringar, så urvalet speglar bredden i lagret i stället för en
+      // slumpad skiva av de billigaste (eller mest körda) bilarna.
+      const poolSlices = (): PoolSlice[] => {
+        const key = hiddenGem ? "horsepower" : "year";
+        return [
+          { from: 0, to: 0.4, orderBy: "price", ascending: true },
+          { from: 0.25, to: 0.75, orderBy: key, ascending: false },
+          { from: 0.55, to: 1, orderBy: "mileage", ascending: true },
+        ];
       };
 
       // Run relaxation levels sequentially — stop as soon as one gives enough
-      // candidates. Running them in parallel doubled DB load for nothing.
+      // candidates.
       for (const level of [0, 1, 2, 3]) {
-        const res = await buildQuery(level);
-        if (res.error) console.error("Search query error at level", level, res.error.message);
-        if (res.data && res.data.length > 0) {
-          cars = res.data as any[];
+        const results = await Promise.all(poolSlices().map((s) => buildQuery(level, s)));
+        const seen = new Set<number>();
+        const merged: any[] = [];
+        for (const res of results) {
+          if (res.error) console.error("Search query error at level", level, res.error.message);
+          for (const row of (res.data ?? []) as any[]) {
+            if (seen.has(row.id)) continue;
+            seen.add(row.id);
+            merged.push(row);
+          }
+        }
+        if (merged.length > 0) {
+          cars = merged.slice(0, 180);
           relaxLevel = level;
           break;
         }
       }
+
 
 
       // Vilka krav vi faktiskt tummade på — förklaras för kunden i resultatet.
