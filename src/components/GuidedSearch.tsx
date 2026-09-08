@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
@@ -925,14 +926,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     lastAssistantMsg?.suggestions?.length &&
     !isTypingMsg(lastAssistantMsg);
 
-  return (
-    <div
-      className={
-        isFullscreen
-          ? 'fixed inset-0 z-50 bg-background p-3 md:p-6 flex'
-          : 'w-full max-w-4xl lg:max-w-5xl mx-auto'
-      }
-    >
+  const shell = (
       <div
         className={`clutch-shell overflow-hidden border border-border/50 flex flex-col ${
           inputFocused ? 'is-focused' : ''
@@ -1257,8 +1251,18 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           </form>
         </div>
       </div>
-    </div>
   );
+
+  // Helskärm renderas i body så att inga föräldrar (t.ex. animationer med
+  // transform) kan begränsa positioneringen.
+  if (isFullscreen) {
+    return createPortal(
+      <div className="fixed inset-0 z-[100] bg-background p-3 md:p-5 flex">{shell}</div>,
+      document.body,
+    );
+  }
+
+  return <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">{shell}</div>;
 };
 
 /* ---------- Memoized suggestions row (prevents re-render during typewriter) ---------- */
