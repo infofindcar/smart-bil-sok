@@ -276,6 +276,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const isMobile = useIsMobile();
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
