@@ -66,6 +66,7 @@ export const CarCard = ({ car, isSaved = false, onToggleSave, matchReason, onIma
   const displayName = getDisplayName(car);
   const equipment = topEquipment(car.model_raw, 5);
   const [similarOpen, setSimilarOpen] = useState(false);
+  const reviewSummary = useReviewSummary(car.make, car.model);
 
   const unusable = !car.image_thumb_url || imageError;
 
