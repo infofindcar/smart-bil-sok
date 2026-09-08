@@ -277,6 +277,21 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [isLoading, setIsLoading] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Helskärmsläge: Escape stänger och sidan bakom ska inte kunna scrolla.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isFullscreen]);
   const isMobile = useIsMobile();
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
