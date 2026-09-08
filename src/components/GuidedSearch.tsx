@@ -279,18 +279,47 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Helskärmsläge: Escape stänger och sidan bakom ska inte kunna scrolla.
+  // Helskärmsläge: Escape stänger, sidan bakom ska inte kunna scrolla och på
+  // mobilen följer höjden tangentbordet så rutan aldrig hoppar bort.
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
   useEffect(() => {
-    if (!isFullscreen) return;
+    if (!isFullscreen) {
+      setViewportHeight(null);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsFullscreen(false);
     };
     window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+
+    const vv = window.visualViewport;
+    const syncHeight = () => setViewportHeight(vv ? vv.height : window.innerHeight);
+    syncHeight();
+    vv?.addEventListener('resize', syncHeight);
+    vv?.addEventListener('scroll', syncHeight);
+
+    const body = document.body;
+    const prev = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      width: body.style.width,
+      top: body.style.top,
+    };
+    const scrollY = window.scrollY;
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.width = '100%';
+    body.style.top = `-${scrollY}px`;
+
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
+      vv?.removeEventListener('resize', syncHeight);
+      vv?.removeEventListener('scroll', syncHeight);
+      body.style.overflow = prev.overflow;
+      body.style.position = prev.position;
+      body.style.width = prev.width;
+      body.style.top = prev.top;
+      window.scrollTo(0, scrollY);
     };
   }, [isFullscreen]);
   const isMobile = useIsMobile();
