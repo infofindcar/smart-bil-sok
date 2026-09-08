@@ -52,6 +52,7 @@ setInterval(() => {
 
 const CAR_COLUMNS =
   "id, make, model, model_raw, year, price, mileage, fuel_type, body_type, drivetrain, city, color, image_thumb_url, image_urls, image_urls_clean, regnr, horsepower, transmission, dealer_name";
+console.log("cars-public build: clean-images-v2");
 
 function sanitizeText(v: unknown, max = 60): string | null {
   if (typeof v !== "string") return null;
