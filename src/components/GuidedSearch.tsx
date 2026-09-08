@@ -1333,12 +1333,27 @@ const SuggestionsRow = memo(function SuggestionsRow({
   const [showSlider, setShowSlider] = useState(false);
   const [range, setRange] = useState<[number, number]>([100000, 250000]);
 
+  /**
+   * "Inget särskilt"/"spelar ingen roll" utesluter alla andra val — då finns
+   * bara ett alternativ kvar och användaren ska inte behöva bekräfta.
+   */
+  const isNoPreference = (s: string) =>
+    /(inget särskilt|inget speciellt|ingen preferens|ingen åsikt|spelar ingen roll|vet inte|ingen favorit|no preference|doesn'?t matter|not sure)/i.test(
+      s,
+    );
+
   const toggle = (s: string) => {
     navigator.vibrate?.(10);
+    if (isNoPreference(s)) {
+      setSelected([]);
+      onPick(s);
+      return;
+    }
     setSelected((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
     );
   };
+
 
   const sendSelected = () => {
     if (!selected.length) return;
