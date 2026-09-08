@@ -160,9 +160,10 @@ const CarDetail = () => {
     if (id) trackEvent('car_view', { carId: Number(id) });
   }, [id]);
 
-  // Fetch car if not passed via state
+  // Fetch car if not passed via state — eller om bildgalleriet saknas i state
   useEffect(() => {
-    if (!car && id) {
+    const needsFetch = !car || !car.image_urls;
+    if (needsFetch && id) {
       (async () => {
         // Tabellen blockerar anon-select via RLS — hämta via edge-funktion.
         const { data, error } = await supabase.functions.invoke('cars-public', {
@@ -172,7 +173,7 @@ const CarDetail = () => {
         setIsLoading(false);
       })();
     }
-  }, [id, car]);
+  }, [id]);
 
   // Fetch enriched model + make data
   useEffect(() => {
