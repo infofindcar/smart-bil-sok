@@ -806,6 +806,10 @@ const CarDetail = () => {
             )}
           </div>
         </div>
+
+        <div className="mt-6">
+          <ModelReviews make={car?.make} model={car?.model} />
+        </div>
       </main>
       <Footer />
     </div>
