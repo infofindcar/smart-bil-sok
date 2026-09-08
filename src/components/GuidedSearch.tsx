@@ -279,18 +279,47 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Helskärmsläge: Escape stänger och sidan bakom ska inte kunna scrolla.
+  // Helskärmsläge: Escape stänger, sidan bakom ska inte kunna scrolla och på
+  // mobilen följer höjden tangentbordet så rutan aldrig hoppar bort.
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
   useEffect(() => {
-    if (!isFullscreen) return;
+    if (!isFullscreen) {
+      setViewportHeight(null);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsFullscreen(false);
     };
     window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+
+    const vv = window.visualViewport;
+    const syncHeight = () => setViewportHeight(vv ? vv.height : window.innerHeight);
+    syncHeight();
+    vv?.addEventListener('resize', syncHeight);
+    vv?.addEventListener('scroll', syncHeight);
+
+    const body = document.body;
+    const prev = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      width: body.style.width,
+      top: body.style.top,
+    };
+    const scrollY = window.scrollY;
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.width = '100%';
+    body.style.top = `-${scrollY}px`;
+
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
+      vv?.removeEventListener('resize', syncHeight);
+      vv?.removeEventListener('scroll', syncHeight);
+      body.style.overflow = prev.overflow;
+      body.style.position = prev.position;
+      body.style.width = prev.width;
+      body.style.top = prev.top;
+      window.scrollTo(0, scrollY);
     };
   }, [isFullscreen]);
   const isMobile = useIsMobile();
@@ -947,8 +976,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             : '500px',
         }}
       >
-        {/* Header */}
-        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
+        {/* Header — utan blur i helskärm, blur gör mobilen trög. */}
+        <div
+          className={`px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 ${
+            isFullscreen ? 'bg-card' : 'bg-card/85 backdrop-blur-md'
+          }`}
+        >
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="clutch-avatar w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center">
@@ -994,18 +1027,16 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {/* Helskärm bara på större skärmar — på mobil tappade tangentbordet fokus. */}
-            {!isMobile && (
-              <button
-                type="button"
-                onClick={() => setIsFullscreen((v) => !v)}
-                className="h-[30px] w-[30px] flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-                title={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
-                aria-label={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
-              >
-                {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              </button>
-            )}
+            {/* Helskärm på alla enheter, även iPhone. */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen((v) => !v)}
+              className="h-8 w-8 flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              title={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
+              aria-label={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
@@ -1262,7 +1293,12 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   // transform) kan begränsa positioneringen.
   if (isFullscreen) {
     return createPortal(
-      <div className="fixed inset-0 z-[100] bg-background p-3 md:p-5 flex">{shell}</div>,
+      <div
+        className="fixed left-0 top-0 w-full z-[100] bg-background p-2 md:p-5 flex overscroll-none"
+        style={{ height: viewportHeight ? `${viewportHeight}px` : '100dvh' }}
+      >
+        {shell}
+      </div>,
       document.body,
     );
   }
