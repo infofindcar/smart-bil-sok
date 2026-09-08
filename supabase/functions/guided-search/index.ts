@@ -1145,27 +1145,47 @@ serve(async (req) => {
             const isHybrid = fuel.includes("hybrid");
             const body = (c.body_type || "").toLowerCase();
             if (useCase === "pendling") {
-              if (isElectric || isHybrid) s += 14;
-              if (fuel.includes("diesel")) s += 6;
-              if ((c.mileage ?? 0) > 0 && (c.mileage as number) < 12000) s += 4;
+              if (isElectric || isHybrid) s += 26;
+              if (fuel.includes("diesel")) s += 12;
+              if ((c.mileage ?? 0) > 0 && (c.mileage as number) < 12000) s += 6;
+              // Lång daglig pendling kräver räckvidd/ekonomi.
+              if (commuteKmPerDay && commuteKmPerDay >= 100 && (isHybrid || fuel.includes("diesel"))) s += 10;
             } else if (useCase === "familj") {
-              if (body.includes("kombi") || body.includes("suv")) s += 14;
-              if ((c.seats ?? 0) >= 7) s += 8;
-              if (body.includes("coupe") || body.includes("cab")) s -= 12;
+              if (body.includes("kombi") || body.includes("suv")) s += 26;
+              if ((c.seats ?? 0) >= 7) s += 12;
+              if (body.includes("coupe") || body.includes("cab")) s -= 25;
             } else if (useCase === "stad") {
-              if (body.includes("halvkombi") || body.includes("småbil")) s += 12;
-              if (isElectric) s += 8;
-              if (body.includes("suv")) s -= 4;
+              if (body.includes("halvkombi") || body.includes("småbil")) s += 22;
+              if (isElectric) s += 14;
+              if (body.includes("suv")) s -= 8;
             } else if (useCase === "langresa") {
-              if (body.includes("kombi") || body.includes("sedan") || body.includes("suv")) s += 10;
-              if (fuel.includes("diesel") || isHybrid) s += 8;
-              if ((c.horsepower ?? 0) >= 150) s += 4;
+              if (body.includes("kombi") || body.includes("sedan") || body.includes("suv")) s += 20;
+              if (fuel.includes("diesel") || isHybrid) s += 14;
+              if ((c.horsepower ?? 0) >= 150) s += 6;
+            }
+
+            // Uttalade krav ur samtalet väger tungt.
+            if (seatsMin) {
+              if ((c.seats ?? 0) >= seatsMin) s += 18;
+              else if ((c.seats ?? 0) > 0) s -= 25;
+            }
+            if (mileageMax && (c.mileage ?? 0) > 0) {
+              if ((c.mileage as number) <= mileageMax) s += 16;
+              else s -= 18;
+            }
+            // Vad personen sagt väger tyngst för dem.
+            if (priority === "pris") s += (1 - Math.min(1, (c.price ?? 0) / Math.max(1, maxPrice))) * 25;
+            else if (priority === "skick" && milPerYear !== null) s += milPerYear <= NORMAL_MIL_PER_YEAR ? 20 : -10;
+            else if (priority === "nytt" && (c.year ?? 0) > 0) s += Math.min(25, Math.max(0, (c.year - 2015) * 3));
+            else if (priority === "narhet" && sanitizedCity) {
+              s += (c.city || "").toLowerCase().includes(sanitizedCity.toLowerCase()) ? 22 : -8;
             }
           }
 
 
-          // Random jitter so repeated searches surface different cars
-          s += Math.random() * (hiddenGem ? 35 : 22);
+          // Litet slumpinslag — skiljer bara mellan i praktiken likvärdiga bilar.
+          s += Math.random() * (hiddenGem ? 20 : 8);
+
           return s;
         };
 
