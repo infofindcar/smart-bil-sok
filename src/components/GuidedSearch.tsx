@@ -47,6 +47,8 @@ export type Car = {
   color: string | null;
   image_thumb_url: string | null;
   image_urls?: string[] | null;
+  /** Granskad bildlista — reklam-/logobilder borttagna. Endast denna visas. */
+  image_urls_clean?: string[] | null;
   listing_url: string | null;
   regnr: string | null;
   horsepower: number | null;

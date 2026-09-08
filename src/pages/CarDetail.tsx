@@ -407,7 +407,7 @@ const CarDetail = () => {
 
           {/* Bildgalleri */}
           <CarGallery
-            images={car.image_urls}
+            images={car.image_urls_clean}
             fallback={car.image_thumb_url}
             alt={`${car.make} ${displayTitle}`}
           />

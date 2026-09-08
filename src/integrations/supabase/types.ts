@@ -137,6 +137,30 @@ export type Database = {
         }
         Relationships: []
       }
+      banner_fingerprints: {
+        Row: {
+          created_at: string
+          dealer_name: string
+          fingerprint: string
+          listing_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dealer_name: string
+          fingerprint: string
+          listing_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dealer_name?: string
+          fingerprint?: string
+          listing_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       car_makes: {
         Row: {
           country_of_origin: string | null
@@ -453,6 +477,7 @@ export type Database = {
           id: number
           image_thumb_url: string | null
           image_urls: string[] | null
+          image_urls_clean: string[] | null
           is_active: boolean | null
           last_seen_at: string | null
           listing_url: string | null
@@ -490,6 +515,7 @@ export type Database = {
           id?: number
           image_thumb_url?: string | null
           image_urls?: string[] | null
+          image_urls_clean?: string[] | null
           is_active?: boolean | null
           last_seen_at?: string | null
           listing_url?: string | null
@@ -527,6 +553,7 @@ export type Database = {
           id?: number
           image_thumb_url?: string | null
           image_urls?: string[] | null
+          image_urls_clean?: string[] | null
           is_active?: boolean | null
           last_seen_at?: string | null
           listing_url?: string | null
@@ -730,6 +757,7 @@ export type Database = {
       admin_traffic_stats: { Args: never; Returns: Json }
       apply_car_model_data_from_cache: { Args: never; Returns: Json }
       delete_unenrichable_cars: { Args: never; Returns: number }
+      set_car_clean_images: { Args: { payload: Json }; Returns: number }
       set_car_image_urls: { Args: { payload: Json }; Returns: number }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

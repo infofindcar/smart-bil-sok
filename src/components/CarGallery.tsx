@@ -26,6 +26,18 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
   const [broken, setBroken] = useState<Set<string>>(new Set());
   const usable = all.filter((u) => !broken.has(u));
 
+  /**
+   * Extra spärr mot reklam-/logobilder: bilfoton är liggande med normalt
+   * format. Kvadratiska, stående eller extremt breda bilder är i praktiken
+   * alltid bilfirmans banner — dessa döljs direkt när de laddats.
+   */
+  const checkAspect = (url: string, img: HTMLImageElement) => {
+    const { naturalWidth: w, naturalHeight: h } = img;
+    if (!w || !h) return;
+    const ratio = w / h;
+    if (ratio < 1.15 || ratio > 2.2) markBroken(url);
+  };
+
   const [index, setIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -93,6 +105,7 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
             alt={alt}
             className="w-full h-64 md:h-96 object-cover"
             onError={() => markBroken(current)}
+            onLoad={(e) => checkAspect(current, e.currentTarget)}
           />
 
           {usable.length > 1 && (
@@ -139,6 +152,7 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
                   loading="lazy"
                   className="w-full h-full object-cover"
                   onError={() => markBroken(url)}
+            onLoad={(e) => checkAspect(url, e.currentTarget)}
                 />
               </button>
             ))}
@@ -171,6 +185,7 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
             className="max-h-[85vh] max-w-[95vw] object-contain"
             onClick={(e) => e.stopPropagation()}
             onError={() => markBroken(current)}
+            onLoad={(e) => checkAspect(current, e.currentTarget)}
           />
 
           {usable.length > 1 && (
