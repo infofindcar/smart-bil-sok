@@ -147,6 +147,7 @@ const CarDetail = () => {
   const [_makeData, setMakeData] = useState<CarMakeData | null>(null);
   const [benchmark, setBenchmark] = useState<PriceBenchmark | null>(null);
   const [showFactors, setShowFactors] = useState(false);
+  const ownerSummary = useReviewSummary(car?.make, car?.model);
 
   // Contact form state
   const [formName, setFormName] = useState('');
