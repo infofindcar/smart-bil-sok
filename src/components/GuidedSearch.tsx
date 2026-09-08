@@ -1250,8 +1250,18 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
           </form>
         </div>
       </div>
-    </div>
   );
+
+  // Helskärm renderas i body så att inga föräldrar (t.ex. animationer med
+  // transform) kan begränsa positioneringen.
+  if (isFullscreen) {
+    return createPortal(
+      <div className="fixed inset-0 z-[100] bg-background p-3 md:p-5 flex">{shell}</div>,
+      document.body,
+    );
+  }
+
+  return <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">{shell}</div>;
 };
 
 /* ---------- Memoized suggestions row (prevents re-render during typewriter) ---------- */
