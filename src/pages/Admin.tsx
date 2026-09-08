@@ -373,6 +373,8 @@ const Admin = () => {
               </Card>
             </>
           )}
+
+          <CommunityModeration password={storedPassword} />
         </div>
       </main>
     </div>
