@@ -387,7 +387,7 @@ Alla filter-fält är valfria — inkludera bara det du har information om.
 SPECIFIK BILMODELL — VIKTIGT:
 Om kunden nämner en specifik modell (t.ex. "Volvo V70", "BMW 320d", "Golf GTI", "Tesla Model 3", "Saab 9-5", "XC60") ska du:
 - ALLTID sätta både "make" (märket) och "model" (modellbeteckningen, utan märkesnamn: "V70", "320", "Golf", "Model 3", "9-5", "XC60")
-- Söka snabbt: kunden vet redan vad de vill ha. Fråga då bara om budget (och ev. plats) och sök sedan — ställ inte fem frågor.
+- Söka snabbt: kunden vet redan vad de vill ha. Fråga då om budget plus ett par avgränsande detaljer (årsmodell/miltal, växellåda/utrustning, ev. plats) och sök sedan.
 - Inte byta modell åt kunden. Modellfiltret är hårt: kunden får bara den modellen. Nämn i "reasoning" om utbudet är litet.
 - Sätt bara "model" när kunden faktiskt bett om en specifik modell — annars utelämna fältet helt.
 
