@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, type FormEvent } from '
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { SearchAnimation } from './SearchAnimation';
-import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X, SlidersHorizontal } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, PenLine, ChevronDown, ArrowDown, Mic, MicOff, Info, Check, X, SlidersHorizontal, Maximize2, Minimize2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -276,6 +276,22 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
   const [phase, setPhase] = useState<Phase>(savedChat?.phase || 'chatting');
   const [isLoading, setIsLoading] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Helskärmsläge: Escape stänger och sidan bakom ska inte kunna scrolla.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isFullscreen]);
   const isMobile = useIsMobile();
   const [inputValue, setInputValue] = useState('');
   const [language, setLanguage] = useState('sv');
@@ -910,16 +926,30 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     !isTypingMsg(lastAssistantMsg);
 
   return (
-    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto">
+    <div
+      className={
+        isFullscreen
+          ? 'fixed inset-0 z-50 bg-background p-3 md:p-6 flex'
+          : 'w-full max-w-4xl lg:max-w-5xl mx-auto'
+      }
+    >
       <div
         className={`clutch-shell overflow-hidden border border-border/50 flex flex-col ${
           inputFocused ? 'is-focused' : ''
         } ${
-          isMobile && mobileExpanded
+          isFullscreen
+            ? 'rounded-2xl md:rounded-3xl w-full'
+            : isMobile && mobileExpanded
             ? 'rounded-2xl'
             : 'rounded-2xl md:rounded-3xl'
         }`}
-        style={{ height: isMobile ? 'min(82svh, calc(100dvh - 110px))' : '500px' }}
+        style={{
+          height: isFullscreen
+            ? '100%'
+            : isMobile
+            ? 'min(82svh, calc(100dvh - 110px))'
+            : '500px',
+        }}
       >
         {/* Header */}
         <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-5 border-b border-border/30 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-card/85 backdrop-blur-md">
@@ -968,6 +998,15 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsFullscreen((v) => !v)}
+              className="h-[30px] w-[30px] flex items-center justify-center border border-border/40 rounded-lg bg-background/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              title={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
+              aria-label={isFullscreen ? 'Avsluta helskärm' : 'Helskärm'}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
