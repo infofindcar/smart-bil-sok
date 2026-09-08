@@ -925,14 +925,7 @@ export const GuidedSearch = ({ onResults, onScrollToResults, onLanguageChange }:
     lastAssistantMsg?.suggestions?.length &&
     !isTypingMsg(lastAssistantMsg);
 
-  return (
-    <div
-      className={
-        isFullscreen
-          ? 'fixed inset-0 z-50 bg-background p-3 md:p-6 flex'
-          : 'w-full max-w-4xl lg:max-w-5xl mx-auto'
-      }
-    >
+  const shell = (
       <div
         className={`clutch-shell overflow-hidden border border-border/50 flex flex-col ${
           inputFocused ? 'is-focused' : ''
