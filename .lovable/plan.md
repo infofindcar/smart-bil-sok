@@ -1,73 +1,59 @@
-# FindCar Pro — betaltjänst för bilhandlare och inköpare
+# Fyll på bildgallerier på alla bilar — och håll det påfyllt
 
-En egen del av sajten, bakom inloggning och månadsbetalning, med ett snabbt filterverktyg i stället för chatt. Tre saker säljer tjänsten: djupsökning på utrustning, obegränsat med sökningar och bevakningar som mailar när en ny bil matchar.
+Läget idag (verifierat): alla 76 234 aktiva bilar har en huvudbild och länkarna
+fungerar. Men 33 282 bilar visar bara **en** bild, varav 30 894 aldrig fick sin
+bildlista hämtad. Nästan alla dessa är annonser som senast uppdaterades före
+5 september. Bland bilarna från senaste hämtningen (7 sep) har 93 % fullt
+galleri — så det nattliga flödet fungerar redan, det är de äldre bilarna som
+släpar.
 
-## Först: en sak måste lösas för att utrustningssökningen ska hålla
+## Vad vi gör
 
-Utrustning söks idag bara i annonsens rubrik, som är 50–100 tecken. Vi har kontrollerat lagret: av 76 234 aktiva bilar har **noll** en sparad annonstext. En betalande inköpare som söker "dragkrok + värmare + drag över 2 000 kg" får därför träff på långt under hälften av bilarna som faktiskt har det.
+1. **Engångspåfyllning av alla bilar som saknar galleri** (~31 000). Vi hämtar
+   bildlistan per annons från annonskällan, kör exakt samma reklamrensning som
+   den nattliga importen använder:
+   - sista bilden tas alltid bort (bilfirmans logga/kontaktbild),
+   - bilder som återkommer i mer än en annons tas bort (återanvänd reklam),
+   - bilder med onormalt format (kvadratiska, stående, extremt breda) tas bort,
+   - bilder vi inte kan bedöma tas bort — hellre för få bilder än en främmande
+     annons,
+   - max 15 bilder per bil.
+2. **Kontroll efteråt.** När körningen är klar räknar vi igenom hela lagret och
+   redovisar: hur många bilar som har flera bilder, hur många som fortfarande
+   har bara en och varför (annonsen har faktiskt bara en bild, eller resten
+   rensades bort som reklam). Bilar som missats körs om tills listan är tom.
+3. **Fortsätter av sig själv för nya bilar.** Den nattliga hämtningen fyller
+   redan galleriet med samma regler. Vi lägger till en efterkontroll i samma
+   körning som tar hand om de bilar som eventuellt blivit utan galleri, så det
+   aldrig byggs upp en ny eftersläpning.
+4. **Ingen ändring i hur bilarna visas.** Sökresultaten har fortfarande en bild
+   per kort; galleriet syns på bilsidan.
 
-Därför är steg ett att börja spara och tolka hela annonstexten. Utan det blir Pro bara ett snabbare filter, inte något att ta betalt för.
+## Att tänka på
 
-## Så här fungerar tjänsten för kunden
+- Bilder som rensas bort som "reklam" kan i enstaka fall vara en riktig bilbild
+  som firman återanvänt mellan två annonser. Det är den avvägning vi valt:
+  hellre en bild för lite än en främmande annons.
+- Körningen tar en stund (ca 31 000 annonser plus bildkontroller) och görs i
+  omgångar. Sajten påverkas inte medan den pågår.
 
-1. Inköparen skapar konto och betalar månadsvis med kort. Kontot låses upp direkt efter betalning.
-2. Under "Pro" finns ett filterverktyg: pris, årsmodell, miltal, miltal per år, effekt, drivning, växellåda, bränsle, karosstyp, platser, ort/region, färg, bilfirma och utrustning. Flera utrustningskrav samtidigt, och krav som "minst" på till exempel effekt och dragvikt.
-3. Resultatet visas som en tät lista/tabell som går att sortera på pris, miltal, miltal per år, årsmodell och effekt, med alla bilder och direktlänk till annonsen.
-4. Träfflistan kan sparas som en bevakning. När en ny bil kommer in i lagret och matchar, går ett mail ut — högst ett mail per bevakning och dag.
-5. Inköparen kan pausa eller avsluta sitt abonnemang själv.
-6. Inga sökbegränsningar: Pro-konton kringgår spärren som gäller gratisläget.
+## Tekniska detaljer
 
-Gratisläget med Clutch ändras inte alls.
-
-## Vad vi bygger
-
-**1. Annonstext och utrustning**
-Ett bakgrundsjobb hämtar annonstexten för aktiva bilar och plockar ut utrustningen som en sökbar lista (dragkrok, dragvikt, värmare, skinn, panorama, backkamera, adaptiv farthållare, ljudsystem, luftfjädring, paket som M Sport/AMG/R-Line, och så vidare). Texten sparas per bil, utrustningen sparas som märkord vi kan filtrera hårt på. Jobbet går i omgångar så vi inte överbelastar källan, nya bilar tas efter varje nattlig uppdatering.
-
-**2. Konto och betalning**
-Månadsabonnemang med kortbetalning. Betalningsstatus sparas på kontot och kontrolleras på servern varje gång Pro används — aldrig i webbläsaren. Kunden når sin egen betalningssida för att byta kort eller avsluta.
-
-**3. Pro-sökningen**
-En serverfunktion som tar emot filtren, kontrollerar att kontot är betalande och kör sökningen direkt mot lagret. Ingen AI inblandad, så den är snabb och kostar inget per sökning — det är därför obegränsat är möjligt.
-
-**4. Bevakningar och mail**
-Sparade sökningar körs automatiskt några gånger per dygn. Nya matchningar sedan förra körningen mailas till inköparen. Vi håller reda på vilka bilar som redan mailats så samma bil inte skickas två gånger.
-
-**5. Admin**
-I admin ser ni antal Pro-konton, aktiva abonnemang, antal bevakningar och hur långt utrustningsjobbet kommit. Ni kan även ge ett konto Pro manuellt, till exempel för en provperiod eller en kund som faktureras.
-
-## Vad som inte ingår i denna version
-
-- Pris mot marknad / fyndlista (vilka bilar som ligger under snittpris). Bra nästa steg, men kräver egen prismodell — ligger utanför.
-- Export till Excel/CSV och budgivning eller inköpsanteckningar.
-- Bilar från andra källor än de vi redan har.
-
-## Två saker jag behöver från dig innan bygget är klart
-
-- **Pris per månad** och om det ska finnas årsrabatt.
-- **Om annonstexten får hämtas** i den omfattning det handlar om (tiotusentals annonser, spritt över tid). Jag lägger in fördröjning och omgångar, men du bör känna till att vi läser mer från källan än idag.
-
-## Tekniskt
-
-**Databas (migration)**
-- `pro_subscribers` — `user_id`, status, plan, period-slut, kund-/prenumerations-id, `granted_manually`. RLS: användaren läser bara sin egen rad; endast service role skriver.
-- `saved_searches` — `user_id`, namn, `filters jsonb`, `notify boolean`, `last_run_at`. RLS scopad på `auth.uid()`.
-- `saved_search_hits` — `saved_search_id`, `car_id`, `notified_at`, unik nyckel på paret (dubblettskydd).
-- `"Lovable"`: fyll befintlig `description`, lägg till `equipment text[]` + `max_towing_kg` (finns), `enriched_text_at timestamptz`. GIN-index på `equipment`, samt index på `(is_active, price)`, `(is_active, year)`, `(is_active, mileage)`.
-- GRANT i samma migration för varje ny tabell: `authenticated` läs/skriv där policy tillåter, `service_role` ALL, inget `anon`.
-
-**Edge functions**
-- `pro-search` — validerar JWT, slår upp aktiv prenumeration, bygger PostgREST-query av filtren (equipment via `contains`, fri text via `ilike` mot `description`), returnerar sida + totalantal. Aldrig rå SQL.
-- `pro-checkout` + `pro-portal` + `pro-webhook` — Stripe-abonnemang; webhooken (`verify_jwt = false`, signaturkontroll) är enda skrivaren till `pro_subscribers`.
-- `enrich-listing-text` — cron, batchvis: hämtar annonstext, extraherar utrustning med regelbaserad matchning (utökad `featurePatterns`) och AI endast för fritextrester, sätter `enriched_text_at` alltid så bilar inte loopar i kön (samma sentinel-princip som övrig enrichment).
-- `saved-search-run` — cron, kör bevakningar, diffar mot `saved_search_hits`, mailar via Resend.
-- `guided-search`: enda ändringen är att Pro-konton hoppar över `guided_search_usage`-spärren.
-
-**Frontend**
-- `/pro` (filterverktyg + resultattabell), `/pro/bevakningar`, `/pro/konto`, `/pro/pris` (låst tillstånd med köpknapp). Skyddas av en `useProAccess`-hook som frågar servern, inte localStorage.
-- Återanvänder befintlig auth (`Login.tsx`, `profiles`) och `carImage.ts` för bilder; sista bilden i varje annons hoppas över som vanligt.
-- Ny `ProFilters`-komponent (shadcn), resultattabell med virtuell lista, semantiska tokens — inga hårdkodade färger.
-- Admin får en `ProPanel`-flik.
-
-**Nycklar**
-`STRIPE_SECRET_KEY` och `STRIPE_WEBHOOK_SECRET` behöver läggas till. `RESEND_API_KEY` och `FIRECRAWL_API_KEY` finns redan.
+- Tillfällig, hemlighetsskyddad underhållsfunktion (samma mönster som förra
+  gången: `IMAGE_JOB_SECRET`, RPC:erna `set_car_image_urls` /
+  `set_car_clean_images`, uppslag av reklam-fingeravtryck i
+  `banner_fingerprints`). Funktionen och secreten tas bort när körningen är
+  verifierad.
+- Backfill-script kör i batchar (id-cursor, ~500 bilar per varv), hämtar
+  bildlistor per `source_listing_id` från Blockets API, återanvänder logiken i
+  `pickGalleryImages` + `annotateCleanImages` från `scripts/import-cars.js` och
+  skriver `image_urls` samt `image_urls_clean`.
+- Bilförmedlingen-bilarna (29 rader utan galleri) fylls från feedets
+  bildkolumn med samma regler.
+- Ny efterkontroll i `scripts/import-cars.js`: efter synken loggas och
+  återkörs bilar där `image_urls` är null trots att annonsen hade flera bilder.
+- Verifiering: fördelning av `array_length(image_urls_clean,1)` före/efter,
+  samt stickprov med öppnad bilsida (huvudbild + miniatyrer laddas, inga döda
+  länkar).
+- Inga schemaändringar, inga RLS-ändringar, ingen ändring i `guided-search`
+  eller `cars-public`.
