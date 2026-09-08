@@ -834,7 +834,7 @@ const CarDetail = () => {
           </div>
         </div>
 
-        <div className="mt-6">
+        <div id="agaromdomen" className="mt-6 scroll-mt-24">
           <ModelReviews make={car?.make} model={car?.model} />
         </div>
       </main>
