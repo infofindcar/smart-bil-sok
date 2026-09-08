@@ -1234,12 +1234,31 @@ serve(async (req) => {
 
       if (cars.length > 0) {
         try {
+          const nowYear = new Date().getFullYear();
           const carSummaries = cars
-            .map(
-              (c: any) =>
-                `ID:${c.id} — ${c.make} ${c.model} ${c.year}, ${c.price?.toLocaleString("sv-SE")} kr, ${c.fuel_type}, ${c.body_type}, ${c.mileage?.toLocaleString("sv-SE")} mil, ${c.city}, färg: ${c.color || "okänd"}`
-            )
+            .map((c: any) => {
+              const age = Math.max(1, nowYear - (c.year ?? nowYear) + 1);
+              const perYear = (c.mileage ?? 0) > 0 ? Math.round((c.mileage as number) / age) : null;
+              const equip = typeof c.model_raw === "string" ? c.model_raw.slice(0, 90) : "";
+              return [
+                `ID:${c.id} — ${c.make} ${c.model} ${c.year}`,
+                `${c.price?.toLocaleString("sv-SE")} kr`,
+                `${c.fuel_type}`,
+                `${c.body_type}`,
+                `${c.mileage?.toLocaleString("sv-SE")} mil${perYear ? ` (~${perYear.toLocaleString("sv-SE")} mil/år)` : ""}`,
+                c.horsepower ? `${c.horsepower} hk` : null,
+                c.drivetrain && c.drivetrain !== "Unknown" ? `${c.drivetrain}` : null,
+                c.transmission ? `${c.transmission}` : null,
+                c.seats ? `${c.seats} platser` : null,
+                `${c.city}`,
+                `färg: ${c.color || "okänd"}`,
+                equip ? `annonstitel: ${equip}` : null,
+              ]
+                .filter(Boolean)
+                .join(", ");
+            })
             .join("\n");
+
 
           const msgResponse = await fetch(
             "https://ai.gateway.lovable.dev/v1/chat/completions",
