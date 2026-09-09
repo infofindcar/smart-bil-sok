@@ -8,11 +8,12 @@ import { GuidedSearch, type Car, type CarReason } from '@/components/GuidedSearc
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { SEO } from '@/components/SEO';
 import { ListingAnalyzer } from '@/components/ListingAnalyzer';
+import { WhyFindCar } from '@/components/WhyFindCar';
 
 // Lazy-load below-fold sections
 const ResultsReveal = lazy(() => import('@/components/ResultsReveal').then((m) => ({ default: m.ResultsReveal })));
 const HowItWorks = lazy(() => import('@/components/HowItWorks').then((m) => ({ default: m.HowItWorks })));
-const WhyFindCar = lazy(() => import('@/components/WhyFindCar').then((m) => ({ default: m.WhyFindCar })));
+
 const FAQ = lazy(() => import('@/components/FAQ').then((m) => ({ default: m.FAQ })));
 const CookieBanner = lazy(() => import('@/components/CookieBanner').then((m) => ({ default: m.CookieBanner })));
 
