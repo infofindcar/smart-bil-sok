@@ -191,14 +191,26 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
             <X className="h-5 w-5" />
           </button>
 
-          <img
-            src={carImageUrl(current, 1280)}
-            alt={alt}
-            className="max-h-[85vh] max-w-[95vw] object-contain"
+          <div
+            className="relative flex items-center justify-center h-[85vh] w-[95vw]"
             onClick={(e) => e.stopPropagation()}
-            onError={() => markBroken(current)}
-            onLoad={(e) => checkAspect(current, e.currentTarget)}
-          />
+          >
+            {usable.map((url, i) => {
+              const active = i === Math.min(index, usable.length - 1);
+              return (
+                <img
+                  key={url}
+                  src={carImageUrl(url, 1280)}
+                  alt={active ? alt : ''}
+                  aria-hidden={!active}
+                  decoding="async"
+                  className={`absolute max-h-[85vh] max-w-[95vw] object-contain transition-opacity duration-300 ease-out ${active ? 'opacity-100' : 'opacity-0'}`}
+                  onError={() => markBroken(url)}
+                  onLoad={(e) => checkAspect(url, e.currentTarget)}
+                />
+              );
+            })}
+          </div>
 
           {usable.length > 1 && (
             <>
