@@ -84,6 +84,24 @@ async function annotateCleanImages(cars) {
     }),
   );
 
+  // Andra försöket för bilder som inte kunde bedömas (tillfälliga nätverksfel).
+  // Utan detta tappar vi galleribilder i onödan.
+  const unresolved = urls.filter((u) => !fps.has(u));
+  if (unresolved.length > 0) {
+    console.log(`  Gör om ${unresolved.length} obedömda bilder...`);
+    let c2 = 0;
+    await Promise.all(
+      Array.from({ length: IMAGE_HEAD_CONCURRENCY }, async () => {
+        for (;;) {
+          const idx = c2++;
+          if (idx >= unresolved.length) return;
+          const f = await imageFingerprint(unresolved[idx]);
+          if (f) fps.set(unresolved[idx], f);
+        }
+      }),
+    );
+  }
+
   // Räkna antal annonser per fingeravtryck (globalt räcker: en riktig bilbild
   // förekommer bara i en annons).
   const seenIn = new Map();
@@ -112,7 +130,17 @@ async function annotateCleanImages(cars) {
     car.image_urls_clean = clean.slice(0, MAX_GALLERY_IMAGES);
   }
 
+  // Efterkontroll: hur många bilar hamnade utan galleri trots flera annonsbilder?
+  const noGallery = cars.filter(
+    (c) => (c.image_urls_clean?.length ?? 0) < 2 && (c.image_urls?.length ?? 0) > 1,
+  ).length;
+  const withGallery = cars.filter((c) => (c.image_urls_clean?.length ?? 0) > 1).length;
+
   console.log(`  Tog bort ${dropped} reklam-/osäkra bilder.`);
+  console.log(`  Bilar med galleri: ${withGallery}/${cars.length}`);
+  if (noGallery > 0) {
+    console.log(`  OBS: ${noGallery} bilar fick bara en bild trots flera annonsbilder (allt rensat som reklam/osäkert).`);
+  }
 }
 
 // 30 prisintervall som täcker hela prisskalan (SEK)
