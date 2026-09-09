@@ -92,21 +92,33 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
     <>
       <div className="mb-6">
         <div
-          className="relative rounded-2xl overflow-hidden bg-card shadow-warm cursor-zoom-in"
+          className="relative rounded-2xl overflow-hidden bg-muted shadow-warm cursor-zoom-in h-64 md:h-96"
           onClick={() => setFullscreen(true)}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          <img
-            key={current}
-            src={carImageUrl(current, 960)}
-            srcSet={carImageSrcSet(current, 960)}
-            sizes="(max-width: 896px) 100vw, 896px"
-            alt={alt}
-            className="w-full h-64 md:h-96 object-cover"
-            onError={() => markBroken(current)}
-            onLoad={(e) => checkAspect(current, e.currentTarget)}
-          />
+          {/* Alla bilder ligger kvar i DOM:en och tonas in/ut — inget vitt blink
+              eftersom bilden redan är laddad när man byter. */}
+          {usable.map((url, i) => {
+            const active = i === Math.min(index, usable.length - 1);
+            const near = Math.abs(i - index) <= 1 || i === 0;
+            return (
+              <img
+                key={url}
+                src={carImageUrl(url, 960)}
+                srcSet={carImageSrcSet(url, 960)}
+                sizes="(max-width: 896px) 100vw, 896px"
+                alt={active ? alt : ''}
+                aria-hidden={!active}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={near ? 'high' : 'low'}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ease-out ${active ? 'opacity-100' : 'opacity-0'}`}
+                onError={() => markBroken(url)}
+                onLoad={(e) => checkAspect(url, e.currentTarget)}
+              />
+            );
+          })}
 
           {usable.length > 1 && (
             <>
