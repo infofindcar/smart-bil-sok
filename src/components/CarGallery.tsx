@@ -34,9 +34,12 @@ export const CarGallery = ({ images, fallback, alt }: CarGalleryProps) => {
   const checkAspect = (url: string, img: HTMLImageElement) => {
     const { naturalWidth: w, naturalHeight: h } = img;
     if (!w || !h) return;
+    // Aldrig dölja sista kvarvarande bilden — då blir sidan bildlös.
+    if (usable.length <= 1) return;
     const ratio = w / h;
-    if (ratio < 1.15 || ratio > 2.2) markBroken(url);
+    if (ratio < 1.05 || ratio > 2.6) markBroken(url);
   };
+
 
   const [index, setIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
