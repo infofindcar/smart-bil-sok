@@ -28,7 +28,7 @@ const Community = () => {
   const attachAuthors = useCallback(async (rows: CarReview[]) => {
     const ids = [...new Set(rows.map((r) => r.user_id))];
     if (ids.length === 0) return rows;
-    const { data } = await supabase.from('profiles').select('id,display_name').in('id', ids);
+    const { data } = await supabase.rpc('review_author_names', { _ids: ids });
     const names = Object.fromEntries((data ?? []).map((p) => [p.id, p.display_name]));
     return rows.map((r) => ({ ...r, author: names[r.user_id] ?? null }));
   }, []);
