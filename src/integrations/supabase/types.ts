@@ -850,6 +850,13 @@ export type Database = {
         Args: { _make: string; _model: string }
         Returns: string
       }
+      review_author_names: {
+        Args: { _ids: string[] }
+        Returns: {
+          display_name: string
+          id: string
+        }[]
+      }
       set_car_clean_images: { Args: { payload: Json }; Returns: number }
       set_car_image_urls: { Args: { payload: Json }; Returns: number }
       show_limit: { Args: never; Returns: number }
