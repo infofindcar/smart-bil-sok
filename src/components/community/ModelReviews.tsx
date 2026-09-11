@@ -35,7 +35,7 @@ export const ModelReviews = ({ make, model }: { make?: string | null; model?: st
       const ids = [...new Set(rows.map((r) => r.user_id))];
       let names: Record<string, string | null> = {};
       if (ids.length) {
-        const { data: profs } = await supabase.from('profiles').select('id,display_name').in('id', ids);
+        const { data: profs } = await supabase.rpc('review_author_names', { _ids: ids });
         names = Object.fromEntries((profs ?? []).map((p) => [p.id, p.display_name]));
       }
       setReviews(rows.map((r) => ({ ...r, author: names[r.user_id] ?? null })));
